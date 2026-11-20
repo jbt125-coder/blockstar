@@ -781,6 +781,7 @@ function dressRig(R,L){
   const T=R.torso, Hd=R.head;
   // head and hair
   const hm=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),headMats(L)); hm.position.y=0.23; Hd.userData.d.add(hm);
+  const mo=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.11,0.012),cm('#3a0d10')); mo.position.set(0,0.12,-0.234); mo.visible=false; Hd.userData.d.add(mo); R.mouth=mo; // opens when singing
   const hc=cm(L.hairC), hs=st=>L.hair===st;
   if(hs('long'))put(Hd,0.48,0.62,0.08,hc,0,0.12,0.25);
   if(hs('ponytail')){ put(Hd,0.16,0.14,0.1,cm(shadeHex(L.hairC,0.7)),0,0.33,0.27); const p=put(Hd,0.13,0.44,0.11,hc,0,0.1,0.32); p.rotation.x=0.22; }
@@ -1459,14 +1460,15 @@ $('card').addEventListener('click',()=>$('card').style.display='none');
 $('card').addEventListener('touchstart',e=>{e.preventDefault();$('card').style.display='none';},{passive:false});
 
 window.addEventListener('keydown',e=>{
-  if(demo){ if(e.code==='Escape')demoStop(); else demoPoke(); e.preventDefault(); return; }
+  if(demo){ if(e.code==='Escape')demoStop(); else if(demo.sc&&demo.sc.act==='concert'){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else singKeys.add(e.code); } else demoPoke(); e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
   if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'&&nearMerchant())openShop();
   if(e.code.startsWith('Digit')){ const n=parseInt(e.code.slice(5)); const list=order(); if(n>=1&&n<=9&&list[n-1])select(list[n-1]); }
   if(e.code==='Space')e.preventDefault();
 });
-window.addEventListener('keyup',e=>{ keys[e.code]=false; });
+window.addEventListener('keyup',e=>{ keys[e.code]=false; singKeys.delete(e.code); });
+window.addEventListener('blur',()=>singKeys.clear());
 if(!IS_TOUCH){
   touchEl.addEventListener('click',e=>{ audioInit(); if(demo){ demoPoke(); return; } if(document.pointerLockElement!==touchEl){ try{ const r=touchEl.requestPointerLock(); if(r&&r.catch)r.catch(()=>{}); }catch(e){} } });
   document.addEventListener('mousemove',e=>{ if(document.pointerLockElement!==touchEl||paused)return;
@@ -1721,14 +1723,14 @@ function steerSeek(s,dt){ const sp=Math.hypot(s.v[0],s.v[1],s.v[2])||1;
   s.v[0]+=(dx/d*sp-s.v[0])*k; s.v[1]+=(dy/d*sp-s.v[1])*k; s.v[2]+=(dz/d*sp-s.v[2])*k; }
 function specialImpact(s,m,x,y,z,x0,y0,z0){
   if(s.sp==='fire'){ if(m){ if(!m.t.fireproof){ m.fireT=4; m.burnT=0; } } else { const fx=Math.floor(x0),fy=Math.floor(y0),fz=Math.floor(z0); if(get(fx,fy,fz)===0)tryIgnite(fx,fy,fz); } sfx('sizzle'); }
-  else if(s.sp==='explode') explodeAt(x,y,z); }
-function explodeAt(x,y,z){ sfx('boom'); for(let k=0;k<4;k++) burst(x-0.5+(rand()-.5)*2,y-0.5+(rand()-.5)*2,z-0.5+(rand()-.5)*2,new THREE.Color(1,0.35+rand()*0.4,0.05),12);
+  else if(s.sp==='explode') explodeAt(x,y,z,s.big); }
+function explodeAt(x,y,z,big){ sfx('boom'); const R2=big?big*big:3.2, Ri=big?Math.ceil(big):2; for(let k=0;k<(big?9:4);k++) burst(x-0.5+(rand()-.5)*2,y-0.5+(rand()-.5)*2,z-0.5+(rand()-.5)*2,new THREE.Color(1,0.35+rand()*0.4,0.05),12);
   for(const m of mobs.slice()){ const d=Math.hypot(m.p[0]-x,m.p[1]+m.h*0.5-y,m.p[2]-z); if(d<3.4&&mobs.includes(m)) damageMob(m,Math.round(2+9*(1-d/3.4)),m.p[0]-x,m.p[2]-z,9); }
   const pd=Math.hypot(pl.p[0]-x,pl.p[1]+0.9-y,pl.p[2]-z); if(pd<2.2){ const l=Math.hypot(pl.p[0]-x,pl.p[2]-z)||1; hurtPlayer(1,(pl.p[0]-x)/l,(pl.p[2]-z)/l,'Your own explosion'); }
   const cx=Math.floor(x),cy=Math.floor(y),cz=Math.floor(z);
-  for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++)for(let dz=-2;dz<=2;dz++){ if(dx*dx+dy*dy+dz*dz>3.2)continue; const bx=cx+dx,by=cy+dy,bz=cz+dz; if(by<=0||!inB(bx,by,bz))continue;
+  for(let dx=-Ri;dx<=Ri;dx++)for(let dy=-Ri;dy<=Ri;dy++)for(let dz=-Ri;dz<=Ri;dz++){ if(dx*dx+dy*dy+dz*dz>R2)continue; const bx=cx+dx,by=cy+dy,bz=cz+dz; if(by<=0||!inB(bx,by,bz))continue;
     const id=get(bx,by,bz); if(!id||B[id].fluid||id===ID.fire)continue;
-    if(B[id].hidden)continue; setBlock(bx,by,bz,0); }
+    if(B[id].hidden&&!big)continue; setBlock(bx,by,bz,0); }
   queueSave(); }
 
 // ================= APPLE TREES =================
@@ -1964,9 +1966,9 @@ function tuneStep(st,i,t,sp){ const T=st.T, bar=Math.floor(i/16)%8, s=i%16, c=T.
   if(T.drums===0){ if(s===0)for(const k of [0,2,4])mn('sine',midiF(deg(T,c+k,0)),t,sp*15,0.05); }
   else if(s%2===0)mn('triangle',midiF(deg(T,c+[0,2,4,2][(s/2)%4],1)),t,sp*1.8,0.045);
   const m=st.score[bar][s]; if(m!=null){ let len=1; while(s+len<16&&st.score[bar][s+len]==null&&len<4)len++;
-    mn(T.lead,midiF(deg(T,m,0)),t,sp*len*0.92,T.lead==='square'||T.lead==='sawtooth'?0.06:0.13); }
+    mn(T.lead,midiF(deg(T,m,0)),t,sp*len*0.92,T.lead==='square'||T.lead==='sawtooth'?0.06:0.13); if(st.notes){ st.notes.push([t,t+sp*len*0.85,m]); if(st.notes.length>48)st.notes.shift(); } }
   if(T.drums){ if(s%8===0||(T.drums>=3&&s%8===6))mdrum('kick',t); if(T.drums>=2&&s%8===4)mdrum('snare',t); if(s%2===0)mdrum('hat',t); } }
-function tunePlay(k){ if(!musOut())return false; tuneStop(); const T=TUNES[k]||TUNES.adventure, st={T,score:tuneScore(T),i:0,next:AC.currentTime+0.1};
+function tunePlay(k){ if(!musOut())return false; tuneStop(); const T=TUNES[k]||TUNES.adventure, st={T,score:tuneScore(T),i:0,next:AC.currentTime+0.1,t0:AC.currentTime+0.1,notes:[]};
   st.timer=setInterval(()=>{ const sp=60/T.bpm/4; while(st.next<AC.currentTime+0.3){ tuneStep(st,st.i,st.next,sp); st.i++; st.next+=sp; } },40); tuneSt=st; return true; }
 function tuneStop(){ if(tuneSt){ clearInterval(tuneSt.timer); tuneSt=null; } }
 // your own song: kept in this browser's storage so it is still there next time
@@ -2014,25 +2016,194 @@ function musicTick(dt){ if(musFadeT<=0)return; musFadeT-=dt; const f=Math.max(0,
   try{ if(musOnNow==='tune'&&musGain)musGain.gain.value=mus.vol/100*0.55*f; else if(musOnNow==='mp3')songEl.volume=mus.vol/100*f; else if(musOnNow==='yt'&&ytReady)ytP.setVolume(mus.vol*f); }catch(e){}
   if(musFadeT<=0)musicStop(); }
 
+// ================= WONDERS =================
+// The 15 world landmarks from StrataCraft's Wrecking World Tour. In the "Build a wonder" demo scene the hero flies around
+// laying every block, then blows the whole thing up with bomb arrows. x,z are from the middle of the site, y up from the ground.
+const WGY=8; // the site's ground level: the tallest wonders reach the top of the world
+function twKit(P){ // drawing helpers in landmark coordinates: x,z from the middle of the site, y up from the ground
+  const box=(x0,x1,y0,y1,z0,z1,id)=>{ for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)P(x,y,z,typeof id==='function'?id(x,y,z):id); };
+  const disc=(cx,cz,y,r0,r1,id)=>{ const R=Math.ceil(r1); for(let z=-R;z<=R;z++)for(let x=-R;x<=R;x++){ const d=Math.hypot(x,z); if(d<=r1+0.01&&d>=r0)P(cx+x,y,cz+z,typeof id==='function'?id(x,z,d):id); } };
+  const ball=(cx,cy,cz,r,id,shell)=>{ const R=Math.ceil(r); for(let y=-R;y<=R;y++)for(let z=-R;z<=R;z++)for(let x=-R;x<=R;x++){ const d=Math.hypot(x,y,z); if(d<=r&&(!shell||d>=r-shell))P(Math.round(cx+x),Math.round(cy+y),Math.round(cz+z),id); } };
+  const line=(a,b,id,th)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]), n=Math.max(1,Math.ceil(L*2)), t=th||0, R=Math.ceil(t);
+    for(let k=0;k<=n;k++){ const f=k/n, x=a[0]+(b[0]-a[0])*f, y=a[1]+(b[1]-a[1])*f, z=a[2]+(b[2]-a[2])*f;
+      if(!t)P(Math.round(x),Math.round(y),Math.round(z),id); else for(let dy=-R;dy<=R;dy++)for(let dz=-R;dz<=R;dz++)for(let dx=-R;dx<=R;dx++)if(Math.hypot(dx,dy,dz)<=t)P(Math.round(x+dx),Math.round(y+dy),Math.round(z+dz),id); } };
+  return {box,disc,ball,line}; }
+const WON={
+  eiffel:{name:'Eiffel Tower',icon:'🗼',place:'Paris, France',year:'1889',value:5e8,ground:'grass',
+    history:'Gustave Eiffel\'s company built it for the 1889 World\'s Fair out of 18,000 iron pieces and 2.5 million rivets. It was only supposed to stand for 20 years, and it was the tallest structure humans had ever built until 1930.',
+    sad:'Parisians are crying into their croissants. You knocked over the Iron Lady!',
+    build(K,part){ const I=ID.iron; part('Eiffel Tower',0.3);
+      for(let y=0;y<=10;y++){ const h=Math.round(10-y*0.42); for(const sx of[-1,1])for(const sz of[-1,1])K.box(sx*h-1,sx*h+1,y,y,sz*h-1,sz*h+1,I); }
+      for(let t=-6;t<=6;t++){ const y=Math.round(8.6-t*t/12); for(const s of[-8,8]){ K.box(t,t,y,y,s,s,I); K.box(s,s,y,y,t,t,I); } }
+      K.box(-8,8,11,11,-8,8,I);
+      for(let y=12;y<=22;y++){ const h=Math.round(6-(y-12)*0.32); K.box(-h,h,y,y,-h,h,(x,yy,z)=>(Math.abs(x)===h||Math.abs(z)===h)&&((x+z+yy)%3!==0||(Math.abs(x)===h&&Math.abs(z)===h))?I:0); }
+      K.box(-4,4,23,23,-4,4,I);
+      for(let y=24;y<=35;y++){ const h=Math.max(0,Math.round(3-(y-24)*0.24)); K.box(-h,h,y,y,-h,h,(x,yy,z)=>(Math.abs(x)===h||Math.abs(z)===h)?I:0); }
+      K.box(-1,1,33,33,-1,1,I); K.box(0,0,36,39,0,0,I); }},
+  pyramid:{name:'Great Pyramid of Giza',icon:'🔺',place:'Giza, Egypt',year:'about 2560 BC',value:5e9,ground:'sand',
+    history:'It was built for the pharaoh Khufu about 4,500 years ago out of roughly 2.3 million stone blocks. Inside, a long sloping Grand Gallery leads up to the King\'s Chamber, and the Great Sphinx keeps watch nearby. For almost 3,800 years it was the tallest thing humans had ever made, and it is the only one of the Seven Wonders of the Ancient World still standing.',
+    sad:'It survived 4,500 years of sandstorms, earthquakes and tomb robbers… and then YOU showed up. Pharaoh Khufu is NOT happy.',
+    build(K,part){ part('Great Pyramid',0.3);
+      for(let y=0;y<=18;y++){ const h=18-y; K.box(-h,h,y,y,-h,h,(x,yy,z)=>Math.max(Math.abs(x),Math.abs(z))>=h-1?(y>=16?ID.gold:ID.sandstone):0); }
+      // inside: the Grand Gallery climbs up to the King's Chamber, with the Queen's Chamber below it
+      for(let t=0;t<=8;t++){ const z=-10+t, y=1+Math.round(t*0.8); K.box(-1,1,y-1,y-1,z,z,ID.limestone); K.box(-1,-1,y,y+2,z,z,ID.granite); K.box(1,1,y,y+2,z,z,ID.granite); K.box(-1,1,y+3,y+3,z,z,ID.limestone); }
+      K.box(-4,4,7,11,-2,3,(x,y,z)=>Math.abs(x)===4||z===-2||z===3||y===7||y===11?ID.granite:0); K.box(2,3,8,8,0,1,ID.gold);
+      K.box(-2,2,2,5,-2,1,(x,y,z)=>Math.abs(x)===2||z===-2||z===1||y===2||y===5?ID.limestone:0);
+      // the Great Sphinx keeps watch out front
+      part('Great Sphinx',0.35); const S=ID.sandstone;
+      K.box(-30,-25,0,3,-5,7,S); K.box(-30,-25,4,4,1,7,S); K.box(-29,-26,0,1,-11,-6,S); K.box(-30,-25,0,5,-7,-5,S);
+      K.box(-29,-26,6,8,-9,-7,S); K.box(-30,-25,6,9,-7,-5,(x,y)=>y%2?ID.gold:ID.paint_blue); K.box(-28,-27,5,5,-9,-9,S); }},
+  colosseum:{name:'Colosseum',icon:'🏟️',place:'Rome, Italy',year:'80 AD',value:1.8e9,ground:'grass',
+    history:'Emperor Titus opened it in 80 AD, and about 50,000 Romans could squeeze in to watch gladiators. Earthquakes and people taking its stones for other buildings had already knocked part of it down, which is why one side is lower.',
+    sad:'It made it through 1,900 years, two big earthquakes and a LOT of tourists. Julius Caesar would like a word.',
+    build(K,part){ const a=20,b=15; part('Colosseum',0.3);
+      for(let z=-b-1;z<=b+1;z++)for(let x=-a-1;x<=a+1;x++){ const e=Math.hypot(x/a,z/b); if(e>1.0||e<0.78){ if(e<0.78)P0(x,0,z,ID.sand); continue; }
+        const ang=Math.atan2(z/b,x/a), outer=e>0.92, ruined=ang>0.5&&ang<2.2, top=outer?(ruined?8+((x*7+z*3)&3):13):Math.round(3+(e-0.78)/0.14*6), ai=Math.round((ang+Math.PI)/(2*Math.PI)*84);
+        for(let y=0;y<=top;y++){ if(outer&&ai%2===0&&y<12&&(y%4===1||y%4===2))continue; P0(x,y,z,outer?ID.limestone:ID.sandstone); } }
+      function P0(x,y,z,id){ K.box(x,x,y,y,z,z,id); } }},
+  burj:{name:'Burj Khalifa',icon:'🏙️',place:'Dubai, United Arab Emirates',year:'2010',value:1.5e9,ground:'sand',
+    history:'At 828 meters and 163 floors it is the tallest building in the world. Its Y-shaped floor plan is based on a desert flower, and on a clear day you can see the top from 95 kilometers away.',
+    sad:'The tallest building on the planet… and now it\'s the tallest pile of rubble on the planet. Dubai is going to need a bigger broom.',
+    build(K,part){ part('Burj Khalifa',0.28); const wid=y=>y%4===0?ID.steel:ID.window;
+      for(let y=0;y<=31;y++){ K.box(-2,2,y,y,-2,2,wid(y)); const L=y<6?10:y<10?9:y<14?8:y<18?7:y<22?6:y<25?5:y<28?4:y<30?3:0;
+        for(const a of [Math.PI/2,Math.PI*7/6,Math.PI*11/6]){ const dx=Math.cos(a),dz=Math.sin(a); for(let t=2;t<=L;t++)for(let w=-1;w<=1;w++)K.box(Math.round(dx*t-dz*w),Math.round(dx*t-dz*w),y,y,Math.round(dz*t+dx*w),Math.round(dz*t+dx*w),wid(y)); } }
+      K.box(-1,1,32,34,-1,1,ID.steel); K.box(0,0,35,39,0,0,ID.steel); }},
+  goldengate:{name:'Golden Gate Bridge',icon:'🌉',place:'San Francisco, USA',year:'1937',value:1.5e9,ground:'water',
+    history:'When it opened in 1937 it had the longest bridge span in the world, 1,280 meters. Its color is called International Orange, chosen so ships could see it in the fog, and painters touch it up all year round.',
+    sad:'San Francisco just lost its favorite bridge. The fog is going to be SO confused.',
+    build(K,part){ const R=ID.paint_red, seg=[part('West bridge',0.35),part('Middle bridge',0.3),part('East bridge',0.35)], tw=[part('West tower',0.3),part('East tower',0.3)];
+      const segOf=x=>x<-20?0:x>20?2:1;
+      for(let x=-42;x<=42;x++){ K.use(seg[segOf(x)]); K.box(x,x,4,4,-1,1,ID.asphalt); K.box(x,x,3,3,-2,2,R); if(x%3===0)K.box(x,x,2,2,-2,2,R);
+        const cy=Math.abs(x)<=20?6+24*(x/20)**2:5+25*(1-(Math.abs(x)-20)/22)**2; for(const z of[-2,2]){ K.box(x,x,Math.round(cy),Math.round(cy),z,z,R); if(x%2===0)K.box(x,x,5,Math.round(cy)-1,z,z,R); } }
+      tw.forEach((p,i)=>{ K.use(p); const X=i?20:-21; K.box(X,X+1,-4,30,-2,-2,R); K.box(X,X+1,-4,30,2,2,R); for(const y of[11,18,25,30])K.box(X,X+1,y,y+1,-2,2,R); });
+      K.use(seg[0]); K.box(-45,-42,-4,5,-3,3,ID.concrete); K.use(seg[2]); K.box(42,45,-4,5,-3,3,ID.concrete); }},
+  opera:{name:'Sydney Opera House',icon:'🎭',place:'Sydney, Australia',year:'1973',value:1.2e9,ground:'water',
+    history:'Danish architect Jørn Utzon won a design contest in 1957, and it took 16 years to build. Its shell-shaped roofs are covered with more than a million white and cream tiles, and it is a UNESCO World Heritage Site.',
+    sad:'A million hand-made tiles… sploosh, into the harbor. Somewhere a kangaroo is shaking its head.',
+    build(K,part){ part('Podium',0.4); K.box(-19,19,-4,1,-10,10,(x,y,z)=>Math.abs(x)===19||Math.abs(z)===10?ID.granite:0); K.box(-19,19,2,2,-10,10,ID.sandstone); K.box(-24,-20,-4,2,-6,6,(x,y,z)=>y===2||x===-24||Math.abs(z)===6?ID.sandstone:0);
+      const sail=(sx,sz,h,W,lean,dir)=>{ for(let y=0;y<=h;y++){ const f=y/h, w=Math.round(W*Math.pow(1-f,0.7)), x=sx+dir*Math.round(lean*f*f); for(let z=sz-w;z<=sz+w;z++)for(const t of[0,1])K.box(x-dir*t,x-dir*t,3+y,3+y,z,z,(y+z)%5===0?ID.quartz:ID.paint_white); } };
+      part('Concert Hall',0.3); [[-16,7,5],[-10,11,6],[-3,15,7],[4,18,7]].forEach(([x,h,W],i)=>sail(x,-5,h,W,5,i%2?-1:1));
+      part('Opera Theatre',0.3); [[-14,6,4],[-8,10,5],[-1,13,6],[6,15,6]].forEach(([x,h,W],i)=>sail(x,5,h,W,5,i%2?-1:1));
+      part('Restaurant',0.35); sail(13,0,8,3,3,1); sail(16,0,6,3,2,-1); }},
+  atomium:{name:'Atomium',icon:'⚛️',place:'Brussels, Belgium',year:'1958',value:1e8,ground:'grass',
+    history:'It was built for the 1958 World\'s Fair (Expo 58) and shows one tiny crystal of iron, blown up 165 billion times. Its nine steel balls are connected by tubes with escalators inside.',
+    sad:'It was a model of an iron crystal. Now it\'s a model of iron confetti. Belgium is going to need a LOT of waffles to feel better.',
+    build(K,part){ part('Atomium',0.3); const S=ID.steel, th=Math.acos(1/Math.sqrt(3)), k=[-1/Math.SQRT2,0,1/Math.SQRT2];
+      const rot=v=>{ const c=Math.cos(th), s=Math.sin(th), kv=k[0]*v[0]+k[1]*v[1]+k[2]*v[2], kx=[k[1]*v[2]-k[2]*v[1],k[2]*v[0]-k[0]*v[2],k[0]*v[1]-k[1]*v[0]]; return v.map((q,i)=>q*c+kx[i]*s+k[i]*kv*(1-c)); };
+      const C=[0,22,0], pts=[]; for(const a of[-1,1])for(const b of[-1,1])for(const c of[-1,1]){ const r=rot([a*7.6,b*7.6,c*7.6]); pts.push([C[0]+r[0],C[1]+r[1],C[2]+r[2]]); }
+      for(const p of pts)K.line(C,p,S,0.7);
+      for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){ const d=Math.hypot(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1],pts[i][2]-pts[j][2]); if(d<15.5)K.line(pts[i],pts[j],S,0.6); }
+      for(const p of [C,...pts])K.ball(p[0],p[1],p[2],3.3,S,1.3);
+      const low=pts.reduce((a,b)=>a[1]<b[1]?a:b); K.line(low,[low[0],0,low[2]],ID.concrete,0.6);
+      for(let i=0;i<3;i++){ const an=i*Math.PI*2/3; K.line([low[0],low[1]-2,low[2]],[low[0]+Math.cos(an)*7,0,low[2]+Math.sin(an)*7],ID.concrete,0.5); } }},
+  needle:{name:'Space Needle',icon:'🛸',place:'Seattle, USA',year:'1962',value:1.5e8,ground:'grass',
+    history:'It was built in about 400 days for the 1962 World\'s Fair and stands 184 meters tall. The top was designed to look like a flying saucer, and today it has a glass floor that spins so you can look straight down.',
+    sad:'Seattle\'s flying saucer has crash-landed. The aliens would like their parking spot back.',
+    build(K,part){ part('Space Needle',0.3); const W=ID.paint_white;
+      K.box(-1,1,0,27,-1,1,ID.concrete);
+      for(let i=0;i<3;i++)for(const o of[-0.22,0.22]){ const an=i*Math.PI*2/3+o, a=[Math.cos(an)*8,0,Math.sin(an)*8], m=[Math.cos(an)*2.4,13,Math.sin(an)*2.4], t=[Math.cos(an)*5.5,24,Math.sin(an)*5.5]; K.line(a,m,W,0.5); K.line(m,t,W,0.5); }
+      K.disc(0,0,24,0,6,ID.steel); K.disc(0,0,25,0,8,(x,z,d)=>d>7?ID.window:W); K.disc(0,0,26,0,7.5,W); K.disc(0,0,27,5.5,7.5,ID.paint_yellow); K.disc(0,0,27,0,5.5,ID.gold); K.disc(0,0,28,0,4,ID.gold);
+      K.box(-1,1,29,30,-1,1,ID.steel); K.box(0,0,31,39,0,0,ID.steel); }},
+  petronas:{name:'Petronas Twin Towers',icon:'🏢',place:'Kuala Lumpur, Malaysia',year:'1998',value:1.6e9,ground:'plaza',
+    history:'At 452 meters they were the tallest buildings in the world from 1998 to 2004. The floor plan is an eight-pointed star from Islamic art, and a two-story skybridge joins the towers on floors 41 and 42.',
+    sad:'Twin towers? More like twin piles. Somebody has to tell Malaysia, and it is NOT going to be me.',
+    build(K,part){ const tower=(X,nm)=>{ part(nm,0.3); for(let y=0;y<=33;y++){ const r=y<16?5:y<22?4.5:y<27?4:y<31?3:2; K.disc(X,0,y,r-1,r,(x,z)=>y%3===0?ID.steel:ID.window); if(y%6===0)K.disc(X,0,y,0,r-1,ID.concrete); }
+        K.box(X-1,X+1,34,35,-1,1,ID.steel); K.box(X,X,36,39,0,0,ID.steel); };
+      tower(-9,'West tower'); tower(9,'East tower'); part('Skybridge',0.4); K.box(-4,4,14,15,-1,1,(x,y)=>y===14?ID.steel:ID.window); K.line([-5,9,0],[0,13,0],ID.steel,0.4); K.line([5,9,0],[0,13,0],ID.steel,0.4); }},
+  guggenheim:{name:'Guggenheim Museum Bilbao',icon:'🌀',place:'Bilbao, Spain',year:'1997',value:1e8,ground:'plaza',
+    history:'Frank Gehry designed its wild curves with computer software made for building airplanes, and it is covered with about 33,000 thin sheets of titanium. A giant spider sculpture called Maman stands guard outside.',
+    sad:'33,000 shiny titanium sheets, now 33,000 shiny titanium bits. Even Maman the giant spider is hiding under a chair.',
+    build(K,part){ part('Museum',0.3); K.box(-18,12,0,3,-6,9,ID.limestone);
+      for(let y=0;y<=16;y++){ const rx=7-Math.abs(y-7)*0.35, cx=Math.round(3*Math.sin(y*0.35)), an=y*0.18;
+        for(let a=0;a<64;a++){ const t=a/64*Math.PI*2, ex=Math.cos(t)*rx, ez=Math.sin(t)*3.2, x=Math.round(cx+ex*Math.cos(an)-ez*Math.sin(an)), z=Math.round(2+ex*Math.sin(an)+ez*Math.cos(an)); K.box(x,x,y+4,y+4,z,z,(a+y)%9===0?ID.window:ID.steel); } }
+      for(const [cx,cy,cz,r] of [[-11,6,2,4.5],[-6,9,6,3.5],[9,6,3,4]])K.ball(cx,cy,cz,r,ID.steel,1.2);
+      K.box(15,17,0,13,-2,0,(x,y)=>y%3===0?ID.steel:ID.limestone);
+      part('Maman (the spider)',0.4); const mx=-25,mz=-6; K.ball(mx,8,mz,1.6,ID.iron); for(let i=0;i<8;i++){ const an=i/8*Math.PI*2, kx=mx+Math.cos(an)*3.5, kz=mz+Math.sin(an)*3.5; K.line([mx,8,mz],[kx,11,kz],ID.iron,0); K.line([kx,11,kz],[mx+Math.cos(an)*6,0,mz+Math.sin(an)*6],ID.iron,0); } }},
+  louvre:{name:'Louvre Pyramid',icon:'💎',place:'Paris, France',year:'1989',value:6e7,ground:'plaza',
+    history:'Architect I. M. Pei built this glass entrance to the Louvre, the world\'s most visited art museum, in 1989. Lots of people hated it at first, but now it is one of the most famous sights in Paris. It is made of 673 panes of glass.',
+    sad:'673 panes of glass… you\'re going to need a REALLY big dustpan. And the Mona Lisa saw the whole thing.',
+    build(K,part){ part('Glass pyramid',0.3);
+      for(let y=0;y<=12;y++){ const h=Math.round(11*(1-y/13)); K.box(-h,h,y,y,-h,h,(x,yy,z)=>Math.max(Math.abs(x),Math.abs(z))>=h-0.5?((Math.abs(x)===Math.abs(z)||(x+z+yy)%3===0)?ID.steel:ID.glass):0); }
+      for(const [px,pz] of[[-16,-8],[16,-8],[0,-15]])for(let y=0;y<=2;y++){ const h=2-y; K.box(px-h,px+h,y,y,pz-h,pz+h,ID.glass); }
+      const wing=(x0,x1,z0,z1,nm)=>{ part(nm,0.35); K.box(x0,x1,0,7,z0,z1,(x,y,z)=>(x===x0||x===x1||z===z0||z===z1)?(y%3===1&&(x+z)%2?ID.window:ID.limestone):(y===0||y===4?ID.limestone:0)); K.box(x0,x1,8,9,z0,z1,(x,y,z)=>y===8||(x>x0&&x<x1&&z>z0&&z<z1)?ID.slate:0); };
+      wing(-34,34,15,20,'Palace (back)'); wing(-34,-29,-6,14,'Palace (west wing)'); wing(29,34,-6,14,'Palace (east wing)'); }},
+  shard:{name:'The Shard',icon:'🔷',place:'London, England',year:'2012',value:5.5e8,ground:'plaza',
+    history:'Renzo Piano designed it to look like a spire of glass rising from the River Thames. At 310 meters it is the tallest building in the United Kingdom, and it has about 11,000 panes of glass.',
+    sad:'It was called the Shard. Now it is LOTS of shards. London is putting the kettle on, because this calls for a very strong cup of tea.',
+    build(K,part){ part('The Shard',0.25);
+      for(let y=0;y<=39;y++){ const h=Math.max(0,Math.round(9*(1-y/41))); K.box(-h,h,y,y,-h,h,(x,yy,z)=>{ const e=Math.max(Math.abs(x),Math.abs(z)); if(e<h-0.5)return yy%6===0?ID.concrete:0; if(yy>32&&(x+z)%2)return 0; return Math.abs(x)===Math.abs(z)?ID.steel:ID.window; }); } }},
+  dancing:{name:'Dancing House',icon:'💃',place:'Prague, Czech Republic',year:'1996',value:3e7,ground:'plaza',
+    history:'Architects Vlado Milunić and Frank Gehry designed it to look like two dancers, so people nicknamed it "Fred and Ginger" after the movie stars Fred Astaire and Ginger Rogers. It was built where a building was destroyed in 1945.',
+    sad:'Fred and Ginger were dancing for 28 years. You just ended the dance. Forever. Not cool.',
+    build(K,part){ part('Fred',0.3); for(let y=0;y<=13;y++)K.disc(5,0,y,3,4,(x,z,d)=>{ const ai=Math.round(Math.atan2(z,x)/(Math.PI*2)*24+24); return y%3===1&&(ai+Math.floor(y/3))%3===0?ID.window:ID.concrete; });
+      K.ball(5,14,0,3,ID.steel,1);
+      part('Ginger',0.3); for(let y=0;y<=13;y++){ const s=Math.sin(Math.PI*y/13), r=4-1.6*s, cx=-4-1.6*s; if(y<3){ for(const [px,pz] of[[-6,-2],[-6,2],[-2,-2],[-2,2]])K.box(px,px,y,y,pz,pz,ID.concrete); continue; } K.disc(Math.round(cx),0,y,r-1,r,y%4===0?ID.steel:ID.window); }
+      part('Neighbor (west)',0.35); K.box(-20,-11,0,9,-4,4,(x,y,z)=>y===9?ID.roof:(y%3===1&&x%2?ID.window:ID.limestone));
+      part('Neighbor (east)',0.35); K.box(11,20,0,9,-4,4,(x,y,z)=>y===9?ID.roof:(y%3===1&&x%2?ID.window:ID.sandstone)); }},
+  fallingwater:{name:'Fallingwater',icon:'🏞️',place:'Pennsylvania, USA',year:'1939',value:5e7,ground:'stream',
+    history:'Frank Lloyd Wright built this house right on top of a waterfall for the Kaufmann family. Its concrete terraces stick far out over the stream with nothing underneath, and architects once voted it the best building in American history.',
+    sad:'Frank Lloyd Wright said a house should live in harmony with nature. Now it\'s living in harmony with the bottom of the creek.',
+    build(K,part){ part('Fallingwater',0.3); const C=ID.sandstone, G=ID.granite;
+      K.box(-4,4,-2,0,6,12,G); K.box(-1,1,0,17,5,7,G); K.box(-9,-7,0,9,4,8,G);
+      const terrace=(x0,x1,y,z0,z1)=>{ K.box(x0,x1,y,y,z0,z1,C); K.box(x0,x1,y+1,y+1,z0,z1,(x,yy,z)=>(x===x0||x===x1||z===z0||z===z1)?C:0); K.box(x0+2,x1-2,y-3,y-1,z0+2,z1-1,(x,yy,z)=>(x===x0+2||x===x1-2||z===z0+2)?ID.window:0); };
+      terrace(-11,7,4,-7,6); terrace(-3,11,8,-4,8); terrace(-8,3,12,-1,9);
+      for(const [x,y,z] of [[-2,4,-8],[-1,4,-8],[0,4,-8],[6,8,-5],[7,8,-5],[-4,12,-2]])K.box(x,x,y,y,z,z,ID.water); }},  // water spills off the terraces into the stream
+  millau:{name:'Millau Viaduct',icon:'🌁',place:'Millau, France',year:'2004',value:5e8,ground:'valley',
+    history:'It is the tallest bridge in the world: the top of its highest mast is 343 meters above the valley, taller than the Eiffel Tower. Engineer Michel Virlogeux and architect Norman Foster designed it, and it is 2.46 kilometers long.',
+    sad:'The tallest bridge in the world is now the tallest bridge in the world… lying down. Cars are going to have to take the long way around.',
+    build(K,part){ const X=[-39,-26,-13,0,13,26,39];
+      for(let i=0;i<=X.length;i++){ const a=i?X[i-1]:-46, b=i<X.length?X[i]:46; part('Deck section '+(i+1),0.4); K.box(a+(i?1:0),b-(i<X.length?1:0),18,18,-1,1,(x,y,z)=>z===0?ID.asphalt:ID.concrete); K.box(a+(i?1:0),b-(i<X.length?1:0),17,17,-1,1,ID.concrete); }
+      X.forEach((px,i)=>{ part('Pier '+(i+1),0.3); for(let y=-6;y<=18;y++){ const w=y<4?1:0; if(y<10)K.box(px-w-1,px+w+1,y,y,-1,1,ID.concrete); else{ K.box(px-1,px-1,y,y,-1,1,ID.concrete); K.box(px+1,px+1,y,y,-1,1,ID.concrete); } }
+        K.box(px,px,19,30,0,0,ID.steel); for(let k=1;k<=6;k++){ K.line([px,29-k,0],[px-k*1.1,19,0],ID.paint_white,0); K.line([px,29-k,0],[px+k*1.1,19,0],ID.paint_white,0); } }); }},
+};
+const WON_KEYS=Object.keys(WON);
+// the beat of the song that's playing: exact for the built-in tunes, 120 beats a minute for anything else
+function musBeat(){ if(musOnNow==='tune'&&tuneSt&&AC&&AC.state==='running'&&tuneSt.t0)return Math.max(0,AC.currentTime-tuneSt.t0)*tuneSt.T.bpm/60; return (demo?demo.t:0)*2; }
+// how loud the singing range of your own song file is (0 to 1), or -1 when the browser can't listen to it
+let mp3An=null, mp3AnTry=0;
+function musLevel(){ if(musOnNow!=='mp3'||!AC||!songEl.captureStream)return -1;
+  if(!mp3An){ if(songEl.paused||performance.now()<mp3AnTry)return -1; mp3AnTry=performance.now()+1000;
+    try{ const st=songEl.captureStream(); if(!st.getAudioTracks().length)return -1; const an=AC.createAnalyser(), z=AC.createGain(); an.fftSize=1024; an.smoothingTimeConstant=0.35; z.gain.value=0;
+      AC.createMediaStreamSource(st).connect(an); an.connect(z); z.connect(AC.destination); mp3An={an,buf:new Uint8Array(an.frequencyBinCount),lo:255,hi:1}; }catch(e){ return -1; } }
+  const A=mp3An, hz=AC.sampleRate/1024, a=Math.max(1,Math.round(250/hz)), b=Math.round(3200/hz); A.an.getByteFrequencyData(A.buf);
+  let s=0; for(let i=a;i<=b;i++)s+=A.buf[i]; s/=(b-a+1); A.lo=Math.min(s,A.lo+0.15); A.hi=Math.max(s,A.hi*0.997,A.lo+8);
+  return Math.max(0,Math.min(1,(s-A.lo)/(A.hi-A.lo)*1.3-0.15)); }
+// the hero's mouth in "moves with the music" mode: 3 sections of singing, then 1 to dance (an instrumental break)
+function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
+  if(musOnNow==='tune'&&tuneSt&&tuneSt.notes){ const t=AC.currentTime, n=tuneSt.notes.find(q=>t>=q[0]&&t<q[1]); if(!n)return 0; // sing the tune's melody
+    const f=(t-n[0])/(n[1]-n[0]); return (0.5+0.5*(((n[2]%5)+5)%5)/4)*(f<0.7?1:Math.max(0.15,1-(f-0.7)*3)); }
+  const lv=musLevel(); if(lv>=0)return lv;
+  if(Math.floor(beat/4)%4===3)return 0; // no way to listen (YouTube, Safari): syllables on the eighth notes, with a breath every 4th bar
+  const e=Math.floor(beat*2), fr=beat*2-e, h=Math.sin(e*12.9898)*43758.5453, r=h-Math.floor(h); if(r<0.22)return 0;
+  return (0.45+0.55*((r*7.31)%1))*(fr<0.7?1:0.15); }
+
 // ================= DEMO MODE =================
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',fight:'⚔️ Fight monsters',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
 const DM_CAM={cine:'🎥 Cinematic',follow:'🏃 Follow',orbit:'🔄 Circle around',wide:'🏞️ Wide shot',first:'👁 First person'};
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:''};
+const DM_SING={0:'No backup singers',1:'1 singer',2:'2 singers',3:'3 singers'};
+const DM_CROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monsters:'🧟 Monsters'};
+const DM_PYRO={on:'🔥 Pyro on',off:'No pyro'};
+const DM_MOUTH={auto:'🤖 Moves with the music',button:'🎮 I press a button'};
+const DM_WON={random:'🎲 A random wonder'}; for(const k of WON_KEYS)DM_WON[k]=WON[k].icon+' '+WON[k].name;
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
   {act:'build',time:'sunset',wx:'clear',land:'normal',cam:'cine',secs:22,cap:'Building a house'},
+  {act:'wonder',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',wonder:'random'},
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
+  {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM]])if(T[o[k]])s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON]])if(T[o[k]])s[k]=o[k];
+  if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
   return {scenes:c.scenes.slice(0,30).map(cleanScene),loop:c.loop!==false,fades:c.fades!==false,world:c.world==='mine'?'mine':'demo',seed:Math.abs(+c.seed|0)||2026}; }
@@ -2048,8 +2219,10 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
     '<h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
-    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>'+
-    '<label>Land'+sel(DM_LAND,'land',i,s.land)+'</label><label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='concert'?
+      '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
+    '<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2061,13 +2234,14 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   h+='<h3>⚙️ Options</h3>'+
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>World</b><div class="fx">'+(dmCfg.world==='demo'?'A demo world that is the same every time, so you can record it again.':'Your saved Survival world. Nothing the demo does is saved.')+'</div></div><button class="ibtn eq" id="dmWorld">'+(dmCfg.world==='demo'?'Demo world':'My world')+'</button></div>'+
     (dmCfg.world==='demo'?'<div class="dmRow"><label class="dmInline">Demo world number<input type="number" min="1" id="dmSeed" value="'+dmCfg.seed+'"></label><span class="fx">Change it for a different landscape.</span></div>':'')+
+    '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤 concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
     '<div class="item"><div class="ic">🔁</div><div class="tx"><b>Repeat</b><div class="fx">'+(dmCfg.loop?'Start again from scene 1 after the last scene.':'Go back to the main menu after the last scene.')+'</div></div><button class="ibtn'+(dmCfg.loop?'':' gray')+'" id="dmLoop">'+(dmCfg.loop?'ON':'OFF')+'</button></div>'+
     '<div class="item"><div class="ic">🌗</div><div class="tx"><b>Fade between scenes</b><div class="fx">A quick fade to black between scenes.</div></div><button class="ibtn'+(dmCfg.fades?'':' gray')+'" id="dmFades">'+(dmCfg.fades?'ON':'OFF')+'</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlay">▶ Play demo</button><button class="mbtn gray" id="dmBack">Back</button></div>';
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; saveDemo(); const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; saveDemo(); if(el.dataset.k==='act'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
@@ -2126,10 +2300,12 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
   if(dmCfg.world==='demo'){ placed.clear(); generate(dmCfg.seed); rebuildAll(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; demoUp=demoDown=false; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
+  if(demo.bak){ world.set(demo.bak.w); meta.set(demo.bak.m); lavaSet.clear(); for(const q of demo.bak.lava)lavaSet.add(q); lavaArr=null; demo.bak=null; // put the land back after a wonder
+    activeW.clear(); activeL.clear(); fires.clear(); for(const sh of shots.slice())freeShot(sh); rebuildAll(); }
   demo.i=i; demo.t=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
   if(dmCfg.fades){ $('dmFade').style.transition='none'; $('dmFade').style.opacity=1; requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=0; })); } }
 function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&B[b].solid&&b!==ID.leaves&&b!==ID.log)return y+1; } return SPAWN_H; }
@@ -2139,8 +2315,12 @@ function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI
 function demoSetup(sc){ setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
+  weapon=sc.act==='fight'?'diamond':sc.act==='concert'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
+  demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
+  if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
+  if(sc.act==='concert'){ concertSetup(sc,P); return; }
+  if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
   else if(sc.act==='flint'){ pl.p=landSpot(MX,MZ+12,3); yaw=0; }
@@ -2161,6 +2341,8 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
   P.side=Math.max(0,P.side-dt); if(P.side>0)return {ix:P.dir2,iz:-0.4};
   return {ix:0,iz:dist<0.6?0:Math.abs(d)<1.0?-1:-0.2}; }
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
+  if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
   if(sc.act==='explore'){ P.wpT-=dt; if(!P.wp||P.wpT<=0||Math.hypot(P.wp[0]-pl.p[0],P.wp[2]-pl.p[2])<1.2){ P.wp=landSpot(pl.p[0],pl.p[2],14); P.wpT=9; }
@@ -2170,9 +2352,19 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     if(foes.length<3&&P.spawnT<=0){ P.spawnT=1.2; const types=['zombie','skeleton','slime','spider','golem','orc','mummy','wolf','troll']; const s=landSpot(pl.p[0],pl.p[2],10);
       if(Math.hypot(s[0]-pl.p[0],s[2]-pl.p[2])>5)spawnMob(types[Math.floor(Math.random()*types.length)],s[0],s[1],s[2]); }
     let foe=null, fd=1e9; for(const m of foes){ const q=Math.hypot(m.p[0]-pl.p[0],m.p[2]-pl.p[2]); if(q<fd){ fd=q; foe=m; } }
-    if(!foe)return {ix:0,iz:0};
-    if(fd<2.4){ turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
-    return walkTo(foe.p[0],foe.p[2],dt,P); }
+    P.bowPose=false; const wield=id=>{ if(weapon!==id){ weapon=id; refreshWeapon(); } };
+    if(!foe){ wield('diamond'); return {ix:0,iz:0}; }
+    // stuck? (in a tree, or on something it can't climb) Check every second whether the hero has really moved
+    P.chk=(P.chk||0)+dt; if(P.chk>=1){ P.chk=0; const moved=P.lastP?Math.hypot(pl.p[0]-P.lastP[0],pl.p[2]-P.lastP[1]):9; P.lastP=[pl.p[0],pl.p[2]];
+      if(moved<0.5&&fd>2.4){ P.stuckN=(P.stuckN||0)+1; P.bowT=3; } else P.stuckN=0;
+      if(P.stuckN>=5){ P.stuckN=0; pl.p=landSpot(pl.p[0],pl.p[2],5); } } // still stuck after all that: hop down somewhere else
+    P.bowT=Math.max(0,(P.bowT||0)-dt);
+    const fx=Math.floor(pl.p[0]), fz=Math.floor(pl.p[2]), fy=Math.floor(pl.p[1]), leafy=[fy-1,fy,fy+1].some(y=>get(fx,y,fz)===ID.leaves);
+    if(fd<2.4){ wield('diamond'); turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
+    if(fd>3.5&&(fd>7||P.bowT>0||leafy)){ wield('bow'); P.bowPose=true; turnTo(foe.p[0],foe.p[2],dt,6); // too far away to reach, or stuck: bomb arrows!
+      const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(foe.p[0],foe.p[1]+foe.h*0.5,foe.p[2]), fl=o.distanceTo(t)/42, d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize();
+      pitch=Math.max(-1,Math.min(1,Math.asin(d.y))); if(atkCd<=0){ atkCd=0.9; arrows.explode=999; fireSpecial('explode',o,d,WP.bow); } return {ix:0,iz:0}; }
+    wield('diamond'); return walkTo(foe.p[0],foe.p[2],dt,P); }
   if(sc.act==='fly'){ P.a+=dt*0.22; const r=28, tx=CX+Math.cos(P.a+0.5)*r, tz=CZ+Math.sin(P.a+0.5)*r; turnTo(tx,tz,dt,2); const alt=34+Math.sin(demo.t*0.3)*4;
     demoUp=pl.p[1]<alt-0.6; demoDown=pl.p[1]>alt+0.6; return {ix:0,iz:-1}; }
   if(sc.act==='side'){ if(pl.p[2]>D-12)P.dir=-1; if(pl.p[2]<12)P.dir=1; yaw+=((-Math.PI/2)-yaw)*Math.min(1,dt*2); return {ix:P.dir*0.3,iz:0}; }
@@ -2182,7 +2374,8 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'){ wonderCam(dt); return; }
+  const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
   const C=demo.cam; let d=base-C.a; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; C.a+=d*Math.min(1,dt*(k==='follow'?2.5:0.9));
@@ -2199,8 +2392,14 @@ function demoCamera(dt){ const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='s
 function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; const sc=demo.sc, P=demo.pil;
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
   if(P.wave||sc.act==='showcase'){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
+  if(sc.act==='showcase'){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
+  if(sc.act==='concert')concertTick(dt);
+  if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
+  if(P.bowPose&&weapon==='bow'){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
+  brickTick(dt);
   hl.visible=false; updateWeather(dt);
-  const cap=$('dmCap'), showCap=!!sc.cap&&demo.t>0.8&&demo.t<sc.secs-1.2; if(cap.textContent!==sc.cap)cap.textContent=sc.cap; cap.classList.toggle('on',showCap);
+  const capT=sc.cap||(sc.act==='wonder'&&P.key&&P.phase==='build'?WON[P.key].icon+' '+WON[P.key].name+' · '+WON[P.key].place:'');
+  const cap=$('dmCap'), showCap=!!capT&&demo.t>0.8&&demo.t<sc.secs-1.2; if(cap.textContent!==capT)cap.textContent=capT; cap.classList.toggle('on',showCap);
   if(dmCfg.fades&&demo.t>sc.secs-0.7&&!demo.out){ demo.out=true; $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=1; }
   if(!dmCfg.loop&&demo.i===dmCfg.scenes.length-1&&demo.t>sc.secs-2.2)musicFade();
   if(demo.t>=sc.secs){ demo.out=false; demoNext(); } }
@@ -2208,13 +2407,276 @@ function demoPoke(){ const b=$('dmStop'); b.classList.add('on'); clearTimeout(dm
 tap($('dmStop'),demoStop);
 document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.abs(e.movementY)>2))demoPoke(); });
 
+// ================= NIGHT CLUB CONCERT =================
+// A club up in the sky: a band (guitar, bass, drums, and a DJ on turntables and a synth), up to 3 backup singers and a
+// dancing crowd of people and monsters. The hero sings at the mic: the mouth moves with the music, or with a button on a
+// game controller or keyboard (so nobody has to touch the screen while recording). The stage is at the -z end, facing +z.
+const CLUB=new THREE.Vector3(48,180,48), club=new THREE.Group(); club.position.copy(CLUB); club.visible=false; scene.add(club);
+let clubK=null, padPyroWas=false; const singKeys=new Set();
+function setMouth(R,o){ if(!R||!R.mouth)return; R.mouth.visible=o>0.06; R.mouth.scale.y=Math.max(0.05,o); R.mouth.position.y=0.125-0.055*o; }
+function padRead(){ let sing=0, pyro=false, ps=[]; try{ ps=navigator.getGamepads?navigator.getGamepads():[]; }catch(e){}
+  for(const p of ps){ if(!p||!p.buttons)continue; p.buttons.forEach((b,i)=>{ const v=typeof b==='object'?(b.value||(b.pressed?1:0)):+b||0;
+    if(i===4||i===5){ if(v>0.5)pyro=true; } else if(i!==8&&i!==9&&i!==16)sing=Math.max(sing,v); }); } // shoulder buttons: pyro. Select, Start and Home do nothing
+  return {sing,pyro}; }
+function clubNpc(L,x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry||0; g.scale.setScalar(0.94); const R=makeRig(g); dressRig(R,cleanLook(L)); club.add(g); return {g,R,x,y,z}; }
+function guitarMesh(col,neckL,bass){ const g=new THREE.Group(), bodyM=lm(col), wood=lm(0x6b4a2a), dk=lm(0x1a1410), n=bass?4:6;
+  const b1=box(0.42,0.3,0.08,bodyM); b1.position.y=-0.12; g.add(b1); const b2=box(0.32,0.22,0.08,bodyM); b2.position.y=0.12; g.add(b2);
+  const pg=box(0.14,0.16,0.01,lm(0xf2f2ee)); pg.position.set(0.09,-0.06,-0.045); g.add(pg);
+  const nk=box(0.06,neckL,0.04,wood); nk.position.y=0.22+neckL/2; g.add(nk); const hd=box(0.1,0.14,0.045,dk); hd.position.y=0.22+neckL+0.07; g.add(hd);
+  for(let i=0;i<n;i++){ const s=box(0.005,neckL+0.36,0.005,bm(0xe8e8e8)); s.position.set(-0.022+i*0.044/(n-1),0.05+neckL/2,-0.03); g.add(s); } return g; }
+function drumKit(){ const g=new THREE.Group(), shell=lm(0xc8282e), head=lm(0xf2f2ee), chrome=lm(0xc8ccd2), gold=new THREE.MeshLambertMaterial({color:0xe8b830,emissive:0x302000}), K={g};
+  const drum=(r,h,x,y,z,rx)=>{ const d=new THREE.Group(); d.position.set(x,y,z); d.rotation.x=rx||0; const s=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,18),shell); d.add(s);
+    const t=new THREE.Mesh(new THREE.CylinderGeometry(r*0.95,r*0.95,0.012,18),head); t.position.y=h/2+0.006; d.add(t); g.add(d); return d; };
+  const pole=(x,z,h)=>{ const p=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,h,6),chrome); p.position.set(x,h/2,z); g.add(p); };
+  const cym=(r,x,y,z,tilt)=>{ const c=new THREE.Mesh(new THREE.CylinderGeometry(r,r*0.9,0.015,18),gold); c.position.set(x,y,z); c.rotation.x=tilt; g.add(c); pole(x,z,y); return c; };
+  K.kick=drum(0.42,0.4,0,0.42,-0.85,-Math.PI/2);
+  const logo=box(0.36,0.1,0.01,bm(0xffd84a)); logo.position.set(0,0.42,-1.06); g.add(logo);
+  drum(0.2,0.14,-0.32,0.78,-0.42,0.25); pole(-0.32,-0.42,0.7);
+  drum(0.17,0.16,-0.17,1.02,-0.68,0.4); drum(0.19,0.18,0.2,1.02,-0.68,0.4);
+  drum(0.24,0.32,0.48,0.62,-0.38,0.1);
+  K.crashL=cym(0.3,-0.62,1.42,-0.62,0.35); K.crashR=cym(0.34,0.62,1.48,-0.62,0.3); cym(0.18,-0.58,0.98,-0.28,0.05); cym(0.18,-0.58,0.94,-0.28,0.05);
+  const stool=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.16,0.5,12),lm(0x1a1a1e)); stool.position.set(0,0.25,0.05); g.add(stool); return K; }
+function disposeG(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material)for(const m of [].concat(o.material))if(m.userData.own){ if(m.map)m.map.dispose(); m.dispose(); } }); }
+function buildClub(){ const g=club, K={t:0,tiles:[],lights:[],beams:[],band:{},singers:[],crowd:[],crowdKind:'',nSing:-1,emit:[],fl:0,pyroT:-9,pyroI:0,lastBar:-1,lastBeat:-1,scrT:0};
+  const add=(m,x,y,z,par)=>{ m.position.set(x,y,z); (par||g).add(m); return m; };
+  const cyl=(rt,rb,h,m,n)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n||16),m);
+  // the room: 26 wide, the stage across the back (z -11 to 0) and the dance floor in front
+  add(box(26,0.2,26,lm(0x141018)),0,-0.1,2); add(box(26,0.2,26,lm(0x0c0a10)),0,10.1,2);
+  for(const sx of[-1,1])add(box(0.3,10.4,26,lm(0x1c1624)),sx*13,5,2);
+  add(box(26,10.4,0.3,lm(0x120e18)),0,5,-11); add(box(26,10.4,0.3,lm(0x120e18)),0,5,15);
+  const neon=[0xff3aa8,0x3ae0ff,0xffd84a,0x8a4aff]; for(let i=0;i<4;i++)for(const sx of[-1,1])add(box(0.06,0.12,24,bm(neon[(i+(sx>0?1:0))%4])),sx*12.82,2.4+i*1.8,2);
+  for(let i=-5;i<=5;i++)for(let j=0;j<6;j++){ const m=new THREE.MeshBasicMaterial({color:0x111111}); add(box(1.9,0.06,1.9,m),i*2,0.03,1.4+j*2); K.tiles.push({m,i,j}); }
+  add(box(24,1,11,lm(0x2a2230)),0,0.5,-5.5); add(box(24,0.04,11,lm(0x3a2e3e)),0,1.02,-5.5);
+  K.edge=add(box(24,0.1,0.1,new THREE.MeshBasicMaterial({color:0xffffff})),0,0.98,0.02);
+  add(box(4.6,0.5,3.6,lm(0x3a2e40)),0,1.25,-7.6); // the drum riser
+  // a giant LED screen behind the band
+  const sc=document.createElement('canvas'); sc.width=256; sc.height=96; K.scrX=sc.getContext('2d'); K.scrTex=new THREE.CanvasTexture(sc);
+  add(new THREE.Mesh(new THREE.PlaneGeometry(16,6),new THREE.MeshBasicMaterial({map:K.scrTex,fog:false})),0,5.6,-10.8); add(box(16.6,6.6,0.2,lm(0x08080a)),0,5.6,-10.95);
+  for(const sx of[-1,1]){ const s=add(box(2,4.2,1.6,lm(0x1a1a1e)),sx*10.8,3.1,-1.4); for(const y of[-1.3,0.1,1.3]){ const c=cyl(0.52,0.52,0.1,lm(0x050505)); c.rotation.x=Math.PI/2; add(c,0,y,0.82,s); const d=cyl(0.16,0.16,0.12,lm(0x3a3a40)); d.rotation.x=Math.PI/2; add(d,0,y,0.85,s); } }
+  // lights on a truss, with beams that sweep the room, and a disco ball
+  for(const z of[-2.5,-8.5])add(box(22,0.3,0.3,lm(0x8a8a92)),0,8.8,z);
+  for(let i=0;i<6;i++){ const x=-8.75+i*3.5; add(box(0.4,0.5,0.4,lm(0x222228)),x,8.45,-2.5); const pv=add(new THREE.Group(),x,8.2,-2.5);
+    const cn=new THREE.Mesh(new THREE.ConeGeometry(1.1,9,14,1,true),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.14,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+    cn.position.y=-4.5; pv.add(cn); K.beams.push({pv,cn,i}); }
+  K.ball=add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.6,1),new THREE.MeshLambertMaterial({color:0xdadae8,emissive:0x303040,flatShading:true})),0,8.6,6); add(box(0.03,1.2,0.03,lm(0x888888)),0,9.5,6);
+  K.key=add(new THREE.PointLight(0xfff0e0,1.3,16),0,6,3);
+  for(let i=0;i<3;i++)K.lights.push(add(new THREE.PointLight(0xffffff,1.4,20),0,6.5,0));
+  K.flash=add(new THREE.PointLight(0xffa040,0,24),0,3,0);
+  // the singer's mic stand
+  const ms=add(new THREE.Group(),0,1,-0.85); add(cyl(0.3,0.3,0.05,lm(0x222226)),0,0.03,0,ms); add(cyl(0.022,0.022,1.4,lm(0x9a9aa2),8),0,0.72,0,ms);
+  const mic=add(new THREE.Group(),0,1.43,-0.14,ms); const mb=cyl(0.03,0.04,0.2,lm(0x1e1e22),10); mb.rotation.x=Math.PI/2; mic.add(mb);
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),lm(0x6a6a72)),0,0,-0.12,mic); K.stand=ms;
+  // pyro launchers along the front of the stage
+  for(const x of[-9,-7,-5,-3,3,5,7,9])add(box(0.36,0.16,0.36,lm(0x101012)),x,1.08,-0.45);
+  // the band. They face the crowd (+z)
+  const B=K.band;
+  B.gtr=clubNpc({skin:'#d29b6e',eyes:'#3a2412',hair:'long',hairC:'#1a1410',top:'jacket',topC:'#2a2a30',bottom:'pants',bottomC:'#2f3e7a',shoes:'boots',shoeC:'#2a2a30',glasses:'shades'},-3.6,1,-3.6,Math.PI);
+  { const gt=guitarMesh(0xd8202a,0.62,false); gt.position.set(0.02,1.0,-0.25); gt.rotation.z=0.95; B.gtr.g.add(gt); }
+  B.bass=clubNpc({skin:'#7a4a26',eyes:'#3a2412',hair:'buzz',hairC:'#1a1410',top:'tank',topC:'#d8202a',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#ffffff',hat:'cap',hatC:'#2a2a30'},3.6,1,-3.6,Math.PI);
+  { const gt=guitarMesh(0x2f6ae0,0.86,true); gt.position.set(0.02,0.98,-0.25); gt.rotation.z=1.05; B.bass.g.add(gt); }
+  B.drm=clubNpc({skin:'#ffe0c4',eyes:'#3a7ac8',hair:'spiky',hairC:'#f2d68a',top:'tank',topC:'#ffffff',bottom:'shorts',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#d8202a',hat:'headband',hatC:'#d8202a'},0,1.3,-7.8,Math.PI);
+  K.kit=drumKit(); K.kit.g.position.set(0,1.5,-7.8); K.kit.g.rotation.y=Math.PI; club.add(K.kit.g);
+  for(const a of[B.drm.R.armL,B.drm.R.armR]){ const st=box(0.03,0.03,0.46,lm(0xe8d8b0)); st.position.set(0,-0.62,-0.2); a.add(st); }
+  B.dj=clubNpc({skin:'#b97d50',eyes:'#2f8a4a',hair:'short',hairC:'#1a1410',top:'hoodie',topC:'#7a3ac8',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#3fa34d',glasses:'shades',hat:'beanie',hatC:'#2a2a30'},-6.8,1,-6.6,Math.PI);
+  { const H=B.dj.R.head, hp=lm(0x1a1a1e); const band=box(0.56,0.06,0.1,hp); band.position.y=0.52; H.add(band); for(const sx of[-1,1]){ const c=box(0.08,0.2,0.18,lm(0x3ae0ff)); c.position.set(sx*0.27,0.24,0); H.add(c); const s=box(0.04,0.28,0.06,hp); s.position.set(sx*0.27,0.4,0); H.add(s); } }
+  // the DJ's table: turntables on the DJ's right hand, a synth on the left (the DJ faces +z, so right is -x)
+  add(box(2.6,1.0,0.8,lm(0x1e1a24)),-6.8,1.5,-5.75); add(box(2.6,0.12,0.02,bm(0x3ae0ff)),-6.8,1.6,-5.34);
+  add(cyl(0.34,0.34,0.06,lm(0x2a2a30),20),-7.55,2.03,-5.8); K.plat=add(cyl(0.3,0.3,0.03,lm(0x0a0a0a),20),-7.55,2.08,-5.8);
+  add(box(0.12,0.012,0.04,bm(0xd8202a)),0.12,0.02,0,K.plat); add(cyl(0.07,0.07,0.01,bm(0xd8202a),12),0,0.016,0,K.plat);
+  const kc=document.createElement('canvas'); kc.width=64; kc.height=8; { const x=kc.getContext('2d'); x.fillStyle='#f4f4f0'; x.fillRect(0,0,64,8); x.fillStyle='#111'; for(let i=0;i<22;i++){ x.fillRect(i*3,0,1,8); if([0,1,3,4,5].includes(i%7))x.fillRect(i*3+2,0,1.6,5); } }
+  const kt=new THREE.CanvasTexture(kc); kt.magFilter=kt.minFilter=THREE.NearestFilter; kt.generateMipmaps=false;
+  add(box(1.1,0.08,0.4,[lm(0x2a2a30),lm(0x2a2a30),new THREE.MeshLambertMaterial({map:kt}),lm(0x2a2a30),lm(0x2a2a30),lm(0x2a2a30)]),-6.2,2.04,-5.7);
+  K.knobs=[]; for(let i=0;i<6;i++){ const m=new THREE.MeshBasicMaterial({color:0xff3aa8}); K.knobs.push(m); add(box(0.06,0.04,0.06,m),-6.65+i*0.18,2.04,-5.95); }
+  pyroInit(K); return K; }
+// backup singers stand back right, each with a handheld mic
+const SINGER_LOOKS=[{skin:'#7a4a26',eyes:'#3a2412',hair:'curly',hairC:'#1a1410',bottom:'dress',bottomC:'#f2c230',shoes:'shoes',shoeC:'#2a2a30'},
+  {skin:'#f6cfa8',eyes:'#2f8a4a',hair:'long',hairC:'#c8401e',bottom:'dress',bottomC:'#e85aa8',shoes:'shoes',shoeC:'#ffffff'},
+  {skin:'#d29b6e',eyes:'#6a4a2a',hair:'ponytail',hairC:'#3b2a1a',bottom:'dress',bottomC:'#7a3ac8',shoes:'boots',shoeC:'#2a2a30'}];
+function setSingers(K,n){ for(const S of K.singers){ club.remove(S.g); disposeG(S.g); } K.singers=[]; K.nSing=n;
+  const xs=n===1?[5.8]:n===2?[5.0,6.6]:[4.4,5.8,7.2];
+  for(let i=0;i<n;i++){ const S=clubNpc(SINGER_LOOKS[i],xs[i],1,-6.6,Math.PI); S.i=i; S.mo=0;
+    const mic=new THREE.Group(); mic.position.set(0,-0.6,-0.04); S.R.armR.add(mic); const b=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.025,0.2,8),lm(0x1e1e22)); mic.add(b);
+    const h=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6),lm(0x8a8a92)); h.position.y=0.12; mic.add(h); K.singers.push(S); } }
+// the crowd: people, monsters, or both, all facing the stage
+const CROWD_MON=['zombie','skeleton','golem','orc','mummy','alien','slime','wolf','trashbot','spider'];
+function setCrowd(K,kind){ for(const c of K.crowd){ club.remove(c.g); disposeG(c.g); if(c.r)for(const m of c.r.mats)m.dispose(); } K.crowd=[]; K.crowdKind=kind;
+  const styles=['bob','jump','arms','pump','sway','clap'];
+  for(let j=0;j<3;j++)for(let i=0;i<9;i++){ const x=-8+i*2+(j%2?0.9:0)+(Math.random()-0.5)*0.5, z=2.1+j*2.5+(Math.random()-0.5)*0.6; if(x>10.5)continue;
+    const mon=kind==='monsters'||(kind==='mixed'&&Math.random()<0.5), ry=Math.atan2(x,z+1.5)+(Math.random()-0.5)*0.3; let c;
+    if(mon){ const r=mobModel(CROWD_MON[Math.floor(Math.random()*CROWD_MON.length)]); r.bar.visible=false; r.root.position.set(x,0,z); r.root.rotation.y=ry; club.add(r.root); c={g:r.root,r}; }
+    else { const p=clubNpc(randomLook(),x,0,z,ry); c={g:p.g,R:p.R}; }
+    c.x=x; c.z=z; c.st=styles[Math.floor(Math.random()*styles.length)]; c.off=Math.random()<0.7?0:0.5; c.ph=Math.random()*6; K.crowd.push(c); } }
+// pyrotechnics: one cloud of glowing points for flames, sparks and fireworks
+function pyroInit(K){ const N=900, g=new THREE.BufferGeometry(), pos=new Float32Array(N*3), col=new Float32Array(N*3); for(let i=0;i<N;i++)pos[i*3+1]=-50;
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const pts=new THREE.Points(g,new THREE.PointsMaterial({size:0.24,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); pts.frustumCulled=false; club.add(pts);
+  K.px={g,pos,col,v:new Float32Array(N*3),life:new Float32Array(N),max:new Float32Array(N),c0:new Float32Array(N*3),grav:new Float32Array(N),n:N,next:0}; }
+function pyroAdd(x,y,z,vx,vy,vz,r,g,b,life,grav){ const P=clubK.px, i=P.next++%P.n; P.pos[i*3]=x; P.pos[i*3+1]=y; P.pos[i*3+2]=z; P.v[i*3]=vx; P.v[i*3+1]=vy; P.v[i*3+2]=vz;
+  P.c0[i*3]=r; P.c0[i*3+1]=g; P.c0[i*3+2]=b; P.life[i]=P.max[i]=life; P.grav[i]=grav; }
+function pyroGo(){ const K=clubK; if(!K||!demo||!demo.sc||demo.sc.pyro!=='on'||K.t-K.pyroT<0.4)return; K.pyroT=K.t;
+  const kind=['jets','curtain','jets2','fireworks'][K.pyroI++%4];
+  if(kind==='jets'){ for(const x of[-9,-5,5,9])K.emit.push({k:'jet',x,z:-0.45,t:0.9}); sfx('jet'); }
+  else if(kind==='jets2'){ for(const x of[-7,-3,3,7])K.emit.push({k:'jet',x,z:-0.45,t:0.9}); for(const x of[-9,9])K.emit.push({k:'spark',x,z:-0.45,t:1.6}); sfx('jet'); }
+  else if(kind==='curtain'){ K.emit.push({k:'curtain',t:2.4}); sfx('sizzle'); }
+  else { [-5,0,5].forEach((x,i)=>K.emit.push({k:'rocket',x,y:1.1,z:-0.45,t:0.55+i*0.12,hue:Math.random()})); sfx('whoosh'); } }
+function pyroTick(dt){ const K=clubK, P=K.px, R=rand;
+  for(const e of K.emit){ e.t-=dt;
+    if(e.k==='jet'){ for(let n=0;n<10;n++)pyroAdd(e.x+(R()-.5)*0.3,1.15,e.z+(R()-.5)*0.3,(R()-.5)*1.2,9+R()*5,(R()-.5)*1.2,1,0.35+R()*0.5,0.05,0.35+R()*0.35,-4); K.fl=1; }
+    else if(e.k==='spark'){ for(let n=0;n<6;n++)pyroAdd(e.x,1.15,e.z,(R()-.5)*3,6+R()*4,(R()-.5)*3,1,0.9,0.6,1.1+R()*0.4,10); }
+    else if(e.k==='curtain'){ for(let n=0;n<12;n++)pyroAdd(-10+R()*20,8.5,-2.5+(R()-.5)*0.2,(R()-.5)*0.3,-R(),(R()-.5)*0.3,1,0.85+R()*0.15,0.5,1.3+R()*0.5,9); K.fl=Math.max(K.fl,0.4); }
+    else if(e.k==='rocket'){ e.y+=12*dt; e.z+=6*dt; for(let n=0;n<2;n++)pyroAdd(e.x,e.y,e.z,(R()-.5)*0.4,-1,(R()-.5)*0.4,1,0.7,0.3,0.4,2);
+      if(e.t<=0){ const c=new THREE.Color().setHSL(e.hue,1,0.6); for(let n=0;n<90;n++){ const u=R()*2-1, a=R()*Math.PI*2, s=Math.sqrt(1-u*u), sp=3.5+R()*1.5; pyroAdd(e.x,e.y,e.z,s*Math.cos(a)*sp,u*sp,s*Math.sin(a)*sp,c.r,c.g,c.b,1.1+R()*0.5,3); }
+        sfx('boom'); K.fl=1; } } }
+  K.emit=K.emit.filter(e=>e.t>0);
+  for(let i=0;i<P.n;i++){ const o=i*3; if(P.life[i]<=0){ if(P.col[o]||P.col[o+1]||P.col[o+2]){ P.col[o]=P.col[o+1]=P.col[o+2]=0; P.pos[o+1]=-50; } continue; }
+    P.life[i]-=dt; const f=Math.max(0,P.life[i]/P.max[i]); P.v[o+1]-=P.grav[i]*dt; P.pos[o]+=P.v[o]*dt; P.pos[o+1]+=P.v[o+1]*dt; P.pos[o+2]+=P.v[o+2]*dt;
+    P.col[o]=P.c0[o]*f; P.col[o+1]=P.c0[o+1]*f; P.col[o+2]=P.c0[o+2]*f; }
+  P.g.attributes.position.needsUpdate=true; P.g.attributes.color.needsUpdate=true;
+  K.flash.intensity=K.fl*2.4; K.fl=Math.max(0,K.fl-dt*2.5); }
+function drawScreen(K,beat,lvl){ const x=K.scrX, w=256, h=96, hue=Math.floor(beat*12)%360; x.fillStyle='#05030a'; x.fillRect(0,0,w,h);
+  for(let i=0;i<32;i++){ const v=0.15+0.85*Math.abs(Math.sin(i*1.7+beat*Math.PI*0.5+Math.sin(i*0.6+beat)))*(0.35+0.65*lvl); const bh=v*h*0.62; x.fillStyle='hsl('+((hue+i*8)%360)+',100%,55%)'; x.fillRect(i*8+1,h-bh,6,bh); }
+  x.font='900 30px Trebuchet MS,Verdana,sans-serif'; x.textAlign='center'; x.fillStyle='#fff'; x.shadowColor='hsl('+hue+',100%,60%)'; x.shadowBlur=14; x.fillText('BLOCKSTAR',w/2,36); x.shadowBlur=0; K.scrTex.needsUpdate=true; }
+function concertSetup(sc,P){ if(!clubK)clubK=buildClub(); const K=clubK; club.visible=true; merchant.g.visible=false;
+  if(K.nSing!==sc.singers)setSingers(K,sc.singers); if(K.crowdKind!==sc.crowd)setCrowd(K,sc.crowd);
+  K.emit.length=0; K.px.life.fill(0); K.lastBar=-1; K.lastBeat=-1;
+  setTime('night'); setWeather('clear'); scene.background.setHex(0x050308); scene.fog.color.setHex(0x050308); if(stars)stars.visible=false;
+  Object.assign(P,{x:0,z:-1.5,mo:0,lastSing:-9,atMic:true,hs:0}); pl.p=[CLUB.x,CLUB.y+1,CLUB.z-1.5]; yaw=Math.PI; pitch=0.02; demo.puppet=true; }
+// where the hero stands: at the mic while singing, dancing round the front of the stage in the breaks
+function concertPilot(dt,P){ const beat=musBeat(); P.atMic=demo.t-P.lastSing<1.4||demo.t<1;
+  const tx=P.atMic?0:Math.sin(demo.t*0.5)*2.8, tz=P.atMic?-1.5:-2.1, ox=P.x, oz=P.z; P.x+=(tx-P.x)*Math.min(1,dt*3); P.z+=(tz-P.z)*Math.min(1,dt*3);
+  P.hs=Math.hypot(P.x-ox,P.z-oz)/Math.max(dt,1e-3); pl.p=[CLUB.x+P.x,CLUB.y+1,CLUB.z+P.z];
+  let want=Math.PI; if(!P.atMic){ want+=Math.sin(beat*Math.PI*0.5)*0.45; const sp=beat%32; if(sp>=28&&sp<29)want+=(sp-28)*Math.PI*2; } // a spin now and then
+  yaw=want; pitch=0.02; }
+function concertTick(dt){ const K=clubK, sc=demo.sc, P=demo.pil, beat=musBeat(), T=demo.t, P2=Math.PI*2, s=Math.sin; K.t+=dt;
+  scene.background.setHex(0x050308); scene.fog.color.setHex(0x050308);
+  // singing: a button always wins; otherwise the mouth follows the music (in "moves with the music" mode)
+  const pad=padRead(); if(pad.pyro&&!padPyroWas)pyroGo(); padPyroWas=pad.pyro;
+  const btn=Math.max(pad.sing,singKeys.size?1:0); let want=sc.mouth==='auto'?autoSing(beat):0; if(btn>0.05)want=Math.max(0.35,btn);
+  P.mo+=(want-P.mo)*Math.min(1,dt*(want>P.mo?30:16)); setMouth(rig,P.mo); if(P.mo>0.2)P.lastSing=T;
+  // the hero dances and bobs their head
+  const pulse=0.5+0.5*Math.cos(beat*P2), hop=Math.abs(s(beat*Math.PI));
+  model.position.y+=hop*0.06; model.rotation.z=s(beat*Math.PI)*0.05; head.rotation.x=0.06-0.26*pulse;
+  if(P.atMic){ armR.rotation.x=1.25; armR.rotation.z=-0.32; armL.rotation.x=0.35+0.2*s(beat*Math.PI); armL.rotation.z=-0.2;
+    legL.rotation.x=0.12*Math.max(0,s(beat*Math.PI)); legR.rotation.x=0.12*Math.max(0,-s(beat*Math.PI)); }
+  else { const mv=Math.floor(beat/8)%3;
+    if(mv===0){ armR.rotation.x=2.6+0.4*pulse; armL.rotation.x=0.3*s(beat*Math.PI); }
+    else if(mv===1){ armL.rotation.x=0; armR.rotation.x=0; armL.rotation.z=-2.5-0.3*s(beat*Math.PI); armR.rotation.z=2.5+0.3*s(beat*Math.PI); }
+    else { armR.rotation.x=1.55; armR.rotation.z=-0.1+0.25*s(beat*Math.PI*0.5); armL.rotation.x=-0.3; armL.rotation.z=-0.5; }
+    if(P.hs<0.5){ legL.rotation.x=0.3*Math.max(0,s(beat*Math.PI)); legR.rotation.x=0.3*Math.max(0,-s(beat*Math.PI)); } }
+  // the band
+  const B=K.band, nod=b=>0.06-0.24*(0.5+0.5*Math.cos(b*P2));
+  { const R=B.gtr.R, solo=(beat%32)>=24; R.head.rotation.x=nod(beat); R.armR.rotation.x=0.5+0.22*s(beat*P2*(solo?4:2)); R.armR.rotation.z=-0.38;
+    R.armL.rotation.x=0.75; R.armL.rotation.z=-0.35+0.05*s(beat*P2); B.gtr.g.rotation.x=solo?-0.18:0; B.gtr.g.position.y=1+hop*0.04; R.legL.rotation.z=-0.14; R.legR.rotation.z=0.14; }
+  { const R=B.bass.R; R.head.rotation.x=nod(beat/2); R.armR.rotation.x=0.5+0.18*s(beat*P2); R.armR.rotation.z=-0.38; R.armL.rotation.x=0.7; R.armL.rotation.z=-0.42;
+    B.bass.g.rotation.z=0.05*s(beat*Math.PI*0.5); R.legL.rotation.z=-0.1; R.legR.rotation.z=0.1; }
+  { const R=B.drm.R, crash=(beat%16)<0.4, h=ph=>Math.max(0,s(ph)); R.armL.rotation.x=0.8+0.35*h(beat*P2*2); R.armR.rotation.x=crash?1.5:0.8+0.35*h(beat*P2*2+Math.PI);
+    R.armL.rotation.z=0.18; R.armR.rotation.z=crash?-0.55:-0.18; R.head.rotation.x=nod(beat); R.legR.rotation.x=1.35+0.12*Math.max(0,Math.cos(beat*P2)); R.legL.rotation.x=1.4;
+    const k=1+0.06*Math.pow(Math.max(0,Math.cos(beat*P2)),8); K.kit.kick.scale.set(k,1,k); K.kit.crashR.rotation.z=crash?0.15*s(T*30):0; }
+  { const R=B.dj.R, mode=Math.floor(beat/8)%4, scr=mode!==2, keys=mode%2===1||mode===2; R.head.rotation.x=nod(beat);
+    if(scr){ R.armR.rotation.x=1.0; R.armR.rotation.z=-0.1+0.2*s(K.t*14); K.plat.rotation.y+=dt*(3+12*s(K.t*14)); } else { R.armR.rotation.x=2.7+0.3*Math.cos(beat*P2); R.armR.rotation.z=0; K.plat.rotation.y+=dt*3.5; }
+    if(keys){ R.armL.rotation.x=1.0+0.07*s(K.t*20); R.armL.rotation.z=0.1; } else { R.armL.rotation.x=0; R.armL.rotation.z=-2.8+0.2*s(beat*Math.PI); }
+    K.knobs.forEach((m,i)=>m.color.setHSL(((beat/4+i/6)%1),1,(Math.floor(beat*2)+i)%3===0?0.6:0.25)); }
+  // backup singers: "ooh"s in the second half of every 4 bars, swaying together
+  const sb=Math.floor(beat/4)%4; for(const S of K.singers){ const R=S.R; R.head.rotation.x=nod(beat)*0.6; S.g.position.x=S.x+0.18*s(beat*Math.PI*0.5); S.g.rotation.z=0.06*s(beat*Math.PI*0.5);
+    R.armR.rotation.x=2.25; R.armR.rotation.z=-0.42; const wave=Math.floor(beat/16)%2===1; R.armL.rotation.x=0.15; R.armL.rotation.z=wave?-2.4-0.3*s(beat*Math.PI):-0.15+0.12*s(beat*Math.PI*0.5);
+    const w2=sb>=2&&beat%4<3.5?0.5+0.1*s(beat*P2):0; S.mo+=(w2-S.mo)*Math.min(1,dt*10); setMouth(R,S.mo); }
+  // the crowd bobs, jumps and waves
+  for(const c of K.crowd){ const b=beat+c.off, bp=0.5+0.5*Math.cos(b*P2), up=Math.abs(s(b*Math.PI));
+    c.g.position.y=c.st==='jump'?up*0.35:0; const hr=0.06-0.3*bp;
+    if(c.R){ const R=c.R; R.head.rotation.x=hr; R.armL.rotation.z=0; R.armR.rotation.z=0; R.armL.rotation.x=0; R.armR.rotation.x=0;
+      if(c.st==='arms'){ R.armL.rotation.z=-2.7+0.25*s(b*Math.PI); R.armR.rotation.z=2.7+0.25*s(b*Math.PI); }
+      else if(c.st==='pump'){ R.armR.rotation.x=2.8+0.35*Math.cos(b*P2); }
+      else if(c.st==='clap'){ R.armL.rotation.x=R.armR.rotation.x=1.2; R.armL.rotation.z=0.12+0.3*(1-bp); R.armR.rotation.z=-0.12-0.3*(1-bp); }
+      else if(c.st==='sway'){ c.g.rotation.z=0.1*s(b*Math.PI*0.5); R.armL.rotation.z=-0.3-0.2*s(b*Math.PI*0.5); R.armR.rotation.z=0.3-0.2*s(b*Math.PI*0.5); } }
+    else { const r=c.r; r.body.rotation.x=-0.22*bp; if(r.armL){ if(c.st==='arms'||c.st==='pump'){ r.armL.rotation.x=2.7+0.3*s(b*Math.PI); r.armR.rotation.x=2.7-0.3*s(b*Math.PI); } else { r.armL.rotation.x=0.5+0.4*bp; r.armR.rotation.x=0.5+0.4*(1-bp); } }
+      if(r.legL){ r.legL.rotation.x=0; r.legR.rotation.x=0; } } }
+  // lights
+  const hueB=(beat/16)%1; K.lights.forEach((L,i)=>{ L.position.set(s(K.t*0.6+i*2.1)*8,6.5,-1+Math.cos(K.t*0.5+i*1.7)*5); L.color.setHSL((hueB+i/3)%1,1,0.55); });
+  K.key.intensity=1.0+0.5*pulse; for(const q of K.beams){ q.pv.rotation.z=0.55*s(K.t*0.8+q.i*1.1); q.pv.rotation.x=-0.35-0.3*s(K.t*0.6+q.i*0.7); q.cn.material.color.setHSL((hueB+q.i/6)%1,1,0.55); }
+  const bi=Math.floor(beat); if(bi!==K.lastBeat){ K.lastBeat=bi; for(const t of K.tiles){ const on=((t.i+t.j+bi)%3===0)||((t.i*t.i+t.j+bi)%5===0); t.m.color.setHSL(((t.i+5)*0.05+t.j*0.08+bi*0.11)%1,1,on?0.5:0.06); } }
+  K.ball.rotation.y+=dt*0.8; K.edge.material.color.setHSL((K.t*0.1)%1,1,0.6);
+  K.scrT-=dt; if(K.scrT<=0){ K.scrT=0.08; drawScreen(K,beat,Math.max(P.mo,0.3)); }
+  // pyro fires by itself every 4 bars (a shoulder button or P sets it off any time)
+  const bar=Math.floor(beat/4); if(bar!==K.lastBar){ if(K.lastBar>=0&&bar%4===0)pyroGo(); K.lastBar=bar; }
+  pyroTick(dt); }
+// cameras: cinematic cuts between the hero, each band member and the crowd
+function concertCam(dt){ const sc=demo.sc, K=clubK, C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null}), k=sc.cam, h=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]);
+  const at=(x,y,z)=>new THREE.Vector3(CLUB.x+x,CLUB.y+y,CLUB.z+z), B=K.band, mp=m=>at(m.g.position.x,2.3,m.g.position.z);
+  const SH={wide:t=>[at(Math.sin(t*0.1)*2,4.2,13.5-t*0.4),at(0,2.6,-3)], hero:t=>[h.clone().add(new THREE.Vector3(0.9-t*0.12,0.1,2.2-t*0.1)),h],
+    low:t=>[at(1.6-t*0.15,1.3,2)  ,h.clone().add(new THREE.Vector3(0,0.1,0))], guitar:t=>[mp(B.gtr).add(new THREE.Vector3(1.6-t*0.1,0.4,2.6)),mp(B.gtr)],
+    bass:t=>[mp(B.bass).add(new THREE.Vector3(-1.6+t*0.1,0.4,2.6)),mp(B.bass)], drums:t=>[at(0.5-t*0.1,3.7,-3.4),at(0,2.4,-7.6)], dj:t=>[at(-4.8+t*0.1,3,-3.6),at(-6.8,2.3,-6.2)],
+    singers:t=>[at(3.6+t*0.15,2.8,-3.2),at(5.8,2.4,-6.6)], crowd:t=>[h.clone().add(new THREE.Vector3(1.5,0.9,-2.2)),at(Math.sin(t*0.2)*3,1.6,8)], side:t=>[at(11.5,3.5,1+t*0.2),at(0,2.2,-4)]};
+  let pr;
+  if(k==='cine'||!k){ C.st-=dt; C.k+=dt; if(C.st<=0||!C.cur){ const seq=['wide','hero','guitar','crowd','drums','hero','dj','low','bass','singers','side','hero'].filter(n=>n!=='singers'||K.singers.length);
+      C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.5+Math.random()*1.5; C.k=0; } pr=SH[C.cur](C.k); }
+  else if(k==='follow')pr=[h.clone().add(new THREE.Vector3(Math.sin(demo.t*0.3)*1.2,0.2,2.6)),h];
+  else if(k==='orbit'){ const a=demo.t*0.3; pr=[h.clone().add(new THREE.Vector3(Math.sin(a)*4.5,0.6,Math.cos(a)*4.5)),h]; }
+  else pr=SH.wide(Math.sin(demo.t*0.1)*3+3);
+  camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
+
+// ================= WONDER BUILDING =================
+function wonderGround(gr){ const top=gr==='sand'?ID.sand:ID.grass;
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const rz=z-CZ, rx=x-CX, d=Math.max(0,Math.abs(rz)-26);
+    if(d>0){ const cap=WGY+Math.floor(d*0.6); if(cap>=H)continue; let cut=false; // the land outside the site slopes back up to how it was
+      for(let y=H-1;y>=cap;y--){ const i=idx(x,y,z); if(world[i]){ world[i]=0; meta[i]=0; cut=true; } } if(cut){ const i=idx(x,cap-1,z); if(world[i]&&world[i]!==ID.water)world[i]=top; } continue; }
+    let h=WGY, surf=top, water=0;
+    if(gr==='plaza'&&Math.abs(rx)<=38)surf=ID.concrete;
+    if(gr==='water'){ h=WGY-4; water=WGY-1; if(x<4||x>W-5){ h=WGY; water=0; } }
+    if(gr==='valley'){ const f=Math.max(0,1-(Math.abs(rz)/22)**2); h=WGY-Math.round(6*f); if(Math.abs(rz)<=2)water=h; }
+    if(gr==='stream'&&Math.abs(rx)<=3){ h=WGY-(rz<4?1:3); water=h; }
+    for(let y=1;y<H;y++){ const i=idx(x,y,z), dp=h-1-y; world[i]=y<h?(dp===0?(h<WGY&&gr!=='valley'?ID.sand:surf):dp<=2?(surf===ID.sand?ID.sandstone:ID.dirt):y<4?ID.granite:ID.limestone):(y<=water?ID.water:0); meta[i]=0; } }
+  for(const i of [...lavaSet])if(world[i]!==ID.lava)lavaSet.delete(i); lavaArr=null; activeW.clear(); activeL.clear(); fires.clear(); }
+function wonderSetup(sc,P){ const key=WON[sc.wonder]?sc.wonder:WON_KEYS[Math.floor(Math.random()*WON_KEYS.length)], L=WON[key];
+  demo.bak={w:world.slice(),m:meta.slice(),lava:[...lavaSet]}; clearApples(); merchant.g.visible=false;
+  wonderGround(L.ground); rebuildAll();
+  const Q=new Map(), put=(x,y,z,id)=>{ if(!id)return; const X=CX+x, Y=WGY+y, Z=CZ+z; if(!inB(X,Y,Z)||Y<1)return; Q.set(idx(X,Y,Z),id); };
+  const Kt=twKit(put); Kt.use=()=>{}; L.build(Kt,()=>0);
+  const q=[]; let ext=4, top=4; for(const [i,id] of Q){ const x=ix_(i), y=iy_(i), z=iz_(i); ext=Math.max(ext,Math.abs(x-CX),Math.abs(z-CZ)); top=Math.max(top,y-WGY); q.push([x,y,z,id,Math.atan2(z-CZ,x-CX)]); }
+  q.sort((a,b)=>a[1]-b[1]||a[4]-b[4]); // layer by layer, and round each layer, so the hero can fly round laying them
+  const buildEnd=Math.max(4,sc.secs*0.62-1);
+  Object.assign(P,{key,q,k:0,ext,top,bt:0,phase:'build',buildEnd,rate:q.length/Math.max(2,buildEnd-0.6),fireT:0,brT:0,swT:0,hs:0,boomT:0});
+  setFly(true,false); const a0=Math.random()*6.28; pl.p=[CX+Math.cos(a0)*(ext+6),WGY+3,CZ+Math.sin(a0)*(ext+6)]; yaw=Math.atan2(-(CX-pl.p[0]),-(CZ-pl.p[2])); demo.puppet=true; }
+// a few bricks fly from the hero's hand to the wonder as it goes up
+const brickPool=[];
+function flyBrick(from,to,col){ let b=brickPool.find(q=>!q.on); if(!b){ if(brickPool.length>=14)return; const m=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.45),new THREE.MeshLambertMaterial({color:0xffffff})); scene.add(m); b={m,on:false}; brickPool.push(b); }
+  b.on=true; b.t=0; b.a=from; b.b=to; b.m.material.color.copy(col); b.m.visible=true; }
+function brickTick(dt){ for(const b of brickPool){ if(!b.on)continue; b.t+=dt/0.3; if(b.t>=1){ b.on=false; b.m.visible=false; continue; } b.m.position.lerpVectors(b.a,b.b,b.t); b.m.position.y+=Math.sin(b.t*Math.PI)*1.2; b.m.rotation.x+=dt*9; b.m.rotation.y+=dt*7; } }
+function wonderLeft(P,n){ for(let k=0;k<n;k++){ const b=P.q[Math.floor(Math.random()*P.q.length)]; if(get(b[0],b[1],b[2]))return b; } return null; }
+function heroTo(t,dt,maxS){ const d=[t[0]-pl.p[0],t[1]-pl.p[1],t[2]-pl.p[2]], l=Math.hypot(...d)||1, step=Math.min(l*Math.min(1,dt*3),maxS*dt); for(let i=0;i<3;i++)pl.p[i]+=d[i]/l*step; return step/Math.max(dt,1e-3); }
+function wonderPilot(dt,P){ const sc=demo.sc, T=demo.t, hand=()=>new THREE.Vector3(pl.p[0],pl.p[1]+1.3,pl.p[2]);
+  const aim=b=>{ turnTo(b[0]+0.5,b[2]+0.5,dt,8); pitch=Math.max(-1.2,Math.min(1.2,Math.atan2(b[1]+0.5-(pl.p[1]+EYE),Math.max(0.5,Math.hypot(b[0]+0.5-pl.p[0],b[2]+0.5-pl.p[2]))))); };
+  if(P.phase==='build'){ if(P.k>=P.q.length){ P.phase='admire'; P.t2=0; return; }
+    const b=P.q[P.k]; let dx=b[0]-CX, dz=b[2]-CZ, l=Math.hypot(dx,dz); if(l<1){ dx=pl.p[0]-CX; dz=pl.p[2]-CZ; l=Math.hypot(dx,dz)||1; }
+    P.hs=heroTo([b[0]+0.5+dx/l*3.5,b[1]+1,b[2]+0.5+dz/l*3.5],dt,45); aim(b);
+    if(T<0.6)return; P.bt+=dt*P.rate; let n=Math.floor(P.bt); P.bt-=n;
+    while(n-->0&&P.k<P.q.length){ const q=P.q[P.k++]; setBlock(q[0],q[1],q[2],q[3]); }
+    P.brT-=dt; if(P.brT<=0){ P.brT=0.07; const ahead=P.q[Math.min(P.q.length-1,P.k+Math.round(P.rate*0.3))]; if(ahead)flyBrick(hand(),new THREE.Vector3(ahead[0]+0.5,ahead[1]+0.5,ahead[2]+0.5),B[ahead[3]].avg); }
+    P.swT-=dt; if(P.swT<=0){ P.swT=0.22; swingT=0.25; sfx('place'); } return; }
+  const out=[pl.p[0]-CX,pl.p[2]-CZ], ol=Math.hypot(out[0],out[1])||1, R=P.ext+10, vy=WGY+Math.min(P.top*0.6,22)+2, spot=[CX+out[0]/ol*R,vy,CZ+out[1]/ol*R];
+  if(P.phase==='admire'){ P.t2+=dt; P.hs=heroTo(spot,dt,16); turnTo(CX,CZ,dt,3); pitch*=0.95; if(P.t2>1.3){ P.phase='blast'; weapon='bow'; refreshWeapon(); arrows.explode=999; P.fireT=0.2; } return; }
+  P.hs=heroTo(spot,dt,10); P.bowPose=true;
+  if(T>sc.secs-2.6){ P.boomT-=dt; if(P.boomT<=0){ P.boomT=0.1; const b=wonderLeft(P,30); if(b)explodeAt(b[0]+0.5,b[1]+0.5,b[2]+0.5,4.6); } } // the grand finale: a chain reaction
+  const tg=P.tg&&get(P.tg[0],P.tg[1],P.tg[2])?P.tg:(P.tg=wonderLeft(P,40)); if(!tg)return; aim(tg);
+  P.fireT-=dt; if(P.fireT<=0){ P.fireT=0.42; const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(tg[0]+0.5,tg[1]+0.5,tg[2]+0.5), dist=o.distanceTo(t), fl=dist/42;
+    const d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize(); arrows.explode=999; fireSpecial('explode',o,d,WP.bow); shots[shots.length-1].big=3.4; P.tg=null; } }
+function wonderCam(dt){ const sc=demo.sc, P=demo.pil, k=sc.cam, C=demo.cam||(demo.cam={a:Math.atan2(pl.p[0]-CX,pl.p[2]-CZ)+0.6,p:null,l:null});
+  const R=Math.max(P.ext,P.top*0.8)+(k==='wide'?28:15); C.a+=dt*(k==='orbit'?0.25:0.07); const a=k==='cine'?C.a+Math.sin(demo.t*0.15)*0.4:C.a;
+  const ctr=new THREE.Vector3(CX+0.5,WGY+P.top*0.4,CZ+0.5), hero=new THREE.Vector3(pl.p[0],pl.p[1]+1,pl.p[2]);
+  let want=new THREE.Vector3(CX+Math.sin(a)*R,WGY+P.top*0.55+5,CZ+Math.cos(a)*R), look=ctr.clone().lerp(hero,0.35);
+  if(P.phase==='build'&&k!=='wide'){ // on the hero's side of the wonder, just outside it, level with the hero
+    let ha=Math.atan2(pl.p[0]-CX,pl.p[2]-CZ)+(k==='orbit'?Math.sin(demo.t*0.3)*0.9:0.35), d=ha-(C.ha===undefined?ha:C.ha); while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
+    C.ha=(C.ha===undefined?ha:C.ha)+d*Math.min(1,dt*2.5); const r=P.ext+9;
+    want=new THREE.Vector3(CX+Math.sin(C.ha)*r,pl.p[1]+3.5,CZ+Math.cos(C.ha)*r); look=hero; }
+  const fast=P.phase==='build'&&k!=='wide'; if(!C.p){ C.p=want.clone(); C.l=look.clone(); } else { C.p.lerp(want,Math.min(1,dt*(fast?4:1.5))); C.l.lerp(look,Math.min(1,dt*(fast?7:3))); }
+  camera.position.copy(C.p); camera.lookAt(C.l); scene.fog.near=R+10; scene.fog.far=R+120; if(camera.far<R+160){ camera.far=R+160; camera.updateProjectionMatrix(); } }
+
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
 let waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
-  if(demo){ const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; } // the demo autopilot drives
+  if(demo){ const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } // the demo autopilot drives (concerts and wonders move the hero themselves)
   const m=Math.hypot(ix,iz); if(m>1){ix/=m;iz/=m;}
   const fwd=-iz, str=ix, s=Math.sin(yaw), c=Math.cos(yaw);
   const env=envAt(pl);
