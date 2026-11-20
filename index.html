@@ -2250,7 +2250,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2263,11 +2263,14 @@ const DM_WON={random:'🎲 A random wonder'}; for(const k of WON_KEYS)DM_WON[k]=
 const DM_CITY={random:'🎲 A random city'}; // filled in below, once the cities exist
 const DM_DSRC={fresh:'🆕 A fresh demo city',mine:'💾 My saved city'};
 const DM_GIANT={cycle:'🎬 Cut between them all',singer:'🎤 The singer (you!)',guitar:'🎸 Guitar player',drums:'🥁 Drummer',synth:'🎹 Synth player',dj:'💿 DJ scratching'};
+const DM_FSTAT={random:'🎲 A random statue',golem:'🗿 Giant Rock Golem',slime:'🟫 Giant Mud Slime',skull:'💀 Giant pixel skull',pick:'⛏️ Giant pickaxe',flint:'🧔 Giant Flint',pit:'🪵 Just a fire pit'};
+const DM_FBAND={cycle:'🔀 Switch members at random',sing:'🎤 Always the singer (you!)',gtr:'🎸 Always guitar',drm:'🥁 Always drums',sx:'🎹 Always the synth scratcher',bass:'🎸 Always bass',off:'🚫 No giant band'};
+const DM_FCROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monsters:'🧟 Monsters',none:'🙋 Just me'};
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
-function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'); } // both concerts sing with any button
+function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2278,10 +2281,11 @@ const DEMO0={scenes:[
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
+  {act:'fire',time:'night',wx:'clear',land:'normal',cam:'cine',secs:45,cap:'',mouth:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2298,11 +2302,11 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
     '<h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
-    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='concert'||s.act==='stadium'?
+    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2317,7 +2321,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>World</b><div class="fx">'+(dmCfg.world==='demo'?'A demo world that is the same every time, so you can record it again.':'Your saved Survival world. Nothing the demo does is saved.')+'</div></div><button class="ibtn eq" id="dmWorld">'+(dmCfg.world==='demo'?'Demo world':'My world')+'</button></div>'+
     (dmCfg.world==='demo'?'<div class="dmRow"><label class="dmInline">Demo world number<input type="number" min="1" id="dmSeed" value="'+dmCfg.seed+'"></label><span class="fx">Change it for a different landscape.</span></div>':'')+
     '<div class="item"><div class="ic">🕹️</div><div class="tx"><b>Take over the hero</b><div class="fx">While a demo plays, move a controller stick, touch the screen, press WASD or click the mouse and you\'re in control: the camera swings behind your hero and the scene waits for you. Controller: left stick walks, right stick looks, A jumps, X or RT attacks, Y swaps between the sword and bomb arrows. Keyboard: Q swaps, E attacks (or click with the mouse). Let go for 5 seconds and the demo carries on by itself.</div></div></div>'+
-    '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤 or 🏟️ concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
+    '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤, 🏟️ or 🔥 concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
     '<div class="item"><div class="ic">🔁</div><div class="tx"><b>Repeat</b><div class="fx">'+(dmCfg.loop?'Start again from scene 1 after the last scene.':'Go back to the main menu after the last scene.')+'</div></div><button class="ibtn'+(dmCfg.loop?'':' gray')+'" id="dmLoop">'+(dmCfg.loop?'ON':'OFF')+'</button></div>'+
     '<div class="item"><div class="ic">🌗</div><div class="tx"><b>Fade between scenes</b><div class="fx">A quick fade to black between scenes.</div></div><button class="ibtn'+(dmCfg.fades?'':' gray')+'" id="dmFades">'+(dmCfg.fades?'ON':'OFF')+'</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlay">▶ Play demo</button><button class="mbtn gray" id="dmBack">Back</button></div>';
@@ -2384,7 +2388,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; camp.visible=false; if(campK){ campK.mic.visible=false; campK.gl=null; } canvas.style.transform=''; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
@@ -2399,14 +2403,15 @@ function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI
 function demoSetup(sc){ if(drive)exitVehicle(true,true); if(demo.cityWorld&&sc.act!=='city')demoBaseWorld(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'?1:3;
+  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
-  clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',isConc(sc)); arena.visible=false; for(const c of clouds)c.visible=true;
+  clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',isConc(sc)); arena.visible=false; camp.visible=false; if(campK)campK.mic.visible=false; canvas.style.transform=''; for(const c of clouds)c.visible=true;
   if(sc.act==='city'){ demoCitySetup(sc,P); return; }
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
   if(sc.act==='stadium'){ stadiumSetup(sc,P); return; }
+  if(sc.act==='fire'){ fireSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2432,6 +2437,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
@@ -2449,7 +2455,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2471,12 +2477,13 @@ function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!de
   if(sc.act==='showcase'&&!demo.user){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='stadium')stadiumTick(dt);
+  if(sc.act==='fire')fireTick(dt);
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
   if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
   if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
   brickTick(dt);
   hl.visible=false; updateWeather(dt);
-  const capT=sc.cap||(sc.act==='wonder'&&P.key?(P.phase==='build'?WON[P.key].icon+' '+WON[P.key].name+' · '+WON[P.key].place:P.phase==='fight'&&demo.st<P.fightAt+3.5?'⚔️ Here come the monsters!':''):'');
+  const capT=sc.cap||(sc.act==='fire'&&campK&&campK.st&&campK.st.name&&demo.st<6?'🔥 Burn the giant '+campK.st.name+'!':'')||(sc.act==='wonder'&&P.key?(P.phase==='build'?WON[P.key].icon+' '+WON[P.key].name+' · '+WON[P.key].place:P.phase==='fight'&&demo.st<P.fightAt+3.5?'⚔️ Here come the monsters!':''):'');
   const cap=$('dmCap'), showCap=!!capT&&demo.st>0.8&&demo.st<sc.secs-1.2; if(cap.textContent!==capT)cap.textContent=capT; cap.classList.toggle('on',showCap);
   if(dmCfg.fades&&demo.st>sc.secs-0.7&&!demo.out){ demo.out=true; $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=1; }
   if(!dmCfg.loop&&demo.i===dmCfg.scenes.length-1&&demo.st>sc.secs-2.2)musicFade();
@@ -2771,11 +2778,12 @@ const GIANT_AT={sing:[0,-20,-64],gtr:[-46,-20,-76],syn:[46,-20,-76],drm:[-92,-20
 const GIANT_LOOKS={gtr:{skin:'#d29b6e',eyes:'#3a2412',hair:'long',hairC:'#1a1410',top:'jacket',topC:'#2a2a30',bottom:'pants',bottomC:'#2f3e7a',shoes:'boots',shoeC:'#2a2a30',glasses:'shades'},
   drm:{skin:'#ffe0c4',eyes:'#3a7ac8',hair:'spiky',hairC:'#f2d68a',top:'tank',topC:'#ffffff',bottom:'shorts',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#d8202a',hat:'headband',hatC:'#d8202a'},
   syn:{skin:'#7a4a26',eyes:'#3a2412',hair:'curly',hairC:'#1a1410',top:'stripes',topC:'#3ae0ff',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#ffffff',glasses:'round'},
+  bass:{skin:'#7a4a26',eyes:'#3a2412',hair:'buzz',hairC:'#1a1410',top:'tank',topC:'#d8202a',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#ffffff',hat:'cap',hatC:'#2a2a30'},
   dj:{skin:'#b97d50',eyes:'#2f8a4a',hair:'short',hairC:'#1a1410',top:'hoodie',topC:'#7a3ac8',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#3fa34d',glasses:'shades',hat:'beanie',hatC:'#2a2a30'}};
 // a band member (a giant, or life-size up on the stage): the props are built life-size round a rig facing -z, then the whole thing
 // is scaled and turned to face the crowd
 let synKeysTex=null;
-function member(L,key,x,y,z,sc){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.PI; g.scale.setScalar(sc); arena.add(g);
+function member(L,key,x,y,z,sc,par,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry===undefined?Math.PI:ry; g.scale.setScalar(sc); (par||arena).add(g);
   const inner=new THREE.Group(); g.add(inner); const R=makeRig(inner); dressRig(R,cleanLook(L)); const M={g,inner,R,x,y,z,s:sc};
   const add=(m,px,py,pz,par)=>{ m.position.set(px,py,pz); (par||inner).add(m); return m; }, cyl=(rt,rb,h,m,n)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n||16),m), dk=lm(0x2a2a30), ch=lm(0x9a9aa2);
   if(key==='sing'){ // a mic stand, with the mic right at the mouth (straight arms can't hold one there without hiding the face)
@@ -2783,8 +2791,16 @@ function member(L,key,x,y,z,sc){ const g=new THREE.Group(); g.position.set(x,y,z
     add(cyl(0.032,0.042,0.16,lm(0x1e1e22),10),0,1.53,-0.36).rotation.x=1.25; add(new THREE.Mesh(new THREE.SphereGeometry(0.055,10,8),lm(0x6a6a72)),0,1.56,-0.29); }
   if(key==='gtr'){ const gt=guitarMesh(0xd8202a,0.62,false); gt.position.set(0.02,1.0,-0.25); gt.rotation.z=0.95; inner.add(gt); }
   if(key==='drm'){ inner.position.y=0.3; M.kit=drumKit(); M.kit.g.position.y=0.5; g.add(M.kit.g); for(const a of[R.armL,R.armR]){ const st=box(0.03,0.03,0.46,lm(0xe8d8b0)); st.position.set(0,-0.62,-0.2); a.add(st); } }
-  if(key==='syn'){ if(!synKeysTex){ const kc=document.createElement('canvas'); kc.width=64; kc.height=8; const x2=kc.getContext('2d'); x2.fillStyle='#f4f4f0'; x2.fillRect(0,0,64,8); x2.fillStyle='#111';
+  if(key==='bass'){ const gt=guitarMesh(0x2f6ae0,0.86,true); gt.position.set(0.02,0.98,-0.25); gt.rotation.z=1.05; inner.add(gt); }
+  if(key==='syn'||key==='sx'){ if(!synKeysTex){ const kc=document.createElement('canvas'); kc.width=64; kc.height=8; const x2=kc.getContext('2d'); x2.fillStyle='#f4f4f0'; x2.fillRect(0,0,64,8); x2.fillStyle='#111';
       for(let i=0;i<22;i++){ x2.fillRect(i*3,0,1,8); if([0,1,3,4,5].includes(i%7))x2.fillRect(i*3+2,0,1.6,5); } synKeysTex=new THREE.CanvasTexture(kc); synKeysTex.magFilter=synKeysTex.minFilter=THREE.NearestFilter; synKeysTex.generateMipmaps=false; }
+    if(key==='sx'){ // the synth scratcher: a deck with a turntable for the right hand and a small synth for the left
+      add(box(0.56,0.06,0.1,lm(0x1a1a1e)),0,0.52,0,R.head); for(const sx of[-1,1])add(box(0.08,0.2,0.18,lm(0xff3aa8)),sx*0.27,0.24,0,R.head); // headphones
+      add(box(1.9,0.95,0.6,lm(0x1e1a24)),0,0.475,-0.62); add(box(1.9,0.1,0.02,bm(0xff3aa8)),0,0.8,-0.93);
+      add(cyl(0.34,0.34,0.05,dk,20),0.48,0.97,-0.6); M.plat=add(cyl(0.3,0.3,0.03,lm(0x0a0a0a),20),0.48,1.01,-0.6);
+      add(box(0.14,0.012,0.04,bm(0xd8202a)),0.13,0.02,0,M.plat); add(cyl(0.08,0.08,0.01,bm(0xd8202a),12),0,0.016,0,M.plat);
+      add(box(0.8,0.07,0.36,[dk,dk,new THREE.MeshLambertMaterial({map:synKeysTex}),dk,dk,dk]),-0.42,0.99,-0.58);
+      M.keys=[]; for(let i=0;i<8;i++){ const m=new THREE.MeshBasicMaterial({color:0xff3aa8}); M.keys.push(m); add(box(0.07,0.04,0.05,m),-0.78+i*0.1,1.05,-0.84); } return M; }
     add(box(1.4,0.09,0.44,[dk,dk,new THREE.MeshLambertMaterial({map:synKeysTex}),dk,dk,dk]),0,0.98,-0.52); add(box(1.4,0.12,0.12,dk),0,1.05,-0.8);
     for(const sx of[-1,1])add(box(0.05,0.95,0.05,ch),sx*0.55,0.47,-0.52);
     M.keys=[]; for(let i=0;i<12;i++){ const m=new THREE.MeshBasicMaterial({color:0xff3aa8}); M.keys.push(m); add(box(0.07,0.04,0.05,m),-0.6+i*0.11,1.12,-0.8); } }
@@ -2921,27 +2937,33 @@ function arenaTick(K,dt,beat,lvl){ const P2=Math.PI*2, s=Math.sin, T=K.t, pulse=
   const bar=Math.floor(beat/4); if(bar!==K.lastBar){ if(K.lastBar>=0&&bar%4===0)pyroGo(); K.lastBar=bar; } // pyro every 4 bars by itself
   pyroTick(dt,K); }
 // the band's moves (the giants and the band on the stage play exactly the same)
-function bandTick(G,dt,beat,lvl,T){ const P2=Math.PI*2, s=Math.sin, hop=Math.abs(s(beat*Math.PI)), nod=b=>0.06-0.24*(0.5+0.5*Math.cos(b*P2));
-  if(G.sing){ // the giant singer at the mic: one hand on the stand, the other reaching out, waving or pumping
-  { const R=G.sing.R, mv=Math.floor(beat/16)%3; R.head.rotation.x=0.02+nod(beat)*0.35+0.06*lvl; R.armR.rotation.x=0.95; R.armR.rotation.z=-0.42+0.04*s(beat*Math.PI); // gripping the stand
+// each band member's moves (the giants and the band on the stage play exactly the same)
+const MEMBER_ANIM=(()=>{ const P2=Math.PI*2, s=Math.sin, nod=b=>0.06-0.24*(0.5+0.5*Math.cos(b*P2)), hop=b=>Math.abs(s(b*Math.PI));
+  const scratch=(M,R,dt,T,beat,on)=>{ if(on){ R.armR.rotation.x=1.0; R.armR.rotation.z=-0.1+0.22*s(T*14); M.plat.rotation.y+=dt*(3+12*s(T*14)); } else { R.armR.rotation.x=2.7+0.3*Math.cos(beat*P2); R.armR.rotation.z=0; M.plat.rotation.y+=dt*3.5; } };
+  return {
+  sing(M,dt,beat,lvl){ const R=M.R, mv=Math.floor(beat/16)%3; R.head.rotation.x=0.02+nod(beat)*0.35+0.06*lvl; R.armR.rotation.x=0.95; R.armR.rotation.z=-0.42+0.04*s(beat*Math.PI); // a hand on the mic stand
     if(mv===2&&Math.floor(beat/4)%2===0){ R.armL.rotation.x=0.95; R.armL.rotation.z=0.42-0.04*s(beat*Math.PI); } // both hands on the stand
     else if(mv===0){ R.armL.rotation.x=0.35+0.2*s(beat*Math.PI*0.5); R.armL.rotation.z=-1.25-0.15*s(beat*Math.PI); } // reaching out to the side
-    else if(mv===1){ R.armL.rotation.x=0; R.armL.rotation.z=-2.5-0.3*s(beat*Math.PI); }
-    else { R.armL.rotation.x=2.75+0.3*Math.cos(beat*P2); R.armL.rotation.z=0; }
-    G.sing.inner.rotation.z=0.04*s(beat*Math.PI*0.5); G.sing.inner.position.y=hop*0.02; } }
-  { const R=G.gtr.R, solo=(beat%32)>=24; R.head.rotation.x=nod(beat); R.armR.rotation.x=0.5+0.22*s(beat*P2*(solo?4:2)); R.armR.rotation.z=-0.38;
-    R.armL.rotation.x=0.75; R.armL.rotation.z=-0.35+0.05*s(beat*P2); G.gtr.inner.rotation.x=solo?-0.18:0; G.gtr.inner.position.y=hop*0.04; R.legL.rotation.z=-0.14; R.legR.rotation.z=0.14; }
-  { const R=G.drm.R, k=G.drm.kit, crash=(beat%16)<0.4, h=ph=>Math.max(0,s(ph)); R.armL.rotation.x=0.8+0.35*h(beat*P2*2); R.armR.rotation.x=crash?1.5:0.8+0.35*h(beat*P2*2+Math.PI);
+    else if(mv===1){ R.armL.rotation.x=0; R.armL.rotation.z=-2.5-0.3*s(beat*Math.PI); } // waving
+    else { R.armL.rotation.x=2.75+0.3*Math.cos(beat*P2); R.armL.rotation.z=0; } // pumping
+    M.inner.rotation.z=0.04*s(beat*Math.PI*0.5); M.inner.position.y=hop(beat)*0.02; },
+  gtr(M,dt,beat){ const R=M.R, solo=(beat%32)>=24; R.head.rotation.x=nod(beat); R.armR.rotation.x=0.5+0.22*s(beat*P2*(solo?4:2)); R.armR.rotation.z=-0.38;
+    R.armL.rotation.x=0.75; R.armL.rotation.z=-0.35+0.05*s(beat*P2); M.inner.rotation.x=solo?-0.18:0; M.inner.position.y=hop(beat)*0.04; R.legL.rotation.z=-0.14; R.legR.rotation.z=0.14; },
+  bass(M,dt,beat){ const R=M.R; R.head.rotation.x=nod(beat/2); R.armR.rotation.x=0.5+0.18*s(beat*P2); R.armR.rotation.z=-0.38; R.armL.rotation.x=0.7; R.armL.rotation.z=-0.42;
+    M.inner.rotation.z=0.05*s(beat*Math.PI*0.5); R.legL.rotation.z=-0.1; R.legR.rotation.z=0.1; },
+  drm(M,dt,beat,lvl,T){ const R=M.R, k=M.kit, crash=(beat%16)<0.4, h=ph=>Math.max(0,s(ph)); R.armL.rotation.x=0.8+0.35*h(beat*P2*2); R.armR.rotation.x=crash?1.5:0.8+0.35*h(beat*P2*2+Math.PI);
     R.armL.rotation.z=0.18; R.armR.rotation.z=crash?-0.55:-0.18; R.head.rotation.x=nod(beat); R.legR.rotation.x=1.35+0.12*Math.max(0,Math.cos(beat*P2)); R.legL.rotation.x=1.4;
-    const kk=1+0.06*Math.pow(Math.max(0,Math.cos(beat*P2)),8); k.kick.scale.set(kk,1,kk); k.crashR.rotation.z=crash?0.15*s(T*30):0; }
-  { const R=G.syn.R; R.head.rotation.x=nod(beat); R.armR.rotation.x=1.0+0.07*s(T*9); R.armL.rotation.x=1.0+0.07*s(T*7+1); R.armR.rotation.z=-0.1+0.1*s(beat*Math.PI*0.5); R.armL.rotation.z=0.1+0.1*s(beat*Math.PI*0.5+1);
+    const kk=1+0.06*Math.pow(Math.max(0,Math.cos(beat*P2)),8); k.kick.scale.set(kk,1,kk); k.crashR.rotation.z=crash?0.15*s(T*30):0; },
+  syn(M,dt,beat,lvl,T){ const R=M.R; R.head.rotation.x=nod(beat); R.armR.rotation.x=1.0+0.07*s(T*9); R.armL.rotation.x=1.0+0.07*s(T*7+1); R.armR.rotation.z=-0.1+0.1*s(beat*Math.PI*0.5); R.armL.rotation.z=0.1+0.1*s(beat*Math.PI*0.5+1);
     if(Math.floor(beat/8)%4===3){ R.armL.rotation.x=0; R.armL.rotation.z=-2.7+0.2*s(beat*Math.PI); } // one hand up in the air
-    G.syn.keys.forEach((m,i)=>m.color.setHSL((beat/8+i/12)%1,1,(Math.floor(beat*2)+i*3)%5===0?0.6:0.14)); G.syn.inner.rotation.z=0.04*s(beat*Math.PI*0.5); }
-  { const R=G.dj.R, mode=Math.floor(beat/8)%4, scr=mode!==2; R.head.rotation.x=nod(beat);
-    if(scr){ R.armR.rotation.x=1.0; R.armR.rotation.z=-0.1+0.22*s(T*14); G.dj.plat.rotation.y+=dt*(3+12*s(T*14)); } else { R.armR.rotation.x=2.7+0.3*Math.cos(beat*P2); R.armR.rotation.z=0; G.dj.plat.rotation.y+=dt*3.5; }
+    M.keys.forEach((m,i)=>m.color.setHSL((beat/8+i/12)%1,1,(Math.floor(beat*2)+i*3)%5===0?0.6:0.14)); M.inner.rotation.z=0.04*s(beat*Math.PI*0.5); },
+  dj(M,dt,beat,lvl,T){ const R=M.R, mode=Math.floor(beat/8)%4; R.head.rotation.x=nod(beat); scratch(M,R,dt,T,beat,mode!==2);
     if(mode%2===1){ R.armL.rotation.x=1.0+0.07*s(T*20); R.armL.rotation.z=0.1; } else { R.armL.rotation.x=0; R.armL.rotation.z=-2.8+0.2*s(beat*Math.PI); }
-    G.dj.knobs.forEach((m,i)=>m.color.setHSL((beat/4+i/5)%1,1,(Math.floor(beat*2)+i)%3===0?0.6:0.25)); }
-}
+    M.knobs.forEach((m,i)=>m.color.setHSL((beat/4+i/5)%1,1,(Math.floor(beat*2)+i)%3===0?0.6:0.25)); },
+  sx(M,dt,beat,lvl,T){ const R=M.R; R.head.rotation.x=nod(beat); scratch(M,R,dt,T,beat,Math.floor(beat/8)%4!==3); // scratching with the right hand, playing the synth with the left
+    R.armL.rotation.x=1.0+0.07*s(T*8); R.armL.rotation.z=0.12+0.08*s(beat*Math.PI*0.5); M.inner.rotation.z=0.04*s(beat*Math.PI*0.5);
+    M.keys.forEach((m,i)=>m.color.setHSL((beat/8+i/8)%1,1,(Math.floor(beat*2)+i*3)%5===0?0.6:0.14)); } }; })();
+function bandTick(G,dt,beat,lvl,T){ for(const k in G)MEMBER_ANIM[k](G[k],dt,beat,lvl,T); }
 // the camera cuts on the beat between the crowd, the band on the stage and close-ups of each giant (or one member, giant and life-size, if you picked one)
 function stadiumCam(dt){ const sc=demo.sc, G=arenaK.G, B=arenaK.B, C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:-1}), A=arena.position, beat=musBeat();
   const at=(x,y,z)=>new THREE.Vector3(A.x+x,A.y+y,A.z+z);
@@ -2974,9 +2996,175 @@ function stadiumCam(dt){ const sc=demo.sc, G=arenaK.G, B=arenaK.B, C=demo.cam||(
   if(!C.cur||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.2+Math.random()*1.6; C.k=0; } C.lb=bt;
   const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
 
+// ================= FIRE CONCERT =================
+// A bonfire in a bowl in the middle of the world. A giant statue of something from the game (or just a fire pit) burns down while
+// the hero walks round it singing, with a ring of people and monsters dancing. Past each of the four edges of the world stands a giant
+// band member, all four the same, watching the tiny hero; every 8 bars they go glitchy and squiggly and turn into a different member.
+// The camp's origin is the middle of the fire, on the ground.
+const camp=new THREE.Group(); camp.visible=false; scene.add(camp);
+let campK=null;
+const CAMP_BAND=['gtr','sing','drm','sx','bass']; // in the order they first appear when switching
+const STATUE_NAME={golem:'Rock Golem',slime:'Mud Slime',skull:'pixel skull',pick:'pickaxe',flint:'Flint'};
+// the statues, as lists of blocks: [x,y,z,colour,kind] where kind is 0 burns, 1 is the wood pile, 2 is stone that never burns.
+// They stand on a pile of logs and face +z. vs is how big each block is.
+function statueVox(kind){ const V=[], R=Math.random, put=(x,y,z,c,k)=>V.push([x,y,z,c,k||0]);
+  const fill=(x0,x1,y0,y1,z0,z1,c,k)=>{ for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)put(x,y,z,typeof c==='function'?c(x,y,z):c,k); };
+  const vary=(hex,a)=>()=>{ const c=new THREE.Color(hex); c.offsetHSL(0,0,(R()-0.5)*a); return c.getHex(); };
+  const logs=r=>{ for(let z=-r;z<=r;z++)for(let x=-r;x<=r;x++){ const d=Math.hypot(x,z); if(d>r+0.4)continue; put(x,0,z,(x+z)%2?0x6b4a2a:0x5a3a1e,1); if(d<r-0.6)put(x,1,z,(x*3+z)%2?0x7a5530:0x5a3a1e,1); } };
+  if(kind==='pit'){ for(let a=0;a<14;a++){ const t=a/14*Math.PI*2; put(Math.round(Math.cos(t)*3.2),0,Math.round(Math.sin(t)*3.2),vary(0x7a7a80,0.12)(),2); }
+    for(let i=-2;i<=2;i++){ put(i,0,0,0x6b4a2a,1); put(0,0,i,0x5a3a1e,1); } put(0,1,0,0x6b4a2a,1); put(1,1,0,0x5a3a1e,1); put(-1,1,0,0x5a3a1e,1);
+    return {V,vs:1,name:'',r:3.6}; }
+  if(kind==='golem'){ logs(6); const gr=vary(0x7c7c84,0.14);
+    fill(-4,-2,2,7,-1,1,gr); fill(2,4,2,7,-1,1,gr); fill(-4,4,8,15,-2,2,gr); fill(-2,2,16,20,-2,2,gr);
+    fill(-6,-5,6,15,-1,1,gr); fill(5,6,6,15,-1,1,gr); fill(-7,-5,5,6,-1,1,gr); fill(5,7,5,6,-1,1,gr); // long arms, big fists
+    for(let x=-4;x<=4;x++)for(let z=-2;z<=2;z++)if(R()<0.4)put(x,16,z,vary(0x4a7a3a,0.1)()); // moss on the shoulders
+    for(let y=10;y<=13;y++)put(0,y,3,0xff8a20); put(-1,18,3,0xffa020); put(1,18,3,0xffa020); for(let x=-2;x<=2;x++)put(x,19,3,0x4a4a50); // a glowing crack, eyes and a brow
+    return {V,vs:1,name:'Rock Golem',r:7}; }
+  if(kind==='slime'){ logs(6); const mud=vary(0x7a5530,0.16);
+    for(let y=2;y<=11;y++)for(let z=-5;z<=5;z++)for(let x=-5;x<=5;x++){ const ex=Math.abs(x)===5, ez=Math.abs(z)===5; if(ex&&ez)continue; if((y===11||y===2)&&(ex||ez))continue;
+      if(Math.abs(x)<4&&Math.abs(z)<4&&y>3&&y<10)continue; put(x,y,z,R()<0.08?0x3d2a18:mud()); } // a hollow blob with rounded edges
+    for(const ex of[-3,2])fill(ex,ex+1,8,9,6,6,0x111111); fill(-2,2,5,5,6,6,0x2a1a0a);
+    return {V,vs:1,name:'Mud Slime',r:6}; }
+  if(kind==='skull'){ logs(5); const P=['....#####....','..#########..','.###########.','#############','#############','##ooo###ooo##','##ooo###ooo##','##ooo###ooo##','######o######','.####ooo####.','..#########..','..#.#.#.#.#..','..#########..','...#######...'];
+    const bone=vary(0xeeeee6,0.06); fill(-3,3,2,3,-2,2,vary(0x7a7a80,0.12),2); // a stone stand
+    P.forEach((row,r)=>[...row].forEach((ch,c)=>{ if(ch==='.')return; for(let z=-1;z<=1;z++)put(c-6,(13-r)+4,z,ch==='#'?bone():0x141414); }));
+    return {V,vs:1.45,name:'pixel skull',r:9.5}; }
+  if(kind==='pick'){ logs(5); fill(-3,3,2,3,-3,3,vary(0x6a6a70,0.14),2); fill(-2,2,4,4,-2,2,vary(0x6a6a70,0.14),2); // a rock it's stuck in
+    fill(-1,0,5,19,-1,0,vary(0x8a5a2e,0.1)); fill(-2,1,18,20,-2,1,0x4a3018); // the handle and its binding
+    for(let x=-8;x<=8;x++){ const yy=21-Math.floor(x*x/18); const th=Math.abs(x)>6?1:2; for(let y=yy-th+1;y<=yy;y++)for(let z=-1;z<=0;z++)put(x,y,z,Math.abs(x)>6?0xb8fff8:vary(0x4ad8d8,0.12)()); }
+    return {V,vs:1,name:'pickaxe',r:9}; }
+  // Flint the shopkeeper, arms folded, with his hat and beard
+  logs(6); const robe=vary(0x7a5230,0.1), sl=vary(0x3f7a4a,0.1), sk=0xd9a77f;
+  fill(-3,3,2,12,-2,2,robe); fill(-5,-4,8,12,-1,1,sl); fill(4,5,8,12,-1,1,sl); fill(-4,4,9,10,3,3,sl); fill(-2,2,13,17,-2,2,sk);
+  fill(-2,2,13,14,3,3,0xdddddd); put(-2,15,3,0xdddddd); put(2,15,3,0xdddddd); put(0,15,4,sk); // beard and nose
+  put(-1,16,3,0x3a6a2a); put(-2,16,3,0xffffff); put(1,16,3,0x3a6a2a); put(2,16,3,0xffffff); fill(-2,-1,17,17,3,3,0x7a4a3a); fill(1,2,17,17,3,3,0x7a4a3a);
+  fill(-4,4,18,18,-4,4,0x4a3420); fill(-2,2,19,21,-2,2,0x4a3420); for(let x=-2;x<=2;x++){ put(x,19,3,0xc9a04a); put(x,19,-3,0xc9a04a); } for(let z=-2;z<=2;z++){ put(3,19,z,0xc9a04a); put(-3,19,z,0xc9a04a); }
+  return {V,vs:1.2,name:'Flint',r:7}; }
+function glowTex(){ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'), g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.35,'rgba(255,255,255,0.6)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillRect(0,0,64,64); return new THREE.CanvasTexture(c); }
+// glowing particles (flames and sparks) that rise, fade and die
+function sparkSys(par,n,size,tex){ const g=new THREE.BufferGeometry(), pos=new Float32Array(n*3), col=new Float32Array(n*3); for(let i=0;i<n;i++)pos[i*3+1]=-999;
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const pts=new THREE.Points(g,new THREE.PointsMaterial({size,map:tex,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); pts.frustumCulled=false; par.add(pts);
+  return {g,pos,col,v:new Float32Array(n*3),life:new Float32Array(n),max:new Float32Array(n),c0:new Float32Array(n*3),drag:new Float32Array(n),n,next:0}; }
+function sparkAdd(P,x,y,z,vx,vy,vz,r,g,b,life,drag){ const i=P.next++%P.n, o=i*3; P.pos[o]=x; P.pos[o+1]=y; P.pos[o+2]=z; P.v[o]=vx; P.v[o+1]=vy; P.v[o+2]=vz; P.c0[o]=r; P.c0[o+1]=g; P.c0[o+2]=b; P.life[i]=P.max[i]=life; P.drag[i]=drag||0; }
+function sparkTick(P,dt,T){ for(let i=0;i<P.n;i++){ const o=i*3; if(P.life[i]<=0){ if(P.pos[o+1]!==-999){ P.pos[o+1]=-999; P.col[o]=P.col[o+1]=P.col[o+2]=0; } continue; }
+    P.life[i]-=dt; const f=Math.max(0,P.life[i]/P.max[i]); P.pos[o]+=(P.v[o]+Math.sin(T*3+i)*P.drag[i])*dt; P.pos[o+1]+=P.v[o+1]*dt; P.pos[o+2]+=(P.v[o+2]+Math.cos(T*2.6+i)*P.drag[i])*dt;
+    P.col[o]=P.c0[o]*f; P.col[o+1]=P.c0[o+1]*f*f; P.col[o+2]=P.c0[o+2]*f*f*f; } // yellow at the bottom, red as it rises and fades
+  P.g.attributes.position.needsUpdate=true; P.g.attributes.color.needsUpdate=true; }
+function buildCamp(){ const K={t:0,crowd:[],crowdKind:'',mosh:0,ring:{},cur:'',gl:null,lastSw:-1,st:null};
+  const tex=glowTex(); K.flames=sparkSys(camp,2400,1.5,tex); K.sparks=sparkSys(camp,700,0.28,tex);
+  K.light=new THREE.PointLight(0xff8a30,2.2,80); K.light.position.set(0,5,0); camp.add(K.light);
+  K.hemi=new THREE.HemisphereLight(0xffb070,0x3a2040,0.9); camp.add(K.hemi); K.amb=new THREE.AmbientLight(0xffa070,0.4); camp.add(K.amb); // light the giants out at the edges
+  K.mic=micMesh(); K.mic.position.set(0,-0.6,-0.04); K.mic.visible=false; armR.add(K.mic); // the hero's own mic
+  return K; }
+// the statue: one box per block, all drawn together, so blocks can glow, char, fall off and turn to embers
+function campStatue(K,kind){ if(K.st){ camp.remove(K.st.mesh); K.st.mesh.geometry.dispose(); K.st.mesh.material.dispose(); }
+  const S=statueVox(kind), n=S.V.length, mesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial({emissive:0x1a0800}),n); mesh.frustumCulled=false; camp.add(mesh);
+  const st={kind,mesh,n,vs:S.vs,name:S.name,r:S.r,top:0,p:new Float32Array(n*3),c:[],k:new Uint8Array(n),ti:new Float32Array(n),td:new Float32Array(n),state:new Uint8Array(n),v:new Float32Array(n*3),rot:new Float32Array(n*2),sc:new Float32Array(n),burn:[]};
+  S.V.forEach((q,i)=>{ st.p[i*3]=q[0]*S.vs; st.p[i*3+1]=(q[1]+0.5)*S.vs; st.p[i*3+2]=q[2]*S.vs; st.c.push(new THREE.Color(q[3])); st.k[i]=q[4]; st.top=Math.max(st.top,(q[1]+1)*S.vs); st.sc[i]=1; });
+  K.st=st; return st; }
+// when each block catches fire and when it falls (scene time). Flames climb from the logs to the top over the first half
+function campTimes(st,secs){ const R=Math.random, pit=st.kind==='pit';
+  for(let i=0;i<st.n;i++){ const h=st.p[i*3+1]/st.top; st.state[i]=0; st.sc[i]=1;
+    if(st.k[i]===1){ st.ti[i]=R()*1.5; st.td[i]=1e9; continue; } if(st.k[i]===2||pit){ st.ti[i]=1e9; st.td[i]=1e9; continue; }
+    st.ti[i]=secs*(0.03+0.42*h+0.07*R()); st.td[i]=Math.min(secs*0.8,st.ti[i]+secs*(0.16+0.26*R())); if(R()<0.6)st.td[i]=1e9; } // most blocks hang on until the collapse
+  st.collapse=pit?1e9:secs*0.8; }
+function campCrowd(K,kind){ for(const c of K.crowd){ camp.remove(c.g); disposeG(c.g); if(c.r)for(const m of c.r.mats)m.dispose(); } K.crowd=[]; K.crowdKind=kind; if(kind==='none')return;
+  const styles=['bob','jump','arms','pump','sway','clap'];
+  for(const [r,n] of [[15,18],[18,24]])for(let i=0;i<n;i++){ const a=(i+(r>16?0.5:0))/n*Math.PI*2+(Math.random()-0.5)*0.12, rr=r+(Math.random()-0.5)*1.2, x=Math.cos(a)*rr, z=Math.sin(a)*rr;
+    const mon=kind==='monsters'||(kind==='mixed'&&Math.random()<0.5), ry=Math.atan2(x,z)+(Math.random()-0.5)*0.3; let c;
+    if(mon){ const m=mobModel(CROWD_MON[Math.floor(Math.random()*CROWD_MON.length)]); m.bar.visible=false; m.root.position.set(x,0,z); m.root.rotation.y=ry; camp.add(m.root); c={g:m.root,r:m}; }
+    else { const p=clubNpc(randomLook(),x,0,z,ry,camp); c={g:p.g,R:p.R}; }
+    if(Math.random()<0.35&&(c.R||c.r.armR))crowdItem(c);
+    c.x=x; c.z=z; c.st=styles[Math.floor(Math.random()*styles.length)]; c.off=Math.random()<0.7?0:0.5; c.ph=Math.random()*6; K.crowd.push(c); } }
+// four giants of one kind, one past each edge of the world, all facing the fire
+function campRing(K,key){ if(K.ring[key])return K.ring[key]; const E=Math.max(W,D)/2+30, L=key==='sing'?look:GIANT_LOOKS[key==='sx'?'syn':key];
+  const set=[[0,-E,Math.PI],[0,E,0],[-E,0,-Math.PI/2],[E,0,Math.PI/2]].map(([x,z,ry])=>{ const M=member(L,key,x,-20,z,GS,camp,ry);
+    M.jb=['legL','legR','armL','armR','torso','head'].map(j=>[M.R[j],M.R[j].position.x]); return M; });
+  for(const M of set)M.g.visible=false; return K.ring[key]=set; }
+function ringShow(K,key,on){ if(K.ring[key])for(const M of K.ring[key])M.g.visible=on; }
+function nextBand(K,sc){ if(sc.fband!=='cycle')return sc.fband; if(!K.cur)return CAMP_BAND[0]; const o=CAMP_BAND.filter(k=>k!==K.cur); return o[Math.floor(Math.random()*o.length)]; }
+function fireSetup(sc,P){ if(!campK)campK=buildCamp(); const K=campK;
+  demo.bak={w:world.slice(),m:meta.slice(),lava:[...lavaSet]}; clearApples(); merchant.g.visible=false; // a round clearing for the fire (put back after the scene)
+  wonderGround('grass',true); rebuildAll(); camp.position.set(CX+0.5,WGY,CZ+0.5); camp.visible=true;
+  const kind=sc.fstat==='random'?['golem','slime','skull','pick','flint'][Math.floor(Math.random()*5)]:sc.fstat; campStatue(K,kind); campTimes(K.st,sc.secs);
+  if(K.crowdKind!==sc.fcrowd)campCrowd(K,sc.fcrowd); K.flames.life.fill(0); K.sparks.life.fill(0); K.mosh=0;
+  for(const k in K.ring){ ringShow(K,k,false); for(const M of K.ring[k]){ M.g.scale.setScalar(GS); M.g.position.y=-20; for(const [j,x] of M.jb)j.position.x=x; } } if(K.ring.sing)for(const M of K.ring.sing)dressRig(M.R,look); // the giant singers are you
+  K.cur=''; K.gl=null; K.lastSw=-1; if(sc.fband!=='off'){ K.cur=nextBand(K,sc); campRing(K,K.cur); ringShow(K,K.cur,true); }
+  setTime('night'); setWeather('clear'); scene.background.setHex(0x07050c); scene.fog.color.setHex(0x07050c); for(const c of clouds)c.visible=false;
+  K.mic.visible=true; Object.assign(P,{mo:0,hs:0,lastSing:-9,a:Math.random()*6.28,R:K.st.r+3.6,face:0}); pl.p=[camp.position.x+Math.cos(P.a)*P.R,WGY,camp.position.z+Math.sin(P.a)*P.R]; yaw=Math.PI-P.a; pitch=0; demo.puppet=true; }
+// the hero walks slowly round the fire, and now and then stops to sing out to the crowd
+function firePilot(dt,P){ const A=camp.position, stop=Math.floor(musBeat()/16)%3===2, sp=1.4; if(!stop)P.a+=dt*sp/P.R;
+  const t=[A.x+Math.cos(P.a)*P.R,WGY,A.z+Math.sin(P.a)*P.R], o=pl.p.slice(); for(let i=0;i<3;i++)pl.p[i]+=(t[i]-pl.p[i])*Math.min(1,dt*4);
+  P.hs=Math.hypot(pl.p[0]-o[0],pl.p[2]-o[2])/Math.max(dt,1e-3); const want=stop?Math.atan2(-Math.cos(P.a),-Math.sin(P.a)):Math.PI-P.a; let d=want-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=d*Math.min(1,dt*4); pitch=0; }
+function fireTick(dt){ const K=campK, sc=demo.sc, P=demo.pil, beat=musBeat(), s=Math.sin, T=demo.st; K.t+=dt;
+  // singing, just like the other concerts
+  const btn=Math.max(pad.sing,singKeys.size?1:0); let want=sc.mouth==='auto'?autoSing(beat):0; if(btn>0.05)want=Math.max(0.35,btn);
+  P.mo+=(want-P.mo)*Math.min(1,dt*(want>P.mo?30:16)); setMouth(rig,P.mo); if(P.mo>0.2)P.lastSing=demo.t; if(K.ring.sing)for(const M of K.ring.sing)setMouth(M.R,P.mo);
+  if(!demo.user){ head.rotation.x=0.04-0.18*(0.5+0.5*Math.cos(beat*Math.PI*2)); if(demo.t-P.lastSing<1.2){ armR.rotation.x=2.25; armR.rotation.z=-0.42; } // the mic up at the mouth
+    if(P.hs<0.3){ armL.rotation.x=0.4+0.3*s(beat*Math.PI*0.5); armL.rotation.z=-1.1-0.2*s(beat*Math.PI); } } // reaching out to the crowd
+  // the giant band: switch every 8 bars (on the beat) with a glitchy squiggle
+  if(sc.fband==='cycle'){ const sw=Math.floor(beat/32); if(sw!==K.lastSw){ if(K.lastSw>=0&&!K.gl){ const to=nextBand(K,sc); campRing(K,to); K.gl={from:K.cur,to,t:0,dur:Math.max(0.7,beatSec()*1.5)}; K.mosh=1.6; if(demo.cam)demo.cam.force=true; } K.lastSw=sw; } }
+  const G=K.gl; if(G){ G.t+=dt; const f=G.t/G.dur;
+    if(f>=1){ ringShow(K,G.from,false); ringShow(K,G.to,true); for(const k of[G.from,G.to])for(const M of K.ring[k]){ M.g.scale.setScalar(GS); M.g.position.y=-20; for(const [j,x] of M.jb)j.position.x=x; } K.cur=G.to; K.gl=null; K.hemi.color.setHex(0xffb070); canvas.style.transform=''; }
+    else { const show=Math.random()<f?G.to:G.from, amp=0.45*Math.sin(Math.PI*f); ringShow(K,G.from,show===G.from); ringShow(K,G.to,show===G.to);
+      for(const M of K.ring[show]){ M.g.scale.set(GS*(1+0.35*s(K.t*53)*amp*2),GS*(1-0.1*amp),GS); M.g.position.y=-20+(Math.random()-0.5)*6*amp; // squiggle: each part slides on a wave up the body
+        for(const [j,x] of M.jb)j.position.x=x+amp*s(j.position.y*5+K.t*38); }
+      K.hemi.color.setHSL(Math.random(),1,0.6); if(fxK.cur!=='film'&&fxK.cur!=='glitch')canvas.style.transform='translateX('+Math.round((Math.random()-0.5)*24*amp*3)+'px) skewX('+((Math.random()-0.5)*8*amp).toFixed(1)+'deg)'; } }
+  for(const k of[K.cur,G&&G.to])if(k&&K.ring[k])for(const M of K.ring[k])MEMBER_ANIM[k](M,dt,beat,P.mo,K.t);
+  crowdDance(K,dt,beat); K.mosh=Math.max(0,K.mosh-dt);
+  fireBurn(K,dt,T);
+  const fl=0.85+0.1*s(K.t*13)+0.08*s(K.t*7.3+1)+0.05*Math.random(); // firelight flickers on everything
+  K.light.intensity=(1.4+1.6*Math.min(1,K.st.burn.length/120))*fl; K.light.position.y=2+Math.min(K.st.top*0.5,K.st.burnY||3);
+  K.hemi.intensity=0.8+0.2*fl; K.amb.intensity=0.35+0.1*fl; blockMat.color.setRGB(0.44*fl,0.32*fl,0.28*fl); waterMat.color.setRGB(0.4*fl,0.32*fl,0.34*fl);
+  scene.background.setHex(0x07050c); scene.fog.color.setHex(0x07050c); scene.fog.near=150; scene.fog.far=420; if(camera.far<700){ camera.far=700; camera.updateProjectionMatrix(); } }
+// the statue burning down: blocks char and glow, flames and sparks pour off them, chunks fall off, and near the end the whole thing
+// collapses into a pile of glowing embers
+function fireBurn(K,dt,T){ const st=K.st, m=st.mesh, o=fireTmp, col=fireCol, R=Math.random, ch=fireChar, pit=st.kind==='pit', s=Math.sin; st.burn.length=0; let by=0;
+  for(let i=0;i<st.n;i++){ const p=i*3; let state=st.state[i];
+    if(state===0&&(T>=st.td[i]||(T>=st.collapse+st.p[p+1]*0.02&&st.k[i]===0))){ state=st.state[i]=1; const ox=st.p[p], oz=st.p[p+2], l=Math.hypot(ox,oz)||1, out=T>=st.collapse?1.5:3.5; // falling
+      st.v[p]=ox/l*out*R()+(R()-0.5); st.v[p+1]=R()*2; st.v[p+2]=oz/l*out*R()+(R()-0.5); st.rot[i*2]=(R()-0.5)*8; st.rot[i*2+1]=(R()-0.5)*8; }
+    let lit=0;
+    if(state===1){ st.v[p+1]-=16*dt; st.p[p]+=st.v[p]*dt; st.p[p+1]+=st.v[p+1]*dt; st.p[p+2]+=st.v[p+2]*dt;
+      if(st.p[p+1]<=0.35*st.vs){ st.p[p+1]=0.35*st.vs; st.state[i]=state=2; st.sc[i]=0.75; for(let n=0;n<4;n++)sparkAdd(K.sparks,st.p[p],st.p[p+1],st.p[p+2],(R()-0.5)*4,2+R()*4,(R()-0.5)*4,1,0.7,0.3,0.6+R()*0.6,0.5); } }
+    if(state===2){ st.sc[i]=Math.max(0.3,st.sc[i]-dt*0.012); lit=0.6+0.4*s(T*3+i); col.setRGB(1,0.35+0.15*lit,0.08).multiplyScalar(0.55+0.45*lit); if(R()<dt*0.25)sparkAdd(K.sparks,st.p[p],st.p[p+1],st.p[p+2],(R()-0.5),2+R()*3,(R()-0.5),1,0.6,0.2,1+R(),0.8); } // embers
+    else { const f=T<st.ti[i]?0:Math.min(1,(T-st.ti[i])/Math.max(1,(Math.min(st.td[i],st.collapse)-st.ti[i])));
+      col.copy(st.c[i]); if(f>0&&!pit&&st.k[i]!==2){ col.lerp(ch,f*0.85); lit=(0.45+0.55*Math.abs(s(T*9+i*1.7)))*Math.min(1,f*3); col.r=Math.min(1,col.r+lit*0.9); col.g=Math.min(1,col.g+lit*0.35); }
+      if(f>0&&st.k[i]!==2&&state===0){ st.burn.push(i); by+=st.p[p+1]; } if(st.k[i]===1&&f>0){ lit=0.5+0.5*Math.abs(s(T*7+i)); col.lerp(fireGlow,0.5*lit); } }
+    o.position.set(st.p[p],st.p[p+1],st.p[p+2]); o.rotation.set(state===1?T*st.rot[i*2]:0,state===1?T*st.rot[i*2+1]:0,0); o.scale.setScalar(st.vs*st.sc[i]); o.updateMatrix(); m.setMatrixAt(i,o.matrix); m.setColorAt(i,col); }
+  m.instanceMatrix.needsUpdate=true; m.instanceColor.needsUpdate=true; st.burnY=st.burn.length?by/st.burn.length:2;
+  // flames and sparks pour off the burning blocks
+  const nf=Math.min(14,2+Math.floor(st.burn.length/12)); for(let n=0;n<nf&&st.burn.length;n++){ const i=st.burn[Math.floor(R()*st.burn.length)], p=i*3, big=pit?1.3:1;
+    sparkAdd(K.flames,st.p[p]+(R()-0.5)*st.vs,st.p[p+1]+0.4*st.vs,st.p[p+2]+(R()-0.5)*st.vs,(R()-0.5)*0.6,(2.2+R()*2.4)*big,(R()-0.5)*0.6,1,0.75+R()*0.2,0.3,0.5+R()*0.6,0.8); }
+  if(R()<dt*30&&st.burn.length){ const i=st.burn[Math.floor(R()*st.burn.length)], p=i*3; sparkAdd(K.sparks,st.p[p],st.p[p+1],st.p[p+2],(R()-0.5)*2,4+R()*5,(R()-0.5)*2,1,0.8,0.4,1.4+R()*1.6,1.5); }
+  sparkTick(K.flames,dt,T); sparkTick(K.sparks,dt,T); }
+const fireTmp=new THREE.Object3D(), fireCol=new THREE.Color(), fireChar=new THREE.Color(0x231812), fireGlow=new THREE.Color(0xff7a20);
+// the camera cuts on the beat: the hero walking, the statue burning, the crowd, and the giants (cutting to them as they switch)
+function fireCam(dt){ const sc=demo.sc, K=campK, C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:-1,gi:0}), A=camp.position, beat=musBeat(), st=K.st, Hh=st.top;
+  const at=(x,y,z)=>new THREE.Vector3(A.x+x,A.y+y,A.z+z), hero=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]), f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)), rt=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  const gk=K.gl?K.gl.to:K.cur, ring=gk&&K.ring[gk], M=ring&&ring[C.gi%4], gw=(x,y,z)=>M.g.localToWorld(new THREE.Vector3(x,y,z)), hy=gk==='drm'?1.92:1.62;
+  const inst={gtr:[[-0.3,1.3,-1.25],[0,1.0,-0.3]],bass:[[-0.3,1.3,-1.3],[0,1.0,-0.3]],drm:[[0.35,2.4,-1.7],[0,1.2,-0.5]],sx:[[0.05,1.9,-1.1],[0.1,1.0,-0.6]],sing:[[-0.45,1.1,-0.9],[0,1.55,-0.3]]};
+  const SH={wide:t=>[at(Math.sin(t*0.05)*30,14-t*0.2,34-t*0.5),at(0,Hh*0.4,0)],
+    heroSide:t=>[hero.clone().addScaledVector(f,2.6).addScaledVector(rt,1.3-t*0.1).add(new THREE.Vector3(0,0.2,0)),hero],
+    heroBack:t=>[hero.clone().addScaledVector(f,-3.2).add(new THREE.Vector3(0,0.8,0)),hero.clone().addScaledVector(f,6)],
+    statueLow:t=>{ const a=t*0.12+C.k0; return [at(Math.cos(a)*(st.r+5),1.4,Math.sin(a)*(st.r+5)),at(0,Hh*0.6,0)]; },
+    fireClose:t=>[at(2-t*0.2,2.2,st.r+4.5),at(0,Math.min(3,Hh*0.3),0)],
+    crowd:t=>{ const a=t*0.1+C.k0; return [at(Math.cos(a)*21,2.3,Math.sin(a)*21),at(0,3,0)]; },
+    aerial:t=>{ const a=t*0.15+C.k0; return [at(Math.cos(a)*22,36-t,Math.sin(a)*22),at(0,3,0)]; },
+    giantFace:t=>[gw(0.25*Math.sin(t*0.3),hy,-(0.95-t*0.03)),gw(0,hy,0)],
+    giantInst:t=>{ const q=inst[gk]; return [gw(q[0][0]+t*0.04,q[0][1],q[0][2]),gw(...q[1])]; },
+    tiny:t=>[gw(0.55,2.15-t*0.02,0.7),hero], // looking down past a giant's head at the tiny hero by the fire
+    giantUp:t=>{ const g=gw(0,hy,0), d=new THREE.Vector3(g.x-A.x,0,g.z-A.z).normalize(); return [at(d.x*(st.r+6),1.6,d.z*(st.r+6)),g]; }};
+  const seq=['wide','heroSide','tiny','statueLow','giantFace','crowd','heroBack','giantInst','aerial','fireClose','giantUp'].filter(n=>(M||!/giant|tiny/.test(n))&&(K.crowd.length||n!=='crowd'));
+  const bt=Math.floor(beat); C.st-=dt; C.k+=dt;
+  if(C.force&&M){ C.force=false; C.cur=Math.random()<0.75?'giantUp':'giantFace'; C.gi=Math.floor(Math.random()*4); C.st=Math.max(2.5,beatSec()*4); C.k=0; C.k0=Math.random()*6; } // show the giants as they switch
+  else if(!C.cur||!SH[C.cur]||(!M&&/giant|tiny/.test(C.cur))||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.2+Math.random()*1.6; C.k=0; C.k0=Math.random()*6; C.gi=Math.floor(Math.random()*4); } C.lb=bt;
+  const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
+
 // ================= WONDER BUILDING =================
-function wonderGround(gr){ const top=gr==='sand'?ID.sand:ID.grass;
-  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const rz=z-CZ, rx=x-CX, d=Math.max(0,Math.abs(rz)-26);
+function wonderGround(gr,round){ const top=gr==='sand'?ID.sand:ID.grass; // round: a flat circle (the fire concert's bowl) instead of a strip
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const rz=z-CZ, rx=x-CX, d=Math.max(0,round?Math.hypot(rx,rz)-24:Math.abs(rz)-26);
     if(d>0){ const cap=WGY+Math.floor(d*0.6); if(cap>=H)continue; let cut=false; // the land outside the site slopes back up to how it was
       for(let y=H-1;y>=cap;y--){ const i=idx(x,y,z); if(world[i]){ world[i]=0; meta[i]=0; cut=true; } } if(cut){ const i=idx(x,cap-1,z); if(world[i]&&world[i]!==ID.water)world[i]=top; } continue; }
     let h=WGY, surf=top, water=0;
@@ -3050,7 +3238,7 @@ function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(drive&&drive
   if(!demo.user){ demo.user=true; document.body.classList.add('duser'); if(demo.sc.act!=='concert')camMode=3; demoPoke(); } }
 function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.remove('duser'); for(const k of DEMO_MOVE)keys[k]=false; hitHeld=false; upHeld=downHeld=false;
   if(document.pointerLockElement)document.exitPointerLock(); camMode=demo.sc.cam==='first'?1:3; demo.cam=null;
-  const P=demo.pil; if(demo.sc.act==='concert'){ P.x=pl.p[0]-CLUB.x; P.z=pl.p[2]-CLUB.z; } P.d=1e9; P.t=0; P.tree=null; }
+  const P=demo.pil; if(demo.sc.act==='concert'){ P.x=pl.p[0]-CLUB.x; P.z=pl.p[2]-CLUB.z; } if(demo.sc.act==='fire')P.a=Math.atan2(pl.p[2]-camp.position.z,pl.p[0]-camp.position.x); P.d=1e9; P.t=0; P.tree=null; }
 function doHit(){ if(demo)demoHit(); else hitAction(); }
 function demoHit(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
   const n=shots.length; hitAction(); if(demo.sc.act==='wonder'&&weapon==='bow'&&shots.length>n)shots[shots.length-1].big=demo.pil.phase==='blast'?3.4:2.4; }
@@ -4256,7 +4444,7 @@ $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.tog
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
 window.__bs={get cityK(){return cityK;},makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
-  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
+  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
 </script>
