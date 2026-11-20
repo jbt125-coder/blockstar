@@ -180,6 +180,13 @@
   body.demo #dmStop{display:block} #dmStop.on{opacity:1;pointer-events:auto}
   #ytBox{left:calc(10px + env(safe-area-inset-left));bottom:calc(10px + env(safe-area-inset-bottom));z-index:9;display:none;border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.5)}
   #ytBox.on{display:block} body:not(.demo) #ytBox{bottom:auto;top:calc(110px + env(safe-area-inset-top))}
+  /* demo color looks: grain, vignette and a camcorder stamp for the old home video look, and replayed frames for the glitchy look */
+  #fxBox{position:fixed;inset:0;pointer-events:none;z-index:7;display:none;overflow:hidden} body.demo #fxBox{display:block}
+  #fxBox>*{position:absolute;inset:0;width:100%;height:100%;display:none}
+  #fxGrain{mix-blend-mode:overlay;opacity:.5}
+  #fxVig{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 52%,rgba(30,16,4,.6) 100%)}
+  #fxStamp{font:700 clamp(14px,2.6vw,26px)/1 'Courier New',monospace;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6);letter-spacing:1px}
+  #fxStamp b{position:absolute;left:4%;top:5%;font-weight:700} #fxStamp i{position:absolute;right:4%;bottom:5%;font-style:normal}
 
   .no-touch #act,.no-touch #joyHint,.no-touch #bTalk{display:none!important}
   @media (orientation:portrait){
@@ -194,6 +201,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="tint"></div><div id="hurt"></div><div id="web"></div><div id="burn"></div>
+<div id="fxBox"><canvas id="fxGlitch"></canvas><canvas id="fxGrain" width="320" height="180"></canvas><div id="fxVig"></div><div id="fxStamp"><b>▶ PLAY</b><i></i></div></div>
 <div id="touch"></div>
 <div id="cross" class="ui"></div>
 <div id="hud" class="ui"><div id="hearts"></div><div id="coins">🪙 0</div><div id="webCount"></div></div>
@@ -1512,7 +1520,7 @@ $('card').addEventListener('touchstart',e=>{e.preventDefault();$('card').style.d
 
 window.addEventListener('keydown',e=>{
   if(demo){ if(e.code==='Escape')demoStop(); // in a concert: WASD/arrows walk, P is pyro, every other key sings. Anywhere else: WASD, Space, Shift take over; Q swaps weapon; E or Enter attacks
-    else if(demo.sc&&demo.sc.act==='concert'){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else if(CONC_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); } else singKeys.add(e.code); }
+    else if(isConc(demo.sc)){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else if(CONC_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); } else singKeys.add(e.code); }
     else if(DEMO_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); }
     else if(e.code==='KeyQ'){ if(!e.repeat)demoSwap(); } else if(e.code==='KeyE'||e.code==='Enter')demoHit(); else demoPoke();
     e.preventDefault(); return; }
@@ -2242,7 +2250,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2254,7 +2262,12 @@ const DM_MOUTH={auto:'🤖 Moves with the music',button:'🎮 I press a button'}
 const DM_WON={random:'🎲 A random wonder'}; for(const k of WON_KEYS)DM_WON[k]=WON[k].icon+' '+WON[k].name;
 const DM_CITY={random:'🎲 A random city'}; // filled in below, once the cities exist
 const DM_DSRC={fresh:'🆕 A fresh demo city',mine:'💾 My saved city'};
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random'};
+const DM_GIANT={cycle:'🎬 Cut between them all',singer:'🎤 The singer (you!)',guitar:'🎸 Guitar player',drums:'🥁 Drummer',synth:'🎹 Synth player',dj:'💿 DJ scratching'};
+const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
+const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
+function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'); } // both concerts sing with any button
+const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2264,14 +2277,15 @@ const DEMO0={scenes:[
   {act:'wonder',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',wonder:'random'},
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
+  {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
-  return {scenes:c.scenes.slice(0,30).map(cleanScene),loop:c.loop!==false,fades:c.fades!==false,world:c.world==='mine'?'mine':'demo',seed:Math.abs(+c.seed|0)||2026}; }
+  return {scenes:c.scenes.slice(0,30).map(cleanScene),loop:c.loop!==false,fades:c.fades!==false,world:c.world==='mine'?'mine':'demo',seed:Math.abs(+c.seed|0)||2026,fx:DM_FX[c.fx]?c.fx:'normal'}; }
 let dmCfg=readDemo();
 function saveDemo(){ try{ localStorage.setItem(DEMO_KEY,JSON.stringify(dmCfg)); }catch(e){} }
 const dmEl=document.createElement('div'); dmEl.innerHTML='<div id="dmFade" class="ui dm"></div><div id="dmCap" class="ui dm"></div><button id="dmStop" class="ui dm">■ Stop demo</button>';
@@ -2284,11 +2298,11 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
     '<h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
-    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='concert'?
+    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
-      (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    '<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+      (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
+    (s.act==='stadium'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2298,10 +2312,12 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   if(mus.src==='mp3'||mus.src==='yt')h+='<div class="dmRow"><label class="dmInline">Start the song at<input type="number" min="0" id="dmStart" value="'+mus.start+'"> seconds</label></div>';
   if(mus.src!=='none')h+='<div class="dmRow"><label class="dmInline">Volume<input type="range" min="0" max="100" id="dmVol" value="'+mus.vol+'"></label></div>';
   h+='<h3>⚙️ Options</h3>'+
+    '<div class="item"><div class="ic">🎨</div><div class="tx"><b>Color look</b><div class="fx">How the whole demo looks: normal, black and white, sepia, a grainy old home video, funky colors, or glitchy (it stutters and repeats bits in time with the music). A scene can pick its own look too.</div></div></div>'+
+    '<div class="dmRow"><select id="dmFx">'+Object.entries(DM_FX).map(([a,b])=>'<option value="'+a+'"'+(a===dmCfg.fx?' selected':'')+'>'+b+'</option>').join('')+'</select></div>'+
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>World</b><div class="fx">'+(dmCfg.world==='demo'?'A demo world that is the same every time, so you can record it again.':'Your saved Survival world. Nothing the demo does is saved.')+'</div></div><button class="ibtn eq" id="dmWorld">'+(dmCfg.world==='demo'?'Demo world':'My world')+'</button></div>'+
     (dmCfg.world==='demo'?'<div class="dmRow"><label class="dmInline">Demo world number<input type="number" min="1" id="dmSeed" value="'+dmCfg.seed+'"></label><span class="fx">Change it for a different landscape.</span></div>':'')+
     '<div class="item"><div class="ic">🕹️</div><div class="tx"><b>Take over the hero</b><div class="fx">While a demo plays, move a controller stick, touch the screen, press WASD or click the mouse and you\'re in control: the camera swings behind your hero and the scene waits for you. Controller: left stick walks, right stick looks, A jumps, X or RT attacks, Y swaps between the sword and bomb arrows. Keyboard: Q swaps, E attacks (or click with the mouse). Let go for 5 seconds and the demo carries on by itself.</div></div></div>'+
-    '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤 concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
+    '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤 or 🏟️ concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
     '<div class="item"><div class="ic">🔁</div><div class="tx"><b>Repeat</b><div class="fx">'+(dmCfg.loop?'Start again from scene 1 after the last scene.':'Go back to the main menu after the last scene.')+'</div></div><button class="ibtn'+(dmCfg.loop?'':' gray')+'" id="dmLoop">'+(dmCfg.loop?'ON':'OFF')+'</button></div>'+
     '<div class="item"><div class="ic">🌗</div><div class="tx"><b>Fade between scenes</b><div class="fx">A quick fade to black between scenes.</div></div><button class="ibtn'+(dmCfg.fades?'':' gray')+'" id="dmFades">'+(dmCfg.fades?'ON':'OFF')+'</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlay">▶ Play demo</button><button class="mbtn gray" id="dmBack">Back</button></div>';
@@ -2321,6 +2337,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   if($('dmYt'))$('dmYt').addEventListener('input',()=>{ mus.yt=$('dmYt').value.trim().slice(0,300); saveMus(); });
   if($('dmStart'))$('dmStart').addEventListener('input',()=>{ mus.start=Math.max(0,+$('dmStart').value||0); saveMus(); });
   if($('dmVol'))$('dmVol').addEventListener('input',()=>{ mus.vol=+$('dmVol').value; saveMus(); try{ if(musGain)musGain.gain.value=mus.vol/100*0.55; songEl.volume=mus.vol/100; if(ytReady)ytP.setVolume(mus.vol); }catch(e){} });
+  $('dmFx').addEventListener('change',()=>{ dmCfg.fx=DM_FX[$('dmFx').value]?$('dmFx').value:'normal'; saveDemo(); });
   onClick($('dmWorld'),()=>{ dmCfg.world=dmCfg.world==='demo'?'mine':'demo'; saveDemo(); redraw(); });
   if($('dmSeed'))$('dmSeed').addEventListener('input',()=>{ dmCfg.seed=Math.abs(+$('dmSeed').value|0)||1; saveDemo(); });
   onClick($('dmLoop'),()=>{ dmCfg.loop=!dmCfg.loop; saveDemo(); redraw(); }); onClick($('dmFades'),()=>{ dmCfg.fades=!dmCfg.fades; saveDemo(); redraw(); });
@@ -2367,7 +2384,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
@@ -2382,13 +2399,14 @@ function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI
 function demoSetup(sc){ if(drive)exitVehicle(true,true); if(demo.cityWorld&&sc.act!=='city')demoBaseWorld(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':sc.act==='concert'||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
+  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
-  clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',sc.act==='concert');
+  clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',isConc(sc)); arena.visible=false; for(const c of clouds)c.visible=true;
   if(sc.act==='city'){ demoCitySetup(sc,P); return; }
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
+  if(sc.act==='stadium'){ stadiumSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2413,6 +2431,7 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
   if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
@@ -2430,7 +2449,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2445,12 +2464,13 @@ function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } 
   want.lerpVectors(tgt,want,tt);
   if(!C.p)C.p=want.clone(); else C.p.lerp(want,Math.min(1,dt*(k==='follow'?4:2.2))); C.l.lerp(tgt,Math.min(1,dt*5));
   camera.position.copy(C.p); camera.lookAt(C.l); }
-function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; if(!demo.user)demo.st+=dt; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock: it waits while you're driving
+function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!demo.user)demo.st+=dt; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock: it waits while you're driving
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
   if((P.wave||sc.act==='showcase')&&!demo.user){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
   if(sc.act==='city')demoCityDance();
   if(sc.act==='showcase'&&!demo.user){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
   if(sc.act==='concert')concertTick(dt);
+  if(sc.act==='stadium')stadiumTick(dt);
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
   if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
   if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
@@ -2464,6 +2484,49 @@ function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; if(!demo.user)demo
 function demoPoke(){ const b=$('dmStop'); b.classList.add('on'); clearTimeout(dmPokeT); dmPokeT=setTimeout(()=>b.classList.remove('on'),2500); }
 tap($('dmStop'),demoStop);
 document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.abs(e.movementY)>2))demoPoke(); });
+
+// ================= COLOR LOOKS =================
+// How a demo looks. Black and white, sepia and funky colors are a filter on the game picture. The old home video adds grain,
+// dust, scratches, flicker, a wobble and a camcorder stamp. Glitchy keeps the last moment of the game and, on the beat, plays a
+// little piece of it over and over (a stutter), sometimes torn into strips or with the colours flipped.
+const fxK={cur:'normal',ring:[],ri:0,rw:0,rh:0,on:null,hb:-1,gT:0,shake:0};
+const fxGl=$('fxGlitch'), fxGlX=fxGl.getContext('2d'), fxGrX=$('fxGrain').getContext('2d'), fxGrD=fxGrX.createImageData(320,180);
+const FX_MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function fxKind(){ if(!demo||!demo.sc)return 'normal'; const k=demo.sc.fx; return k&&k!=='auto'&&DM_FX[k]?k:dmCfg.fx||'normal'; }
+function fxSet(k){ if(fxK.cur===k)return; fxK.cur=k; const film=k==='film';
+  canvas.style.filter=k==='bw'?'grayscale(1) contrast(1.12)':k==='sepia'?'sepia(0.9) contrast(1.06) brightness(1.04)':''; canvas.style.transform='';
+  for(const id of['fxGrain','fxVig','fxStamp'])$(id).style.display=film?'block':'none';
+  fxGl.style.display='none'; fxGl.style.filter=''; fxK.on=null; fxK.ring.length=0; fxK.ri=0; fxK.gT=0; fxK.shake=0; }
+function beatSec(){ return musOnNow==='tune'&&tuneSt&&tuneSt.T&&tuneSt.T.bpm?60/tuneSt.T.bpm:0.5; }
+function fxTick(dt){ const k=fxKind(); fxSet(k); if(k==='normal'||k==='bw'||k==='sepia')return; const beat=musBeat(), r=Math.random;
+  if(k==='funky'){ const p=Math.pow(0.5+0.5*Math.cos((beat%1)*Math.PI*2),3); // the colours roll round the rainbow and pulse on the beat
+    canvas.style.filter='hue-rotate('+Math.round((beat*22.5)%360)+'deg) saturate(2.3) contrast(1.15) brightness('+(1+0.14*p).toFixed(3)+')'; return; }
+  if(k==='film'){ fxK.gT-=dt; if(fxK.gT>0)return; fxK.gT=1/24; // like an old camera: 24 new grains a second
+    canvas.style.filter='sepia(0.38) saturate(0.78) contrast(1.16) brightness('+(0.93+r()*0.1).toFixed(3)+')';
+    canvas.style.transform='translate('+((r()-0.5)*3).toFixed(1)+'px,'+((r()-0.5)*3).toFixed(1)+'px) scale(1.02)';
+    const d=fxGrD.data; for(let i=0;i<d.length;i+=4){ const v=128+(r()-0.5)*100; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; } fxGrX.putImageData(fxGrD,0,0);
+    for(let n=Math.floor(r()*5);n>0;n--){ fxGrX.fillStyle=r()<0.5?'#000':'#fff'; fxGrX.beginPath(); fxGrX.arc(r()*320,r()*180,0.4+r()*1.4,0,7); fxGrX.fill(); } // dust
+    if(r()<0.3){ fxGrX.fillStyle='rgba(255,255,255,0.55)'; fxGrX.fillRect(r()*320,0,0.7,180); } // a scratch
+    const d2=new Date(), h=d2.getHours(), st=FX_MON[d2.getMonth()]+' '+d2.getDate()+' 1994  '+((h+11)%12+1)+':'+String(d2.getMinutes()).padStart(2,'0')+(h<12?' AM':' PM'), el=$('fxStamp').lastChild;
+    if(el.textContent!==st)el.textContent=st; return; }
+  glitchTick(dt,beat); }
+// glitchy: keep the last 24 frames (a small copy of each), so a moment can be replayed
+function fxCapture(){ if(fxK.on)return; const w=Math.min(800,innerWidth), h=Math.max(1,Math.round(w*innerHeight/innerWidth));
+  if(w!==fxK.rw||h!==fxK.rh){ fxK.rw=w; fxK.rh=h; fxK.ring.length=0; fxK.ri=0; fxGl.width=w; fxGl.height=h; }
+  let f=fxK.ring[fxK.ri]; if(!f){ const c=document.createElement('canvas'); c.width=w; c.height=h; f=fxK.ring[fxK.ri]={c,x:c.getContext('2d'),t:0}; }
+  f.x.drawImage(canvas,0,0,w,h); f.t=performance.now()/1000; fxK.ri=(fxK.ri+1)%24; }
+function glitchTick(dt,beat){ const now=performance.now()/1000, hb=Math.floor(beat*2), r=Math.random;
+  fxK.shake=Math.max(0,fxK.shake-dt); canvas.style.transform=fxK.shake>0?'translateX('+Math.round((r()-0.5)*18)+'px)':'';
+  if(!fxK.on&&hb!==fxK.hb){ fxK.hb=hb; const down=hb%8===0, ch=r(); // every half beat there's a chance of a stutter (a good one on the first beat of a bar)
+    if(fxK.ring.length>=12&&ch<(down?0.8:0.32)){ const spb=beatSec(), loop=Math.max(0.05,spb/(r()<0.5?4:2)), byT=fxK.ring.slice().sort((a,b)=>a.t-b.t);
+      let fr=byT.filter(f=>f.t>=now-loop-0.001); if(fr.length<2)fr=byT.slice(-2);
+      const o=fxK.on={fr,t0:now,loop,end:now+spb*(down?1:r()<0.5?0.5:0.75),freeze:r()<0.2,tear:r()<0.65,bw:r()<0.15,hue:r()<0.3?Math.floor(30+r()*300):0};
+      fxGl.style.filter=(o.hue?'hue-rotate('+o.hue+'deg) saturate(2) ':'')+(o.bw?'grayscale(1) contrast(1.6)':''); fxGl.style.display='block'; }
+    else if(ch>0.85)fxK.shake=0.08; } // or a quick jolt sideways
+  const o=fxK.on; if(!o)return;
+  if(now>=o.end){ fxK.on=null; fxGl.style.display='none'; return; }
+  const ph=((now-o.t0)%o.loop)/o.loop, f=o.freeze?o.fr[o.fr.length-1]:o.fr[Math.min(o.fr.length-1,Math.floor(ph*o.fr.length))], X=fxGlX, w=fxK.rw, h=fxK.rh;
+  X.drawImage(f.c,0,0); if(o.tear)for(let n=2+Math.floor(r()*4);n>0;n--){ const y=Math.floor(r()*h), bh=4+Math.floor(r()*h*0.08), dx=Math.round((r()-0.5)*w*0.12); X.drawImage(f.c,0,y,w,bh,dx,y,w,bh); } }
 
 // ================= NIGHT CLUB CONCERT =================
 // A club up in the sky: a band (guitar, bass, drums, and a DJ on turntables and a synth), up to 3 backup singers and a
@@ -2479,7 +2542,7 @@ function padRead(){ const o={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:fal
       if(on&&i!==8&&i!==9&&i!==16)o.any=true; if(on&&i===0)o.a=true; if(on&&i===1)o.b=true; if(on&&(i===2||i===7))o.hit=true; if(on&&i===3){ o.swap=true; o.y=true; } if(i===7)o.rt=v; if(i===6)o.lt=v; });
     const ax=p.axes||[]; o.lx+=dz(ax[0]||0); o.ly+=dz(ax[1]||0); o.rx+=dz(ax[2]||0); o.ry+=dz(ax[3]||0); }
   return o; }
-function clubNpc(L,x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry||0; g.scale.setScalar(0.94); const R=makeRig(g); dressRig(R,cleanLook(L)); club.add(g); return {g,R,x,y,z}; }
+function clubNpc(L,x,y,z,ry,par){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry||0; g.scale.setScalar(0.94); const R=makeRig(g); dressRig(R,cleanLook(L)); (par||club).add(g); return {g,R,x,y,z}; }
 function guitarMesh(col,neckL,bass){ const g=new THREE.Group(), bodyM=lm(col), wood=lm(0x6b4a2a), dk=lm(0x1a1410), n=bass?4:6;
   const b1=box(0.42,0.3,0.08,bodyM); b1.position.y=-0.12; g.add(b1); const b2=box(0.32,0.22,0.08,bodyM); b2.position.y=0.12; g.add(b2);
   const pg=box(0.14,0.16,0.01,lm(0xf2f2ee)); pg.position.set(0.09,-0.06,-0.045); g.add(pg);
@@ -2571,13 +2634,15 @@ function setCrowd(K,kind){ for(const c of K.crowd){ club.remove(c.g); disposeG(c
     if(Math.random()<0.35&&(c.R||c.r.armR))crowdItem(c);
     c.x=x; c.z=z; c.st=styles[Math.floor(Math.random()*styles.length)]; c.off=Math.random()<0.7?0:0.5; c.ph=Math.random()*6; K.crowd.push(c); } }
 // pyrotechnics: one cloud of glowing points for flames, sparks and fireworks
-function pyroInit(K){ const N=900, g=new THREE.BufferGeometry(), pos=new Float32Array(N*3), col=new Float32Array(N*3); for(let i=0;i<N;i++)pos[i*3+1]=-50;
+function pyroInit(K,par){ const N=900, g=new THREE.BufferGeometry(), pos=new Float32Array(N*3), col=new Float32Array(N*3); for(let i=0;i<N;i++)pos[i*3+1]=-50;
   g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
-  const pts=new THREE.Points(g,new THREE.PointsMaterial({size:0.24,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); pts.frustumCulled=false; club.add(pts);
+  const pts=new THREE.Points(g,new THREE.PointsMaterial({size:0.24,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); pts.frustumCulled=false; (par||club).add(pts);
   K.px={g,pos,col,v:new Float32Array(N*3),life:new Float32Array(N),max:new Float32Array(N),c0:new Float32Array(N*3),grav:new Float32Array(N),n:N,next:0}; }
-function pyroAdd(x,y,z,vx,vy,vz,r,g,b,life,grav){ const P=clubK.px, i=P.next++%P.n; P.pos[i*3]=x; P.pos[i*3+1]=y; P.pos[i*3+2]=z; P.v[i*3]=vx; P.v[i*3+1]=vy; P.v[i*3+2]=vz;
+let pyK=null; // the venue whose pyro is being updated (the club, or the outdoor stage)
+function pyroAdd(x,y,z,vx,vy,vz,r,g,b,life,grav){ const P=(pyK||clubK).px, i=P.next++%P.n; P.pos[i*3]=x; P.pos[i*3+1]=y; P.pos[i*3+2]=z; P.v[i*3]=vx; P.v[i*3+1]=vy; P.v[i*3+2]=vz;
   P.c0[i*3]=r; P.c0[i*3+1]=g; P.c0[i*3+2]=b; P.life[i]=P.max[i]=life; P.grav[i]=grav; }
-function pyroGo(){ const K=clubK; if(!K||(demo&&(!demo.sc||demo.sc.pyro!=='on'))||K.t-K.pyroT<0.4)return; K.pyroT=K.t;
+function venueK(){ return demo&&demo.sc&&demo.sc.act==='stadium'?arenaK:clubK; }
+function pyroGo(){ const K=venueK(); if(!K||(demo&&(!demo.sc||demo.sc.pyro!=='on'))||K.t-K.pyroT<0.4)return; K.pyroT=K.t;
   const kind=['jets','curtain','jets2','fireworks'][K.pyroI++%4];
   K.mosh=2.2; // everyone jumps together
   if(kind==='jets2'||kind==='fireworks')K.emit.push({k:'confetti',t:2.6});
@@ -2585,7 +2650,7 @@ function pyroGo(){ const K=clubK; if(!K||(demo&&(!demo.sc||demo.sc.pyro!=='on'))
   else if(kind==='jets2'){ for(const x of[-7,-3,3,7])K.emit.push({k:'jet',x,z:-0.45,t:0.9}); for(const x of[-9,9])K.emit.push({k:'spark',x,z:-0.45,t:1.6}); sfx('jet'); }
   else if(kind==='curtain'){ K.emit.push({k:'curtain',t:2.4}); sfx('sizzle'); }
   else { [-5,0,5].forEach((x,i)=>K.emit.push({k:'rocket',x,y:1.1,z:-0.45,t:0.55+i*0.12,hue:Math.random()})); sfx('whoosh'); } }
-function pyroTick(dt){ const K=clubK, P=K.px, R=rand;
+function pyroTick(dt,K0){ const K=K0||clubK, P=K.px, R=rand; pyK=K;
   for(const e of K.emit){ e.t-=dt;
     if(e.k==='jet'){ for(let n=0;n<10;n++)pyroAdd(e.x+(R()-.5)*0.3,1.15,e.z+(R()-.5)*0.3,(R()-.5)*1.2,9+R()*5,(R()-.5)*1.2,1,0.35+R()*0.5,0.05,0.35+R()*0.35,-4); K.fl=1; }
     else if(e.k==='spark'){ for(let n=0;n<6;n++)pyroAdd(e.x,1.15,e.z,(R()-.5)*3,6+R()*4,(R()-.5)*3,1,0.9,0.6,1.1+R()*0.4,10); }
@@ -2652,7 +2717,18 @@ function clubVenueTick(dt,beat,lvl,T){ const K=clubK, P2=Math.PI*2, s=Math.sin, 
     R.armR.rotation.x=2.25; R.armR.rotation.z=-0.42; const wave=Math.floor(beat/16)%2===1; R.armL.rotation.x=0.15; R.armL.rotation.z=wave?-2.4-0.3*s(beat*Math.PI):-0.15+0.12*s(beat*Math.PI*0.5);
     const w2=sb>=2&&beat%4<3.5?0.5+0.1*s(beat*P2):0; S.mo+=(w2-S.mo)*Math.min(1,dt*10); setMouth(R,S.mo); }
   // the crowd bobs, jumps and waves
-  crowdFunTick(K,dt,beat); const mosh=K.mosh>0, lightsUp=Math.floor(beat/16)%4>=2;
+  crowdFunTick(K,dt,beat); crowdDance(K,dt,beat);
+  // lights
+  const hueB=(beat/16)%1; K.lights.forEach((L,i)=>{ L.position.set(s(K.t*0.6+i*2.1)*8,6.5,-1+Math.cos(K.t*0.5+i*1.7)*5); L.color.setHSL((hueB+i/3)%1,1,0.55); });
+  K.key.intensity=1.0+0.5*pulse; for(const q of K.beams){ q.pv.rotation.z=0.55*s(K.t*0.8+q.i*1.1); q.pv.rotation.x=-0.35-0.3*s(K.t*0.6+q.i*0.7); q.cn.material.color.setHSL((hueB+q.i/6)%1,1,0.55); }
+  const bi=Math.floor(beat); if(bi!==K.lastBeat){ K.lastBeat=bi; for(const t of K.tiles){ const on=((t.i+t.j+bi)%3===0)||((t.i*t.i+t.j+bi)%5===0); t.m.color.setHSL(((t.i+5)*0.05+t.j*0.08+bi*0.11)%1,1,on?0.5:0.06); } }
+  K.ball.rotation.y+=dt*0.8; K.edge.material.color.setHSL((K.t*0.1)%1,1,0.6);
+  K.scrT-=dt; if(K.scrT<=0){ K.scrT=0.08; drawScreen(K,beat,Math.max(lvl,0.3)); }
+  // pyro fires by itself every 4 bars (a shoulder button or P sets it off any time)
+  const bar=Math.floor(beat/4); if(bar!==K.lastBar){ if(K.lastBar>=0&&bar%4===0)pyroGo(); K.lastBar=bar; }
+  pyroTick(dt); }
+// everyone in a crowd bobs, jumps and waves to the beat (and puts their hands up when the pyro goes off)
+function crowdDance(K,dt,beat){ const P2=Math.PI*2, s=Math.sin, mosh=K.mosh>0, lightsUp=Math.floor(beat/16)%4>=2;
   for(const c of K.crowd){ if(c.surf)continue; c.hitT=Math.max(0,(c.hitT||0)-dt); const b=beat+c.off, bp=0.5+0.5*Math.cos(b*P2), up=Math.abs(s(b*Math.PI));
     c.g.position.y=mosh?Math.abs(s(beat*Math.PI))*0.6:c.st==='jump'?up*0.35:0; const hr=0.06-0.3*bp;
     if(c.R){ const R=c.R; R.head.rotation.x=hr; R.armL.rotation.z=0; R.armR.rotation.z=0; R.armL.rotation.x=0; R.armR.rotation.x=0;
@@ -2664,15 +2740,7 @@ function clubVenueTick(dt,beat,lvl,T){ const K=clubK, P2=Math.PI*2, s=Math.sin, 
       if(r.legL){ r.legL.rotation.x=0; r.legR.rotation.x=0; } if(r.armL){ r.armL.rotation.z=0; r.armR.rotation.z=0; } }
     const A=c.R||c.r; if(A&&A.armL){ if(c.hitT>0||mosh){ A.armL.rotation.x=A.armR.rotation.x=0; A.armL.rotation.z=-2.8; A.armR.rotation.z=2.8; } // hands up!
       else if(c.item&&lightsUp){ A.armR.rotation.z=0; A.armR.rotation.x=2.9+0.25*s(beat*Math.PI*0.5+c.ph); } } }
-  // lights
-  const hueB=(beat/16)%1; K.lights.forEach((L,i)=>{ L.position.set(s(K.t*0.6+i*2.1)*8,6.5,-1+Math.cos(K.t*0.5+i*1.7)*5); L.color.setHSL((hueB+i/3)%1,1,0.55); });
-  K.key.intensity=1.0+0.5*pulse; for(const q of K.beams){ q.pv.rotation.z=0.55*s(K.t*0.8+q.i*1.1); q.pv.rotation.x=-0.35-0.3*s(K.t*0.6+q.i*0.7); q.cn.material.color.setHSL((hueB+q.i/6)%1,1,0.55); }
-  const bi=Math.floor(beat); if(bi!==K.lastBeat){ K.lastBeat=bi; for(const t of K.tiles){ const on=((t.i+t.j+bi)%3===0)||((t.i*t.i+t.j+bi)%5===0); t.m.color.setHSL(((t.i+5)*0.05+t.j*0.08+bi*0.11)%1,1,on?0.5:0.06); } }
-  K.ball.rotation.y+=dt*0.8; K.edge.material.color.setHSL((K.t*0.1)%1,1,0.6);
-  K.scrT-=dt; if(K.scrT<=0){ K.scrT=0.08; drawScreen(K,beat,Math.max(lvl,0.3)); }
-  // pyro fires by itself every 4 bars (a shoulder button or P sets it off any time)
-  const bar=Math.floor(beat/4); if(bar!==K.lastBar){ if(K.lastBar>=0&&bar%4===0)pyroGo(); K.lastBar=bar; }
-  pyroTick(dt); }
+}
 // cameras: cinematic cuts between the hero, each band member and the crowd
 function concertCam(dt){ const sc=demo.sc, K=clubK, C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null}), k=sc.cam, h=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]);
   const at=(x,y,z)=>new THREE.Vector3(CLUB.x+x,CLUB.y+y,CLUB.z+z), B=K.band, mp=m=>at(m.g.position.x,2.3,m.g.position.z);
@@ -2690,6 +2758,198 @@ function concertCam(dt){ const sc=demo.sc, K=clubK, C=demo.cam||(demo.cam={st:0,
   else if(k==='orbit'){ const a=demo.t*0.3; pr=[h.clone().add(new THREE.Vector3(Math.sin(a)*4.5,0.6,Math.cos(a)*4.5)),h]; }
   else pr=SH.wide(Math.sin(demo.t*0.1)*3+3);
   camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
+
+// ================= OUTDOOR CONCERT =================
+// A festival stage on a field in the middle of the world, with a huge crowd of people and monsters all round it. Past the far
+// edge of the world a giant band towers over everything: the hero sings into a giant mic, with a giant guitar player, drummer,
+// synth player and DJ, and a wall of flashing lights and searchlights behind them. The stage faces +z; the giants stand at -z.
+// The arena's origin is the middle of the front of the stage, on the ground.
+const arena=new THREE.Group(); arena.visible=false; scene.add(arena);
+let arenaK=null;
+const GS=34; // how many times bigger than life the giants are
+const GIANT_AT={sing:[0,-20,-64],gtr:[-46,-20,-76],syn:[46,-20,-76],drm:[-92,-20,-94],dj:[92,-20,-94]}; // x, feet, z
+const GIANT_LOOKS={gtr:{skin:'#d29b6e',eyes:'#3a2412',hair:'long',hairC:'#1a1410',top:'jacket',topC:'#2a2a30',bottom:'pants',bottomC:'#2f3e7a',shoes:'boots',shoeC:'#2a2a30',glasses:'shades'},
+  drm:{skin:'#ffe0c4',eyes:'#3a7ac8',hair:'spiky',hairC:'#f2d68a',top:'tank',topC:'#ffffff',bottom:'shorts',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#d8202a',hat:'headband',hatC:'#d8202a'},
+  syn:{skin:'#7a4a26',eyes:'#3a2412',hair:'curly',hairC:'#1a1410',top:'stripes',topC:'#3ae0ff',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#ffffff',glasses:'round'},
+  dj:{skin:'#b97d50',eyes:'#2f8a4a',hair:'short',hairC:'#1a1410',top:'hoodie',topC:'#7a3ac8',bottom:'pants',bottomC:'#2a2a30',shoes:'sneakers',shoeC:'#3fa34d',glasses:'shades',hat:'beanie',hatC:'#2a2a30'}};
+// a giant: its props are built life-size round a rig facing -z, then the whole thing is scaled up and turned to face the crowd
+function giant(L,key){ const [x,y,z]=GIANT_AT[key], g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=Math.PI; g.scale.setScalar(GS); arena.add(g);
+  const inner=new THREE.Group(); g.add(inner); const R=makeRig(inner); dressRig(R,cleanLook(L)); return {g,inner,R,x,y,z}; }
+function micMesh(){ const m=new THREE.Group(), b=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.025,0.2,8),lm(0x1e1e22)); m.add(b);
+  const h=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6),lm(0x8a8a92)); h.position.y=0.12; m.add(h); return m; }
+function buildArena(){ const g=arena, K={t:0,beams:[],singers:[],crowd:[],crowdKind:'',nSing:-1,emit:[],fl:0,pyroT:-9,pyroI:0,lastBar:-1,lastBeat:-1,scrT:0,mosh:0,panels:[],search:[],G:{},stageL:[]};
+  const add=(m,x,y,z,par)=>{ m.position.set(x,y,z); (par||g).add(m); return m; };
+  const cyl=(rt,rb,h,m,n)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n||16),m);
+  // the stage: 28 wide and 12 deep, with no roof so the giant band shows over it
+  add(box(28,1,12,lm(0x2a2230)),0,0.5,-6); add(box(28,0.04,12,lm(0x3a2e3e)),0,1.02,-6);
+  K.edge=add(box(28,0.1,0.1,new THREE.MeshBasicMaterial({color:0xffffff})),0,0.98,0.02);
+  const steel=lm(0x8a8a92);
+  for(const sx of[-1,1]){ for(const z of[-0.8,-11.2])add(box(0.5,11,0.5,steel),sx*13.6,5.5,z); add(box(0.45,0.45,10.4,steel),sx*13.6,10.2,-6); }
+  for(const z of[-2.5,-10])add(box(27.7,0.45,0.45,steel),0,10.2,z);
+  for(let i=0;i<7;i++){ const x=-10.5+i*3.5; add(box(0.4,0.5,0.4,lm(0x222228)),x,9.75,-2.5); const pv=add(new THREE.Group(),x,9.5,-2.5);
+    const cn=new THREE.Mesh(new THREE.ConeGeometry(1.2,10,14,1,true),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.14,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+    cn.position.y=-5; pv.add(cn); K.beams.push({pv,cn,i}); }
+  // speaker stacks, and two big screens on towers either side
+  const sc=document.createElement('canvas'); sc.width=256; sc.height=96; K.scrX=sc.getContext('2d'); K.scrTex=new THREE.CanvasTexture(sc);
+  for(const sx of[-1,1]){ const s=add(box(2.6,6,2,lm(0x1a1a1e)),sx*15.9,3,-1.5); for(const y of[-1.9,0,1.9]){ const c=cyl(0.75,0.75,0.1,lm(0x050505)); c.rotation.x=Math.PI/2; add(c,0,y,1.02,s); }
+    add(box(0.6,15,0.6,steel),sx*21,7.5,-2.4); add(box(9.6,5.9,0.3,lm(0x08080a)),sx*21,10,-2); add(new THREE.Mesh(new THREE.PlaneGeometry(9,5.4),new THREE.MeshBasicMaterial({map:K.scrTex,fog:false})),sx*21,10,-1.83); }
+  for(const x of[-9,-7,-5,-3,3,5,7,9])add(box(0.36,0.16,0.36,lm(0x101012)),x,1.08,-0.45); // pyro launchers
+  add(box(30,1.1,0.12,lm(0x9a9aa2)),0,0.55,1.5); // the crowd barrier
+  // the giant band (the singer is dressed as the hero each time the scene starts)
+  const G=K.G; G.sing=giant(LOOK0,'sing'); { const I=G.sing.inner, ch=lm(0x9a9aa2); // a mic stand, with the mic right at the mouth (straight arms can't hold one there without hiding the face)
+    add(cyl(0.16,0.16,0.03,lm(0x222226)),0,0.015,-0.52,I); add(cyl(0.018,0.018,1.42,ch,8),0,0.71,-0.52,I); const bm1=add(cyl(0.015,0.015,0.24,ch,8),0,1.47,-0.44,I); bm1.rotation.x=1.1;
+    const mb=add(cyl(0.032,0.042,0.16,lm(0x1e1e22),10),0,1.53,-0.36,I); mb.rotation.x=1.25; add(new THREE.Mesh(new THREE.SphereGeometry(0.055,10,8),lm(0x6a6a72)),0,1.56,-0.29,I); }
+  G.gtr=giant(GIANT_LOOKS.gtr,'gtr'); { const gt=guitarMesh(0xd8202a,0.62,false); gt.position.set(0.02,1.0,-0.25); gt.rotation.z=0.95; G.gtr.inner.add(gt); }
+  G.drm=giant(GIANT_LOOKS.drm,'drm'); G.drm.inner.position.y=0.3; G.drm.kit=drumKit(); G.drm.kit.g.position.y=0.5; G.drm.g.add(G.drm.kit.g);
+  for(const a of[G.drm.R.armL,G.drm.R.armR]){ const st=box(0.03,0.03,0.46,lm(0xe8d8b0)); st.position.set(0,-0.62,-0.2); a.add(st); }
+  const kc=document.createElement('canvas'); kc.width=64; kc.height=8; { const x=kc.getContext('2d'); x.fillStyle='#f4f4f0'; x.fillRect(0,0,64,8); x.fillStyle='#111'; for(let i=0;i<22;i++){ x.fillRect(i*3,0,1,8); if([0,1,3,4,5].includes(i%7))x.fillRect(i*3+2,0,1.6,5); } }
+  const kt=new THREE.CanvasTexture(kc); kt.magFilter=kt.minFilter=THREE.NearestFilter; kt.generateMipmaps=false; const dk=lm(0x2a2a30);
+  G.syn=giant(GIANT_LOOKS.syn,'syn'); { const I=G.syn.inner; add(box(1.4,0.09,0.44,[dk,dk,new THREE.MeshLambertMaterial({map:kt}),dk,dk,dk]),0,0.98,-0.52,I); add(box(1.4,0.12,0.12,dk),0,1.05,-0.8,I);
+    for(const sx of[-1,1])add(box(0.05,0.95,0.05,lm(0x9a9aa2)),sx*0.55,0.47,-0.52,I);
+    G.syn.keys=[]; for(let i=0;i<12;i++){ const m=new THREE.MeshBasicMaterial({color:0xff3aa8}); G.syn.keys.push(m); add(box(0.07,0.04,0.05,m),-0.6+i*0.11,1.12,-0.8,I); } }
+  G.dj=giant(GIANT_LOOKS.dj,'dj'); { const I=G.dj.inner, H=G.dj.R.head, hp=lm(0x1a1a1e); const band=box(0.56,0.06,0.1,hp); band.position.y=0.52; H.add(band);
+    for(const sx of[-1,1]){ const c=box(0.08,0.2,0.18,lm(0x3ae0ff)); c.position.set(sx*0.27,0.24,0); H.add(c); }
+    add(box(1.7,0.95,0.6,lm(0x1e1a24)),0,0.475,-0.62,I); add(box(1.7,0.1,0.02,bm(0x3ae0ff)),0,0.8,-0.93,I);
+    add(cyl(0.34,0.34,0.05,lm(0x2a2a30),20),0.42,0.97,-0.6,I); G.dj.plat=add(cyl(0.3,0.3,0.03,lm(0x0a0a0a),20),0.42,1.01,-0.6,I);
+    add(box(0.14,0.012,0.04,bm(0xd8202a)),0.13,0.02,0,G.dj.plat); add(cyl(0.08,0.08,0.01,bm(0xd8202a),12),0,0.016,0,G.dj.plat);
+    add(box(0.5,0.06,0.4,dk),-0.3,0.98,-0.6,I); G.dj.knobs=[]; for(let i=0;i<5;i++){ const m=new THREE.MeshBasicMaterial({color:0x3ae0ff}); G.dj.knobs.push(m); add(box(0.06,0.04,0.06,m),-0.48+i*0.09,1.03,-0.7,I); } }
+  // behind the giants: a wall of light panels that flash to the beat, and searchlights sweeping the sky
+  for(let r=0;r<7;r++)for(let c=0;c<14;c++){ const m=new THREE.MeshBasicMaterial({color:0x000000,fog:false}); add(new THREE.Mesh(new THREE.PlaneGeometry(13,11),m),-92.3+c*14.2,-4+r*12,-136); K.panels.push({m,r,c}); }
+  for(let i=0;i<9;i++){ const pv=add(new THREE.Group(),-112+i*28,-8,-124), m=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.13,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
+    const cn=new THREE.Mesh(new THREE.ConeGeometry(9,160,16,1,true),m); cn.position.y=80; cn.rotation.x=Math.PI; pv.add(cn); K.search.push({pv,m,i}); }
+  // lights on the giants and the crowd: a white key light from the front, a coloured one from the side, and colours over the stage
+  K.key=new THREE.DirectionalLight(0xffffff,0.9); K.key.position.set(0,60,80); K.key.target.position.set(0,20,-60); g.add(K.key,K.key.target);
+  K.col=new THREE.DirectionalLight(0xff40c0,0.7); K.col.position.set(-80,40,30); K.col.target.position.set(0,20,-60); g.add(K.col,K.col.target);
+  for(let i=0;i<3;i++)K.stageL.push(add(new THREE.PointLight(0xffffff,1.5,26),0,7,-3));
+  K.flash=add(new THREE.PointLight(0xffa040,0,40),0,3,0);
+  pyroInit(K,g); arenaFar(K); return K; }
+// the backup singers stand across the stage
+function arenaSingers(K,n){ for(const S of K.singers){ arena.remove(S.g); disposeG(S.g); } K.singers=[]; K.nSing=n;
+  const xs=n===1?[0]:n===2?[-2.6,2.6]:[-4.2,0,4.2];
+  for(let i=0;i<n;i++){ const S=clubNpc(SINGER_LOOKS[i],xs[i],1,-3.6,Math.PI,arena); S.i=i; S.mo=0; const m=micMesh(); m.position.set(0,-0.6,-0.04); S.R.armR.add(m); K.singers.push(S); } }
+// the crowd up close: people and monsters with full bodies, a few rows in front of the barrier
+function arenaCrowd(K,kind){ for(const c of K.crowd){ arena.remove(c.g); disposeG(c.g); if(c.r)for(const m of c.r.mats)m.dispose(); } K.crowd=[]; K.crowdKind=kind;
+  const styles=['bob','jump','arms','pump','sway','clap'];
+  for(let j=0;j<4;j++)for(let i=0;i<13;i++){ const x=-12+i*2+(j%2?1:0)+(Math.random()-0.5)*0.5, z=3.3+j*2.4+(Math.random()-0.5)*0.6;
+    if((j===0&&Math.abs(x)<1.3)||Math.abs(x)>13.2)continue; // the hero's spot in the front row
+    const mon=kind==='monsters'||(kind==='mixed'&&Math.random()<0.5), ry=Math.atan2(x,z+6)+(Math.random()-0.5)*0.3; let c;
+    if(mon){ const r=mobModel(CROWD_MON[Math.floor(Math.random()*CROWD_MON.length)]); r.bar.visible=false; r.root.position.set(x,0,z); r.root.rotation.y=ry; arena.add(r.root); c={g:r.root,r}; }
+    else { const p=clubNpc(randomLook(),x,0,z,ry,arena); c={g:p.g,R:p.R}; }
+    if(Math.random()<0.4&&(c.R||c.r.armR))crowdItem(c);
+    c.x=x; c.z=z; c.st=styles[Math.floor(Math.random()*styles.length)]; c.off=Math.random()<0.7?0:0.5; c.ph=Math.random()*6; K.crowd.push(c); }
+  farColors(K,kind); }
+// the crowd further back and all round the sides: hundreds of simple blocky people drawn in one go each for bodies, heads and arms
+const FAR_MON=[[0x4a7a3a,0x6aa04a],[0xd8d8d0,0xeeeee6],[0x6a6a70,0x8a8a90],[0x3a8a3a,0x5ab05a],[0xd8ccaa,0xe8dcc0],[0x40b040,0x90f090],[0x6a4a8a,0x9a7aba]];
+const FAR_SKIN=[0xffe0c4,0xf6cfa8,0xd29b6e,0xb97d50,0x7a4a26,0x5a3418];
+function arenaFar(K){ const xs=[], zs=[]; for(let i=0;i<4000&&xs.length<460;i++){ const x=(Math.random()*2-1)*46, z=-12+Math.random()*52;
+    if(z<2&&Math.abs(x)<17)continue; if(Math.abs(x)<14.5&&z<13.5)continue; if(Math.abs(x)<23&&z<1.5&&z>-4)continue; xs.push(x); zs.push(z); }
+  const n=xs.length, mk=(w,h,d)=>{ const m=new THREE.InstancedMesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial(),n); m.frustumCulled=false; arena.add(m); return m; };
+  const F=K.far={n,x:xs,z:zs,ry:xs.map((x,i)=>Math.atan2(x,zs[i]+6)),off:xs.map(()=>Math.random()<0.6?0:Math.random()),st:xs.map(()=>Math.floor(Math.random()*4)),
+    body:mk(0.52,1.42,0.3),head:mk(0.44,0.44,0.44),aL:mk(0.15,0.66,0.15),aR:mk(0.15,0.66,0.15),o:new THREE.Object3D()};
+  const gl=[]; xs.forEach((x,i)=>{ if(F.st[i]===3&&Math.random()<0.7)gl.push(i); }); F.gl=gl;
+  const pos=new Float32Array(gl.length*3), col=new Float32Array(gl.length*3); gl.forEach((i,k)=>{ const c=new THREE.Color().setHSL(Math.random(),1,0.6); col[k*3]=c.r; col[k*3+1]=c.g; col[k*3+2]=c.b; });
+  const pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.BufferAttribute(pos,3)); pg.setAttribute('color',new THREE.BufferAttribute(col,3));
+  F.pts=new THREE.Points(pg,new THREE.PointsMaterial({size:0.35,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); F.pts.frustumCulled=false; arena.add(F.pts); }
+function farColors(K,kind){ const F=K.far, c=new THREE.Color();
+  for(let i=0;i<F.n;i++){ const mon=kind==='monsters'||(kind==='mixed'&&Math.random()<0.5);
+    if(mon){ const p=FAR_MON[Math.floor(Math.random()*FAR_MON.length)]; c.setHex(p[0]); F.body.setColorAt(i,c); F.aL.setColorAt(i,c); F.aR.setColorAt(i,c); c.setHex(p[1]); F.head.setColorAt(i,c); }
+    else { c.setHSL(Math.random(),0.55+Math.random()*0.4,0.3+Math.random()*0.35); F.body.setColorAt(i,c); F.aL.setColorAt(i,c); F.aR.setColorAt(i,c); c.setHex(FAR_SKIN[Math.floor(Math.random()*FAR_SKIN.length)]); F.head.setColorAt(i,c); } }
+  for(const m of[F.body,F.head,F.aL,F.aR])m.instanceColor.needsUpdate=true; }
+function farTick(K,beat){ const F=K.far, o=F.o, s=Math.sin, mosh=K.mosh>0, wave=Math.floor(beat/16)%4>=2, pp=F.pts.geometry.attributes.position; let g=0;
+  for(let i=0;i<F.n;i++){ const b=beat+F.off[i], st=F.st[i], y=mosh?Math.abs(s(beat*Math.PI))*0.5:st===1?Math.abs(s(b*Math.PI))*0.4:Math.abs(s(b*Math.PI))*0.07, up=mosh||st===3||(st===2&&wave);
+    o.rotation.set(0,F.ry[i],0); o.scale.set(1,1,1); o.position.set(F.x[i],y+0.71,F.z[i]); o.updateMatrix(); F.body.setMatrixAt(i,o.matrix);
+    o.position.y=y+1.64; o.updateMatrix(); F.head.setMatrixAt(i,o.matrix);
+    const c=Math.cos(F.ry[i]), sn=Math.sin(F.ry[i]), sw=up?0.25*s(b*Math.PI):0;
+    for(const [A,sx] of [[F.aL,-1],[F.aR,1]]){ o.position.set(F.x[i]+sx*0.34*c,y+(up?1.78:1.07),F.z[i]-sx*0.34*sn); o.rotation.set(0,F.ry[i],up?sx*(-0.2)+sw:0); o.updateMatrix(); A.setMatrixAt(i,o.matrix); }
+    if(F.gl[g]===i){ pp.array[g*3]=F.x[i]+0.34*c; pp.array[g*3+1]=y+2.2; pp.array[g*3+2]=F.z[i]-0.34*sn; g++; } }
+  for(const m of[F.body,F.head,F.aL,F.aR])m.instanceMatrix.needsUpdate=true; pp.needsUpdate=true; }
+function stadiumSetup(sc,P){ if(!arenaK)arenaK=buildArena(); const K=arenaK;
+  demo.bak={w:world.slice(),m:meta.slice(),lava:[...lavaSet]}; clearApples(); merchant.g.visible=false; // a flat field for the show (put back after the scene)
+  wonderGround('grass'); rebuildAll();
+  arena.position.set(CX+0.5,WGY,CZ-14); arena.visible=true;
+  if(K.nSing!==sc.singers)arenaSingers(K,sc.singers); if(K.crowdKind!==sc.crowd)arenaCrowd(K,sc.crowd);
+  dressRig(K.G.sing.R,look); // the giant singer is you
+  K.emit.length=0; K.px.life.fill(0); K.lastBar=-1; K.lastBeat=-1; K.mosh=0;
+  setTime('night'); setWeather('clear'); scene.background.setHex(0x05040c); scene.fog.color.setHex(0x05040c); for(const c of clouds)c.visible=false;
+  Object.assign(P,{mo:0,hs:0}); pl.p=[arena.position.x,WGY,arena.position.z+2.5]; yaw=0; pitch=0.3; demo.puppet=true; }
+// the hero is in the front row, looking up at the giant band
+function stadiumPilot(dt,P){ const A=arena.position, t=[A.x,WGY,A.z+2.5]; for(let i=0;i<3;i++)pl.p[i]+=(t[i]-pl.p[i])*Math.min(1,dt*3);
+  yaw=Math.sin(musBeat()*Math.PI*0.25)*0.18; pitch=0.3; P.hs=0; }
+function stadiumTick(dt){ const K=arenaK, sc=demo.sc, P=demo.pil, beat=musBeat(), s=Math.sin; K.t+=dt;
+  if(pad.pyro&&!padPyroWas)pyroGo(); padPyroWas=pad.pyro;
+  const btn=Math.max(pad.sing,singKeys.size?1:0); let want=sc.mouth==='auto'?autoSing(beat):0; if(btn>0.05)want=Math.max(0.35,btn);
+  P.mo+=(want-P.mo)*Math.min(1,dt*(want>P.mo?30:16)); setMouth(K.G.sing.R,P.mo); setMouth(rig,P.mo*0.8); // the hero sings along with their giant self
+  if(!demo.user){ const pulse=0.5+0.5*Math.cos(beat*Math.PI*2); model.position.y+=Math.abs(s(beat*Math.PI))*0.08; head.rotation.x=0.42-0.14*pulse;
+    const mv=Math.floor(beat/8)%3; armL.rotation.z=0; armR.rotation.z=0;
+    if(mv===0){ armR.rotation.x=2.7+0.35*pulse; armL.rotation.x=0.2; }
+    else if(mv===1){ armL.rotation.x=0; armR.rotation.x=0; armL.rotation.z=-2.6-0.25*s(beat*Math.PI); armR.rotation.z=2.6+0.25*s(beat*Math.PI); }
+    else { armR.rotation.x=2.9; armL.rotation.x=2.9; armR.rotation.z=0.3*s(beat*Math.PI); armL.rotation.z=-0.3*s(beat*Math.PI); } }
+  arenaTick(K,dt,beat,P.mo);
+  scene.background.setHex(0x05040c); scene.fog.color.setHex(0x05040c); scene.fog.near=170; scene.fog.far=460; if(camera.far<700){ camera.far=700; camera.updateProjectionMatrix(); } }
+function arenaTick(K,dt,beat,lvl){ const G=K.G, P2=Math.PI*2, s=Math.sin, T=K.t, pulse=0.5+0.5*Math.cos(beat*P2), hop=Math.abs(s(beat*Math.PI)), nod=b=>0.06-0.24*(0.5+0.5*Math.cos(b*P2));
+  // the giant singer at the mic: one hand on the stand, the other reaching out, waving or pumping
+  { const R=G.sing.R, mv=Math.floor(beat/16)%3; R.head.rotation.x=0.02+nod(beat)*0.35+0.06*lvl; R.armR.rotation.x=0.95; R.armR.rotation.z=-0.42+0.04*s(beat*Math.PI); // gripping the stand
+    if(mv===2&&Math.floor(beat/4)%2===0){ R.armL.rotation.x=0.95; R.armL.rotation.z=0.42-0.04*s(beat*Math.PI); } // both hands on the stand
+    else if(mv===0){ R.armL.rotation.x=0.35+0.2*s(beat*Math.PI*0.5); R.armL.rotation.z=-1.25-0.15*s(beat*Math.PI); } // reaching out to the side else if(mv===1){ R.armL.rotation.x=0; R.armL.rotation.z=-2.5-0.3*s(beat*Math.PI); }
+    else { R.armL.rotation.x=2.75+0.3*Math.cos(beat*P2); R.armL.rotation.z=0; }
+    G.sing.inner.rotation.z=0.04*s(beat*Math.PI*0.5); G.sing.inner.position.y=hop*0.02; }
+  { const R=G.gtr.R, solo=(beat%32)>=24; R.head.rotation.x=nod(beat); R.armR.rotation.x=0.5+0.22*s(beat*P2*(solo?4:2)); R.armR.rotation.z=-0.38;
+    R.armL.rotation.x=0.75; R.armL.rotation.z=-0.35+0.05*s(beat*P2); G.gtr.inner.rotation.x=solo?-0.18:0; G.gtr.inner.position.y=hop*0.04; R.legL.rotation.z=-0.14; R.legR.rotation.z=0.14; }
+  { const R=G.drm.R, k=G.drm.kit, crash=(beat%16)<0.4, h=ph=>Math.max(0,s(ph)); R.armL.rotation.x=0.8+0.35*h(beat*P2*2); R.armR.rotation.x=crash?1.5:0.8+0.35*h(beat*P2*2+Math.PI);
+    R.armL.rotation.z=0.18; R.armR.rotation.z=crash?-0.55:-0.18; R.head.rotation.x=nod(beat); R.legR.rotation.x=1.35+0.12*Math.max(0,Math.cos(beat*P2)); R.legL.rotation.x=1.4;
+    const kk=1+0.06*Math.pow(Math.max(0,Math.cos(beat*P2)),8); k.kick.scale.set(kk,1,kk); k.crashR.rotation.z=crash?0.15*s(T*30):0; }
+  { const R=G.syn.R; R.head.rotation.x=nod(beat); R.armR.rotation.x=1.0+0.07*s(T*9); R.armL.rotation.x=1.0+0.07*s(T*7+1); R.armR.rotation.z=-0.1+0.1*s(beat*Math.PI*0.5); R.armL.rotation.z=0.1+0.1*s(beat*Math.PI*0.5+1);
+    if(Math.floor(beat/8)%4===3){ R.armL.rotation.x=0; R.armL.rotation.z=-2.7+0.2*s(beat*Math.PI); } // one hand up in the air
+    G.syn.keys.forEach((m,i)=>m.color.setHSL((beat/8+i/12)%1,1,(Math.floor(beat*2)+i*3)%5===0?0.6:0.14)); G.syn.inner.rotation.z=0.04*s(beat*Math.PI*0.5); }
+  { const R=G.dj.R, mode=Math.floor(beat/8)%4, scr=mode!==2; R.head.rotation.x=nod(beat);
+    if(scr){ R.armR.rotation.x=1.0; R.armR.rotation.z=-0.1+0.22*s(T*14); G.dj.plat.rotation.y+=dt*(3+12*s(T*14)); } else { R.armR.rotation.x=2.7+0.3*Math.cos(beat*P2); R.armR.rotation.z=0; G.dj.plat.rotation.y+=dt*3.5; }
+    if(mode%2===1){ R.armL.rotation.x=1.0+0.07*s(T*20); R.armL.rotation.z=0.1; } else { R.armL.rotation.x=0; R.armL.rotation.z=-2.8+0.2*s(beat*Math.PI); }
+    G.dj.knobs.forEach((m,i)=>m.color.setHSL((beat/4+i/5)%1,1,(Math.floor(beat*2)+i)%3===0?0.6:0.25)); }
+  // backup singers sway and sing "ooh"s
+  const sb=Math.floor(beat/4)%4; for(const S of K.singers){ const R=S.R; R.head.rotation.x=nod(beat)*0.6; S.g.position.x=S.x+0.18*s(beat*Math.PI*0.5); S.g.rotation.z=0.06*s(beat*Math.PI*0.5);
+    R.armR.rotation.x=2.25; R.armR.rotation.z=-0.42; R.armL.rotation.x=0.15; R.armL.rotation.z=Math.floor(beat/16)%2===1?-2.4-0.3*s(beat*Math.PI):-0.15+0.12*s(beat*Math.PI*0.5);
+    const w2=sb>=2&&beat%4<3.5?0.5+0.1*s(beat*P2):0; S.mo+=(w2-S.mo)*Math.min(1,dt*10); setMouth(R,S.mo); }
+  crowdDance(K,dt,beat); farTick(K,beat); K.mosh=Math.max(0,K.mosh-dt);
+  // the light wall: a new pattern every 4 bars, stepping on the beat (the last one is a white strobe)
+  const bi=Math.floor(beat), pat=Math.floor(beat/16)%5, hue=(beat/32)%1, fade=0.5+0.5*Math.cos((beat%1)*Math.PI);
+  for(const q of K.panels){ const on=pat===0?(q.c+q.r+bi)%2===0:pat===1?Math.abs(q.c-6.5)<=(beat*1.75)%7.5:pat===2?q.r===bi%7||q.c===(bi*2)%14:pat===3?(q.c*7+q.r*3+bi*5)%4===0:Math.floor(beat*4)%2===0;
+    q.m.color.setHSL((hue+q.c/28+(pat===4?0:q.r/21))%1,pat===4?0:1,on?(pat===4?0.75:0.3+0.3*fade):0.025); }
+  for(const q of K.search){ q.pv.rotation.z=0.55*s(T*0.45+q.i*0.9); q.pv.rotation.x=-0.25+0.3*s(T*0.35+q.i*1.3); q.m.color.setHSL((hue+q.i/9)%1,0.8,0.6); }
+  K.key.intensity=0.65+0.4*pulse; K.col.color.setHSL((hue+0.5)%1,1,0.55); K.col.intensity=0.5+0.4*hop;
+  K.stageL.forEach((L,i)=>{ L.position.set(s(T*0.6+i*2.1)*9,7,-3+Math.cos(T*0.5+i*1.7)*4); L.color.setHSL((hue+i/3)%1,1,0.55); });
+  for(const q of K.beams){ q.pv.rotation.z=0.55*s(T*0.8+q.i*1.1); q.pv.rotation.x=-0.35-0.3*s(T*0.6+q.i*0.7); q.cn.material.color.setHSL((hue+q.i/7)%1,1,0.55); }
+  K.edge.material.color.setHSL((T*0.1)%1,1,0.6);
+  K.scrT-=dt; if(K.scrT<=0){ K.scrT=0.08; drawScreen(K,beat,Math.max(lvl,0.3)); }
+  const bar=Math.floor(beat/4); if(bar!==K.lastBar){ if(K.lastBar>=0&&bar%4===0)pyroGo(); K.lastBar=bar; } // pyro every 4 bars by itself
+  pyroTick(dt,K); }
+// the camera cuts on the beat between the crowd, the stage and close-ups of each giant (or just one giant, if you picked one)
+function stadiumCam(dt){ const sc=demo.sc, G=arenaK.G, C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:-1}), A=arena.position, beat=musBeat();
+  const at=(x,y,z)=>new THREE.Vector3(A.x+x,A.y+y,A.z+z);
+  const gp=(q,ly,lz,lx)=>at(q.x-(lx||0)*GS,q.y+ly*GS,q.z-lz*GS); // a point on a giant in its own life-size units (its front is -z there)
+  const hero=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]);
+  const SH={wide:t=>[at(Math.sin(t*0.08)*8,13-t*0.25,44-t*0.9),at(0,17,-62)],
+    crowd:t=>[at(-9+t*0.9,2.4,9.5),at(-3+t*0.6,22,-62)],
+    shoulder:t=>[hero.clone().add(new THREE.Vector3(0.7-t*0.05,0.5,1.7)),gp(G.sing,1.45,0)],
+    heroFace:t=>[hero.clone().add(new THREE.Vector3(0.5-t*0.12,0.1,-1.9)),hero],
+    face:t=>[gp(G.sing,1.6,-(0.85-t*0.035),-0.2+0.06*Math.sin(t*0.4)),gp(G.sing,1.58,0,-0.03)],
+    mic:t=>[gp(G.sing,1.1,-0.9,-0.45+t*0.05),gp(G.sing,1.55,-0.3,0.1)],
+    singer:t=>[gp(G.sing,1.0,-(2.6-t*0.08),0.6*Math.sin(t*0.2)),gp(G.sing,1.25,0)],
+    guitar:t=>[gp(G.gtr,1.25,-(1.25-t*0.04),-0.35+t*0.06),gp(G.gtr,1.0,-0.3)],
+    guitarWide:t=>[gp(G.gtr,1.4,-2.4,0.7-t*0.1),gp(G.gtr,1.2,0)],
+    drums:t=>[gp(G.drm,2.2,-1.7,0.35-t*0.05),gp(G.drm,1.0,-0.5)],
+    drumsSide:t=>[gp(G.drm,1.5,-1.3,1.4-t*0.08),gp(G.drm,1.2,-0.3)],
+    synth:t=>[gp(G.syn,1.75,-1.05,-0.25+t*0.06),gp(G.syn,1.0,-0.55)],
+    synthFace:t=>[gp(G.syn,1.5,-1.6,0.6-t*0.08),gp(G.syn,1.35,-0.2)],
+    dj:t=>[gp(G.dj,1.8,-1.0,-0.3-t*0.04),gp(G.dj,1.0,-0.6,0.42)],
+    djWide:t=>[gp(G.dj,1.5,-2.3,-0.6+t*0.1),gp(G.dj,1.2,-0.2)],
+    band:t=>[at(-70+t*9,24,-14),at(-62+t*9,22,-70)],
+    aerial:t=>[at(Math.sin(t*0.2)*10,34-t*1.2,56-t*4.5),at(0,6,-6)],
+    stage:t=>[at(7-t*0.6,4.5,10),at(0,4,-4)]};
+  const seqs={cycle:['wide','face','crowd','guitar','shoulder','drums','synth','mic','aerial','dj','heroFace','band','stage','singer'],
+    singer:['face','singer','mic','shoulder'],guitar:['guitar','guitarWide'],drums:['drums','drumsSide'],synth:['synth','synthFace'],dj:['dj','djWide']};
+  const seq=seqs[sc.giant]||seqs.cycle, bt=Math.floor(beat); C.st-=dt; C.k+=dt;
+  if(!C.cur||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.2+Math.random()*1.6; C.k=0; } C.lb=bt;
+  const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
 
 // ================= WONDER BUILDING =================
 function wonderGround(gr){ const top=gr==='sand'?ID.sand:ID.grass;
@@ -2732,7 +2992,13 @@ function wonderPilot(dt,P){ const sc=demo.sc, T=demo.st, hand=()=>new THREE.Vect
     P.swT-=dt; if(P.swT<=0){ P.swT=0.22; swingT=0.25; sfx('place'); } return; }
   if(P.phase==='fight'){ if(T>sc.secs-2.6)wonderFinale(dt,P); return fightPilot(dt,P,2.4); }
   const out=[pl.p[0]-CX,pl.p[2]-CZ], ol=Math.hypot(out[0],out[1])||1, R=P.ext+10, vy=WGY+Math.min(P.top*0.6,22)+2, spot=[CX+out[0]/ol*R,vy,CZ+out[1]/ol*R];
-  if(P.phase==='admire'){ P.t2+=dt; P.hs=heroTo(spot,dt,16); turnTo(CX,CZ,dt,3); pitch*=0.95; if(P.t2>1.3){ P.phase='blast'; weapon='bow'; refreshWeapon(); arrows.explode=999; P.fireT=0.2; P.fightAt=demo.st+Math.max(3,(sc.secs-demo.st)*0.3); } return; }
+  const calm=sc.wmon==='off'; // no monsters: a long admiring tour round the wonder, then a short blast at the very end
+  if(P.phase==='admire'){ P.t2+=dt;
+    if(calm){ if(P.blastAt===undefined){ const left=sc.secs-T; P.blastAt=T+Math.max(1.3,left-Math.max(3.5,Math.min(8,left*0.35))); P.orb=Math.atan2(pl.p[2]-CZ,pl.p[0]-CX); }
+      P.orb+=dt*0.22; P.hs=heroTo([CX+Math.cos(P.orb)*(R+2),vy+Math.sin(P.t2*0.4)*3,CZ+Math.sin(P.orb)*(R+2)],dt,16); }
+    else P.hs=heroTo(spot,dt,16);
+    turnTo(CX,CZ,dt,3); pitch*=0.95;
+    if(calm?T>=P.blastAt:P.t2>1.3){ P.phase='blast'; weapon='bow'; refreshWeapon(); arrows.explode=999; P.fireT=0.2; P.fightAt=calm?1e9:demo.st+Math.max(3,(sc.secs-demo.st)*0.3); } return; }
   P.hs=heroTo(spot,dt,10); P.bowPose=true;
   if(T>=P.fightAt){ P.phase='fight'; demo.puppet=false; setFly(false,false); pl.v=[0,0,0]; P.spawnT=0; P.foes=wonderFoes(P.key); return; } // the locals are angry: land and fight
   if(T>sc.secs-2.6)wonderFinale(dt,P);
@@ -2763,10 +3029,10 @@ function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.r
   if(document.pointerLockElement)document.exitPointerLock(); camMode=demo.sc.cam==='first'?1:3; demo.cam=null;
   const P=demo.pil; if(demo.sc.act==='concert'){ P.x=pl.p[0]-CLUB.x; P.z=pl.p[2]-CLUB.z; } P.d=1e9; P.t=0; P.tree=null; }
 function doHit(){ if(demo)demoHit(); else hitAction(); }
-function demoHit(){ if(!demo||!demo.sc||demo.sc.act==='concert')return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
+function demoHit(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
   const n=shots.length; hitAction(); if(demo.sc.act==='wonder'&&weapon==='bow'&&shots.length>n)shots[shots.length-1].big=demo.pil.phase==='blast'?3.4:2.4; }
-function demoSwap(){ if(!demo||!demo.sc||demo.sc.act==='concert')return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
-function demoInput(dt){ pad=padRead(); const conc=demo.sc&&demo.sc.act==='concert';
+function demoSwap(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
+function demoInput(dt){ pad=padRead(); const conc=isConc(demo.sc);
   const mv=Math.abs(pad.lx)+Math.abs(pad.ly)>0, lk=Math.abs(pad.rx)+Math.abs(pad.ry)>0;
   if(mv||lk||(!conc&&pad.any))demoTake(lk);
   if(demo.user){ if(lk){ yaw-=pad.rx*2.6*dt; pitch-=pad.ry*2*dt; pitch=Math.max(-1.55,Math.min(1.55,pitch)); }
@@ -3953,7 +4219,7 @@ function frame(now){
   const dt=Math.min(0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
   update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
   let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
-  renderer.render(scene,camera); requestAnimationFrame(frame);
+  renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); requestAnimationFrame(frame);
 }
 
 // ================= START =================
