@@ -1729,7 +1729,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -2242,7 +2242,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2252,11 +2252,14 @@ const DM_CROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monste
 const DM_PYRO={on:'🔥 Pyro on',off:'No pyro'};
 const DM_MOUTH={auto:'🤖 Moves with the music',button:'🎮 I press a button'};
 const DM_WON={random:'🎲 A random wonder'}; for(const k of WON_KEYS)DM_WON[k]=WON[k].icon+' '+WON[k].name;
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random'};
+const DM_CITY={random:'🎲 A random city'}; // filled in below, once the cities exist
+const DM_DSRC={fresh:'🆕 A fresh demo city',mine:'💾 My saved city'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
   {act:'chop',time:'day',wx:'clear',land:'normal',cam:'cine',secs:20,cap:''},
+  {act:'city',time:'day',wx:'clear',land:'normal',cam:'follow',secs:120,cap:'',dcity:'random',dsrc:'fresh'},
   {act:'build',time:'sunset',wx:'clear',land:'normal',cam:'cine',secs:22,cap:'Building a house'},
   {act:'wonder',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',wonder:'random'},
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
@@ -2264,7 +2267,7 @@ const DEMO0={scenes:[
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON]])if(T[o[k]])s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2283,6 +2286,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='concert'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     '<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
@@ -2359,11 +2363,11 @@ function updateWeather(dt){ if(!wxPts)return; const P=wxPts.geometry.attributes.
 function demoStart(){ if(document.pointerLockElement)document.exitPointerLock(); saveNow(); musicStop();
   $('mbox').classList.remove('wide'); $('modal').style.display='none';
   demo={i:-1,t:0,st:0,user:false,idle:0,lookT:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
-  if(drive)exitVehicle(true); if(titleOn)hideTitle(); mobsOn=false; clearEntities(); clearCityLife(); clearInteriorLife();
+  if(drive)exitVehicle(true,true); if(titleOn)hideTitle(); mobsOn=false; clearEntities(); clearCityLife(); clearInteriorLife();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
@@ -2375,7 +2379,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); if(demo.cityWorld&&sc.act!=='city')demoBaseWorld(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':sc.act==='concert'||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
@@ -2383,6 +2387,7 @@ function demoSetup(sc){ setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
   clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',sc.act==='concert');
+  if(sc.act==='city'){ demoCitySetup(sc,P); return; }
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
@@ -2406,6 +2411,7 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
   P.side=Math.max(0,P.side-dt); if(P.side>0)return {ix:P.dir2,iz:-0.4};
   return {ix:0,iz:dist<0.6?0:Math.abs(d)<1.0?-1:-0.2}; }
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
+  if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
@@ -2442,6 +2448,7 @@ function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } 
 function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; if(!demo.user)demo.st+=dt; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock: it waits while you're driving
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
   if((P.wave||sc.act==='showcase')&&!demo.user){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
+  if(sc.act==='city')demoCityDance();
   if(sc.act==='showcase'&&!demo.user){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
@@ -2750,7 +2757,7 @@ function wonderCam(dt){ const sc=demo.sc, P=demo.pil, k=sc.cam, C=demo.cam||(dem
 const DEMO_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
 const CONC_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 let pad={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false}, padHitWas=false, padSwapWas=false, padRep=0;
-function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(look)demo.lookT=5;
+function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(drive&&drive.npc)drive.npc=null; // you're driving now if(look)demo.lookT=5;
   if(!demo.user){ demo.user=true; document.body.classList.add('duser'); if(demo.sc.act!=='concert')camMode=3; demoPoke(); } }
 function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.remove('duser'); for(const k of DEMO_MOVE)keys[k]=false; hitHeld=false; upHeld=downHeld=false;
   if(document.pointerLockElement)document.exitPointerLock(); camMode=demo.sc.cam==='first'?1:3; demo.cam=null;
@@ -2945,16 +2952,30 @@ function vehicleMesh(type){ const V=VEH[type], g=new THREE.Group(), M=c=>lm(c), 
 function driverMesh(L){ const g=new THREE.Group(); const s=box(0.4,0.42,0.4,cm(L.skin)); s.position.y=1.3; g.add(s); const hr=box(0.42,0.12,0.42,cm(L.hairC)); hr.position.y=1.55; g.add(hr); const t=box(0.5,0.6,0.3,cm(L.topC)); t.position.y=0.82; g.add(t); return g; }
 function makeVehicle(type,x,y,z,h){ const vm=vehicleMesh(type), v={type,V:VEH[type],p:[x,y,z],h,spd:0,vy:0,pitch:0,vm,m:vm.g,driver:null,npc:null,siren:false,sirenT:0,wheel:0}; scene.add(v.m); vehPlace(v); return v; }
 function vehPlace(v){ v.m.position.set(v.p[0],v.p[1],v.p[2]); v.m.rotation.set(0,v.h,0); v.m.rotateX(v.pitch); }
-function removeVehicle(v){ scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); if(v.drv){ v.m.remove(v.drv); } if(cityK){ const i=cityK.vehicles.indexOf(v); if(i>=0)cityK.vehicles.splice(i,1); } if(v.siren)sirenStop(v); }
+function removeVehicle(v){ scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); if(v.drv){ v.m.remove(v.drv); } for(const L of [cityK&&cityK.vehicles,intK&&intK.vehicles,freeVehicles])if(L){ const i=L.indexOf(v); if(i>=0)L.splice(i,1); } if(v.siren)sirenStop(v); }
 const vFwd=h=>[-Math.sin(h),-Math.cos(h)], vRight=h=>[Math.cos(h),-Math.sin(h)];
-function vSolid(x,y,z){ const xi=Math.floor(x), zi=Math.floor(z); if(xi<1||zi<1||xi>=W-1||zi>=D-1)return true; const b=get(xi,Math.floor(y),zi); return !!b&&B[b].solid; }
+function vSolid(x,y,z){ const xi=Math.floor(x), zi=Math.floor(z); if(xi<1||zi<1||xi>=W-1||zi>=D-1)return true; const b=get(xi,Math.floor(y),zi); return !!b&&B[b].solid&&b!==ID.pframe; } // vehicles squeeze through portal frames
+let freeVehicles=[], enterCD=0, drivePortalArmed=false;
+function vehList(){ return cityK?cityK.vehicles:intK?(intK.vehicles||(intK.vehicles=[])):freeVehicles; } // the vehicles in this place
+// walk into a vehicle to get in. If someone is driving it, they hop out (and aren't happy about it)
+function bumpEnter(){ for(const v of vehList()){ if(v.wrecked||v.towed||v.type==='tow'||v.driver)continue; const dx=pl.p[0]-v.p[0], dz=pl.p[2]-v.p[2], f=vFwd(v.h), r=vRight(v.h), lz=dx*f[0]+dz*f[1], lx=dx*r[0]+dz*r[1];
+    if(Math.abs(lx)<v.V.wid/2+0.4&&Math.abs(lz)<v.V.len/2+0.4&&Math.abs(pl.p[1]-v.p[1])<2){ takeVehicle(v); return true; } } return false; }
+function takeVehicle(v){ const K=cityK; if(v.npc){ if(v.drv){ v.m.remove(v.drv); v.drv=null; if(K)grumbler(v,'Hey!'); } if(K&&K.trip&&K.trip.v===v){ K.trip.p.g.visible=true; K.trip.p.gone=false; K.trip=null; } v.npc=null; } enterVehicle(v); }
+// join the traffic from wherever a vehicle is: curve into the nearest lane, then drive the roads like everyone else
+function attachLane(K,v){ if(!K||!K.crossings)return false; const cs=crossingSet(K); let best=null;
+  for(const [ax,az] of K.crossings)for(let d=0;d<4;d++){ const Dv=DIRS[d]; if(!cs.has((ax+Dv[0]*CITY_GRID)+','+(az+Dv[1]*CITY_GRID)))continue;
+    const r=vRight(dirHeading(d)), lx=ax+r[0]*1.75, lz=az+r[1]*1.75, s=(v.p[0]-lx)*Dv[0]+(v.p[2]-lz)*Dv[1]; if(s<3.5||s>CITY_GRID-9)continue;
+    const dist=Math.hypot(v.p[0]-(lx+Dv[0]*s),v.p[2]-(lz+Dv[1]*s)), f=vFwd(v.h), score=dist+((f[0]*Dv[0]+f[1]*Dv[1])<0?6:0); if(!best||score<best.score)best={score,dist,ax,az,d,s}; }
+  if(!best||best.dist>12)return false;
+  const s2=Math.min(CITY_GRID-8,best.s+6), [bx,bz]=lanePos(best.ax,best.az,best.d,s2), a=[v.p[0],v.p[2]], f=vFwd(v.h), L=Math.max(2,Math.hypot(bx-a[0],bz-a[1]));
+  v.npc={ax:best.ax,az:best.az,d:best.d,s:s2,ph:'turn',cruise:v.V.spd*0.45+2,honkT:0,turn:{a,b:[bx,bz],c:[a[0]+f[0]*L*0.5,a[1]+f[1]*L*0.5],t:0,len:L*1.2},nd:best.d,bx:best.ax,bz:best.az,ns:s2,self:true}; return true; }
 function vGround(x,z,y){ const xi=Math.floor(x), zi=Math.floor(z); for(let yy=Math.floor(y+1.2);yy>=Math.max(0,Math.floor(y)-8);yy--){ const b=get(xi,yy,zi); if(b&&(B[b].solid||b===ID.water))return {y:yy+1,wet:b===ID.water}; } return {y:Math.floor(y)-8,wet:false}; }
 // would the vehicle's body hit something at (x,z)? Checks the front (or back) corners at a few heights, and other vehicles
 function vBlocked(v,x,z,dir){ const V=v.V, f=vFwd(v.h), r=vRight(v.h), hl=V.len/2*dir, hw=V.wid/2-0.1, y=v.p[1];
   for(const s of[-1,0,1]){ const px=x+f[0]*hl+r[0]*hw*s, pz=z+f[1]*hl+r[1]*hw*s;
     for(const hy of [1.15,Math.max(1.15,V.hgt-0.35)])if(vSolid(px,y+hy,pz))return 'wall';
     const gd=vGround(px,pz,y); if(gd.wet&&gd.y>=y-0.5)return 'water'; }
-  if(cityK)for(const o of cityK.vehicles){ if(o===v)continue; const of=vFwd(o.h), orr=vRight(o.h);
+  for(const o of vehList()){ if(o===v)continue; const of=vFwd(o.h), orr=vRight(o.h);
     for(const s of[-1,0,1]){ const px=x+f[0]*hl+r[0]*hw*s-o.p[0], pz=z+f[1]*hl+r[1]*hw*s-o.p[2]; const lz=px*of[0]+pz*of[1], lx=px*orr[0]+pz*orr[1];
       if(Math.abs(lz)<o.V.len/2+0.15&&Math.abs(lx)<o.V.wid/2+0.15&&Math.abs(o.p[1]-y)<2.5)return o; } }
   return null; }
@@ -2977,16 +2998,19 @@ function honk(v){ if(!AC||!sfxOn)return; try{ for(const f of v.V.kind==='bus'||v
     o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.45); } }catch(e){} }
 // --- you, driving
 let drive=null;
-function enterVehicle(v){ if(!v||v.driver)return; drive=v; v.driver='player'; document.body.classList.add('drive'); document.body.classList.toggle('dsiren',!!v.V.siren); tpWeapon.visible=false; if(document.pointerLockElement)document.exitPointerLock();
-  toast(v.V.icon+' '+v.V.name+'! '+(IS_TOUCH?'Drag the joystick to drive and steer.':'W/S to go and stop, A/D to steer, H for the horn'+(v.V.siren?', L for the '+(v.V.siren==='icecream'?'ice cream music':'siren and lights'):'')+', E to get out.')); sfx('catch'); }
-function exitVehicle(quiet){ const v=drive; if(!v)return; drive=null; v.driver=null; v.spd=0; if(v.siren){ v.siren=false; sirenStop(v); } document.body.classList.remove('drive','dsiren'); refreshHeld();
+function enterVehicle(v,quiet){ if(!v||v.driver)return; drive=v; v.driver='player'; drivePortalArmed=false; document.body.classList.add('drive'); document.body.classList.toggle('dsiren',!!v.V.siren); tpWeapon.visible=false; if(document.pointerLockElement)document.exitPointerLock();
+  if(!quiet)toast(v.V.icon+' '+v.V.name+'! '+(IS_TOUCH?'Drag the joystick to drive and steer.':'W/S to go and stop, A/D to steer, H for the horn'+(v.V.siren?', L for the '+(v.V.siren==='icecream'?'ice cream music':'siren and lights'):'')+', E to get out.')); if(!quiet)sfx('catch'); }
+function exitVehicle(quiet,noAuto){ const v=drive; if(!v)return; drive=null; v.driver=null; v.spd=0; v.npc=null; enterCD=1.5; if(v.siren){ v.siren=false; sirenStop(v); } document.body.classList.remove('drive','dsiren'); refreshHeld();
   const r=vRight(v.h), f=vFwd(v.h), Lh=v.V.len/2+0.8, Wh=v.V.wid/2+0.7; let spot=[v.p[0],v.p[1]+v.V.hgt+0.2,v.p[2]]; // try the sides, then front and back; the roof if all else fails
   for(const [a,b] of [[-Wh,0],[Wh,0],[-Wh-0.8,0],[Wh+0.8,0],[0,Lh],[0,-Lh],[-Wh,Lh*0.6],[Wh,-Lh*0.6]]){ const x=v.p[0]+r[0]*a+f[0]*b, z=v.p[2]+r[1]*a+f[1]*b;
     if(!boxHits(x,v.p[1]+0.02,z,pl.hw,pl.h)){ spot=[x,v.p[1]+0.02,z]; break; } }
   pl.p=spot;
-  pl.v=[0,0,0]; unstick(pl); model.rotation.z=0; legL.rotation.z=legR.rotation.z=0; chase.p=null; if(!quiet)sfx('catch'); }
+  pl.v=[0,0,0]; unstick(pl); model.rotation.z=0; legL.rotation.z=legR.rotation.z=0; chase.p=null; if(!quiet)sfx('catch');
+  if(!noAuto&&cityK&&!v.wrecked&&v.type!=='tow'&&attachLane(cityK,v)&&!quiet)toast('🤖 The '+v.V.name+' drives itself off into traffic.'); } // get out and it drives itself
 function toggleSiren(){ const v=drive; if(!v||!v.V.siren)return; v.siren=!v.siren; if(v.siren){ audioInit(); sirenStart(v); } else sirenStop(v); toast(v.siren?(v.V.siren==='icecream'?'🍦 Ice cream music on!':'🚨 Lights and siren on!'):'Lights and siren off.'); }
 function driveUpdate(dt){ const v=drive, V=v.V, top=V.spd*(1-0.55*(v.dmg||0)); let thr=-joy.y, str=joy.x;
+  if(traveling){ v.spd*=0.85; pl.p=v.p.slice(); return {hs:0}; }
+  if(v.npc){ pl.p=v.p.slice(); return {hs:0}; } // driving itself (in a demo)
   if(keys.KeyW||keys.ArrowUp)thr+=1; if(keys.KeyS||keys.ArrowDown)thr-=1; if(keys.KeyA||keys.ArrowLeft)str-=1; if(keys.KeyD||keys.ArrowRight)str+=1;
   const P=padRead(); str+=P.lx; thr+=P.rt-P.lt; if(!P.rt&&!P.lt)thr-=P.ly; // a controller: left stick steers, RT goes, LT brakes and reverses
   thr=Math.max(-1,Math.min(1,thr)); str=Math.max(-1,Math.min(1,str)); const brake=keys.Space;
@@ -2997,6 +3021,9 @@ function driveUpdate(dt){ const v=drive, V=v.V, top=V.spd*(1-0.55*(v.dmg||0)); l
   else v.spd*=Math.max(0,1-dt*0.9);
   const grip=Math.min(1,Math.abs(v.spd)/4), rate=(V.kind==='bus'||V.kind==='fire'?0.9:V.kind==='moto'?2.0:1.5)*grip; v.h-=str*rate*Math.sign(v.spd||1)*dt;
   vMove(v,dt); pl.p=[v.p[0],v.p[1],v.p[2]]; pl.v=[0,0,0];
+  if(!demo){ const f=vFwd(v.h), fx=Math.floor(v.p[0]+f[0]*Math.sign(v.spd||1)*(V.len/2+0.4)), fz=Math.floor(v.p[2]+f[1]*Math.sign(v.spd||1)*(V.len/2+0.4)); let g=-1; // drive right through a doorway
+    for(const dy of [0.6,1.6]){ const y=Math.floor(v.p[1]+dy); if(get(fx,y,fz)===ID.pgate){ g=meta[idx(fx,y,fz)]; break; } }
+    if(g<0)drivePortalArmed=true; else if(drivePortalArmed){ const id=resolveDest(DESTS[g>>1]); if(id){ drivePortalArmed=false; const b=Math.sign(v.spd||1); portalSafe=[v.p[0]-f[0]*b*1.5,v.p[1],v.p[2]-f[1]*b*1.5]; yaw=b>0?v.h:v.h+Math.PI; travel(id); } } }
   if(P.a&&!drive.padA)honk(v); drive.padA=P.a; if(P.y&&!drive.padY){ drive.padY=true; exitVehicle(); return {hs:0}; } drive.padY=P.y;
   return {hs:0}; }
 // the camera follows behind the vehicle
@@ -3051,19 +3078,19 @@ function spawnTraffic(K){ const cs=crossingSet(K), types=K.ck==='newyork'?['taxi
 // how far ahead along its way is the nearest thing in the lane (another vehicle, or you on foot)?
 function aheadGap(K,v){ const f=vFwd(v.h), r=vRight(v.h); let gap=99;
   const test=(x,z,len,wid)=>{ const dx=x-v.p[0], dz=z-v.p[2], along=dx*f[0]+dz*f[1], side=Math.abs(dx*r[0]+dz*r[1]); if(along>0&&along<22&&side<(wid||1)/2+1.1)gap=Math.min(gap,along-(len||0)/2-v.V.len/2); };
-  for(const o of K.vehicles)if(o!==v)test(o.p[0],o.p[2],o.V.len,o.V.wid); if(!drive&&Math.abs(pl.p[1]-v.p[1])<3)test(pl.p[0],pl.p[2],0.6,0.6); return gap; }
+  for(const o of K.vehicles){ if(o===v)continue; const of=vFwd(o.h); if(!o.npc||of[0]*f[0]+of[1]*f[1]>0.4)test(o.p[0],o.p[2],o.V.len,o.V.wid); } /* queue behind cars going your way (or parked ones), not cars crossing */ if(!drive&&Math.abs(pl.p[1]-v.p[1])<3)test(pl.p[0],pl.p[2],0.6,0.6); return gap; }
 function trafficTick(K,v,dt){ const N=v.npc, light=lightState(DIRS[N.d][0]?'x':'z',K.t);
   let want=N.cruise; const gap=aheadGap(K,v); if(gap<9)want=Math.min(want,Math.max(0,(gap-2.5)*1.6));
   if(gap<3&&!drive&&Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])<v.V.len/2+4){ N.honkT-=dt; if(N.honkT<=0){ N.honkT=4; honk(v); } }
   if(N.ph==='edge'){ const stopAt=CITY_GRID-6.5; if(light!=='g'&&N.s<stopAt+0.5&&N.s>stopAt-12)want=Math.min(want,Math.max(0,(stopAt-N.s)*1.4)); // red or yellow: stop at the line
     v.spd+=(want-v.spd)*Math.min(1,dt*(want<v.spd?4:1.2)); N.s+=v.spd*dt;
-    if(N.s>=CITY_GRID-3.5){ const bx=N.ax+DIRS[N.d][0]*CITY_GRID, bz=N.az+DIRS[N.d][1]*CITY_GRID, opts=nextDirs(K,bx,bz,N.d), nd=opts[Math.floor(Math.random()*opts.length)];
+    if(N.s>=CITY_GRID-3.5){ const bx=N.ax+DIRS[N.d][0]*CITY_GRID, bz=N.az+DIRS[N.d][1]*CITY_GRID, opts=nextDirs(K,bx,bz,N.d), nd=opts.includes(N.prefer)?N.prefer:opts[Math.floor(Math.random()*opts.length)];
       const a=lanePos(N.ax,N.az,N.d,N.s), b=lanePos(bx,bz,nd,3.5), c=nd===N.d?[(a[0]+b[0])/2,(a[1]+b[1])/2]:[a[0]+DIRS[N.d][0]*(Math.abs((b[0]-a[0])*DIRS[N.d][0]+(b[1]-a[1])*DIRS[N.d][1])),a[1]+DIRS[N.d][1]*(Math.abs((b[0]-a[0])*DIRS[N.d][0]+(b[1]-a[1])*DIRS[N.d][1]))];
       N.turn={a,b,c,t:0,len:Math.hypot(c[0]-a[0],c[1]-a[1])+Math.hypot(b[0]-c[0],b[1]-c[1])}; N.ph='turn'; N.nd=nd; N.bx=bx; N.bz=bz; }
     else { const [x,z]=lanePos(N.ax,N.az,N.d,N.s); v.p[0]=x; v.p[2]=z; v.h=dirHeading(N.d); } }
   else { v.spd+=(Math.min(want,N.cruise*0.7)-v.spd)*Math.min(1,dt*3); const T=N.turn; T.t=Math.min(1,T.t+v.spd*dt/Math.max(1,T.len)); const t=T.t, u=1-t; // round the corner on a curve
     const x=u*u*T.a[0]+2*u*t*T.c[0]+t*t*T.b[0], z=u*u*T.a[1]+2*u*t*T.c[1]+t*t*T.b[1], dx=2*u*(T.c[0]-T.a[0])+2*t*(T.b[0]-T.c[0]), dz=2*u*(T.c[1]-T.a[1])+2*t*(T.b[1]-T.c[1]);
-    v.p[0]=x; v.p[2]=z; if(Math.hypot(dx,dz)>0.01)v.h=Math.atan2(-dx,-dz); if(t>=1){ N.ph='edge'; N.ax=N.bx; N.az=N.bz; N.d=N.nd; N.s=3.5; } }
+    v.p[0]=x; v.p[2]=z; if(Math.hypot(dx,dz)>0.01)v.h=Math.atan2(-dx,-dz); if(t>=1){ N.ph='edge'; N.ax=N.bx; N.az=N.bz; N.d=N.nd; N.s=N.ns!==undefined?N.ns:3.5; N.ns=undefined; } }
   const gy=cityGround(K.S,v.p[0],v.p[2]); v.p[1]+=(gy-v.p[1])*Math.min(1,dt*8); v.wheel+=v.spd*dt/v.vm.wr; for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); }
 // --- someone takes a vehicle from the garage for a drive, then brings it back
 function garageTripTick(K,dt){ const G=garageBox(), front=[CX+4.5,(G.dz0+G.dz1+1)/2];
@@ -3101,10 +3128,10 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
 function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()};
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
-  if(!cityK)return null; let best=null, bd=1e9;
-  for(const v of cityK.vehicles){ if(v.npc||v.driver)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
+  let best=null, bd=1e9;
+  for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
   if(best)return {label:best.V.icon+' Get in',fn:()=>enterVehicle(best)};
-  const G=garageBox(); if(pl.p[0]>CX+1.5&&pl.p[0]<G.x0+0.6&&pl.p[2]>G.dz0-2&&pl.p[2]<G.dz1+3)return {label:garageDoorOpen()?'🚪 Close garage':'🚗 Open garage',fn:toggleGarage};
+  if(!cityK)return null; const G=garageBox(); if(pl.p[0]>CX+1.5&&pl.p[0]<G.x0+0.6&&pl.p[2]>G.dz0-2&&pl.p[2]<G.dz1+3)return {label:garageDoorOpen()?'🚪 Close garage':'🚗 Open garage',fn:toggleGarage};
   return null; }
 
 // ================= CRASHES AND THE TOW TRUCK =================
@@ -3133,9 +3160,9 @@ function damageVeh(v,a){ if(v.wrecked)return; v.dmg=Math.min(1,(v.dmg||0)+a); if
   if(v===drive)toast('💥 Wrecked! The '+v.V.name+' won\'t go any more. Get out (E) and a tow truck will come and take it away.');
   if(v.npc){ if(v.drv){ v.m.remove(v.drv); grumbler(v); v.drv=null; } v.npc=null; } } // the driver hops out
 // the driver of a wrecked car stomps off and disappears down the street
-function grumbler(v){ const K=cityK; if(!K)return; const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; L.back='none';
+function grumbler(v,text){ const K=cityK; if(!K)return; const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; L.back='none';
   const g=new THREE.Group(); g.scale.setScalar(0.94); K.root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L)); const r=vRight(v.h);
-  g.position.set(v.p[0]+r[0]*(v.V.wid/2+0.6),v.p[1],v.p[2]+r[1]*(v.V.wid/2+0.6)); const b=heySprite('Hmph!'); b.position.y=2.6; g.add(b);
+  g.position.set(v.p[0]+r[0]*(v.V.wid/2+0.6),v.p[1],v.p[2]+r[1]*(v.V.wid/2+0.6)); const b=heySprite(text||'Hmph!'); b.position.y=2.6; g.add(b);
   K.grumps=K.grumps||[]; K.grumps.push({g,R,dir:[r[0],r[1]],t:0}); }
 function grumpTick(K,dt){ if(!K.grumps)return; for(const q of K.grumps.slice()){ q.t+=dt; const st=1.6*dt; q.g.position.x+=q.dir[0]*st; q.g.position.z+=q.dir[1]*st;
     q.g.position.y=cityGround(K.S,q.g.position.x,q.g.position.z); q.g.rotation.y=Math.atan2(-q.dir[0],-q.dir[1]); const sw=Math.sin(q.t*8)*0.6; q.R.legL.rotation.x=sw; q.R.legR.rotation.x=-sw; q.R.armL.rotation.x=-sw; q.R.armR.rotation.x=sw;
@@ -3187,7 +3214,7 @@ const INT_KINDS={house1:{name:'Home',icon:'🏠',dims:[32,10,32],col:[255,170,90
 function ensurePlace(id){ if(PLACES[id])return id; const m=/^([a-z]+)\/([a-z0-9]+)$/.exec(id||''); if(!m||!PLACES[m[1]]||!PLACES[m[1]].city||!INT_KINDS[m[2]])return null;
   const C=PLACES[m[1]], I=INT_KINDS[m[2]]; PLACES[id]={name:C.name+' '+I.name,icon:I.icon,key:'blockstar_in_'+m[1]+'_'+m[2],dims:I.dims,col:I.col,interior:m[2],cityId:m[1],parent:I.parent?m[1]+'/'+I.parent:m[1]}; return id; }
 // a doorway's destination is a kind ('in_school', 'out', 'newyork'...); which actual place that is depends on where you are
-function resolveDest(k){ const P=PLACES[place]; if(k==='out')return P&&P.parent?P.parent:null;
+function resolveDest(k){ const P=PLACES[curPlace()]; if(k==='out')return P&&P.parent?P.parent:null;
   if(k&&k.slice(0,3)==='in_'){ const city=P&&(P.city?place:P.cityId); return city?ensurePlace(city+'/'+k.slice(3)):null; } return PLACES[k]?k:null; }
 function destInfo(k){ const id=resolveDest(k); if(!id)return null; const P=PLACES[id]; return {id,name:k==='out'?'Back to '+(P.interior?INT_KINDS[P.interior].name:P.name):P.interior?INT_KINDS[P.interior].name:P.name,icon:k==='out'?'🚪':P.icon,col:P.col}; }
 // --- the special buildings on the street (built into every city)
@@ -3256,14 +3283,14 @@ function textPlane(lines,w,h,o){ o=o||{}; const c=document.createElement('canvas
   lines.forEach((l,k)=>x.fillText(l,c.width/2,c.height*(k+1)/(lines.length+1)));
   const t=new THREE.CanvasTexture(c); return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t})); }
 function wallSign(root,lines,w,h,x,y,z,ry,o){ const m=textPlane(lines,w,h,o); m.position.set(x,y,z); m.rotation.y=ry||0; root.add(m); return m; }
-function clearInteriorLife(){ if(!intK)return; if(intK.club){ club.visible=false; club.position.copy(CLUB); if(!mus.game)musicStop(); } scene.remove(intK.root);
+function clearInteriorLife(){ if(!intK)return; if(drive&&(intK.vehicles||[]).includes(drive))exitVehicle(true,true); for(const v of (intK.vehicles||[]).slice())removeVehicle(v); if(intK.club){ club.visible=false; club.position.copy(CLUB); if(!mus.game)musicStop(); } scene.remove(intK.root);
   intK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material&&o.material.map&&o.material.map.dispose)o.material.map.dispose(); }); for(const p of intK.people)undress(p.g); intK=null; }
 function intPerson(K,L,x,y,z,ry,sit){ const g=new THREE.Group(); g.scale.setScalar(0.94); g.position.set(x,y,z); g.rotation.y=ry; K.root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L));
   if(sit){ R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.9; } const p={g,R,sit,ph:Math.random()*6}; K.people.push(p); return p; }
-function buildInteriorLife(){ clearInteriorLife(); const P=PLACES[place]; if(!P||!P.interior||demo)return; const kind=P.interior, root=new THREE.Group(); scene.add(root);
+function buildInteriorLife(){ clearInteriorLife(); const P=PLACES[curPlace()]; if(!P||!P.interior||(demo&&!demo.inKind))return; const kind=P.interior, root=new THREE.Group(); scene.add(root);
   const K=intK={root,people:[],kind,t:0}, look=()=>{ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; L.back='none'; return L; };
   if(kind==='dealer'){ wallSign(root,['⭐ BLOCKSTAR MOTORS ⭐','Every car here can turn up in your city garage!'],12,2.4,16,5.2,4.02,0,{bg:'#1a1c22',fg:'#ffd84a',frame:'#ff4040'});
-    ['sports','monster','police','icecream','pickup','taxi'].forEach((t,k)=>{ const vm=vehicleMesh(t); vm.g.position.set(6+(k%3)*10,1,11+Math.floor(k/3)*9); vm.g.rotation.y=k%2?-0.6:0.6; root.add(vm.g); });
+    K.vehicles=[]; ['sports','monster','police','icecream','pickup','taxi'].forEach((t,k)=>{ K.vehicles.push(makeVehicle(t,6+(k%3)*10,1,11+Math.floor(k/3)*9,k%2?-0.6:0.6)); }); // walk into one to drive it
     intPerson(K,{skin:'#d29b6e',hair:'short',hairC:'#1a1410',top:'jacket',topC:'#2a2a30',bottom:'pants',bottomC:'#2a2a30',glasses:'none'},16,1,6,Math.PI,false).wave=true; }
   if(kind==='school'){ wallSign(root,['🏫 Welcome to Blockstar School!'],12,1.6,24,4.6,2.02,0,{bg:'#2a5ab8',fg:'#fff'});
     for(const [lbl,x,z,ry] of [['🧪 Chemistry Lab',7,2.02,0],['📚 English',19,2.02,0],['➗ Math',19,13.98,Math.PI],['🏛️ History',31,13.98,Math.PI]])wallSign(root,[lbl],4,0.8,x,5.6,z,ry,{bg:'#fff8d8'});
@@ -3300,6 +3327,126 @@ function interiorTick(dt){ const K=intK; if(!K)return; K.t+=dt;
       const sw=Math.sin(p.ph*7)*0.6; R.legL.rotation.x=sw; R.legR.rotation.x=-sw; R.armL.rotation.x=-sw*0.8; R.armR.rotation.x=sw*0.8; continue; }
     if(p.wave){ R.armR.rotation.z=Math.hypot(pl.p[0]-p.g.position.x,pl.p[2]-p.g.position.z)<5?2.4+Math.sin(p.ph*9)*0.3:0; } } }
 
+// ================= DEMO MODE: CITY LIFE =================
+// The hero spends the scene doing random things in a city: walking the sidewalks and waving, dancing in the street with
+// people who join in, taking a vehicle from the garage for a drive (sometimes right into the car dealership), and going
+// inside the school (and a classroom), the club and the houses. Nothing the demo does is saved.
+function curPlace(){ return demo&&demo.vplace?demo.vplace:place; }
+// where to stand outside each special door, and which way to walk in (the street layout is the same in every city)
+function demoDoors(){ return {school:{p:[CX+4,CZ+47],d:[1,0]},dealer:{p:[CX-5,CZ+42],d:[-1,0]},club:{p:[CX-5,CZ+53],d:[-1,0]},
+  house1:{p:[CX+42,CZ+4.5],d:[0,1]},house2:{p:[CX+52,CZ+4.5],d:[0,1]},house3:{p:[CX+42,CZ+26.5],d:[0,-1]},house4:{p:[CX+52,CZ+26.5],d:[0,-1]}}; }
+// walking routes inside each kind of building (they start and end near the way out)
+const DEMO_ROUTES={house:[[15.5,19],[15.5,12],[9,10],[15.5,12],[15.5,19],[22,20],[16,22]],dealer:[[11,22],[11,9],[21,9],[21,22],[16.5,24]],
+  school:[[12,7.5],[24,7.5],[36,7.5],[24,7.5]],chem:[[16.5,17],[10,17],[22,17],[16.5,19]],english:[[16.5,17],[10,16],[22,16],[16.5,19]],
+  math:[[16.5,17],[10,16],[22,16],[16.5,19]],history:[[16.5,17],[10,16],[22,16],[16.5,19]],club:[[16,22],[12,20],[20,20],[16,22]]};
+const CLASS_DOORS={chem:{p:[7,4],d:[0,-1]},english:{p:[19,4],d:[0,-1]},math:{p:[19,11.5],d:[0,1]},history:{p:[31,11.5],d:[0,1]}};
+function nearRoad(v,lines){ let b=lines[0]; for(const q of lines)if(Math.abs(q-v)<Math.abs(b-v))b=q; return b; }
+function demoRoute(tx,tz){ const xs=roadLines(CX,W), zs=roadLines(CZ,D), ax=nearRoad(pl.p[0],xs), bz=nearRoad(tz,zs); // along the roads: they're always open
+  return [[ax,pl.p[2]],[ax,bz],[tx,bz],[tx,tz]]; }
+function ringProject(r,x,z){ const w=r[2]-r[0], h=r[3]-r[1], c=[[Math.max(0,Math.min(w,x-r[0])),Math.abs(z-r[1])],[w+Math.max(0,Math.min(h,z-r[1])),Math.abs(x-r[2])],[w+h+Math.max(0,Math.min(w,r[2]-x)),Math.abs(z-r[3])],[2*w+h+Math.max(0,Math.min(h,r[3]-z)),Math.abs(x-r[0])]];
+  return c.sort((a,b)=>a[1]-b[1])[0][0]; }
+// --- the scene: a fresh city, or your own saved one (never saved back)
+function demoCitySetup(sc,P){ const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
+  demo.cityPlace=k; demo.vplace=k; demo.cityKey=PLACES[k].city; demo.inKind=null; demo.stack=[]; demo.cityWorld=true;
+  clearCityLife(); clearInteriorLife(); setWorldSize(...PLACES[k].dims); let mine=false;
+  if(sc.dsrc==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(s&&Array.isArray(s.w)&&s.cityVer===CITY_VER){ world=rleDecode(s.w); meta=rleDecode(s.m); mine=true; } }catch(e){}
+  if(!mine){ generateCity(dmCfg.seed+7); cityExtras(demo.cityKey); }
+  activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
+  Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
+// leave a city scene: put back the demo's usual world for the next scene
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+  let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
+  if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
+// --- going in and out of buildings (the city or hallway waits, exactly as it was)
+function demoEnter(kind,withCar){ const carry=withCar&&drive?{type:drive.type,dmg:drive.dmg||0}:null; if(drive){ const dv=drive; exitVehicle(true,true); removeVehicle(dv); }
+  demo.stack.push({w:world,m:meta,dims:[W,H,D],p:pl.p.slice(),yaw,vplace:demo.vplace,inKind:demo.inKind,city:!!cityK});
+  clearCityLife(); clearInteriorLife(); const parent=demo.vplace, city=PLACES[parent]&&PLACES[parent].city?parent:PLACES[parent].cityId;
+  demo.inKind=kind; demo.vplace=ensurePlace(city+'/'+kind); setWorldSize(...INT_KINDS[kind].dims); world=new Uint8Array(N); meta=new Uint8Array(N);
+  const sp=generateInterior(kind); pl.p=sp.p.slice(); yaw=sp.yaw; pl.v=[0,0,0]; rebuildAll(); refreshPortals(); buildInteriorLife(); applyPlaceSky();
+  if(carry){ const f=vFwd(yaw), V=VEH[carry.type], v=makeVehicle(carry.type,pl.p[0]+f[0]*(V.len/2-0.8),pl.p[1],pl.p[2]+f[1]*(V.len/2-0.8),yaw); v.dmg=carry.dmg; vehList().push(v); enterVehicle(v,true); }
+  warpFlash(); return sp; }
+function demoLeave(){ const s=demo.stack.pop(); if(!s)return; const carry=drive?{type:drive.type,dmg:drive.dmg||0}:null; if(drive){ const dv=drive; exitVehicle(true,true); removeVehicle(dv); }
+  clearInteriorLife(); setWorldSize(...s.dims); world=s.w; meta=s.m; pl.p=s.p.slice(); yaw=s.yaw+Math.PI; pl.v=[0,0,0]; demo.vplace=s.vplace; demo.inKind=s.inKind;
+  rebuildAll(); refreshPortals(); if(s.city)buildCityLife(); else buildInteriorLife(); applyPlaceSky();
+  if(carry){ const f=vFwd(yaw), V=VEH[carry.type], v=makeVehicle(carry.type,pl.p[0]+f[0]*(V.len/2-0.5),pl.p[1],pl.p[2]+f[1]*(V.len/2-0.5),yaw); v.dmg=carry.dmg; vehList().push(v); enterVehicle(v,true); }
+  warpFlash(); }
+function warpFlash(){ warpEl.classList.add('on'); setTimeout(()=>warpEl.classList.remove('on'),450); sfx('zap'); }
+// --- what the hero does
+function demoCityPilot(dt,P){ const C=P.c, K=cityK; C.t+=dt; P.wave=false;
+  if(drive&&!drive.npc&&C.mode!=='indoorcar'&&C.mode!=='detour'&&cityK){ attachLane(cityK,drive); } // back from you driving: carry on by itself
+  const follow=(pts,spd)=>{ while(C.wi<pts.length&&Math.hypot(pts[C.wi][0]-pl.p[0],pts[C.wi][1]-pl.p[2])<1.1)C.wi++; if(C.wi>=pts.length)return null;
+    const m=walkTo(pts[C.wi][0],pts[C.wi][1],dt,P); return m; };
+  if(K&&!drive){ for(const p of K.people){ if(!p.gone&&Math.hypot(p.g.position.x-pl.p[0],p.g.position.z-pl.p[2])<2.6){ P.wave=true; break; } } } // say hi to people on the way
+  if(C.mode==='pick'){ if(demo.inKind){ C.mode='inside'; C.wi=0; C.t=0; return {ix:0,iz:0}; }
+    const opts=['walk','dance','drive','visit','visit','drive'].filter(o=>o!==C.last); C.mode=opts[Math.floor(Math.random()*opts.length)]; C.last=C.mode; C.t=0; C.wi=0; C.ph='go';
+    if(C.mode==='walk'){ const rs=K.people.map(p=>p.ring), r=rs[Math.floor(Math.random()*rs.length)], q=ringPos(r,Math.random()*1e3); C.pts=demoRoute(q[0],q[1]); }
+    if(C.mode==='visit'){ const ds=demoDoors(), keys=Object.keys(ds), k=keys[Math.floor(Math.random()*keys.length)]; C.door=k; C.pts=demoRoute(ds[k].p[0],ds[k].p[1]); }
+    if(C.mode==='drive'){ const G=garageBox(); C.pts=demoRoute(CX+4.5,(G.dz0+G.dz1+1)/2); C.toDealer=Math.random()<0.5; }
+    return {ix:0,iz:0}; }
+  if(C.mode==='walk'){ const m=follow(C.pts); if(!m||C.t>18){ C.mode='pick'; return {ix:0,iz:0}; } return m; }
+  if(C.mode==='dance'){ // people come over and everyone dances in the street
+    if(C.ph==='go'){ const near=K.people.filter(p=>!p.gone&&!p.dodge).sort((a,b)=>Math.hypot(a.g.position.x-pl.p[0],a.g.position.z-pl.p[2])-Math.hypot(b.g.position.x-pl.p[0],b.g.position.z-pl.p[2])).slice(0,5);
+      C.crew=near; near.forEach((p,i)=>{ p.gone='dance'; const a=i/near.length*Math.PI*2; p.spot=[pl.p[0]+Math.cos(a)*2.2,pl.p[2]+Math.sin(a)*2.2]; }); C.ph='gather'; C.t=0; }
+    let all=true; for(const p of C.crew){ const dx=p.spot[0]-p.g.position.x, dz=p.spot[1]-p.g.position.z, d=Math.hypot(dx,dz);
+      if(d>0.15){ all=false; const st=Math.min(d,2.2*dt); p.g.position.x+=dx/d*st; p.g.position.z+=dz/d*st; p.g.rotation.y=Math.atan2(-dx,-dz); p.ph+=dt*8; const sw=Math.sin(p.ph)*0.6; p.R.legL.rotation.x=sw; p.R.legR.rotation.x=-sw; }
+      else { const b=musBeat()+p.ph; p.g.rotation.y=Math.atan2(-(pl.p[0]-p.g.position.x),-(pl.p[2]-p.g.position.z)); p.R.legL.rotation.x=p.R.legR.rotation.x=0;
+        p.R.head.rotation.x=0.06-0.25*(0.5+0.5*Math.cos(b*Math.PI*2)); p.R.armL.rotation.z=-2.5-0.3*Math.sin(b*Math.PI); p.R.armR.rotation.z=2.5+0.3*Math.sin(b*Math.PI); p.R.armL.rotation.x=p.R.armR.rotation.x=0; }
+      p.g.position.y=cityGround(K.S,p.g.position.x,p.g.position.z)+(d<=0.15?Math.abs(Math.sin((musBeat()+p.ph)*Math.PI))*0.25:0); }
+    if(C.ph==='gather'&&(all||C.t>6)){ C.ph='dance'; C.t=0; }
+    if(C.ph==='dance'&&C.t>10){ for(const p of C.crew){ p.s=ringProject(p.ring,p.g.position.x,p.g.position.z); p.R.armL.rotation.z=p.R.armR.rotation.z=0; p.gone=false; } C.crew=[]; C.mode='pick'; }
+    return {ix:0,iz:0}; }
+  if(C.mode==='visit'){ const dr=demoDoors()[C.door];
+    if(C.ph==='go'){ const m=follow(C.pts); if(m&&C.t<30)return m; C.ph='in'; C.t=0; }
+    if(C.ph==='in'){ const tx=dr.p[0]+dr.d[0]*2.2, tz=dr.p[1]+dr.d[1]*2.2; if(Math.hypot(tx-pl.p[0],tz-pl.p[2])>0.9&&C.t<4)return walkTo(tx,tz,dt,P);
+      demoEnter(C.door,false); C.mode='inside'; C.wi=0; C.t=0; C.ph='look'; return {ix:0,iz:0}; } }
+  if(C.mode==='inside'){ const kind=demo.inKind, base=kind.slice(0,5)==='house'?'house':kind, route=DEMO_ROUTES[base]||[];
+    if(C.ph==='look'||!C.ph){ const m=follow(route); if(m&&C.t<22)return m;
+      if(kind==='club'&&!C.danced){ C.danced=true; C.ph='clubdance'; C.t=0; return {ix:0,iz:0}; }
+      if(kind==='school'&&!C.classDone){ const ks=Object.keys(CLASS_DOORS), k=ks[Math.floor(Math.random()*ks.length)]; C.classDoor=k; C.ph='toclass'; C.t=0; return {ix:0,iz:0}; }
+      C.ph='out'; C.t=0; }
+    if(C.ph==='clubdance'){ if(C.t>8)C.ph='out'; return {ix:0,iz:0}; }
+    if(C.ph==='toclass'){ const cd=CLASS_DOORS[C.classDoor]; if(Math.hypot(cd.p[0]-pl.p[0],cd.p[1]-pl.p[2])<0.75)C.lined=true; // line up in front of the door first, then walk straight in
+      if(Math.hypot(cd.p[0]+cd.d[0]*2.5-pl.p[0],cd.p[1]+cd.d[1]*2.5-pl.p[2])<0.9||C.t>14){ C.classDone=true; C.lined=false; demoEnter(C.classDoor,false); C.ph='look'; C.wi=0; C.t=0; C.inClass=true; return {ix:0,iz:0}; }
+      return C.lined?walkTo(cd.p[0]+cd.d[0]*3,cd.p[1]+cd.d[1]*3,dt,P):walkTo(cd.p[0],cd.p[1],dt,P); }
+    if(C.ph==='out'){ const s=INT_EXIT(kind); const near=Math.hypot(s.p[0]-pl.p[0],s.p[1]-pl.p[2])<1.0; C.outNear=C.outNear||near;
+      const tx=C.outNear?s.p[0]+s.d[0]*3:s.p[0], tz=C.outNear?s.p[1]+s.d[1]*3:s.p[1];
+      if((C.outNear&&Math.hypot(s.p[0]+s.d[0]*2-pl.p[0],s.p[1]+s.d[1]*2-pl.p[2])<0.9)||C.t>16){ demoLeave(); C.outNear=false; C.t=0; C.wi=0;
+        if(demo.inKind){ C.ph='look'; C.inClass=false; const r=DEMO_ROUTES[demo.inKind]; C.wi=r?r.length:0; C.ph='out'; } else { C.mode='pick'; C.danced=false; C.classDone=false; } return {ix:0,iz:0}; }
+      return walkTo(tx,tz,dt,P); } }
+  if(C.mode==='drive'){ const G=garageBox();
+    if(C.ph==='go'){ const m=follow(C.pts); if(m&&C.t<30)return m; C.ph='open'; C.t=0; }
+    if(C.ph==='open'){ if(K.trip&&K.trip.ph!=='drive'){ C.mode='pick'; return {ix:0,iz:0}; } if(!garageDoorOpen())toggleGarage(); else if(!garageVehicle())garageFill(); C.ph='walkin'; C.t=0; return {ix:0,iz:0}; }
+    if(C.ph==='walkin'){ const v=garageVehicle(); if(!v||C.t>10){ C.mode='pick'; return {ix:0,iz:0}; }
+      if(Math.hypot(v.p[0]-pl.p[0],v.p[2]-pl.p[2])<v.V.len/2+1.3){ enterVehicle(v,true); C.ph='out'; C.t=0; // drive out into the lane heading south
+        const s2=(G.dz0+G.dz1+1)/2-CZ+6, [bx,bz]=lanePos(CX,CZ,1,s2), a=[v.p[0],v.p[2]], f=vFwd(v.h), L=Math.hypot(bx-a[0],bz-a[1]);
+        v.npc={ax:CX,az:CZ,d:1,s:s2,ph:'turn',cruise:v.V.spd*0.45+2,honkT:0,turn:{a,b:[bx,bz],c:[a[0]+f[0]*L*0.55,a[1]+f[1]*L*0.55],t:0,len:L*1.2},nd:1,bx:CX,bz:CZ,ns:s2,prefer:1,self:true};
+        return {ix:0,iz:0}; } return walkTo(v.p[0],v.p[2],dt,P); }
+    if(C.ph==='out'){ if(!drive){ C.mode='pick'; return {ix:0,iz:0}; } yaw=drive.h; const N=drive.npc;
+      if(C.toDealer&&N&&N.ph==='edge'&&N.ax===CX&&N.az===CZ+CITY_GRID&&N.d===1&&N.s>2&&N.s<7){ // pull off into the car dealership
+        const dr=demoDoors().dealer, a=[drive.p[0],drive.p[2]]; drive.npc=null; C.turn={a,c:[a[0],dr.p[1]],b:[dr.p[0]+1,dr.p[1]],t:0}; C.mode='detour'; C.t=0; return {ix:0,iz:0}; }
+      if(C.t>(C.toDealer?40:24)){ drive.npc=null; drive.spd=0; exitVehicle(true); C.mode='pick'; } return {ix:0,iz:0}; } }
+  if(C.mode==='detour'){ const v=drive; if(!v){ C.mode='pick'; return {ix:0,iz:0}; } const T=C.turn; yaw=v.h;
+    if(T.t<1){ T.t=Math.min(1,T.t+dt*0.5); const t=T.t, u=1-t, x=u*u*T.a[0]+2*u*t*T.c[0]+t*t*T.b[0], z=u*u*T.a[1]+2*u*t*T.c[1]+t*t*T.b[1], dx=2*u*(T.c[0]-T.a[0])+2*t*(T.b[0]-T.c[0]), dz=2*u*(T.c[1]-T.a[1])+2*t*(T.b[1]-T.c[1]);
+      v.p[0]=x; v.p[2]=z; v.h=Math.atan2(-dx,-dz); v.spd=4; vehPlace(v); pl.p=v.p.slice(); return {ix:0,iz:0}; }
+    v.spd=4; const f=vFwd(v.h); v.p[0]+=f[0]*4*dt; v.p[2]+=f[1]*4*dt; vehPlace(v); pl.p=v.p.slice();
+    const fx=Math.floor(v.p[0]+f[0]*(v.V.len/2+0.3)), fz=Math.floor(v.p[2]+f[1]*(v.V.len/2+0.3)); if(get(fx,Math.floor(v.p[1]+1),fz)===ID.pgate||C.t>8){ demoEnter('dealer',true); C.mode='indoorcar'; C.wi=0; C.t=0; }
+    return {ix:0,iz:0}; }
+  if(C.mode==='indoorcar'){ const v=drive; if(!v){ C.mode='inside'; C.ph='out'; return {ix:0,iz:0}; } yaw=v.h; // a lap of the showroom, then back out of the door
+    const route=[[11,24],[11,15.5],[21,15.5],[21,24],[16.5,25],[16.5,31]], tg=route[Math.min(C.wi,route.length-1)]; // up and down the aisles between the cars
+    if(Math.hypot(tg[0]-v.p[0],tg[1]-v.p[2])<1.6&&C.wi<route.length-1)C.wi++;
+    let d=Math.atan2(-(tg[0]-v.p[0]),-(tg[1]-v.p[2]))-v.h; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; v.h+=Math.max(-2*dt,Math.min(2*dt,d)); v.spd=Math.abs(d)>0.8?2:4;
+    if(C.rev>0){ C.rev-=dt; v.spd=-2.5; v.h+=dt*1.2; } if(vMove(v,dt))C.rev=0.9; // bumped something: back up a little pl.p=v.p.slice(); const f=vFwd(v.h), fx=Math.floor(v.p[0]+f[0]*(v.V.len/2+0.3)), fz=Math.floor(v.p[2]+f[1]*(v.V.len/2+0.3));
+    if((C.wi>=route.length-1&&get(fx,Math.floor(v.p[1]+1),fz)===ID.pgate)||C.t>30){ demoLeave(); C.mode='drive'; C.ph='out'; C.toDealer=false; C.t=0; if(drive&&cityK)attachLane(cityK,drive); }
+    return {ix:0,iz:0}; }
+  return {ix:0,iz:0}; }
+// the spot just inside each building's way out, and which way the door is from there
+function INT_EXIT(kind){ if(kind.slice(0,5)==='house')return {p:[16,22.5],d:[0,1]}; if(kind==='dealer')return {p:[16.5,25.5],d:[0,1]}; if(kind==='school')return {p:[3.5,7],d:[-1,0]};
+  if(kind==='club')return {p:[16.5,26.5],d:[0,1]}; return {p:[16.5,21.5],d:[0,1]}; }
+// the hero dancing in the street (and in the club)
+function demoCityDance(){ const C=demo.pil.c; if(!C||demo.user)return; const on=(C.mode==='dance'&&C.ph==='dance')||(C.mode==='inside'&&C.ph==='clubdance'); if(!on)return;
+  const b=musBeat(); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.12; head.rotation.x=0.06-0.25*(0.5+0.5*Math.cos(b*Math.PI*2));
+  armL.rotation.z=-2.5-0.3*Math.sin(b*Math.PI); armR.rotation.z=2.5+0.3*Math.sin(b*Math.PI); armL.rotation.x=armR.rotation.x=0; legL.rotation.x=0.3*Math.max(0,Math.sin(b*Math.PI)); legR.rotation.x=0.3*Math.max(0,-Math.sin(b*Math.PI)); yaw+=0.6*(1/60); }
+
 // ================= PLACES AND PORTALS =================
 // Every place is its own world with its own size and its own save. Place a portal block and a glowing doorway opens;
 // walk through it and the next world loads while you swirl through. Only one world is ever loaded, so worlds stay fast.
@@ -3324,7 +3471,7 @@ const CITY_STYLES={
     wx:'clear',bg:0xb4c2cc,fog:[22,95],fogC:0xc8d0d6,water:{z0:0,z1:21}},
   orlando:{walls:['paint_white','paint_yellow','quartz','sandstone','paint_blue'],trims:['paint_white','quartz','sandstone'],roofs:['roof','concrete'],h:[4,12],glass:0.1,park:0.2,tree:'palm',
     wx:'clear',bg:0x6ec0ff,fog:[55,170]}};
-function cityKey(){ return PLACES[place]&&PLACES[place].city; }
+function cityKey(){ if(demo)return demo.cityKey||null; return PLACES[place]&&PLACES[place].city; }
 function cityRoad(v,c){ const d=((v-c+CITY_GRID/2)%CITY_GRID+CITY_GRID)%CITY_GRID-CITY_GRID/2; return Math.abs(d); } // how far from the middle of the nearest road
 function cityWet(S,x,z){ const w=S.water; return !!w&&((w.x1!==undefined&&x>=w.x0&&x<w.x1)||(w.z1!==undefined&&z>=w.z0&&z<w.z1)); }
 function cityGround(S,x,z){ if(!S.hills)return CITY_G; return CITY_G+Math.max(0,Math.round(2.6*(Math.sin(x*0.05+1)+Math.cos(z*0.043))+2.4)); } // San Francisco's hills: where you stand
@@ -3427,7 +3574,7 @@ let cityK=null;
 const LIGHT_CYCLE=20; // seconds: east-west green 8, yellow 2, then north-south green 8, yellow 2
 function lightState(axis,t){ const p=((t%LIGHT_CYCLE)+LIGHT_CYCLE)%LIGHT_CYCLE, q=axis==='x'?p:(p+10)%LIGHT_CYCLE; return q<8?'g':q<10?'y':'r'; } // 'x' = traffic driving along x
 function clearCityLife(){ if(!cityK)return; if(drive)exitVehicle(true); for(const v of cityK.vehicles.slice())removeVehicle(v); scene.remove(cityK.root); cityK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); for(const p of cityK.people)undress(p.g); cityK=null; }
-function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck||demo)return; const S=CITY_STYLES[ck], root=new THREE.Group(); scene.add(root);
+function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck)return; const S=CITY_STYLES[ck], root=new THREE.Group(); scene.add(root);
   const K=cityK={root,people:[],lights:[],vehicles:[],t:0,ck,S,tripT:20,trip:null,lastType:null}, xs=roadLines(CX,W), zs=roadLines(CZ,D);
   const crossings=[]; for(const x of xs)for(const z of zs)if(!cityWet(S,x,z)&&!cityWet(S,x+6,z+6)&&!cityWet(S,x-6,z-6))crossings.push([x,z]); K.crossings=crossings;
   // traffic lights: a pole on each corner with a box of three lights facing the cars coming
@@ -3474,7 +3621,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
     R.armR.rotation.z=p.wave>0?2.4+Math.sin(K.t*9)*0.3:0; if(p.wave>0)R.armR.rotation.x=0; animRig(R,dt,mv?p.spd:0);
     if(dPl<3&&!p.said&&p.wave>0.9){ p.said=true; } } }
 // each city's weather and sky
-function applyPlaceSky(){ const ck=cityKey(), I=PLACES[place]&&PLACES[place].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
+function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
 
@@ -3522,9 +3669,10 @@ function portalCheck(){ if(demo||traveling||dead||drive)return; const x=Math.flo
   if(g<0){ portalArmed=true; portalSafe=[pl.p[0],pl.p[1],pl.p[2]]; return; } // you've stepped out: the next portal you touch takes you
   const id=resolveDest(DESTS[g>>1]); if(portalArmed&&id)travel(id); }
 function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpEl.classList.add('on');
-  setTimeout(()=>{ try{ const from=place, kit={coins,owned:owned.slice(),weapon,arrows:{...arrows},hp};
+  setTimeout(()=>{ try{ const from=place, kit={coins,owned:owned.slice(),weapon,arrows:{...arrows},hp}, carry=drive?{type:drive.type,dmg:drive.dmg||0}:null; if(drive){ const dv=drive; exitVehicle(true,true); removeVehicle(dv); } // your vehicle comes too
     if(portalSafe)pl.p=portalSafe.slice(); yaw+=Math.PI; saveNow(); // step back out of the doorway and turn round, so you come back facing away from it
     place=dest; if(!loadPlace(dest))newPlace(dest,from);
+    if(carry){ const f=vFwd(yaw), V=VEH[carry.type], v=makeVehicle(carry.type,pl.p[0]+f[0]*(V.len/2-0.8),pl.p[1],pl.p[2]+f[1]*(V.len/2-0.8),yaw); v.dmg=carry.dmg; vehList().push(v); enterVehicle(v,true); }
     coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=kit.hp; refreshWeapon(); updateHUD(); refreshArrowBtn(); // your coins and weapons come with you
     portalArmed=false; saveNow(); }catch(e){ console.error(e); } setTimeout(()=>{ warpEl.classList.remove('on'); traveling=false; },120); // never get stuck mid-warp
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
@@ -3557,9 +3705,10 @@ function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{..
 const tmp=new THREE.Vector3();
 let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
-  if(drive)return driveUpdate(dt);
+  if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return driveUpdate(dt); }
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  if(enterCD>0)enterCD-=dt; else if((!demo||demo.user)&&(Math.abs(ix)+Math.abs(iz)>0.1||Math.abs(pad.lx)+Math.abs(pad.ly)>0.1)&&bumpEnter())return {hs:0};
   if(demo){ demoInput(dt); if(demo.user){ ix+=pad.lx; iz+=pad.ly; if(demo.sc.act==='concert')return concertUser(dt,ix,iz); }
     else { const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } } // the demo autopilot drives (concerts and wonders move the hero themselves)
   const m=Math.hypot(ix,iz); if(m>1){ix/=m;iz/=m;}
@@ -3779,6 +3928,7 @@ function update(dt){
   const pr=$('prompt'); if(act&&!IS_TOUCH){ const t='Press E: '+act.label.replace(/^\S+ /,''); if(pr.textContent!==t)pr.textContent=t; pr.style.display='block'; } else pr.style.display='none';
   if(cityK&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
+  if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
   portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
