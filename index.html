@@ -1715,11 +1715,16 @@ function openSaves(tab){
 function openNewGame(fromTitle){
   let h='<h2>🎮 New Game</h2><div class="say">A new game replaces the one you are playing now. <b>Save it first</b> if you want to come back to it.</div>'+
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>Survival</b><div class="fx">Build with real rocks, fight monsters for coins and shop at Flint\'s. Your coins and weapons carry over.</div></div><button class="ibtn" data-new="survival">Start</button></div>'+
+    '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
+    '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
   $('mbox').innerHTML=h; $('modal').style.display='flex';
   $('mbox').querySelectorAll('[data-new]').forEach(b=>onClick(b,()=>{
     if(!confirm('Start a new Survival game? The game you are playing now will be replaced.'))return;
     closeMenu(); startSurvival(); toast('🌍 Fresh world!'); }));
+  $('mbox').querySelectorAll('[data-newcity]').forEach(b=>onClick(b,()=>{ const k=b.dataset.newcity; // a new city game; your Survival world is kept
+    if(citySaved(k)&&!confirm('Start a new game in '+PLACES[k].name+'? Your saved '+PLACES[k].name+' will be rebuilt from scratch. Your Survival world stays safe.'))return;
+    goCity(k,true); }));
   tap($('nSave'),()=>openSaves(mode)); tap($('nBack'),()=>{ if(titleOn){ $('modal').style.display='none'; } else openMenu(); });
 }
 
