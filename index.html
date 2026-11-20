@@ -163,7 +163,9 @@
   .dmRow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap} .dmRow select{flex:1}
   .dmInline{display:flex;gap:8px;align-items:center;font-weight:700} .dmInline input[type=number]{width:90px!important}
   .dmInline input[type=range]{width:180px}
-  body.demo .ui:not(.dm){display:none!important} body.demo #joyBase,body.demo #joyKnob{display:none!important}
+  body.demo .ui:not(.dm){display:none!important} body.demo:not(.duser) #joyBase,body.demo:not(.duser) #joyKnob{display:none!important}
+  body.demo.duser:not(.no-touch) #act{display:block!important} body.duser #bPlace{display:none!important} #bSwap{right:0;top:20px;display:none}
+  body.demo.duser:not(.dconc) #bSwap{display:flex!important} body.demo.duser.dconc #bBreak{display:none!important} body.demo.duser:not(.dconc) #cross{display:block!important}
   #dmFade{inset:0;background:#000;opacity:0;pointer-events:none;z-index:8;display:none}
   body.demo #dmFade{display:block}
   #dmCap{left:50%;bottom:calc(9vh + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88vw;text-align:center;font:900 clamp(22px,4.6vw,44px)/1.15 'Trebuchet MS',Verdana,sans-serif;color:#fff;
@@ -207,6 +209,7 @@
 <div id="act" class="ui">
   <div class="abtn" id="bBreak"><span>⛏</span>Hit</div>
   <div class="abtn" id="bPlace"><span>🧱</span>Place</div>
+  <div class="abtn" id="bSwap"><span>🔁</span>Weapon</div>
   <div class="abtn" id="bJump"><span>⬆</span>Jump</div>
   <div class="abtn" id="bDown"><span>⬇</span>Down</div>
 </div>
@@ -1400,7 +1403,7 @@ let lookId=null, lx=0, ly=0, upHeld=false, downHeld=false;
 const SENS_T=0.0055, SENS_M=0.0025;
 const touchEl=$('touch');
 touchEl.addEventListener('touchstart',e=>{
-  e.preventDefault(); audioInit(); if(demo){ demoPoke(); return; }
+  e.preventDefault(); audioInit(); if(demo){ demoPoke(); demoTake(); } // touching the screen during a demo takes over
   for(const t of e.changedTouches){
     if(t.clientX<window.innerWidth*0.42 && joy.id===null){
       joy.id=t.identifier; joy.ox=t.clientX; joy.oy=t.clientY; joy.x=joy.y=0;
@@ -1415,10 +1418,10 @@ touchEl.addEventListener('touchmove',e=>{
   for(const t of e.changedTouches){
     if(t.identifier===joy.id){
       let dx=t.clientX-joy.ox, dy=t.clientY-joy.oy; const m=Math.hypot(dx,dy), R=50;
-      if(m>R){dx*=R/m;dy*=R/m;} joy.x=dx/R; joy.y=dy/R;
+      if(m>R){dx*=R/m;dy*=R/m;} joy.x=dx/R; joy.y=dy/R; if(demo)demoTake();
       const jk=$('joyKnob'); jk.style.left=(joy.ox+dx-27)+'px'; jk.style.top=(joy.oy+dy-27)+'px';
     } else if(t.identifier===lookId){
-      yaw-=(t.clientX-lx)*SENS_T; pitch-=(t.clientY-ly)*SENS_T; pitch=Math.max(-1.55,Math.min(1.55,pitch)); lx=t.clientX; ly=t.clientY;
+      if(demo)demoTake(true); yaw-=(t.clientX-lx)*SENS_T; pitch-=(t.clientY-ly)*SENS_T; pitch=Math.max(-1.55,Math.min(1.55,pitch)); lx=t.clientX; ly=t.clientY;
     }
   }
 },{passive:false});
@@ -1449,18 +1452,22 @@ function bindHold(el,down,up){
   el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',e=>{ if(el.classList.contains('down'))off(e); });
 }
 let hitHeld=false, placeHeld=false, repeatT=0;
-bindHold($('bBreak'),()=>{ if(paused)return; hitHeld=true; hitAction(); repeatT=0.3; },()=>hitHeld=false);
+bindHold($('bBreak'),()=>{ if(paused)return; hitHeld=true; doHit(); repeatT=0.3; },()=>hitHeld=false);
 bindHold($('bPlace'),()=>{ if(paused)return; placeHeld=!aimNPC; placeAction(); repeatT=0.3; },()=>placeHeld=false);
 bindHold($('bJump'),()=>upHeld=true,()=>upHeld=false);
 bindHold($('bDown'),()=>downHeld=true,()=>downHeld=false);
 function tap(el,fn){ el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();audioInit();fn();},{passive:false}); el.addEventListener('click',fn); }
 tap($('bCam'),toggleCam); tap($('bFly'),toggleFly); tap($('bWeapon'),cycleWeapon); tap($('bArrow'),()=>openArrows(false));
-tap($('bInfo'),()=>showCard(sel,true)); tap($('bMenu'),openMenu); tap($('bGear'),openSettings); tap($('bTalk'),openShop);
+tap($('bSwap'),demoSwap); tap($('bInfo'),()=>showCard(sel,true)); tap($('bMenu'),openMenu); tap($('bGear'),openSettings); tap($('bTalk'),openShop);
 $('card').addEventListener('click',()=>$('card').style.display='none');
 $('card').addEventListener('touchstart',e=>{e.preventDefault();$('card').style.display='none';},{passive:false});
 
 window.addEventListener('keydown',e=>{
-  if(demo){ if(e.code==='Escape')demoStop(); else if(demo.sc&&demo.sc.act==='concert'){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else singKeys.add(e.code); } else demoPoke(); e.preventDefault(); return; }
+  if(demo){ if(e.code==='Escape')demoStop(); // in a concert: WASD/arrows walk, P is pyro, every other key sings. Anywhere else: WASD, Space, Shift take over; Q swaps weapon; E or Enter attacks
+    else if(demo.sc&&demo.sc.act==='concert'){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else if(CONC_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); } else singKeys.add(e.code); }
+    else if(DEMO_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); }
+    else if(e.code==='KeyQ'){ if(!e.repeat)demoSwap(); } else if(e.code==='KeyE'||e.code==='Enter')demoHit(); else demoPoke();
+    e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
   if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'&&nearMerchant())openShop();
@@ -1470,10 +1477,10 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{ keys[e.code]=false; singKeys.delete(e.code); });
 window.addEventListener('blur',()=>singKeys.clear());
 if(!IS_TOUCH){
-  touchEl.addEventListener('click',e=>{ audioInit(); if(demo){ demoPoke(); return; } if(document.pointerLockElement!==touchEl){ try{ const r=touchEl.requestPointerLock(); if(r&&r.catch)r.catch(()=>{}); }catch(e){} } });
-  document.addEventListener('mousemove',e=>{ if(document.pointerLockElement!==touchEl||paused)return;
+  touchEl.addEventListener('click',e=>{ audioInit(); if(demo){ demoPoke(); demoTake(); } if(document.pointerLockElement!==touchEl){ try{ const r=touchEl.requestPointerLock(); if(r&&r.catch)r.catch(()=>{}); }catch(e){} } });
+  document.addEventListener('mousemove',e=>{ if(document.pointerLockElement!==touchEl||paused)return; if(demo)demoTake(true);
     yaw-=e.movementX*SENS_M; pitch-=e.movementY*SENS_M; pitch=Math.max(-1.55,Math.min(1.55,pitch)); });
-  touchEl.addEventListener('mousedown',e=>{ if(document.pointerLockElement!==touchEl||paused)return; if(e.button===0)hitAction(); if(e.button===2)placeAction(); });
+  touchEl.addEventListener('mousedown',e=>{ if(document.pointerLockElement!==touchEl||paused)return; if(e.button===0)doHit(); if(e.button===2&&!demo)placeAction(); });
   touchEl.addEventListener('contextmenu',e=>e.preventDefault());
   window.addEventListener('wheel',e=>{ if(document.pointerLockElement!==touchEl)return; const l=order(); let i=l.indexOf(sel); i=(i+(e.deltaY>0?1:-1)+l.length)%l.length; select(l[i]); },{passive:true});
 }
@@ -2181,7 +2188,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2195,6 +2202,7 @@ const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',se
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
+  {act:'chop',time:'day',wx:'clear',land:'normal',cam:'cine',secs:20,cap:''},
   {act:'build',time:'sunset',wx:'clear',land:'normal',cam:'cine',secs:22,cap:'Building a house'},
   {act:'wonder',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',wonder:'random'},
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
@@ -2234,6 +2242,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   h+='<h3>⚙️ Options</h3>'+
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>World</b><div class="fx">'+(dmCfg.world==='demo'?'A demo world that is the same every time, so you can record it again.':'Your saved Survival world. Nothing the demo does is saved.')+'</div></div><button class="ibtn eq" id="dmWorld">'+(dmCfg.world==='demo'?'Demo world':'My world')+'</button></div>'+
     (dmCfg.world==='demo'?'<div class="dmRow"><label class="dmInline">Demo world number<input type="number" min="1" id="dmSeed" value="'+dmCfg.seed+'"></label><span class="fx">Change it for a different landscape.</span></div>':'')+
+    '<div class="item"><div class="ic">🕹️</div><div class="tx"><b>Take over the hero</b><div class="fx">While a demo plays, move a controller stick, touch the screen, press WASD or click the mouse and you\'re in control: the camera swings behind your hero and the scene waits for you. Controller: left stick walks, right stick looks, A jumps, X or RT attacks, Y swaps between the sword and bomb arrows. Keyboard: Q swaps, E attacks (or click with the mouse). Let go for 5 seconds and the demo carries on by itself.</div></div></div>'+
     '<div class="item"><div class="ic">🎮</div><div class="tx"><b>Singing with a controller</b><div class="fx">In a 🎤 concert, hold any button on a game controller (Xbox, PlayStation or Switch, over Bluetooth) or any key on a keyboard to open your hero\'s mouth, so you never touch the screen while you record. The L and R shoulder buttons (or the P key) set off the pyro. Press a controller button once before you start, so the browser knows it\'s there. Esc stops the demo.</div></div></div>'+
     '<div class="item"><div class="ic">🔁</div><div class="tx"><b>Repeat</b><div class="fx">'+(dmCfg.loop?'Start again from scene 1 after the last scene.':'Go back to the main menu after the last scene.')+'</div></div><button class="ibtn'+(dmCfg.loop?'':' gray')+'" id="dmLoop">'+(dmCfg.loop?'ON':'OFF')+'</button></div>'+
     '<div class="item"><div class="ic">🌗</div><div class="tx"><b>Fade between scenes</b><div class="fx">A quick fade to black between scenes.</div></div><button class="ibtn'+(dmCfg.fades?'':' gray')+'" id="dmFades">'+(dmCfg.fades?'ON':'OFF')+'</button></div>'+
@@ -2295,18 +2304,18 @@ function updateWeather(dt){ if(!wxPts)return; const P=wxPts.geometry.attributes.
 // --- run the show
 function demoStart(){ if(document.pointerLockElement)document.exitPointerLock(); saveNow(); musicStop();
   $('mbox').classList.remove('wide'); $('modal').style.display='none';
-  demo={i:-1,t:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
+  demo={i:-1,t:0,st:0,user:false,idle:0,lookT:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
   if(titleOn)hideTitle(); mobsOn=false; clearEntities();
   if(dmCfg.world==='demo'){ placed.clear(); generate(dmCfg.seed); rebuildAll(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
   if(demo.bak){ world.set(demo.bak.w); meta.set(demo.bak.m); lavaSet.clear(); for(const q of demo.bak.lava)lavaSet.add(q); lavaArr=null; demo.bak=null; // put the land back after a wonder
     activeW.clear(); activeL.clear(); fires.clear(); for(const sh of shots.slice())freeShot(sh); rebuildAll(); }
-  demo.i=i; demo.t=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
+  demo.i=i; demo.t=0; demo.st=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
   if(dmCfg.fades){ $('dmFade').style.transition='none'; $('dmFade').style.opacity=1; requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=0; })); } }
 function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&B[b].solid&&b!==ID.leaves&&b!==ID.log)return y+1; } return SPAWN_H; }
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
@@ -2315,15 +2324,17 @@ function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI
 function demoSetup(sc){ setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':sc.act==='concert'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
+  weapon=sc.act==='fight'?'diamond':sc.act==='concert'||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
+  clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',sc.act==='concert');
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
   else if(sc.act==='flint'){ pl.p=landSpot(MX,MZ+12,3); yaw=0; }
+  else if(sc.act==='chop'){ pl.p=landSpot(CX,CZ,8); yaw=Math.random()*6.28; P.done=new Set(); P.tree=null; P.wait=0; { const ax=axeMesh(); ax.scale.setScalar(1.7); tpWeapon.add(ax); } demo.puppet=true; }
   else if(sc.act==='fight'){ pl.p=landSpot(CX,CZ+4,4); yaw=Math.random()*6.28; P.kills=0; P.spawnT=0.2; }
   else if(sc.act==='fly'){ setFly(true,false); P.a=Math.random()*6.28; pl.p=[CX+Math.cos(P.a)*28,36,CZ+Math.sin(P.a)*28]; yaw=0; }
   else if(sc.act==='side'){ setFly(true,false); pl.p=[-13,SEA+8,10+Math.random()*30]; yaw=-Math.PI/2; pitch=-0.12; P.dir=1; }
@@ -2348,23 +2359,8 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='explore'){ P.wpT-=dt; if(!P.wp||P.wpT<=0||Math.hypot(P.wp[0]-pl.p[0],P.wp[2]-pl.p[2])<1.2){ P.wp=landSpot(pl.p[0],pl.p[2],14); P.wpT=9; }
     const m=walkTo(P.wp[0],P.wp[2],dt,P); P.jT-=dt; if(P.jT<=0){ P.jT=4+Math.random()*4; demoUp=true; } return m; }
   if(sc.act==='flint'){ const tx=merchant.p[0], tz=merchant.p[2]+2.2; if(Math.hypot(tx-pl.p[0],tz-pl.p[2])>0.8)return walkTo(tx,tz,dt,P); turnTo(merchant.p[0],merchant.p[2],dt,3); P.wave=true; return {ix:0,iz:0}; }
-  if(sc.act==='fight'){ P.spawnT-=dt; const foes=mobs.filter(m=>!m.t.flyer);
-    if(foes.length<3&&P.spawnT<=0){ P.spawnT=1.2; const types=['zombie','skeleton','slime','spider','golem','orc','mummy','wolf','troll']; const s=landSpot(pl.p[0],pl.p[2],10);
-      if(Math.hypot(s[0]-pl.p[0],s[2]-pl.p[2])>5)spawnMob(types[Math.floor(Math.random()*types.length)],s[0],s[1],s[2]); }
-    let foe=null, fd=1e9; for(const m of foes){ const q=Math.hypot(m.p[0]-pl.p[0],m.p[2]-pl.p[2]); if(q<fd){ fd=q; foe=m; } }
-    P.bowPose=false; const wield=id=>{ if(weapon!==id){ weapon=id; refreshWeapon(); } };
-    if(!foe){ wield('diamond'); return {ix:0,iz:0}; }
-    // stuck? (in a tree, or on something it can't climb) Check every second whether the hero has really moved
-    P.chk=(P.chk||0)+dt; if(P.chk>=1){ P.chk=0; const moved=P.lastP?Math.hypot(pl.p[0]-P.lastP[0],pl.p[2]-P.lastP[1]):9; P.lastP=[pl.p[0],pl.p[2]];
-      if(moved<0.5&&fd>2.4){ P.stuckN=(P.stuckN||0)+1; P.bowT=3; } else P.stuckN=0;
-      if(P.stuckN>=5){ P.stuckN=0; pl.p=landSpot(pl.p[0],pl.p[2],5); } } // still stuck after all that: hop down somewhere else
-    P.bowT=Math.max(0,(P.bowT||0)-dt);
-    const fx=Math.floor(pl.p[0]), fz=Math.floor(pl.p[2]), fy=Math.floor(pl.p[1]), leafy=[fy-1,fy,fy+1].some(y=>get(fx,y,fz)===ID.leaves);
-    if(fd<2.4){ wield('diamond'); turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
-    if(fd>3.5&&(fd>7||P.bowT>0||leafy)){ wield('bow'); P.bowPose=true; turnTo(foe.p[0],foe.p[2],dt,6); // too far away to reach, or stuck: bomb arrows!
-      const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(foe.p[0],foe.p[1]+foe.h*0.5,foe.p[2]), fl=o.distanceTo(t)/42, d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize();
-      pitch=Math.max(-1,Math.min(1,Math.asin(d.y))); if(atkCd<=0){ atkCd=0.9; arrows.explode=999; fireSpecial('explode',o,d,WP.bow); } return {ix:0,iz:0}; }
-    wield('diamond'); return walkTo(foe.p[0],foe.p[2],dt,P); }
+  if(sc.act==='fight')return fightPilot(dt,P,0);
+  if(sc.act==='chop')return chopPilot(dt,P);
   if(sc.act==='fly'){ P.a+=dt*0.22; const r=28, tx=CX+Math.cos(P.a+0.5)*r, tz=CZ+Math.sin(P.a+0.5)*r; turnTo(tx,tz,dt,2); const alt=34+Math.sin(demo.t*0.3)*4;
     demoUp=pl.p[1]<alt-0.6; demoDown=pl.p[1]>alt+0.6; return {ix:0,iz:-1}; }
   if(sc.act==='side'){ if(pl.p[2]>D-12)P.dir=-1; if(pl.p[2]<12)P.dir=1; yaw+=((-Math.PI/2)-yaw)*Math.min(1,dt*2); return {ix:P.dir*0.3,iz:0}; }
@@ -2374,7 +2370,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'){ wonderCam(dt); return; }
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2389,20 +2385,21 @@ function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } 
   want.lerpVectors(tgt,want,tt);
   if(!C.p)C.p=want.clone(); else C.p.lerp(want,Math.min(1,dt*(k==='follow'?4:2.2))); C.l.lerp(tgt,Math.min(1,dt*5));
   camera.position.copy(C.p); camera.lookAt(C.l); }
-function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; const sc=demo.sc, P=demo.pil;
+function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; if(!demo.user)demo.st+=dt; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock: it waits while you're driving
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
-  if(P.wave||sc.act==='showcase'){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
-  if(sc.act==='showcase'){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
+  if((P.wave||sc.act==='showcase')&&!demo.user){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
+  if(sc.act==='showcase'&&!demo.user){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
-  if(P.bowPose&&weapon==='bow'){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
+  if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
+  if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
   brickTick(dt);
   hl.visible=false; updateWeather(dt);
-  const capT=sc.cap||(sc.act==='wonder'&&P.key&&P.phase==='build'?WON[P.key].icon+' '+WON[P.key].name+' · '+WON[P.key].place:'');
-  const cap=$('dmCap'), showCap=!!capT&&demo.t>0.8&&demo.t<sc.secs-1.2; if(cap.textContent!==capT)cap.textContent=capT; cap.classList.toggle('on',showCap);
-  if(dmCfg.fades&&demo.t>sc.secs-0.7&&!demo.out){ demo.out=true; $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=1; }
-  if(!dmCfg.loop&&demo.i===dmCfg.scenes.length-1&&demo.t>sc.secs-2.2)musicFade();
-  if(demo.t>=sc.secs){ demo.out=false; demoNext(); } }
+  const capT=sc.cap||(sc.act==='wonder'&&P.key?(P.phase==='build'?WON[P.key].icon+' '+WON[P.key].name+' · '+WON[P.key].place:P.phase==='fight'&&demo.st<P.fightAt+3.5?'⚔️ Here come the monsters!':''):'');
+  const cap=$('dmCap'), showCap=!!capT&&demo.st>0.8&&demo.st<sc.secs-1.2; if(cap.textContent!==capT)cap.textContent=capT; cap.classList.toggle('on',showCap);
+  if(dmCfg.fades&&demo.st>sc.secs-0.7&&!demo.out){ demo.out=true; $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=1; }
+  if(!dmCfg.loop&&demo.i===dmCfg.scenes.length-1&&demo.st>sc.secs-2.2)musicFade();
+  if(demo.st>=sc.secs){ demo.out=false; demoNext(); } }
 function demoPoke(){ const b=$('dmStop'); b.classList.add('on'); clearTimeout(dmPokeT); dmPokeT=setTimeout(()=>b.classList.remove('on'),2500); }
 tap($('dmStop'),demoStop);
 document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.abs(e.movementY)>2))demoPoke(); });
@@ -2414,10 +2411,13 @@ document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.
 const CLUB=new THREE.Vector3(48,180,48), club=new THREE.Group(); club.position.copy(CLUB); club.visible=false; scene.add(club);
 let clubK=null, padPyroWas=false; const singKeys=new Set();
 function setMouth(R,o){ if(!R||!R.mouth)return; R.mouth.visible=o>0.06; R.mouth.scale.y=Math.max(0.05,o); R.mouth.position.y=0.125-0.055*o; }
-function padRead(){ let sing=0, pyro=false, ps=[]; try{ ps=navigator.getGamepads?navigator.getGamepads():[]; }catch(e){}
-  for(const p of ps){ if(!p||!p.buttons)continue; p.buttons.forEach((b,i)=>{ const v=typeof b==='object'?(b.value||(b.pressed?1:0)):+b||0;
-    if(i===4||i===5){ if(v>0.5)pyro=true; } else if(i!==8&&i!==9&&i!==16)sing=Math.max(sing,v); }); } // shoulder buttons: pyro. Select, Start and Home do nothing
-  return {sing,pyro}; }
+function padRead(){ const o={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false}, dz=v=>Math.abs(v)>0.22?v:0; let ps=[];
+  try{ ps=navigator.getGamepads?navigator.getGamepads():[]; }catch(e){}
+  for(const p of ps){ if(!p||!p.buttons)continue; p.buttons.forEach((b,i)=>{ const v=typeof b==='object'?(b.value||(b.pressed?1:0)):+b||0, on=v>0.5;
+      if(i===4||i===5){ if(on)o.pyro=true; } else if(i!==8&&i!==9&&i!==16)o.sing=Math.max(o.sing,v); // shoulder buttons: pyro. Select, Start and Home do nothing
+      if(on&&i!==8&&i!==9&&i!==16)o.any=true; if(on&&i===0)o.a=true; if(on&&i===1)o.b=true; if(on&&(i===2||i===7))o.hit=true; if(on&&i===3)o.swap=true; });
+    const ax=p.axes||[]; o.lx+=dz(ax[0]||0); o.ly+=dz(ax[1]||0); o.rx+=dz(ax[2]||0); o.ry+=dz(ax[3]||0); }
+  return o; }
 function clubNpc(L,x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry||0; g.scale.setScalar(0.94); const R=makeRig(g); dressRig(R,cleanLook(L)); club.add(g); return {g,R,x,y,z}; }
 function guitarMesh(col,neckL,bass){ const g=new THREE.Group(), bodyM=lm(col), wood=lm(0x6b4a2a), dk=lm(0x1a1410), n=bass?4:6;
   const b1=box(0.42,0.3,0.08,bodyM); b1.position.y=-0.12; g.add(b1); const b2=box(0.32,0.22,0.08,bodyM); b2.position.y=0.12; g.add(b2);
@@ -2465,7 +2465,9 @@ function buildClub(){ const g=club, K={t:0,tiles:[],lights:[],beams:[],band:{},s
   // the singer's mic stand
   const ms=add(new THREE.Group(),0,1,-0.85); add(cyl(0.3,0.3,0.05,lm(0x222226)),0,0.03,0,ms); add(cyl(0.022,0.022,1.4,lm(0x9a9aa2),8),0,0.72,0,ms);
   const mic=add(new THREE.Group(),0,1.43,-0.14,ms); const mb=cyl(0.03,0.04,0.2,lm(0x1e1e22),10); mb.rotation.x=Math.PI/2; mic.add(mb);
-  add(new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),lm(0x6a6a72)),0,0,-0.12,mic); K.stand=ms;
+  add(new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),lm(0x6a6a72)),0,0,-0.12,mic); K.stand=ms; K.micStand=mic;
+  K.micHand=new THREE.Group(); K.micHand.position.set(0,-0.6,-0.05); { const hb=cyl(0.03,0.04,0.2,lm(0x1e1e22),10); K.micHand.add(hb); const hh=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,8),lm(0x6a6a72)); hh.position.y=0.13; K.micHand.add(hh); }
+  K.micHand.visible=false; armR.add(K.micHand); // the hero's own arm: the mic comes along when they leave the stand
   // pyro launchers along the front of the stage
   for(const x of[-9,-7,-5,-3,3,5,7,9])add(box(0.36,0.16,0.36,lm(0x101012)),x,1.08,-0.45);
   // the band. They face the crowd (+z)
@@ -2487,7 +2489,7 @@ function buildClub(){ const g=club, K={t:0,tiles:[],lights:[],beams:[],band:{},s
   const kt=new THREE.CanvasTexture(kc); kt.magFilter=kt.minFilter=THREE.NearestFilter; kt.generateMipmaps=false;
   add(box(1.1,0.08,0.4,[lm(0x2a2a30),lm(0x2a2a30),new THREE.MeshLambertMaterial({map:kt}),lm(0x2a2a30),lm(0x2a2a30),lm(0x2a2a30)]),-6.2,2.04,-5.7);
   K.knobs=[]; for(let i=0;i<6;i++){ const m=new THREE.MeshBasicMaterial({color:0xff3aa8}); K.knobs.push(m); add(box(0.06,0.04,0.06,m),-6.65+i*0.18,2.04,-5.95); }
-  pyroInit(K); return K; }
+  pyroInit(K); crowdFunInit(K); return K; }
 // backup singers stand back right, each with a handheld mic
 const SINGER_LOOKS=[{skin:'#7a4a26',eyes:'#3a2412',hair:'curly',hairC:'#1a1410',bottom:'dress',bottomC:'#f2c230',shoes:'shoes',shoeC:'#2a2a30'},
   {skin:'#f6cfa8',eyes:'#2f8a4a',hair:'long',hairC:'#c8401e',bottom:'dress',bottomC:'#e85aa8',shoes:'shoes',shoeC:'#ffffff'},
@@ -2499,12 +2501,13 @@ function setSingers(K,n){ for(const S of K.singers){ club.remove(S.g); disposeG(
     const h=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6),lm(0x8a8a92)); h.position.y=0.12; mic.add(h); K.singers.push(S); } }
 // the crowd: people, monsters, or both, all facing the stage
 const CROWD_MON=['zombie','skeleton','golem','orc','mummy','alien','slime','wolf','trashbot','spider'];
-function setCrowd(K,kind){ for(const c of K.crowd){ club.remove(c.g); disposeG(c.g); if(c.r)for(const m of c.r.mats)m.dispose(); } K.crowd=[]; K.crowdKind=kind;
+function setCrowd(K,kind){ for(const c of K.crowd){ club.remove(c.g); disposeG(c.g); if(c.r)for(const m of c.r.mats)m.dispose(); } K.crowd=[]; K.crowdKind=kind; K.surf=null;
   const styles=['bob','jump','arms','pump','sway','clap'];
   for(let j=0;j<3;j++)for(let i=0;i<9;i++){ const x=-8+i*2+(j%2?0.9:0)+(Math.random()-0.5)*0.5, z=2.1+j*2.5+(Math.random()-0.5)*0.6; if(x>10.5)continue;
     const mon=kind==='monsters'||(kind==='mixed'&&Math.random()<0.5), ry=Math.atan2(x,z+1.5)+(Math.random()-0.5)*0.3; let c;
     if(mon){ const r=mobModel(CROWD_MON[Math.floor(Math.random()*CROWD_MON.length)]); r.bar.visible=false; r.root.position.set(x,0,z); r.root.rotation.y=ry; club.add(r.root); c={g:r.root,r}; }
     else { const p=clubNpc(randomLook(),x,0,z,ry); c={g:p.g,R:p.R}; }
+    if(Math.random()<0.35&&(c.R||c.r.armR))crowdItem(c);
     c.x=x; c.z=z; c.st=styles[Math.floor(Math.random()*styles.length)]; c.off=Math.random()<0.7?0:0.5; c.ph=Math.random()*6; K.crowd.push(c); } }
 // pyrotechnics: one cloud of glowing points for flames, sparks and fireworks
 function pyroInit(K){ const N=900, g=new THREE.BufferGeometry(), pos=new Float32Array(N*3), col=new Float32Array(N*3); for(let i=0;i<N;i++)pos[i*3+1]=-50;
@@ -2515,6 +2518,8 @@ function pyroAdd(x,y,z,vx,vy,vz,r,g,b,life,grav){ const P=clubK.px, i=P.next++%P
   P.c0[i*3]=r; P.c0[i*3+1]=g; P.c0[i*3+2]=b; P.life[i]=P.max[i]=life; P.grav[i]=grav; }
 function pyroGo(){ const K=clubK; if(!K||!demo||!demo.sc||demo.sc.pyro!=='on'||K.t-K.pyroT<0.4)return; K.pyroT=K.t;
   const kind=['jets','curtain','jets2','fireworks'][K.pyroI++%4];
+  K.mosh=2.2; // everyone jumps together
+  if(kind==='jets2'||kind==='fireworks')K.emit.push({k:'confetti',t:2.6});
   if(kind==='jets'){ for(const x of[-9,-5,5,9])K.emit.push({k:'jet',x,z:-0.45,t:0.9}); sfx('jet'); }
   else if(kind==='jets2'){ for(const x of[-7,-3,3,7])K.emit.push({k:'jet',x,z:-0.45,t:0.9}); for(const x of[-9,9])K.emit.push({k:'spark',x,z:-0.45,t:1.6}); sfx('jet'); }
   else if(kind==='curtain'){ K.emit.push({k:'curtain',t:2.4}); sfx('sizzle'); }
@@ -2523,6 +2528,7 @@ function pyroTick(dt){ const K=clubK, P=K.px, R=rand;
   for(const e of K.emit){ e.t-=dt;
     if(e.k==='jet'){ for(let n=0;n<10;n++)pyroAdd(e.x+(R()-.5)*0.3,1.15,e.z+(R()-.5)*0.3,(R()-.5)*1.2,9+R()*5,(R()-.5)*1.2,1,0.35+R()*0.5,0.05,0.35+R()*0.35,-4); K.fl=1; }
     else if(e.k==='spark'){ for(let n=0;n<6;n++)pyroAdd(e.x,1.15,e.z,(R()-.5)*3,6+R()*4,(R()-.5)*3,1,0.9,0.6,1.1+R()*0.4,10); }
+    else if(e.k==='confetti'){ for(let n=0;n<8;n++){ const c=new THREE.Color().setHSL(R(),1,0.6); pyroAdd(-10+R()*20,9.6,R()*13,(R()-.5)*1.5,-0.5,(R()-.5)*1.5,c.r,c.g,c.b,3.2+R(),1.2); } }
     else if(e.k==='curtain'){ for(let n=0;n<12;n++)pyroAdd(-10+R()*20,8.5,-2.5+(R()-.5)*0.2,(R()-.5)*0.3,-R(),(R()-.5)*0.3,1,0.85+R()*0.15,0.5,1.3+R()*0.5,9); K.fl=Math.max(K.fl,0.4); }
     else if(e.k==='rocket'){ e.y+=12*dt; e.z+=6*dt; for(let n=0;n<2;n++)pyroAdd(e.x,e.y,e.z,(R()-.5)*0.4,-1,(R()-.5)*0.4,1,0.7,0.3,0.4,2);
       if(e.t<=0){ const c=new THREE.Color().setHSL(e.hue,1,0.6); for(let n=0;n<90;n++){ const u=R()*2-1, a=R()*Math.PI*2, s=Math.sqrt(1-u*u), sp=3.5+R()*1.5; pyroAdd(e.x,e.y,e.z,s*Math.cos(a)*sp,u*sp,s*Math.sin(a)*sp,c.r,c.g,c.b,1.1+R()*0.5,3); }
@@ -2550,13 +2556,15 @@ function concertPilot(dt,P){ const beat=musBeat(); P.atMic=demo.t-P.lastSing<1.4
 function concertTick(dt){ const K=clubK, sc=demo.sc, P=demo.pil, beat=musBeat(), T=demo.t, P2=Math.PI*2, s=Math.sin; K.t+=dt;
   scene.background.setHex(0x050308); scene.fog.color.setHex(0x050308);
   // singing: a button always wins; otherwise the mouth follows the music (in "moves with the music" mode)
-  const pad=padRead(); if(pad.pyro&&!padPyroWas)pyroGo(); padPyroWas=pad.pyro;
+  if(pad.pyro&&!padPyroWas)pyroGo(); padPyroWas=pad.pyro;
   const btn=Math.max(pad.sing,singKeys.size?1:0); let want=sc.mouth==='auto'?autoSing(beat):0; if(btn>0.05)want=Math.max(0.35,btn);
   P.mo+=(want-P.mo)*Math.min(1,dt*(want>P.mo?30:16)); setMouth(rig,P.mo); if(P.mo>0.2)P.lastSing=T;
   // the hero dances and bobs their head
   const pulse=0.5+0.5*Math.cos(beat*P2), hop=Math.abs(s(beat*Math.PI));
   model.position.y+=hop*0.06; model.rotation.z=s(beat*Math.PI)*0.05; head.rotation.x=0.06-0.26*pulse;
-  if(P.atMic){ armR.rotation.x=1.25; armR.rotation.z=-0.32; armL.rotation.x=0.35+0.2*s(beat*Math.PI); armL.rotation.z=-0.2;
+  const away=!P.atMic; K.micStand.visible=!away; K.micHand.visible=away; // step away from the stand and the mic comes too
+  if(away&&P.mo>0.15){ armR.rotation.x=2.25; armR.rotation.z=-0.42; armL.rotation.x=0.2; armL.rotation.z=-0.4-0.3*s(beat*Math.PI); }
+  else if(P.atMic){ armR.rotation.x=1.25; armR.rotation.z=-0.32; armL.rotation.x=0.35+0.2*s(beat*Math.PI); armL.rotation.z=-0.2;
     legL.rotation.x=0.12*Math.max(0,s(beat*Math.PI)); legR.rotation.x=0.12*Math.max(0,-s(beat*Math.PI)); }
   else { const mv=Math.floor(beat/8)%3;
     if(mv===0){ armR.rotation.x=2.6+0.4*pulse; armL.rotation.x=0.3*s(beat*Math.PI); }
@@ -2581,15 +2589,18 @@ function concertTick(dt){ const K=clubK, sc=demo.sc, P=demo.pil, beat=musBeat(),
     R.armR.rotation.x=2.25; R.armR.rotation.z=-0.42; const wave=Math.floor(beat/16)%2===1; R.armL.rotation.x=0.15; R.armL.rotation.z=wave?-2.4-0.3*s(beat*Math.PI):-0.15+0.12*s(beat*Math.PI*0.5);
     const w2=sb>=2&&beat%4<3.5?0.5+0.1*s(beat*P2):0; S.mo+=(w2-S.mo)*Math.min(1,dt*10); setMouth(R,S.mo); }
   // the crowd bobs, jumps and waves
-  for(const c of K.crowd){ const b=beat+c.off, bp=0.5+0.5*Math.cos(b*P2), up=Math.abs(s(b*Math.PI));
-    c.g.position.y=c.st==='jump'?up*0.35:0; const hr=0.06-0.3*bp;
+  crowdFunTick(K,dt,beat); const mosh=K.mosh>0, lightsUp=Math.floor(beat/16)%4>=2;
+  for(const c of K.crowd){ if(c.surf)continue; c.hitT=Math.max(0,(c.hitT||0)-dt); const b=beat+c.off, bp=0.5+0.5*Math.cos(b*P2), up=Math.abs(s(b*Math.PI));
+    c.g.position.y=mosh?Math.abs(s(beat*Math.PI))*0.6:c.st==='jump'?up*0.35:0; const hr=0.06-0.3*bp;
     if(c.R){ const R=c.R; R.head.rotation.x=hr; R.armL.rotation.z=0; R.armR.rotation.z=0; R.armL.rotation.x=0; R.armR.rotation.x=0;
       if(c.st==='arms'){ R.armL.rotation.z=-2.7+0.25*s(b*Math.PI); R.armR.rotation.z=2.7+0.25*s(b*Math.PI); }
       else if(c.st==='pump'){ R.armR.rotation.x=2.8+0.35*Math.cos(b*P2); }
       else if(c.st==='clap'){ R.armL.rotation.x=R.armR.rotation.x=1.2; R.armL.rotation.z=0.12+0.3*(1-bp); R.armR.rotation.z=-0.12-0.3*(1-bp); }
       else if(c.st==='sway'){ c.g.rotation.z=0.1*s(b*Math.PI*0.5); R.armL.rotation.z=-0.3-0.2*s(b*Math.PI*0.5); R.armR.rotation.z=0.3-0.2*s(b*Math.PI*0.5); } }
     else { const r=c.r; r.body.rotation.x=-0.22*bp; if(r.armL){ if(c.st==='arms'||c.st==='pump'){ r.armL.rotation.x=2.7+0.3*s(b*Math.PI); r.armR.rotation.x=2.7-0.3*s(b*Math.PI); } else { r.armL.rotation.x=0.5+0.4*bp; r.armR.rotation.x=0.5+0.4*(1-bp); } }
-      if(r.legL){ r.legL.rotation.x=0; r.legR.rotation.x=0; } } }
+      if(r.legL){ r.legL.rotation.x=0; r.legR.rotation.x=0; } if(r.armL){ r.armL.rotation.z=0; r.armR.rotation.z=0; } }
+    const A=c.R||c.r; if(A&&A.armL){ if(c.hitT>0||mosh){ A.armL.rotation.x=A.armR.rotation.x=0; A.armL.rotation.z=-2.8; A.armR.rotation.z=2.8; } // hands up!
+      else if(c.item&&lightsUp){ A.armR.rotation.z=0; A.armR.rotation.x=2.9+0.25*s(beat*Math.PI*0.5+c.ph); } } }
   // lights
   const hueB=(beat/16)%1; K.lights.forEach((L,i)=>{ L.position.set(s(K.t*0.6+i*2.1)*8,6.5,-1+Math.cos(K.t*0.5+i*1.7)*5); L.color.setHSL((hueB+i/3)%1,1,0.55); });
   K.key.intensity=1.0+0.5*pulse; for(const q of K.beams){ q.pv.rotation.z=0.55*s(K.t*0.8+q.i*1.1); q.pv.rotation.x=-0.35-0.3*s(K.t*0.6+q.i*0.7); q.cn.material.color.setHSL((hueB+q.i/6)%1,1,0.55); }
@@ -2605,9 +2616,12 @@ function concertCam(dt){ const sc=demo.sc, K=clubK, C=demo.cam||(demo.cam={st:0,
   const SH={wide:t=>[at(Math.sin(t*0.1)*2,4.2,13.5-t*0.4),at(0,2.6,-3)], hero:t=>[h.clone().add(new THREE.Vector3(0.9-t*0.12,0.1,2.2-t*0.1)),h],
     low:t=>[at(1.6-t*0.15,1.3,2)  ,h.clone().add(new THREE.Vector3(0,0.1,0))], guitar:t=>[mp(B.gtr).add(new THREE.Vector3(1.6-t*0.1,0.4,2.6)),mp(B.gtr)],
     bass:t=>[mp(B.bass).add(new THREE.Vector3(-1.6+t*0.1,0.4,2.6)),mp(B.bass)], drums:t=>[at(0.5-t*0.1,3.7,-3.4),at(0,2.4,-7.6)], dj:t=>[at(-4.8+t*0.1,3,-3.6),at(-6.8,2.3,-6.2)],
-    singers:t=>[at(3.6+t*0.15,2.8,-3.2),at(5.8,2.4,-6.6)], crowd:t=>[h.clone().add(new THREE.Vector3(1.5,0.9,-2.2)),at(Math.sin(t*0.2)*3,1.6,8)], side:t=>[at(11.5,3.5,1+t*0.2),at(0,2.2,-4)]};
+    singers:t=>[at(3.6+t*0.15,2.8,-3.2),at(5.8,2.4,-6.6)], flyover:t=>[at(Math.sin(t*0.3)*3,5.2-t*0.35,14-t*2.2),at(Math.sin(t*0.3)*2,0.8,6-t*1.6)],
+    through:t=>[at(-10+t*4.4,1.9,3.35),at(-7+t*4.4,1.5,3.8)], orbitCrowd:t=>[at(Math.sin(t*0.4)*7,3.5,7+Math.cos(t*0.4)*6),at(0,1.2,6)],
+    ball:t=>{ const p=K.balls[0].p, w=at(p.x,p.y,p.z); return [w.clone().add(new THREE.Vector3(3,0.6,3.5)),w]; },
+    surf:t=>{ const g=K.surf?K.surf.c.g.position:new THREE.Vector3(0,0,6), w=at(g.x,g.y+0.5,g.z); return [w.clone().add(new THREE.Vector3(2.6,1.8,2.6)),w]; }, crowd:t=>[h.clone().add(new THREE.Vector3(1.5,0.9,-2.2)),at(Math.sin(t*0.2)*3,1.6,8)], side:t=>[at(11.5,3.5,1+t*0.2),at(0,2.2,-4)]};
   let pr;
-  if(k==='cine'||!k){ C.st-=dt; C.k+=dt; if(C.st<=0||!C.cur){ const seq=['wide','hero','guitar','crowd','drums','hero','dj','low','bass','singers','side','hero'].filter(n=>n!=='singers'||K.singers.length);
+  if(k==='cine'||!k){ C.st-=dt; C.k+=dt; if(C.st<=0||!C.cur){ const seq=['wide','hero','flyover','guitar','crowd','drums','ball','hero','through','dj','low','surf','bass','singers','orbitCrowd','side','hero'].filter(n=>(n!=='singers'||K.singers.length)&&(n!=='surf'||K.surf));
       C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.5+Math.random()*1.5; C.k=0; } pr=SH[C.cur](C.k); }
   else if(k==='follow')pr=[h.clone().add(new THREE.Vector3(Math.sin(demo.t*0.3)*1.2,0.2,2.6)),h];
   else if(k==='orbit'){ const a=demo.t*0.3; pr=[h.clone().add(new THREE.Vector3(Math.sin(a)*4.5,0.6,Math.cos(a)*4.5)),h]; }
@@ -2642,8 +2656,9 @@ function flyBrick(from,to,col){ let b=brickPool.find(q=>!q.on); if(!b){ if(brick
   b.on=true; b.t=0; b.a=from; b.b=to; b.m.material.color.copy(col); b.m.visible=true; }
 function brickTick(dt){ for(const b of brickPool){ if(!b.on)continue; b.t+=dt/0.3; if(b.t>=1){ b.on=false; b.m.visible=false; continue; } b.m.position.lerpVectors(b.a,b.b,b.t); b.m.position.y+=Math.sin(b.t*Math.PI)*1.2; b.m.rotation.x+=dt*9; b.m.rotation.y+=dt*7; } }
 function wonderLeft(P,n){ for(let k=0;k<n;k++){ const b=P.q[Math.floor(Math.random()*P.q.length)]; if(get(b[0],b[1],b[2]))return b; } return null; }
+function wonderFinale(dt,P){ P.boomT-=dt; if(P.boomT<=0){ P.boomT=0.1; const b=wonderLeft(P,30); if(b)explodeAt(b[0]+0.5,b[1]+0.5,b[2]+0.5,4.6); } } // the grand finale: a chain reaction
 function heroTo(t,dt,maxS){ const d=[t[0]-pl.p[0],t[1]-pl.p[1],t[2]-pl.p[2]], l=Math.hypot(...d)||1, step=Math.min(l*Math.min(1,dt*3),maxS*dt); for(let i=0;i<3;i++)pl.p[i]+=d[i]/l*step; return step/Math.max(dt,1e-3); }
-function wonderPilot(dt,P){ const sc=demo.sc, T=demo.t, hand=()=>new THREE.Vector3(pl.p[0],pl.p[1]+1.3,pl.p[2]);
+function wonderPilot(dt,P){ const sc=demo.sc, T=demo.st, hand=()=>new THREE.Vector3(pl.p[0],pl.p[1]+1.3,pl.p[2]);
   const aim=b=>{ turnTo(b[0]+0.5,b[2]+0.5,dt,8); pitch=Math.max(-1.2,Math.min(1.2,Math.atan2(b[1]+0.5-(pl.p[1]+EYE),Math.max(0.5,Math.hypot(b[0]+0.5-pl.p[0],b[2]+0.5-pl.p[2]))))); };
   if(P.phase==='build'){ if(P.k>=P.q.length){ P.phase='admire'; P.t2=0; return; }
     const b=P.q[P.k]; let dx=b[0]-CX, dz=b[2]-CZ, l=Math.hypot(dx,dz); if(l<1){ dx=pl.p[0]-CX; dz=pl.p[2]-CZ; l=Math.hypot(dx,dz)||1; }
@@ -2652,10 +2667,12 @@ function wonderPilot(dt,P){ const sc=demo.sc, T=demo.t, hand=()=>new THREE.Vecto
     while(n-->0&&P.k<P.q.length){ const q=P.q[P.k++]; setBlock(q[0],q[1],q[2],q[3]); }
     P.brT-=dt; if(P.brT<=0){ P.brT=0.07; const ahead=P.q[Math.min(P.q.length-1,P.k+Math.round(P.rate*0.3))]; if(ahead)flyBrick(hand(),new THREE.Vector3(ahead[0]+0.5,ahead[1]+0.5,ahead[2]+0.5),B[ahead[3]].avg); }
     P.swT-=dt; if(P.swT<=0){ P.swT=0.22; swingT=0.25; sfx('place'); } return; }
+  if(P.phase==='fight'){ if(T>sc.secs-2.6)wonderFinale(dt,P); return fightPilot(dt,P,2.4); }
   const out=[pl.p[0]-CX,pl.p[2]-CZ], ol=Math.hypot(out[0],out[1])||1, R=P.ext+10, vy=WGY+Math.min(P.top*0.6,22)+2, spot=[CX+out[0]/ol*R,vy,CZ+out[1]/ol*R];
-  if(P.phase==='admire'){ P.t2+=dt; P.hs=heroTo(spot,dt,16); turnTo(CX,CZ,dt,3); pitch*=0.95; if(P.t2>1.3){ P.phase='blast'; weapon='bow'; refreshWeapon(); arrows.explode=999; P.fireT=0.2; } return; }
+  if(P.phase==='admire'){ P.t2+=dt; P.hs=heroTo(spot,dt,16); turnTo(CX,CZ,dt,3); pitch*=0.95; if(P.t2>1.3){ P.phase='blast'; weapon='bow'; refreshWeapon(); arrows.explode=999; P.fireT=0.2; P.fightAt=demo.st+Math.max(3,(sc.secs-demo.st)*0.3); } return; }
   P.hs=heroTo(spot,dt,10); P.bowPose=true;
-  if(T>sc.secs-2.6){ P.boomT-=dt; if(P.boomT<=0){ P.boomT=0.1; const b=wonderLeft(P,30); if(b)explodeAt(b[0]+0.5,b[1]+0.5,b[2]+0.5,4.6); } } // the grand finale: a chain reaction
+  if(T>=P.fightAt){ P.phase='fight'; demo.puppet=false; setFly(false,false); pl.v=[0,0,0]; P.spawnT=0; P.foes=wonderFoes(P.key); return; } // the locals are angry: land and fight
+  if(T>sc.secs-2.6)wonderFinale(dt,P);
   const tg=P.tg&&get(P.tg[0],P.tg[1],P.tg[2])?P.tg:(P.tg=wonderLeft(P,40)); if(!tg)return; aim(tg);
   P.fireT-=dt; if(P.fireT<=0){ P.fireT=0.42; const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(tg[0]+0.5,tg[1]+0.5,tg[2]+0.5), dist=o.distanceTo(t), fl=dist/42;
     const d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize(); arrows.explode=999; fireSpecial('explode',o,d,WP.bow); shots[shots.length-1].big=3.4; P.tg=null; } }
@@ -2670,19 +2687,140 @@ function wonderCam(dt){ const sc=demo.sc, P=demo.pil, k=sc.cam, C=demo.cam||(dem
   const fast=P.phase==='build'&&k!=='wide'; if(!C.p){ C.p=want.clone(); C.l=look.clone(); } else { C.p.lerp(want,Math.min(1,dt*(fast?4:1.5))); C.l.lerp(look,Math.min(1,dt*(fast?7:3))); }
   camera.position.copy(C.p); camera.lookAt(C.l); scene.fog.near=R+10; scene.fog.far=R+120; if(camera.far<R+160){ camera.far=R+160; camera.updateProjectionMatrix(); } }
 
+// ================= TAKING OVER IN DEMO MODE =================
+// Move a stick, the touch joystick, WASD or the mouse during a demo and you're driving: the camera swings behind the hero and
+// the scene clock stops. Leave the controls alone for 5 seconds and the autopilot takes back over.
+// Controller: left stick moves, right stick looks, A jumps, B goes down (flying), X or RT attacks, Y swaps sword and bomb bow.
+const DEMO_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
+const CONC_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
+let pad={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false}, padHitWas=false, padSwapWas=false, padRep=0;
+function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(look)demo.lookT=5;
+  if(!demo.user){ demo.user=true; document.body.classList.add('duser'); if(demo.sc.act!=='concert')camMode=3; demoPoke(); } }
+function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.remove('duser'); for(const k of DEMO_MOVE)keys[k]=false; hitHeld=false; upHeld=downHeld=false;
+  if(document.pointerLockElement)document.exitPointerLock(); camMode=demo.sc.cam==='first'?1:3; demo.cam=null;
+  const P=demo.pil; if(demo.sc.act==='concert'){ P.x=pl.p[0]-CLUB.x; P.z=pl.p[2]-CLUB.z; } P.d=1e9; P.t=0; P.tree=null; }
+function doHit(){ if(demo)demoHit(); else hitAction(); }
+function demoHit(){ if(!demo||!demo.sc||demo.sc.act==='concert')return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
+  const n=shots.length; hitAction(); if(demo.sc.act==='wonder'&&weapon==='bow'&&shots.length>n)shots[shots.length-1].big=demo.pil.phase==='blast'?3.4:2.4; }
+function demoSwap(){ if(!demo||!demo.sc||demo.sc.act==='concert')return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
+function demoInput(dt){ pad=padRead(); const conc=demo.sc&&demo.sc.act==='concert';
+  const mv=Math.abs(pad.lx)+Math.abs(pad.ly)>0, lk=Math.abs(pad.rx)+Math.abs(pad.ry)>0;
+  if(mv||lk||(!conc&&pad.any))demoTake(lk);
+  if(demo.user){ if(lk){ yaw-=pad.rx*2.6*dt; pitch-=pad.ry*2*dt; pitch=Math.max(-1.55,Math.min(1.55,pitch)); }
+    if(!conc){ padRep-=dt; if(pad.hit&&(!padHitWas||padRep<=0)){ padRep=0.25; demoHit(); } if(pad.swap&&!padSwapWas)demoSwap(); }
+    if(hitHeld||upHeld||downHeld||joy.id!==null||lookId!==null||[...DEMO_MOVE].some(k=>keys[k]))demo.idle=0; // still holding something down
+    demo.idle+=dt; demo.lookT=Math.max(0,(demo.lookT||0)-dt); if(demo.idle>5)demoRelease(); }
+  padHitWas=pad.hit; padSwapWas=pad.swap; }
+// walking round the concert stage yourself (there's no ground up in the sky, so the stage is the limit)
+function concertUser(dt,ix,iz){ const P=demo.pil, m=Math.hypot(ix,iz); if(m>1){ ix/=m; iz/=m; } const s=Math.sin(yaw), c=Math.cos(yaw), fwd=-iz, str=ix, sp=3.6;
+  const vx=(-s*fwd+c*str)*sp, vz=(-c*fwd-s*str)*sp; P.x=Math.max(-9.5,Math.min(9.5,P.x+vx*dt)); P.z=Math.max(-9.6,Math.min(-0.5,P.z+vz*dt));
+  pl.p=[CLUB.x+P.x,CLUB.y+1,CLUB.z+P.z]; pl.v=[0,0,0]; P.hs=Math.hypot(vx,vz)*Math.min(1,m); P.atMic=Math.hypot(P.x,P.z+1.5)<0.6; return {hs:P.hs}; }
+
+// ================= FIGHTING (the fight scene, and monsters at the wonders) =================
+const FIGHT_TYPES=['zombie','skeleton','slime','spider','golem','orc','mummy','wolf','troll'];
+function spawnFoes(P,types,dt,max){ P.spawnT=(P.spawnT===undefined?0.2:P.spawnT)-dt; if(mobs.length>=max||P.spawnT>0)return; P.spawnT=1.2;
+  const s=landSpot(pl.p[0],pl.p[2],11); if(Math.hypot(s[0]-pl.p[0],s[2]-pl.p[2])<5)return; const t=types[Math.floor(Math.random()*types.length)]; spawnMob(t,s[0],s[1]+(MOBT[t].flyer?4:0),s[2]); }
+// sword up close; bomb arrows when the monster is far away or the hero is stuck (a tree, a wall...)
+function fightPilot(dt,P,big){ const foes=mobs; let foe=null, fd=1e9; for(const m of foes){ const q=Math.hypot(m.p[0]-pl.p[0],m.p[2]-pl.p[2]); if(q<fd){ fd=q; foe=m; } }
+  P.bowPose=false; const wield=id=>{ if(weapon!==id){ weapon=id; refreshWeapon(); } };
+  if(!foe){ wield('diamond'); return {ix:0,iz:0}; }
+  P.chk=(P.chk||0)+dt; if(P.chk>=1){ P.chk=0; const moved=P.lastP?Math.hypot(pl.p[0]-P.lastP[0],pl.p[2]-P.lastP[1]):9; P.lastP=[pl.p[0],pl.p[2]];
+    if(moved<0.5&&fd>2.4){ P.stuckN=(P.stuckN||0)+1; P.bowT=3; } else P.stuckN=0;
+    if(P.stuckN>=5){ P.stuckN=0; pl.p=landSpot(pl.p[0],pl.p[2],5); } } // still stuck after all that: hop down somewhere else
+  P.bowT=Math.max(0,(P.bowT||0)-dt);
+  const fx=Math.floor(pl.p[0]), fz=Math.floor(pl.p[2]), fy=Math.floor(pl.p[1]), leafy=[fy-1,fy,fy+1].some(y=>get(fx,y,fz)===ID.leaves), high=foe.t.flyer&&foe.p[1]-pl.p[1]>2;
+  if(fd<2.4&&!high){ wield('diamond'); turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
+  if(fd>3.5&&(fd>7||P.bowT>0||leafy||high)){ wield('bow'); P.bowPose=true; turnTo(foe.p[0],foe.p[2],dt,6);
+    const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(foe.p[0],foe.p[1]+foe.h*0.5,foe.p[2]), fl=o.distanceTo(t)/42, d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize();
+    pitch=Math.max(-1,Math.min(1,Math.asin(d.y))); if(atkCd<=0){ atkCd=0.9; arrows.explode=999; fireSpecial('explode',o,d,WP.bow); if(big)shots[shots.length-1].big=big; } return {ix:0,iz:0}; }
+  wield('diamond'); return walkTo(foe.p[0],foe.p[2],dt,P); }
+// the local monsters at each wonder (from StrataCraft's World Tour); swimmers only where there's water
+const WON_SPEC={eiffel:['gargoyle'],pyramid:['mummy','mummy','scorpion'],colosseum:['lion','lion','skeleton'],burj:['scorpion'],goldengate:['serpent'],opera:['serpent'],atomium:['golem'],
+  needle:['bigfoot'],petronas:['orangutan'],guggenheim:['spider'],louvre:['gargoyle'],shard:['raven'],dancing:['golem'],fallingwater:['koi','zombie'],millau:['wolf','wolf']};
+function wonderFoes(key){ const wet=['water','stream','valley'].includes(WON[key].ground); return [...WON_SPEC[key],...WON_SPEC[key],'zombie','skeleton'].map(t=>MOBT[t]&&MOBT[t].swim&&!wet?'zombie':t).filter(t=>MOBT[t]); }
+
+// ================= CHOPPING DOWN TREES =================
+const fallen=[]; let axeMats=null;
+function axeMesh(){ const g=new THREE.Group(), hl=box(0.06,0.62,0.06,lm(0x6b4a2a)); hl.position.y=0.18; g.add(hl);
+  const hd=box(0.05,0.2,0.24,lm(0xb8bcc4)); hd.position.set(0,0.42,-0.1); g.add(hd); const ed=box(0.055,0.22,0.04,lm(0xeef0f4)); ed.position.set(0,0.42,-0.23); g.add(ed); return g; }
+function findChopTree(P){ let best=null, bd=1e9; const R=26, x0=Math.floor(pl.p[0]), z0=Math.floor(pl.p[2]);
+  for(let z=Math.max(1,z0-R);z<Math.min(D-1,z0+R);z++)for(let x=Math.max(1,x0-R);x<Math.min(W-1,x0+R);x++){ const k=x+z*W; if(P.done.has(k))continue;
+    for(let y=2;y<H-6;y++){ if(world[idx(x,y,z)]!==ID.log)continue; const below=world[idx(x,y-1,z)]; if(below===ID.log||!below||!B[below].solid)break;
+      let top=y; while(world[idx(x,top+1,z)]===ID.log)top++; if(top-y<2||world[idx(x,top+1,z)]!==ID.leaves)break; // a real tree: a trunk with leaves on top
+      const d=Math.hypot(x-pl.p[0],z-pl.p[2])+Math.abs(y-pl.p[1])*5; if(d<bd){ bd=d; best={x,y,z,top,k}; } break; } } // the nearest, best on the same level as the hero
+  return best; }
+function fellTree(t,ang){ if(!axeMats){ const m=n=>new THREE.MeshLambertMaterial({map:tileTex(n),alphaTest:0.5}); axeMats={[ID.log]:m('log_side'),[ID.leaves]:m('leaves')}; }
+  const g=new THREE.Group(), px=t.x+0.5, pz=t.z+0.5; g.position.set(px,t.y,pz); scene.add(g); const geo=new THREE.BoxGeometry(1,1,1);
+  for(let y=t.y;y<=t.top+2;y++)for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){ const x=t.x+dx, z=t.z+dz, id=get(x,y,z);
+    if(!(id===ID.log&&!dx&&!dz)&&!(id===ID.leaves&&y>=t.top-2))continue; setBlock(x,y,z,0); const m=new THREE.Mesh(geo,axeMats[id]); m.position.set(x+0.5-px,y+0.5-t.y,z+0.5-pz); g.add(m); }
+  const dx=Math.sin(ang), dz=Math.cos(ang); fallen.push({g,geo,axis:new THREE.Vector3(dz,0,-dx).normalize(),dir:[dx,dz],th:0,w:0.25,land:false,t:0,h:t.top-t.y+2}); sfx('break'); }
+function fallTick(dt){ for(const f of fallen.slice()){ f.t+=dt;
+    if(!f.land){ f.w+=(3.2*Math.sin(f.th)+0.5)*dt; f.th=Math.min(Math.PI/2-0.05,f.th+f.w*dt); f.g.quaternion.setFromAxisAngle(f.axis,f.th);
+      if(f.th>=Math.PI/2-0.05){ f.land=true; f.t=0; sfx('rock'); const p=f.g.position; for(let k=1;k<=f.h;k++)burst(p.x-0.5+f.dir[0]*k,p.y,p.z-0.5+f.dir[1]*k,k>f.h-3?B[ID.leaves].avg:B[ID.log].avg,6); } }
+    else if(f.t>0.9){ const s=Math.max(0.01,1-(f.t-0.9)/0.7); f.g.children.forEach((m,i)=>m.scale.setScalar(s*(0.7+0.3*((i*0.37)%1)))); if(s<=0.01){ scene.remove(f.g); f.geo.dispose(); fallen.splice(fallen.indexOf(f),1); } } } }
+function clearFallen(){ for(const f of fallen){ scene.remove(f.g); f.geo.dispose(); } fallen.length=0; }
+// the lumberjack walks straight to each tree, stepping up and down the ground (and through the low branches)
+function chopGround(dt){ const gy=solidY(Math.floor(pl.p[0]),Math.floor(pl.p[2])); pl.p[1]+=(gy-pl.p[1])*Math.min(1,dt*(gy>pl.p[1]?14:9)); }
+function chopWalk(tx,tz,dt,P){ turnTo(tx,tz,dt,6); const dx=tx-pl.p[0], dz=tz-pl.p[2], l=Math.hypot(dx,dz)||1, st=Math.min(l,4.2*dt); pl.p[0]+=dx/l*st; pl.p[2]+=dz/l*st; P.hs=st/Math.max(dt,1e-3); chopGround(dt); return {ix:0,iz:0}; }
+function chopPilot(dt,P){ P.hs=0; chopGround(dt); if(P.wait>0){ P.wait-=dt; const t=P.last; if(t)turnTo(t.x+0.5,t.z+0.5,dt,3); return {ix:0,iz:0}; }
+  if(P.tree&&get(P.tree.x,P.tree.y,P.tree.z)!==ID.log)P.tree=null;
+  if(!P.tree){ P.tree=findChopTree(P); P.hits=0; P.treeT=0; P.ct=0.3; if(!P.tree)return {ix:0,iz:0}; }
+  const t=P.tree, sx=t.x+0.5, sz=t.z+0.5, d=Math.hypot(sx-pl.p[0],sz-pl.p[2]); P.treeT+=dt;
+  if(P.treeT>7){ P.done.add(t.k); P.tree=null; return {ix:0,iz:0}; } // can't get to that one: try another
+  if(d>1.5){ const l=d||1; return chopWalk(sx+(pl.p[0]-sx)/l*1.2,sz+(pl.p[2]-sz)/l*1.2,dt,P); }
+  turnTo(sx,sz,dt,6); pitch=-0.15; P.ct-=dt;
+  if(P.ct<=0){ P.ct=0.38; swingT=0.25; sfx('hit'); burst(t.x,t.y+0.6,t.z,B[ID.log].avg,7); P.hits++;
+    if(P.hits>=4){ fellTree(t,Math.atan2(sx-pl.p[0],sz-pl.p[2])); P.felled=(P.felled||0)+1; P.done.add(t.k); P.last=t; P.tree=null; P.wait=1.3; } }
+  return {ix:0,iz:0}; }
+
+// ================= CROWD GOING CRAZY AT THE CONCERT =================
+function ballTex(){ const c=document.createElement('canvas'); c.width=64; c.height=32; const x=c.getContext('2d'); ['#e8282e','#ffffff','#2f6ae0','#ffffff','#f2c230','#ffffff'].forEach((col,i)=>{ x.fillStyle=col; x.fillRect(i*64/6,0,64/6+1,32); });
+  const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
+function crowdFunInit(K){ const tx=ballTex(); K.balls=[]; for(let i=0;i<3;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.42,14,10),new THREE.MeshLambertMaterial({map:tx})); club.add(m);
+    K.balls.push({m,p:new THREE.Vector3(-6+i*6,4+i,4+i*2.5),v:new THREE.Vector3((Math.random()-0.5)*2,2,(Math.random()-0.5)*2)}); }
+  K.surf=null; K.surfNext=8; K.mosh=0; }
+// phones, lighters and glow sticks for some of the crowd, held in the right hand
+function crowdItem(c){ const g=new THREE.Group(), k=['phone','phone','lighter','glow','glow'][Math.floor(Math.random()*5)]; c.item=k;
+  if(k==='phone'){ g.add(box(0.09,0.16,0.025,lm(0x1a1a1e))); const s=box(0.075,0.13,0.01,new THREE.MeshBasicMaterial({color:0xeef4ff})); s.position.z=-0.016; g.add(s); }
+  else if(k==='lighter'){ g.add(box(0.05,0.09,0.03,lm(0xd8202a))); const f=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.09,6),new THREE.MeshBasicMaterial({color:0xffb030})); f.position.y=0.09; g.add(f); }
+  else { const col=new THREE.Color().setHSL(Math.random(),1,0.55); g.add(box(0.035,0.32,0.035,new THREE.MeshBasicMaterial({color:col}))); }
+  const arm=c.R?c.R.armR:c.r.armR; g.position.set(0,-0.62,-0.06); g.rotation.x=Math.PI; arm.add(g); }
+function crowdFunTick(K,dt,beat){
+  // beach balls get batted back up whenever they come down on someone
+  for(const bl of K.balls){ bl.v.y-=7*dt; bl.p.addScaledVector(bl.v,dt); bl.m.rotation.x+=bl.v.z*dt*2; bl.m.rotation.z-=bl.v.x*dt*2;
+    if(bl.p.y<2.6&&bl.v.y<0){ let best=null, bd=9; for(const c of K.crowd){ if(c.surf)continue; const d=Math.hypot(c.x-bl.p.x,c.z-bl.p.z); if(d<bd){ bd=d; best=c; } }
+      if(best&&bd<1.6){ bl.v.y=6+Math.random()*2.5; const tx=(Math.random()-0.5)*15, tz=2+Math.random()*9; bl.v.x=(tx-bl.p.x)*0.33; bl.v.z=(tz-bl.p.z)*0.33; best.hitT=0.5; } }
+    if(bl.p.y<0.42){ bl.p.y=0.42; bl.v.y=Math.abs(bl.v.y)*0.6+3; }
+    if(bl.p.x<-11){ bl.p.x=-11; bl.v.x=Math.abs(bl.v.x); } if(bl.p.x>11){ bl.p.x=11; bl.v.x=-Math.abs(bl.v.x); }
+    if(bl.p.z<1){ bl.p.z=1; bl.v.z=Math.abs(bl.v.z); } if(bl.p.z>13.5){ bl.p.z=13.5; bl.v.z=-Math.abs(bl.v.z); } if(bl.p.y>9.4){ bl.p.y=9.4; bl.v.y=-Math.abs(bl.v.y); }
+    bl.m.position.copy(bl.p); }
+  // crowd surfing: someone from the back gets carried to the front on everyone's hands
+  K.surfNext-=dt; if(!K.surf&&K.surfNext<=0){ const back=K.crowd.filter(c=>c.z>6.5); if(back.length){ const c=back[Math.floor(Math.random()*back.length)]; c.surf=true; K.surf={c,t:0,ph:'up',x0:c.x,z0:c.z,x1:c.x*0.5,z1:1.4}; } K.surfNext=13+Math.random()*5; }
+  const S=K.surf; if(S){ const c=S.c; S.t+=dt; let x, z, y, lie;
+    if(S.ph==='up'){ const f=Math.min(1,S.t/0.8); x=S.x0; z=S.z0; y=f*2.1; lie=f; if(f>=1){ S.ph='ride'; S.t=0; } }
+    else if(S.ph==='ride'){ const f=Math.min(1,S.t/6); x=S.x0+(S.x1-S.x0)*f+Math.sin(S.t*3)*0.3; z=S.z0+(S.z1-S.z0)*f; y=2.1+Math.sin(S.t*7)*0.12; lie=1; if(f>=1){ S.ph='down'; S.t=0; } }
+    else if(S.ph==='down'){ const f=Math.min(1,S.t/0.8); x=S.x1; z=S.z1; y=2.1*(1-f); lie=1-f; if(f>=1){ S.ph='back'; S.t=0; } }
+    else { const f=Math.min(1,S.t/2.5); x=S.x1+(S.x0-S.x1)*f; z=S.z1+(S.z0-S.z1)*f; y=Math.abs(Math.sin(S.t*8))*0.06; lie=0; if(f>=1){ c.surf=false; K.surf=null; } }
+    c.g.position.set(x,y,z); c.g.rotation.x=lie*Math.PI/2; c.g.rotation.z=lie*Math.sin(S.t*4)*0.15;
+    const A=c.R||c.r; if(A&&A.armL){ A.armL.rotation.x=0; A.armR.rotation.x=0; A.armL.rotation.z=-1.3*lie; A.armR.rotation.z=1.3*lie; }
+    if(S.ph==='ride')for(const o of K.crowd){ if(o!==c&&Math.hypot(o.x-x,o.z-z)<1.6)o.hitT=0.3; } } // the people underneath hold them up
+  K.mosh=Math.max(0,K.mosh-dt); }
+function crowdBallShot(K){ return K.balls[0].p; }
+
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
 let waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
-  if(demo){ const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } // the demo autopilot drives (concerts and wonders move the hero themselves)
+  if(demo){ demoInput(dt); if(demo.user){ ix+=pad.lx; iz+=pad.ly; if(demo.sc.act==='concert')return concertUser(dt,ix,iz); }
+    else { const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } } // the demo autopilot drives (concerts and wonders move the hero themselves)
   const m=Math.hypot(ix,iz); if(m>1){ix/=m;iz/=m;}
   const fwd=-iz, str=ix, s=Math.sin(yaw), c=Math.cos(yaw);
   const env=envAt(pl);
   const speed=(fly?(outsideDist()>0?13:9):4.6)*(webbed?Math.max(0.55,1-webbed*0.12):1)*(env.water&&!fly?0.6:1)*(env.lava?0.4:1);
   pl.v[0]=(-s*fwd+c*str)*speed; pl.v[2]=(-c*fwd-s*str)*speed;
-  const up=demo?demoUp:upHeld||keys.Space, down=demo?demoDown:downHeld||keys.ShiftLeft||keys.ShiftRight;
+  const auto=demo&&!demo.user, up=auto?demoUp:upHeld||keys.Space||(demo&&pad.a), down=auto?demoDown:downHeld||keys.ShiftLeft||keys.ShiftRight||(demo&&pad.b);
   if(fly){ pl.v[1]=((up?1:0)-(down?1:0))*7; }
   else if(env.water||env.lava){ pl.v[1]-=9*dt; if(up)pl.v[1]=3.4; if(pl.v[1]<-3.5)pl.v[1]=-3.5; }
   else { pl.v[1]-=28*dt; if(up&&pl.onGround)pl.v[1]=8.6; if(pl.v[1]<-30)pl.v[1]=-30; }
@@ -2862,7 +3000,7 @@ function update(dt){
   if(paused){ return; }
   const {hs}=updatePlayer(dt); updateViewRange(dt); updateApples(dt);
   atkCd-=dt;
-  if(hitHeld||placeHeld){ repeatT-=dt; if(repeatT<=0){ repeatT=0.25; if(hitHeld)hitAction(); if(placeHeld)placeAction(); } }
+  if(hitHeld||placeHeld){ repeatT-=dt; if(repeatT<=0){ repeatT=0.25; if(hitHeld)doHit(); if(placeHeld)placeAction(); } }
 
   // player model
   model.position.set(pl.p[0],pl.p[1],pl.p[2]); model.rotation.y=yaw;
@@ -2884,7 +3022,7 @@ function update(dt){
     let tt=1; for(let t=0.05;t<=1.0001;t+=0.05){ tmp.lerpVectors(eye,want,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0,t-0.1); break; } }
     camera.position.lerpVectors(eye,want,tt); camDist=camera.position.distanceTo(eye); }
   armL.rotation.z=0;
-  if(demo&&demo.sc&&demo.sc.cam!=='first')demoCamera(dt);
+  if(demo&&demo.sc){ if(!demo.user){ if(demo.sc.cam!=='first')demoCamera(dt); } else if(demo.sc.act==='concert'&&!(demo.lookT>0))concertCam(dt); } // you're driving: the normal camera behind you
   camera.updateMatrixWorld();
 
   // merchant faces player
