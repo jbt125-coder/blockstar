@@ -72,6 +72,8 @@
   #bBreak{right:88px;top:0}
   #bJump{right:20px;bottom:0}
   #bDown{right:110px;bottom:0;display:none}
+  #bHorn{right:20px;bottom:0;display:none} #bSiren{right:88px;top:0;display:none} body.drive #bHorn{display:flex} body.drive.dsiren #bSiren{display:flex}
+  body.drive #bBreak,body.drive #bPlace,body.drive #bJump,body.drive #bDown,body.drive #bSwap,body.drive #cross,body.drive #hotwrap{display:none!important}
   .fly #bDown{display:flex}
   #bTalk{right:calc(20px + env(safe-area-inset-right));bottom:calc(214px + env(safe-area-inset-bottom));height:46px;padding:0 16px;border-radius:23px;
     background:#ffcf4a;color:#222;font-weight:900;font-size:16px;display:none;align-items:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
@@ -212,6 +214,8 @@
   <div class="abtn" id="bBreak"><span>⛏</span>Hit</div>
   <div class="abtn" id="bPlace"><span>🧱</span>Place</div>
   <div class="abtn" id="bSwap"><span>🔁</span>Weapon</div>
+  <div class="abtn" id="bHorn"><span>📯</span>Horn</div>
+  <div class="abtn" id="bSiren"><span>🚨</span>Siren</div>
   <div class="abtn" id="bJump"><span>⬆</span>Jump</div>
   <div class="abtn" id="bDown"><span>⬇</span>Down</div>
 </div>
@@ -338,7 +342,14 @@ makeTile('portal_newyork',94,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90
 makeTile('portal_sanfran',95,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([40,90,160],r,.15); if(x===4||x===11||y===9||(y>=3&&y<9&&Math.abs(y-3-Math.abs(x-7.5)*0.9)<0.8))return [220,70,40]; return nz([200,210,220],r,.1); });
 makeTile('portal_orlando',96,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=8&&x>=3&&x<=12)return (y===8&&x%2)?[120,170,255]:nz([245,245,250],r,.05); if((x>=6&&x<=9&&y>=3&&y<8)||((x===3||x===12)&&y>=5))return y<5?[60,110,230]:[245,245,250]; return nz([110,190,255],r,.1); });
 makeTile('door',97,(x,y,r)=>{ if(x<2||x>13)return nz([90,60,34],r,.1); if(x===11&&y>=7&&y<=8)return [230,200,80]; return nz((y%5===0)?[110,74,40]:[150,104,60],r,.1); });
-const CAT={ Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
+const seedTile=(name,sd,fn)=>makeTile(name,sd,(x,y,r)=>{ if(x<2||x>13||y<1||y>14)return [0,0,0,0]; if(y<4)return nz([200,170,110],r,.1); const c=fn(x-8,y-9,r); return c||nz([236,214,160],r,.06); }); // a little seed packet
+seedTile('seed_apple',101,(x,y,r)=>Math.hypot(x,y)<3.6?nz([215,40,45],r,.1):(x===0&&y<-3&&y>-6)?[90,60,30]:null);
+seedTile('seed_oak',102,(x,y,r)=>y<-1&&Math.abs(x)<4&&y>-4?nz([120,84,40],r,.1):Math.hypot(x,(y-0.5)*1.2)<3.2?nz([170,120,60],r,.1):null);
+seedTile('seed_pine',103,(x,y,r)=>Math.abs(x)<=(y+4)*0.6&&y>-4&&y<4?((x+y)&1?[110,70,36]:[150,100,50]):null);
+seedTile('seed_palm',104,(x,y,r)=>Math.hypot(x,y)<3.8?nz([120,82,46],r,.15):null);
+seedTile('seed_cherry',105,(x,y,r)=>{ const a=Math.atan2(y,x), d=Math.hypot(x,y); return d<1.2?[255,220,90]:d<3.6+Math.cos(a*5)*0.9?nz([255,170,210],r,.08):null; });
+makeTile('leaves_pink',106,(x,y,r)=>{ const q=r(); if(q<.14)return [0,0,0,0]; let c=nz([255,175,212],r,.18); if(q>.86)c=[255,225,240]; return c; });
+const CAT={ Plants:{c:'#8fe07a'}, Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
 function addBlock(k,name,cat,fact,tiles,props){
@@ -404,6 +415,14 @@ addBlock('door','Door','Building','A front door. Soon some of these will lead in
 addBlock('portal_newyork','New York Portal','Portal','Place it and a doorway to New York opens. Walk through to go there.',{t:'portal_newyork'},{portal:'newyork'});
 addBlock('portal_sanfran','San Francisco Portal','Portal','Place it and a doorway to San Francisco opens. Walk through to go there.',{t:'portal_sanfran'},{portal:'sanfran'});
 addBlock('portal_orlando','Orlando Portal','Portal','Place it and a doorway to Orlando opens. Walk through to go there.',{t:'portal_orlando'},{portal:'orlando'});
+addBlock('leaves_pink','Cherry Blossom Leaves','Plants','Cherry trees flower in spring for only a week or two. In Japan people hold picnics under them, called hanami.',{t:'leaves_pink'},{opaque:false,flammable:true});
+addBlock('seed_apple','Apple Seed','Plants','Plant it on grass or soil and an apple tree grows. Apple seeds hide inside the core of every apple.',{t:'seed_apple'},{seed:'apple'});
+addBlock('seed_oak','Acorn (Oak Seed)','Plants','Plant it on grass or soil and an oak tree grows. Squirrels bury acorns and forget some, which is how new oaks get planted!',{t:'seed_oak'},{seed:'oak'});
+addBlock('seed_pine','Pine Cone Seed','Plants','Plant it on grass or soil and a pine tree grows. Pine seeds sit under the scales of a pine cone, and the cone opens in dry weather to let them fly.',{t:'seed_pine'},{seed:'pine'});
+addBlock('seed_palm','Coconut (Palm Seed)','Plants','Plant it on grass, soil or sand and a palm tree grows. A coconut is a seed that can float across the ocean to a new beach.',{t:'seed_palm'},{seed:'palm'});
+addBlock('seed_cherry','Cherry Blossom Seed','Plants','Plant it on grass or soil and a cherry blossom tree grows, covered in pink flowers.',{t:'seed_cherry'},{seed:'cherry'});
+addBlock('sapling','Sapling','Plants','A young tree. Give it a moment to grow!',{t:'leaves'},{hidden:true,solid:false,opaque:false,invisible:true});
+addBlock('gdoor','Garage Door','Building','A roll-up garage door.',{t:'concrete'},{hidden:true,invisible:true,target:false});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -1252,6 +1271,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
+  if(drive)return;
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   const w=WP[weapon];
@@ -1373,6 +1393,7 @@ function doBreak(){
   queueSave();
 }
 function placeAction(){
+  if(drive)return;
   if(aimFruit){ pickFruit(aimFruit); return; }
   if(aimNPC){ openShop(); return; }
   if(!target)return;
@@ -1380,6 +1401,7 @@ function placeAction(){
   if(!inB(x,y,z))return; const cur=get(x,y,z); if(cur&&B[cur].solid)return;
   if(B[sel].solid && x+1>pl.p[0]-pl.hw && x<pl.p[0]+pl.hw && z+1>pl.p[2]-pl.hw && z<pl.p[2]+pl.hw && y+1>pl.p[1] && y<pl.p[1]+pl.h) return;
   if(B[sel].portal){ buildGateway(x,y,z,B[sel].portal); return; }
+  if(B[sel].seed){ plantSeed(x,y,z,B[sel].seed); return; }
   if(cur===ID.fire && sel===ID.water){ setBlock(x,y,z,0); sizzle(x,y,z); }
   setBlock(x,y,z,sel,0); sfx('place');
   queueSave();
@@ -1482,7 +1504,7 @@ bindHold($('bJump'),()=>upHeld=true,()=>upHeld=false);
 bindHold($('bDown'),()=>downHeld=true,()=>downHeld=false);
 function tap(el,fn){ el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();audioInit();fn();},{passive:false}); el.addEventListener('click',fn); }
 tap($('bCam'),toggleCam); tap($('bFly'),toggleFly); tap($('bWeapon'),cycleWeapon); tap($('bArrow'),()=>openArrows(false));
-tap($('bSwap'),demoSwap); tap($('bInfo'),()=>showCard(sel,true)); tap($('bMenu'),openMenu); tap($('bGear'),openSettings); tap($('bTalk'),openShop);
+tap($('bSwap'),demoSwap); tap($('bInfo'),()=>showCard(sel,true)); tap($('bMenu'),openMenu); tap($('bGear'),openSettings); tap($('bTalk'),()=>{ const a=nearAction(); if(a)a.fn(); }); tap($('bHorn'),()=>{ if(drive)honk(drive); }); tap($('bSiren'),toggleSiren);
 $('card').addEventListener('click',()=>$('card').style.display='none');
 $('card').addEventListener('touchstart',e=>{e.preventDefault();$('card').style.display='none';},{passive:false});
 
@@ -1493,8 +1515,9 @@ window.addEventListener('keydown',e=>{
     else if(e.code==='KeyQ'){ if(!e.repeat)demoSwap(); } else if(e.code==='KeyE'||e.code==='Enter')demoHit(); else demoPoke();
     e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
+  if(drive){ if(!e.repeat){ if(e.code==='KeyH')honk(drive); if(e.code==='KeyL')toggleSiren(); if(e.code==='KeyE')exitVehicle(); } if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault(); return; } // driving: the keys drive
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
-  if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'&&nearMerchant())openShop();
+  if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'){ const a=nearAction(); if(a)a.fn(); }
   if(e.code.startsWith('Digit')){ const n=parseInt(e.code.slice(5)); const list=order(); if(n>=1&&n<=9&&list[n-1])select(list[n-1]); }
   if(e.code==='Space')e.preventDefault();
 });
@@ -2329,7 +2352,7 @@ function updateWeather(dt){ if(!wxPts)return; const P=wxPts.geometry.attributes.
 function demoStart(){ if(document.pointerLockElement)document.exitPointerLock(); saveNow(); musicStop();
   $('mbox').classList.remove('wide'); $('modal').style.display='none';
   demo={i:-1,t:0,st:0,user:false,idle:0,lookT:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
-  if(titleOn)hideTitle(); mobsOn=false; clearEntities(); clearCityLife();
+  if(drive)exitVehicle(true); if(titleOn)hideTitle(); mobsOn=false; clearEntities(); clearCityLife();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
@@ -2435,11 +2458,11 @@ document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.
 const CLUB=new THREE.Vector3(48,180,48), club=new THREE.Group(); club.position.copy(CLUB); club.visible=false; scene.add(club);
 let clubK=null, padPyroWas=false; const singKeys=new Set();
 function setMouth(R,o){ if(!R||!R.mouth)return; R.mouth.visible=o>0.06; R.mouth.scale.y=Math.max(0.05,o); R.mouth.position.y=0.125-0.055*o; }
-function padRead(){ const o={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false}, dz=v=>Math.abs(v)>0.22?v:0; let ps=[];
+function padRead(){ const o={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false,y:false,rt:0,lt:0}, dz=v=>Math.abs(v)>0.22?v:0; let ps=[];
   try{ ps=navigator.getGamepads?navigator.getGamepads():[]; }catch(e){}
   for(const p of ps){ if(!p||!p.buttons)continue; p.buttons.forEach((b,i)=>{ const v=typeof b==='object'?(b.value||(b.pressed?1:0)):+b||0, on=v>0.5;
       if(i===4||i===5){ if(on)o.pyro=true; } else if(i!==8&&i!==9&&i!==16)o.sing=Math.max(o.sing,v); // shoulder buttons: pyro. Select, Start and Home do nothing
-      if(on&&i!==8&&i!==9&&i!==16)o.any=true; if(on&&i===0)o.a=true; if(on&&i===1)o.b=true; if(on&&(i===2||i===7))o.hit=true; if(on&&i===3)o.swap=true; });
+      if(on&&i!==8&&i!==9&&i!==16)o.any=true; if(on&&i===0)o.a=true; if(on&&i===1)o.b=true; if(on&&(i===2||i===7))o.hit=true; if(on&&i===3){ o.swap=true; o.y=true; } if(i===7)o.rt=v; if(i===6)o.lt=v; });
     const ax=p.axes||[]; o.lx+=dz(ax[0]||0); o.ly+=dz(ax[1]||0); o.rx+=dz(ax[2]||0); o.ry+=dz(ax[3]||0); }
   return o; }
 function clubNpc(L,x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=ry||0; g.scale.setScalar(0.94); const R=makeRig(g); dressRig(R,cleanLook(L)); club.add(g); return {g,R,x,y,z}; }
@@ -2831,6 +2854,245 @@ function crowdFunTick(K,dt,beat){
   K.mosh=Math.max(0,K.mosh-dt); }
 function crowdBallShot(K){ return K.balls[0].p; }
 
+// ================= TREE SEEDS =================
+// Plant a seed on grass or soil (sand works for palms): a little sapling sprouts and grows into a tree in about half a minute.
+// Apple trees then grow blossoms and apples like the ones in the wild.
+const SEED_KINDS=['apple','oak','pine','palm','cherry'];
+const SEED_INFO={apple:{name:'Apple',leaf:0x3f9a2e},oak:{name:'Oak',leaf:0x3a8a2a},pine:{name:'Pine',leaf:0x2a6a3a},palm:{name:'Palm',leaf:0x58b040},cherry:{name:'Cherry Blossom',leaf:0xffa8d0}};
+const saplings=[]; const GROW_TIME=[24,38];
+function saplingMesh(kind){ const g=new THREE.Group(), stem=box(0.08,0.5,0.08,lm(kind==='palm'?0x9a7a4a:0x6b4a2a)); stem.position.y=0.25; g.add(stem);
+  const leaf=lm(SEED_INFO[kind].leaf); if(kind==='pine'){ for(let k=0;k<3;k++){ const c=box(0.42-k*0.12,0.12,0.42-k*0.12,leaf); c.position.y=0.3+k*0.14; g.add(c); } }
+  else if(kind==='palm'){ for(let k=0;k<4;k++){ const f=box(0.36,0.05,0.1,leaf); f.position.set(Math.cos(k*Math.PI/2)*0.16,0.52,Math.sin(k*Math.PI/2)*0.16); f.rotation.y=-k*Math.PI/2; g.add(f); } }
+  else { const c=box(0.34,0.28,0.34,leaf); c.position.y=0.56; g.add(c); }
+  return g; }
+function addSapling(x,y,z,kind,t){ const s={x,y,z,kind,t:t!==undefined?t:GROW_TIME[0]+rand()*(GROW_TIME[1]-GROW_TIME[0]),mesh:saplingMesh(kind)}; s.t0=s.t; s.mesh.position.set(x+0.5,y,z+0.5); scene.add(s.mesh); saplings.push(s); return s; }
+function clearSaplings(){ for(const s of saplings){ scene.remove(s.mesh); s.mesh.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); } saplings.length=0; }
+function plantSeed(x,y,z,kind){ const below=get(x,y-1,z), ok=below===ID.grass||below===ID.dirt||(kind==='palm'&&(below===ID.sand||below===ID.wetsand));
+  if(!ok){ toast('🌱 Seeds need to go on grass or soil'+(kind==='palm'?' (or sand for a palm).':'.')); return; } if(get(x,y,z)){ toast('🌱 There\'s something in the way.'); return; }
+  setBlock(x,y,z,ID.sapling,SEED_KINDS.indexOf(kind)); if(below===ID.grass)setBlock(x,y-1,z,ID.dirt); addSapling(x,y,z,kind); sfx('place'); burst(x,y-0.6,z,B[ID.dirt].avg,5); queueSave();
+  toast('🌱 You planted '+(kind==='apple'?'an':'a')+' '+SEED_INFO[kind].name+' seed! Watch it grow.'); }
+function saplingTick(dt){ for(const s of saplings.slice()){ if(get(s.x,s.y,s.z)!==ID.sapling){ scene.remove(s.mesh); saplings.splice(saplings.indexOf(s),1); continue; } // dug up
+    s.t-=dt; const f=1-Math.max(0,s.t)/s.t0; s.mesh.scale.setScalar(0.6+f*1.1); s.mesh.rotation.y=Math.sin(s.t*0.8)*0.1;
+    if(s.t<=0){ scene.remove(s.mesh); saplings.splice(saplings.indexOf(s),1); setBlock(s.x,s.y,s.z,0); growTree(s.kind,s.x,s.y,s.z); burst(s.x,s.y+2,s.z,new THREE.Color(SEED_INFO[s.kind].leaf),14); sfx('coin'); queueSave(); } } }
+// grow a full tree: trunk and leaves only go into empty space
+function growTree(kind,x,y,z){ const r=mulberry32((x*73856093)^(z*19349663)^y), P=(a,b,c,id)=>{ if(inB(a,b,c)&&!get(a,b,c))setBlock(a,b,c,id); };
+  if(kind==='palm'||kind==='pine'){ cityTree(P,x,y,z,kind,r); return; }
+  if(kind==='cherry'){ const h=4; for(let k=0;k<h;k++)P(x,y+k,z,ID.log); P(x+1,y+h-1,z,ID.log); P(x-1,y+h-1,z,ID.log); const t=y+h;
+    for(let dy=-1;dy<=1;dy++){ const R=dy===1?2:3; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.3||(r()<0.12&&Math.hypot(dx,dz)>R-1))continue; P(x+dx,t+dy,z+dz,ID.leaves_pink); } } return; }
+  const h=kind==='apple'?4:5; for(let k=0;k<h;k++)P(x,y+k,z,ID.log); const ty=y+h-1;
+  for(let dy=-2;dy<=1;dy++){ const R=dy>=0?1:2; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.abs(dx)===R&&Math.abs(dz)===R&&(dy===1||r()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,ty+dy,z+dz,ID.leaves); } }
+  if(kind==='apple'){ const tr=makeAppleTree(x,ty,z); if(tr)toast('🍎 Your apple tree grew! Watch for blossoms, then pick the apples to heal.'); } }
+// street trees: tall trunks so the leaves stay above people's heads on the sidewalk
+function streetTree(P,x,g,z,kind,rnd){ if(kind==='palm'){ cityTree(P,x,g,z,'palm',rnd); return; }
+  const pink=kind==='cherry'; for(let y=0;y<5;y++)P(x,g+y,z,ID.log);
+  for(const [dy,R] of [[4,2],[5,2],[6,1],[7,0]])for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(R===2&&Math.abs(dx)===2&&Math.abs(dz)===2)continue; if(!dx&&!dz&&dy<5)continue; P(x+dx,g+dy,z+dz,pink?ID.leaves_pink:ID.leaves); } }
+
+// ================= VEHICLES =================
+// Arcade driving: W/S (or the joystick, or RT/LT) to go and stop, A/D (or the stick) to steer. Cars can't flip over, they
+// climb one-block steps, and they stop at walls. The front of every vehicle is its local -z, like the hero.
+const VEH={
+  sports:{name:'Sports Car',icon:'🏎️',len:4.2,wid:1.9,hgt:1.15,spd:26,acc:13,col:0xd8202a,kind:'sports'},
+  family:{name:'Family Car',icon:'🚗',len:4.4,wid:1.9,hgt:1.55,spd:18,acc:8,col:0x2f6ae0,kind:'car'},
+  pickup:{name:'Pickup Truck',icon:'🛻',len:5.0,wid:2.0,hgt:1.8,spd:17,acc:7,col:0x3fa34d,kind:'pickup'},
+  moto:{name:'Motorcycle',icon:'🏍️',len:2.1,wid:0.8,hgt:1.1,spd:24,acc:14,col:0x2a2a30,kind:'moto'},
+  bus:{name:'City Bus',icon:'🚌',len:9,wid:2.5,hgt:3.0,spd:12,acc:4,col:0xf2c230,kind:'bus'},
+  police:{name:'Police Car',icon:'🚓',len:4.6,wid:1.9,hgt:1.55,spd:24,acc:12,col:0x1a1c22,kind:'car',siren:'police'},
+  fire:{name:'Fire Truck',icon:'🚒',len:8,wid:2.4,hgt:2.8,spd:15,acc:5,col:0xd8202a,kind:'fire',siren:'fire'},
+  icecream:{name:'Ice Cream Truck',icon:'🍦',len:5.2,wid:2.1,hgt:2.6,spd:13,acc:6,col:0xfafafa,kind:'van',siren:'icecream'},
+  monster:{name:'Monster Truck',icon:'🛻',len:5,wid:2.8,hgt:2.9,spd:19,acc:9,col:0x8a3ac8,kind:'monster'},
+  taxi:{name:'Taxi',icon:'🚕',len:4.6,wid:1.9,hgt:1.55,spd:18,acc:8,col:0xffc81a,kind:'car',taxi:true}};
+const GARAGE_TYPES=['sports','family','pickup','moto','bus','police','fire','icecream','monster'];
+function vehicleMesh(type){ const V=VEH[type], g=new THREE.Group(), M=c=>lm(c), L=V.len, Wd=V.wid, K=V.kind, big=K==='monster';
+  const add=(w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
+  const glass=new THREE.MeshLambertMaterial({color:0x2a3a4a,emissive:0x0a1420}), dark=M(0x18181c), body=M(V.col), wr=big?0.85:K==='bus'||K==='fire'?0.5:K==='moto'?0.34:0.38, lift=big?0.9:0, wheels=[];
+  const wheel=(x,z)=>{ const w=new THREE.Group(); w.position.set(x,wr,z); const t=new THREE.Mesh(new THREE.CylinderGeometry(wr,wr,big?0.7:0.3,14),dark); t.rotation.z=Math.PI/2; w.add(t);
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(wr*0.45,wr*0.45,(big?0.7:0.3)+0.02,8),M(0xb8bcc4)); hub.rotation.z=Math.PI/2; w.add(hub); g.add(w); wheels.push(w); };
+  if(K==='moto'){ wheel(0,-L/2+wr); wheel(0,L/2-wr); add(0.35,0.35,1.2,body,0,0.75,0); add(0.3,0.15,0.6,dark,0,1.0,0.25); add(0.7,0.06,0.06,M(0x9a9aa2),0,1.2,-0.62); add(0.08,0.5,0.08,M(0x9a9aa2),0,0.95,-0.62); }
+  else { const ax=Wd/2-0.18, az=L/2-wr-0.35; wheel(-ax,-az); wheel(ax,-az); wheel(-ax,az); wheel(ax,az); if(K==='bus'||K==='fire'){ wheel(-ax,az-1.3); wheel(ax,az-1.3); }
+    const y0=wr*0.9+lift;
+    if(K==='bus'){ add(Wd,V.hgt-y0,L,body,0,y0+(V.hgt-y0)/2,0); for(const sx of[-1,1])add(0.04,0.8,L-1.4,glass,sx*(Wd/2+0.01),V.hgt-0.95,0.3); add(Wd-0.3,0.9,0.04,glass,0,V.hgt-1,-L/2-0.01);
+      add(1.4,0.3,0.05,new THREE.MeshBasicMaterial({color:0xffa020}),0,V.hgt-0.3,-L/2-0.03); add(Wd+0.02,0.25,L+0.02,M(0xffffff),0,y0+0.6,0); }
+    else if(K==='fire'){ add(Wd,1.6,2.2,body,0,y0+0.8+0.1,-L/2+1.1); add(Wd-0.2,0.7,0.04,glass,0,y0+1.3,-L/2-0.01); add(Wd,1.1,L-2.2,body,0,y0+0.55+0.1,1.1);
+      for(const sx of[-1,1])add(0.08,0.12,L-2.6,M(0xd8d8dc),sx*0.5,y0+1.4,1.0); for(let k=0;k<9;k++)add(1.0,0.08,0.08,M(0xd8d8dc),0,y0+1.4,-0.6+k*0.65); add(Wd+0.02,0.18,L+0.02,M(0xffffff),0,y0+0.3,0); }
+    else if(K==='van'){ add(Wd,V.hgt-y0,L,body,0,y0+(V.hgt-y0)/2,0); add(Wd-0.3,0.7,0.04,glass,0,V.hgt-0.7,-L/2-0.01); for(const sx of[-1,1])add(0.04,0.9,1.6,glass,sx*(Wd/2+0.01),V.hgt-1.0,0.6);
+      add(Wd+0.02,0.3,L+0.02,M(0xff8ac8),0,y0+0.4,0); const cone=new THREE.Mesh(new THREE.ConeGeometry(0.35,0.9,8),M(0xe0a050)); cone.rotation.x=Math.PI; cone.position.set(0,V.hgt+0.5,0.6); g.add(cone);
+      const sc=new THREE.Mesh(new THREE.SphereGeometry(0.42,10,8),M(0xffb0d8)); sc.position.set(0,V.hgt+1.05,0.6); g.add(sc); }
+    else if(K==='pickup'){ add(Wd,0.7,L,body,0,y0+0.35,0); add(Wd*0.94,0.75,L*0.38,body,0,y0+1.05,-L*0.16); add(Wd*0.96,0.5,L*0.36,glass,0,y0+1.05,-L*0.16);
+      for(const sx of[-1,1])add(0.1,0.4,L*0.45,body,sx*(Wd/2-0.05),y0+0.9,L*0.26); add(Wd,0.4,0.1,body,0,y0+0.9,L/2-0.05); }
+    else { const lowH=K==='sports'?0.45:0.6, lo=add(Wd,lowH,L,body,0,y0+lowH/2,0), cabL=K==='sports'?L*0.36:L*0.52, cabH=V.hgt-y0-lowH;
+      const cab=add(Wd*0.9,cabH,cabL,V.siren==='police'?M(0xffffff):body,0,y0+lowH+cabH/2,K==='sports'?0.25:0.15); add(Wd*0.92,cabH*0.7,cabL*0.92,glass,0,y0+lowH+cabH*0.48,cab.position.z);
+      if(K==='sports')add(Wd*0.9,0.08,0.4,dark,0,y0+lowH+0.35,L/2-0.25);
+      if(V.siren==='police'){ for(const sx of[-1,1])add(Wd+0.02,0.35,1.4,M(0xffffff),0,y0+0.35,sx*0.7); }
+      if(big){ add(Wd*0.8,0.2,L*0.6,dark,0,lift+0.2,0); }
+      if(V.taxi){ add(0.7,0.25,0.3,new THREE.MeshBasicMaterial({color:0xfff2a0}),0,V.hgt+0.12,0.15); for(let k=-3;k<=3;k++)add(0.02,0.12,0.12,dark,Wd/2+0.01,y0+0.35,k*0.24+((k&1)?0:0)); } } }
+  const lights=[]; if(V.siren){ const cols=V.siren==='icecream'?[0xff80c0,0x80d0ff]:[0xff2020,0x2060ff]; const yT=K==='van'?V.hgt+0.02:V.hgt+0.08;
+    cols.forEach((c,k)=>{ const m=new THREE.MeshBasicMaterial({color:c}); const b=box(0.45,0.16,0.3,m); b.position.set((k?1:-1)*0.3,yT,K==='fire'?-L/2+0.8:0); g.add(b); lights.push({b,m,c}); }); }
+  if(K!=='moto'){ for(const sx of[-1,1]){ add(0.3,0.16,0.04,new THREE.MeshBasicMaterial({color:0xfff6d0}),sx*(Wd/2-0.3),wr+lift+0.35,-L/2-0.02); add(0.28,0.14,0.04,new THREE.MeshBasicMaterial({color:0xd81818}),sx*(Wd/2-0.3),wr+lift+0.4,L/2+0.02); } }
+  const seatY=K==='moto'?0.55:K==='bus'||K==='fire'||K==='van'?(K==='fire'?wr+0.5:V.hgt-1.75):wr*0.9+lift+0.05, seat=[K==='moto'?0:-Wd*0.22,seatY,K==='moto'?0.1:K==='bus'?-L/2+1.2:K==='fire'?-L/2+1.0:K==='van'?-L/2+1.2:-L*0.02];
+  return {g,wheels,lights,seat,wr}; }
+// a simple person shape for NPC drivers
+function driverMesh(L){ const g=new THREE.Group(); const s=box(0.4,0.42,0.4,cm(L.skin)); s.position.y=1.3; g.add(s); const hr=box(0.42,0.12,0.42,cm(L.hairC)); hr.position.y=1.55; g.add(hr); const t=box(0.5,0.6,0.3,cm(L.topC)); t.position.y=0.82; g.add(t); return g; }
+function makeVehicle(type,x,y,z,h){ const vm=vehicleMesh(type), v={type,V:VEH[type],p:[x,y,z],h,spd:0,vy:0,pitch:0,vm,m:vm.g,driver:null,npc:null,siren:false,sirenT:0,wheel:0}; scene.add(v.m); vehPlace(v); return v; }
+function vehPlace(v){ v.m.position.set(v.p[0],v.p[1],v.p[2]); v.m.rotation.set(0,v.h,0); v.m.rotateX(v.pitch); }
+function removeVehicle(v){ scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); if(v.drv){ v.m.remove(v.drv); } if(cityK)cityK.vehicles.splice(cityK.vehicles.indexOf(v),1); if(v.siren)sirenStop(v); }
+const vFwd=h=>[-Math.sin(h),-Math.cos(h)], vRight=h=>[Math.cos(h),-Math.sin(h)];
+function vSolid(x,y,z){ const xi=Math.floor(x), zi=Math.floor(z); if(xi<1||zi<1||xi>=W-1||zi>=D-1)return true; const b=get(xi,Math.floor(y),zi); return !!b&&B[b].solid; }
+function vGround(x,z,y){ const xi=Math.floor(x), zi=Math.floor(z); for(let yy=Math.floor(y+1.2);yy>=Math.max(0,Math.floor(y)-8);yy--){ const b=get(xi,yy,zi); if(b&&(B[b].solid||b===ID.water))return {y:yy+1,wet:b===ID.water}; } return {y:Math.floor(y)-8,wet:false}; }
+// would the vehicle's body hit something at (x,z)? Checks the front (or back) corners at a few heights, and other vehicles
+function vBlocked(v,x,z,dir){ const V=v.V, f=vFwd(v.h), r=vRight(v.h), hl=V.len/2*dir, hw=V.wid/2-0.1, y=v.p[1];
+  for(const s of[-1,0,1]){ const px=x+f[0]*hl+r[0]*hw*s, pz=z+f[1]*hl+r[1]*hw*s;
+    for(const hy of [1.15,Math.max(1.15,V.hgt-0.35)])if(vSolid(px,y+hy,pz))return 'wall';
+    const gd=vGround(px,pz,y); if(gd.wet&&gd.y>=y-0.5)return 'water'; }
+  if(cityK)for(const o of cityK.vehicles){ if(o===v)continue; const of=vFwd(o.h), orr=vRight(o.h);
+    for(const s of[-1,0,1]){ const px=x+f[0]*hl+r[0]*hw*s-o.p[0], pz=z+f[1]*hl+r[1]*hw*s-o.p[2]; const lz=px*of[0]+pz*of[1], lx=px*orr[0]+pz*orr[1];
+      if(Math.abs(lz)<o.V.len/2+0.15&&Math.abs(lx)<o.V.wid/2+0.15&&Math.abs(o.p[1]-y)<2.5)return o; } }
+  return null; }
+function vMove(v,dt){ const f=vFwd(v.h), nx=v.p[0]+f[0]*v.spd*dt, nz=v.p[2]+f[1]*v.spd*dt;
+  if(Math.abs(v.spd)>0.01){ const hit=vBlocked(v,nx,nz,v.spd>0?1:-1); if(hit){ if(Math.abs(v.spd)>5&&v.driver==='player')sfx('thunk'); v.spd=hit&&hit.p?0:-v.spd*0.15; return hit; } v.p[0]=nx; v.p[2]=nz; }
+  const gd=vGround(v.p[0],v.p[2],v.p[1]); if(gd.y>v.p[1]){ v.p[1]+=Math.min(gd.y-v.p[1],dt*8); v.vy=0; } else if(gd.y<v.p[1]-0.01){ v.vy-=22*dt; v.p[1]=Math.max(gd.y,v.p[1]+v.vy*dt); } else v.vy=0;
+  const bf=vGround(v.p[0]+f[0]*v.V.len*0.4,v.p[2]+f[1]*v.V.len*0.4,v.p[1]).y, bb=vGround(v.p[0]-f[0]*v.V.len*0.4,v.p[2]-f[1]*v.V.len*0.4,v.p[1]).y;
+  v.pitch+=(Math.max(-0.35,Math.min(0.35,Math.atan2(bf-bb,v.V.len*0.8)))-v.pitch)*Math.min(1,dt*6);
+  v.wheel+=v.spd*dt/v.vm.wr; for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); return null; }
+// --- sirens, the ice cream tune and the horn (Web Audio, so they follow the Sound effects switch)
+function sirenStart(v){ if(!AC||!sfxOn||v.sirenNode)return; try{ const o=AC.createOscillator(), g=AC.createGain(); o.type=v.V.siren==='fire'?'sawtooth':'square'; g.gain.value=v.V.siren==='icecream'?0.05:0.035; o.connect(g); g.connect(AC.destination); o.start(); v.sirenNode={o,g}; }catch(e){} }
+function sirenStop(v){ if(v.sirenNode){ try{ v.sirenNode.o.stop(); }catch(e){} v.sirenNode=null; } }
+const ICE_TUNE=[72,76,79,76,77,74,71,74,72,76,79,84,83,79,77,74];
+function sirenTick(v,dt){ v.sirenT+=dt; const on=v.siren&&Math.floor(v.sirenT*6)%2;
+  v.vm.lights.forEach((L,k)=>L.m.color.setHex(v.siren?(((Math.floor(v.sirenT*6)+k)%2)?L.c:0x222222):0x333333));
+  const n=v.sirenNode; if(!n)return; const fr=v.V.siren==='police'?700+300*Math.sign(Math.sin(v.sirenT*Math.PI*2.5)):v.V.siren==='fire'?500+350*(0.5+0.5*Math.sin(v.sirenT*1.6)):midiF(ICE_TUNE[Math.floor(v.sirenT*3.2)%ICE_TUNE.length]);
+  n.o.frequency.setTargetAtTime(fr,AC.currentTime,0.02); const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2]); n.g.gain.setTargetAtTime((v.V.siren==='icecream'?0.05:0.035)*Math.max(0,1-d/45),AC.currentTime,0.1); }
+function honk(v){ if(!AC||!sfxOn)return; try{ for(const f of v.V.kind==='bus'||v.V.kind==='fire'?[220,277]:v.V.kind==='moto'?[520]:[392,494]){ const o=AC.createOscillator(), g=AC.createGain(); o.type='square'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.06,AC.currentTime+0.02); g.gain.setValueAtTime(0.06,AC.currentTime+0.3); g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+0.4);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.45); } }catch(e){} }
+// --- you, driving
+let drive=null;
+function enterVehicle(v){ if(!v||v.driver)return; drive=v; v.driver='player'; document.body.classList.add('drive'); document.body.classList.toggle('dsiren',!!v.V.siren); tpWeapon.visible=false; if(document.pointerLockElement)document.exitPointerLock();
+  toast(v.V.icon+' '+v.V.name+'! '+(IS_TOUCH?'Drag the joystick to drive and steer.':'W/S to go and stop, A/D to steer, H for the horn'+(v.V.siren?', L for the '+(v.V.siren==='icecream'?'ice cream music':'siren and lights'):'')+', E to get out.')); sfx('catch'); }
+function exitVehicle(quiet){ const v=drive; if(!v)return; drive=null; v.driver=null; v.spd=0; if(v.siren){ v.siren=false; sirenStop(v); } document.body.classList.remove('drive','dsiren'); refreshHeld();
+  const r=vRight(v.h); for(const s of [-1,1,0]){ const x=v.p[0]+r[0]*s*(v.V.wid/2+0.9), z=v.p[2]+r[1]*s*(v.V.wid/2+0.9), y=s?v.p[1]:v.p[1]+v.V.hgt+0.2;
+    if(!vSolid(x,y+0.5,z)&&!vSolid(x,y+1.5,z)){ pl.p=[x,y,z]; break; } }
+  pl.v=[0,0,0]; unstick(pl); model.rotation.z=0; legL.rotation.z=legR.rotation.z=0; chase.p=null; if(!quiet)sfx('catch'); }
+function toggleSiren(){ const v=drive; if(!v||!v.V.siren)return; v.siren=!v.siren; if(v.siren){ audioInit(); sirenStart(v); } else sirenStop(v); toast(v.siren?(v.V.siren==='icecream'?'🍦 Ice cream music on!':'🚨 Lights and siren on!'):'Lights and siren off.'); }
+function driveUpdate(dt){ const v=drive, V=v.V; let thr=-joy.y, str=joy.x;
+  if(keys.KeyW||keys.ArrowUp)thr+=1; if(keys.KeyS||keys.ArrowDown)thr-=1; if(keys.KeyA||keys.ArrowLeft)str-=1; if(keys.KeyD||keys.ArrowRight)str+=1;
+  const P=padRead(); str+=P.lx; thr+=P.rt-P.lt; if(!P.rt&&!P.lt)thr-=P.ly; // a controller: left stick steers, RT goes, LT brakes and reverses
+  thr=Math.max(-1,Math.min(1,thr)); str=Math.max(-1,Math.min(1,str)); const brake=keys.Space;
+  if(brake)v.spd*=Math.max(0,1-dt*4);
+  if(thr>0.05){ if(v.spd<0)v.spd=Math.min(0,v.spd+V.acc*3*dt); else v.spd=Math.min(V.spd*thr,v.spd+V.acc*thr*dt); }
+  else if(thr<-0.05){ if(v.spd>0)v.spd=Math.max(0,v.spd-V.acc*2.5*dt); else v.spd=Math.max(-V.spd*0.35,v.spd+V.acc*0.6*thr*dt); }
+  else v.spd*=Math.max(0,1-dt*0.9);
+  const grip=Math.min(1,Math.abs(v.spd)/4), rate=(V.kind==='bus'||V.kind==='fire'?0.9:V.kind==='moto'?2.0:1.5)*grip; v.h-=str*rate*Math.sign(v.spd||1)*dt;
+  vMove(v,dt); pl.p=[v.p[0],v.p[1],v.p[2]]; pl.v=[0,0,0];
+  if(P.a&&!drive.padA)honk(v); drive.padA=P.a; if(P.y&&!drive.padY){ drive.padY=true; exitVehicle(); return {hs:0}; } drive.padY=P.y;
+  return {hs:0}; }
+// the camera follows behind the vehicle
+const chase={p:null,l:null};
+function chaseCam(dt){ const v=drive, f=vFwd(v.h), back=v.V.len*0.5+4.2+v.V.hgt*0.6, up=v.V.hgt+1.6;
+  const want=new THREE.Vector3(v.p[0]-f[0]*back,v.p[1]+up,v.p[2]-f[1]*back), look=new THREE.Vector3(v.p[0]+f[0]*3,v.p[1]+v.V.hgt*0.6,v.p[2]+f[1]*3);
+  if(!chase.p||chase.p.distanceTo(want)>30){ chase.p=want.clone(); chase.l=look.clone(); } chase.p.lerp(want,Math.min(1,dt*4)); chase.l.lerp(look,Math.min(1,dt*8));
+  camera.position.copy(chase.p); camera.lookAt(chase.l); }
+// sit the hero in the driver's seat
+function seatHero(){ const v=drive, s=v.vm.seat, c=Math.cos(v.h), sn=Math.sin(v.h);
+  model.position.set(v.p[0]+s[0]*c+s[2]*sn,v.p[1]+s[1],v.p[2]-s[0]*sn+s[2]*c); model.rotation.set(0,v.h,0); model.visible=true;
+  const moto=v.V.kind==='moto'; legL.rotation.x=legR.rotation.x=moto?0.9:1.45; legL.rotation.z=moto?-0.25:0; legR.rotation.z=moto?0.25:0; armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=armR.rotation.z=0; head.rotation.x=0; }
+
+// ================= THE GARAGE, TRAFFIC AND PEOPLE WHO DRIVE =================
+// Every city has a garage just up the street from where you arrive. Open it and a different vehicle is waiting inside.
+// Cars drive round the road grid on the right-hand side, stop at red lights and for anything in front of them.
+// Now and then someone walks to the garage, takes whatever is in there for a drive, and brings it back later.
+function garageBox(){ return {x0:CX+6,x1:CX+17,z0:CZ+8,z1:CZ+18,dz0:CZ+10,dz1:CZ+16}; } // the walls; the door is in the west wall (x0), facing the road
+function cityGarage(P,S,g){ const G=garageBox();
+  for(let x=CX+4;x<=G.x1;x++)for(let z=G.z0;z<=G.z1;z++){ for(let y=g;y<g+9;y++)P(x,y,z,0); /* clear the driveway, street trees too */ for(let y=1;y<g;y++)if(!world[idx(x,y,z)])P(x,y,z,ID.limestone); P(x,g-1,z,x<G.x0?ID.asphalt:ID.concrete); } // a flat floor and a driveway
+  for(let y=0;y<6;y++)for(let x=G.x0;x<=G.x1;x++)for(let z=G.z0;z<=G.z1;z++){ const e=x===G.x0||x===G.x1||z===G.z0||z===G.z1; if(!e&&y<5)continue;
+    if(y<5&&x===G.x0&&z>=G.dz0&&z<=G.dz1&&y<4){ P(x,g+y,z,ID.gdoor); continue; } P(x,g+y,z,y===5?ID.concrete:y===4?ID.paint_white:ID.brick); } }
+function garageDoorOpen(){ const G=garageBox(); return get(G.x0,cityK.gy,G.dz0)!==ID.gdoor; }
+function setGarageDoor(open){ const G=garageBox(), K=cityK; for(let y=0;y<4;y++)for(let z=G.dz0;z<=G.dz1;z++)setBlock(G.x0,K.gy+y,z,open?0:ID.gdoor); K.doorT=open?0:1; queueSave(); }
+function garageInside(v){ const G=garageBox(); return v.p[0]>G.x0&&v.p[0]<G.x1&&v.p[2]>G.z0&&v.p[2]<G.z1; }
+function garageVehicle(){ return cityK&&cityK.vehicles.find(v=>!v.npc&&!v.driver&&garageInside(v)); }
+function garageFill(){ const K=cityK, G=garageBox(), old=garageVehicle(); if(old)removeVehicle(old);
+  const list=GARAGE_TYPES.concat(K.ck==='newyork'?['taxi']:[]); let t; do{ t=list[Math.floor(Math.random()*list.length)]; }while(t===K.lastType&&list.length>1); K.lastType=t;
+  const v=makeVehicle(t,(G.x0+G.x1)/2+0.5,K.gy,(G.z0+G.z1)/2+0.5,Math.PI/2); K.vehicles.push(v); return v; }
+function toggleGarage(){ const K=cityK; if(!K)return; if(K.trip&&K.trip.ph!=='drive'){ toast('🚗 Someone is using the garage. Wait a moment!'); return; }
+  if(garageDoorOpen()){ setGarageDoor(false); sfx('thunk'); toast('🚪 Garage closed. Open it again for a different vehicle.'); return; }
+  setGarageDoor(true); const v=garageFill(); sfx('zap'); toast('🚪 The garage door rolls up… '+v.V.icon+' a '+v.V.name+'! Walk up to it to get in.'); }
+// the roll-up door you see (the blocks behind it are invisible and solid)
+function garageDecor(K){ const G=garageBox(), S=K.S; K.gy=cityGround(S,CX+5,(G.dz0+G.dz1)/2); const c=document.createElement('canvas'); c.width=16; c.height=32; const x=c.getContext('2d');
+  for(let y=0;y<32;y++){ x.fillStyle=y%4===3?'#8a8e96':'#d4d8de'; x.fillRect(0,y,16,1); } const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false;
+  const w=G.dz1-G.dz0+1, door=new THREE.Mesh(new THREE.PlaneGeometry(w,4),new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide})); door.rotation.y=-Math.PI/2; door.position.set(G.x0-0.02,K.gy+2,(G.dz0+G.dz1+1)/2); K.root.add(door); K.door=door;
+  const lb=labelSprite('🚗 GARAGE'); lb.position.set(G.x0-0.4,K.gy+5.2,(G.dz0+G.dz1+1)/2); lb.scale.set(3.2,0.8,1); K.root.add(lb); K.doorT=garageDoorOpen()?0:1; }
+function garageDecorTick(K,dt){ const want=garageDoorOpen()?0:1; K.doorT+=(want-K.doorT)*Math.min(1,dt*4); const s=Math.max(0.03,K.doorT); K.door.scale.y=s; K.door.position.y=K.gy+4-2*s; }
+// --- NPC traffic on the road grid
+function crossingSet(K){ if(!K.cset)K.cset=new Set(K.crossings.map(c=>c[0]+','+c[1])); return K.cset; }
+const DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // +x, +z, -x, -z
+function dirHeading(d){ const v=DIRS[d]; return Math.atan2(-v[0],-v[1]); }
+function lanePos(ax,az,d,s){ const v=DIRS[d], r=vRight(dirHeading(d)); return [ax+v[0]*s+r[0]*1.75,az+v[1]*s+r[1]*1.75]; }
+function nextDirs(K,bx,bz,d){ const cs=crossingSet(K), out=[]; for(let nd=0;nd<4;nd++){ if(nd===(d+2)%4)continue; const v=DIRS[nd]; if(cs.has((bx+v[0]*CITY_GRID)+','+(bz+v[1]*CITY_GRID)))out.push(nd); }
+  if(!out.length)out.push((d+2)%4); return out; }
+function addTraffic(K,type,ax,az,d,s,driverLook){ const [x,z]=lanePos(ax,az,d,s), v=makeVehicle(type,x,cityGround(K.S,x,z),z,dirHeading(d)); v.npc={ax,az,d,s,ph:'edge',cruise:v.V.spd*0.45+2,honkT:0};
+  v.drv=driverMesh(driverLook||randomLook()); const st=v.vm.seat; v.drv.position.set(st[0],st[1]-0.7,st[2]); v.m.add(v.drv); K.vehicles.push(v); return v; }
+function spawnTraffic(K){ const cs=crossingSet(K), types=K.ck==='newyork'?['taxi','taxi','taxi','family','bus','pickup']:K.ck==='orlando'?['family','sports','icecream','pickup','bus','family']:['family','pickup','bus','sports','family','taxi'];
+  let n=0; for(let tries=0;tries<60&&n<5;tries++){ const c=K.crossings[Math.floor(Math.random()*K.crossings.length)], d=Math.floor(Math.random()*4), v=DIRS[d];
+    if(!cs.has((c[0]+v[0]*CITY_GRID)+','+(c[1]+v[1]*CITY_GRID)))continue; const s=8+Math.random()*16, [x,z]=lanePos(c[0],c[1],d,s);
+    if(K.vehicles.some(o=>Math.hypot(o.p[0]-x,o.p[2]-z)<10))continue; addTraffic(K,types[n%types.length],c[0],c[1],d,s); n++; } }
+// how far ahead along its way is the nearest thing in the lane (another vehicle, or you on foot)?
+function aheadGap(K,v){ const f=vFwd(v.h), r=vRight(v.h); let gap=99;
+  const test=(x,z,len,wid)=>{ const dx=x-v.p[0], dz=z-v.p[2], along=dx*f[0]+dz*f[1], side=Math.abs(dx*r[0]+dz*r[1]); if(along>0&&along<22&&side<(wid||1)/2+1.1)gap=Math.min(gap,along-(len||0)/2-v.V.len/2); };
+  for(const o of K.vehicles)if(o!==v)test(o.p[0],o.p[2],o.V.len,o.V.wid); if(!drive&&Math.abs(pl.p[1]-v.p[1])<3)test(pl.p[0],pl.p[2],0.6,0.6); return gap; }
+function trafficTick(K,v,dt){ const N=v.npc, light=lightState(DIRS[N.d][0]?'x':'z',K.t);
+  let want=N.cruise; const gap=aheadGap(K,v); if(gap<9)want=Math.min(want,Math.max(0,(gap-2.5)*1.6));
+  if(gap<3&&!drive&&Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])<v.V.len/2+4){ N.honkT-=dt; if(N.honkT<=0){ N.honkT=4; honk(v); } }
+  if(N.ph==='edge'){ const stopAt=CITY_GRID-6.5; if(light!=='g'&&N.s<stopAt+0.5&&N.s>stopAt-12)want=Math.min(want,Math.max(0,(stopAt-N.s)*1.4)); // red or yellow: stop at the line
+    v.spd+=(want-v.spd)*Math.min(1,dt*(want<v.spd?4:1.2)); N.s+=v.spd*dt;
+    if(N.s>=CITY_GRID-3.5){ const bx=N.ax+DIRS[N.d][0]*CITY_GRID, bz=N.az+DIRS[N.d][1]*CITY_GRID, opts=nextDirs(K,bx,bz,N.d), nd=opts[Math.floor(Math.random()*opts.length)];
+      const a=lanePos(N.ax,N.az,N.d,N.s), b=lanePos(bx,bz,nd,3.5), c=nd===N.d?[(a[0]+b[0])/2,(a[1]+b[1])/2]:[a[0]+DIRS[N.d][0]*(Math.abs((b[0]-a[0])*DIRS[N.d][0]+(b[1]-a[1])*DIRS[N.d][1])),a[1]+DIRS[N.d][1]*(Math.abs((b[0]-a[0])*DIRS[N.d][0]+(b[1]-a[1])*DIRS[N.d][1]))];
+      N.turn={a,b,c,t:0,len:Math.hypot(c[0]-a[0],c[1]-a[1])+Math.hypot(b[0]-c[0],b[1]-c[1])}; N.ph='turn'; N.nd=nd; N.bx=bx; N.bz=bz; }
+    else { const [x,z]=lanePos(N.ax,N.az,N.d,N.s); v.p[0]=x; v.p[2]=z; v.h=dirHeading(N.d); } }
+  else { v.spd+=(Math.min(want,N.cruise*0.7)-v.spd)*Math.min(1,dt*3); const T=N.turn; T.t=Math.min(1,T.t+v.spd*dt/Math.max(1,T.len)); const t=T.t, u=1-t; // round the corner on a curve
+    const x=u*u*T.a[0]+2*u*t*T.c[0]+t*t*T.b[0], z=u*u*T.a[1]+2*u*t*T.c[1]+t*t*T.b[1], dx=2*u*(T.c[0]-T.a[0])+2*t*(T.b[0]-T.c[0]), dz=2*u*(T.c[1]-T.a[1])+2*t*(T.b[1]-T.c[1]);
+    v.p[0]=x; v.p[2]=z; if(Math.hypot(dx,dz)>0.01)v.h=Math.atan2(-dx,-dz); if(t>=1){ N.ph='edge'; N.ax=N.bx; N.az=N.bz; N.d=N.nd; N.s=3.5; } }
+  const gy=cityGround(K.S,v.p[0],v.p[2]); v.p[1]+=(gy-v.p[1])*Math.min(1,dt*8); v.wheel+=v.spd*dt/v.vm.wr; for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); }
+// --- someone takes a vehicle from the garage for a drive, then brings it back
+function garageTripTick(K,dt){ const G=garageBox(), front=[CX+4.5,(G.dz0+G.dz1+1)/2];
+  if(!K.trip){ K.tripT-=dt; if(K.tripT>0)return; K.tripT=35+Math.random()*25;
+    if(drive||garageDoorOpen()||garageVehicle()||Math.hypot(pl.p[0]-front[0],pl.p[2]-front[1])<10)return;
+    const p=K.people.filter(q=>!q.gone&&!q.dodge).sort((a,b)=>{ const pa=ringPos(a.ring,a.s), pb=ringPos(b.ring,b.s); return Math.hypot(pa[0]-front[0],pa[1]-front[1])-Math.hypot(pb[0]-front[0],pb[1]-front[1]); })[0];
+    if(!p)return; const pp=ringPos(p.ring,p.s); K.trip={p,ph:'walk',from:[pp[0],pp[1]],t:0}; p.gone='trip'; return; }
+  const T=K.trip, p=T.p;
+  if(T.ph==='walk'){ const dx=front[0]-p.g.position.x, dz=front[1]-p.g.position.z, d=Math.hypot(dx,dz); // walk over to the garage door
+    if(d<0.4){ T.ph='open'; T.t=0; setGarageDoor(true); sfx('zap'); return; }
+    const st=Math.min(d,1.5*dt); p.g.position.x+=dx/d*st; p.g.position.z+=dz/d*st; p.g.position.y=cityGround(K.S,p.g.position.x,p.g.position.z); p.g.rotation.y=Math.atan2(-dx,-dz);
+    p.ph+=dt*7; const sw=Math.sin(p.ph)*0.6; p.R.legL.rotation.x=sw; p.R.legR.rotation.x=-sw; p.R.armL.rotation.x=-sw*0.8; p.R.armR.rotation.x=sw*0.8; return; }
+  if(T.ph==='open'){ T.t+=dt; if(T.t>1.2){ p.g.visible=false; const list=GARAGE_TYPES.filter(t=>t!=='bus'&&t!=='fire'); const t=list[Math.floor(Math.random()*list.length)];
+      const v=makeVehicle(t,(G.x0+G.x1)/2+0.5,K.gy,(G.z0+G.z1)/2+0.5,Math.PI/2); v.drv=driverMesh(p.look); const st=v.vm.seat; v.drv.position.set(st[0],st[1]-0.7,st[2]); v.m.add(v.drv);
+      v.npc={ph:'out',cruise:v.V.spd*0.45+2,honkT:0}; K.vehicles.push(v); T.v=v; T.ph='out'; } return; }
+  if(T.ph==='out'){ const v=T.v; // roll out of the garage, then turn north into the near lane
+    if(!v.npc.turn){ v.spd=3; v.p[0]-=3*dt; if(v.p[0]<CX+9.5){ const a=[v.p[0],v.p[2]], b=[CX+1.75,front[1]-6]; v.npc.turn={a,b,c:[CX+1.75,a[1]],t:0,len:Math.hypot(b[0]-a[0],b[1]-a[1])*1.3}; } v.h=Math.PI/2; }
+    else { const Tn=v.npc.turn; Tn.t=Math.min(1,Tn.t+4*dt/Tn.len); const t=Tn.t, u=1-t, x=u*u*Tn.a[0]+2*u*t*Tn.c[0]+t*t*Tn.b[0], z=u*u*Tn.a[1]+2*u*t*Tn.c[1]+t*t*Tn.b[1];
+      const dx=2*u*(Tn.c[0]-Tn.a[0])+2*t*(Tn.b[0]-Tn.c[0]), dz=2*u*(Tn.c[1]-Tn.a[1])+2*t*(Tn.b[1]-Tn.c[1]); v.p[0]=x; v.p[2]=z; if(Math.hypot(dx,dz)>0.01)v.h=Math.atan2(-dx,-dz);
+      if(t>=1){ const bz=CZ+CITY_GRID; v.npc={ax:CX,az:bz,d:3,s:bz-z,ph:'edge',cruise:v.V.spd*0.45+2,honkT:0}; T.ph='drive'; T.t=0; setGarageDoor(false); } }
+    v.p[1]=K.gy; v.wheel+=v.spd*dt/v.vm.wr; for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); return; }
+  if(T.ph==='drive'){ T.t+=dt; if(T.t>70&&Math.hypot(pl.p[0]-T.v.p[0],pl.p[2]-T.v.p[2])>40){ removeVehicle(T.v); p.g.visible=true; p.gone=false; K.trip=null; } } } // back home: they're walking again
+// --- people jump out of the way of anything driving at them, and shout
+let heyTex=null;
+function heySprite(){ if(!heyTex){ const c=document.createElement('canvas'); c.width=128; c.height=64; const x=c.getContext('2d'); x.fillStyle='#fff'; x.strokeStyle='#222'; x.lineWidth=4;
+    x.beginPath(); x.roundRect?x.roundRect(6,6,116,40,14):x.rect(6,6,116,40); x.fill(); x.stroke(); x.beginPath(); x.moveTo(40,46); x.lineTo(30,60); x.lineTo(56,46); x.fill(); x.font='bold 28px sans-serif'; x.fillStyle='#d8202a'; x.textAlign='center'; x.fillText('Hey!',64,36); heyTex=new THREE.CanvasTexture(c); }
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:heyTex,transparent:true})); s.scale.set(1.3,0.65,1); return s; }
+function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.position.z;
+  if(!p.dodge)for(const v of K.vehicles){ if(Math.abs(v.spd)<1.5)continue; const f=vFwd(v.h), r=vRight(v.h), dx=px-v.p[0], dz=pz-v.p[2], along=(dx*f[0]+dz*f[1])*Math.sign(v.spd), side=dx*r[0]+dz*r[1];
+    if(along>0&&along<v.V.len/2+2.5+Math.abs(v.spd)*0.25&&Math.abs(side)<v.V.wid/2+0.7&&Math.abs(v.p[1]-p.g.position.y)<2){ const s=side>=0?1:-1; p.dodge={t:0,vx:r[0]*s*4,vz:r[1]*s*4}; p.off=p.off||[0,0];
+      if(!p.hey){ p.hey=heySprite(); p.g.add(p.hey); p.hey.position.y=2.5/0.94; } p.hey.visible=true; p.heyT=1.6; if(sfxOn)sfx('hurt'); break; } }
+  if(p.dodge){ const D=p.dodge; D.t+=dt; if(D.t<0.4){ p.off[0]+=D.vx*dt; p.off[1]+=D.vz*dt; p.hop=Math.sin(D.t/0.4*Math.PI)*0.7; } else { p.hop=0; if(D.t>2.2)p.dodge=null; } }
+  else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
+  if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
+// what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()};
+  if(nearMerchant())return {label:'💬 Talk',fn:openShop};
+  if(!cityK)return null; let best=null, bd=1e9;
+  for(const v of cityK.vehicles){ if(v.npc||v.driver)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
+  if(best)return {label:best.V.icon+' Get in',fn:()=>enterVehicle(best)};
+  const G=garageBox(); if(pl.p[0]>CX+1.5&&pl.p[0]<G.x0+0.6&&pl.p[2]>G.dz0-2&&pl.p[2]<G.dz1+3)return {label:garageDoorOpen()?'🚪 Close garage':'🚗 Open garage',fn:toggleGarage};
+  return null; }
+
 // ================= PLACES AND PORTALS =================
 // Every place is its own world with its own size and its own save. Place a portal block and a glowing doorway opens;
 // walk through it and the next world loads while you swirl through. Only one world is ever loaded, so worlds stay fast.
@@ -2845,7 +3107,7 @@ const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
 // water and each city's famous sights. The road grid lines up with the middle of the map (CX, CZ).
-const CITY_G=8, CITY_GRID=32, CITY_VER=2;
+const CITY_G=8, CITY_GRID=32, CITY_VER=5;
 const CITY_STYLES={
   seattle:{walls:['brick','concrete','limestone','window'],trims:['concrete','steel','slate'],roofs:['concrete','slate'],h:[6,26],glass:0.25,park:0.12,tree:'pine',
     wx:'rain',bg:0x9fb2c2,fog:[30,110],water:{x0:0,x1:11}},
@@ -2875,8 +3137,14 @@ function generateCity(s){ const ck=cityKey()||'seattle', S=CITY_STYLES[ck], rnd=
     world[idx(x,g-1,z)]=top; }
   // the blocks between the roads
   const xs=roadLines(CX,W), zs=roadLines(CZ,D), LM=CITY_LANDMARKS[ck]||{};
+  const stk=()=>S.tree==='palm'?'palm':rnd()<0.25?'cherry':'round';
+  for(const x of xs)for(const z of zs)for(const off of [12,20])for(const s of [-1,1]){ // trees along the sidewalks, between the street lamps
+    const tx=x+(s>0?5:-6), tz=z+off; if(tz<D-1&&!cityWet(S,tx,tz)&&!cityWet(S,x,z+off))streetTree(P,tx,cityGround(S,tx,tz),tz,stk(),rnd);
+    const ux=x+off, uz=z+(s>0?5:-6); if(ux<W-1&&!cityWet(S,ux,uz)&&!cityWet(S,x+off,z))streetTree(P,ux,cityGround(S,ux,uz),uz,stk(),rnd); }
   for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+6, x1=xs[i+1]-6, z0=zs[j]+6, z1=zs[j+1]-6, cx=(x0+x1)>>1, cz=(z0+z1)>>1;
     if(cityWet(S,cx,cz)||cityWet(S,x0,z0)||cityWet(S,x1,z1))continue;
+    if(i===2&&j===2){ cityGarage(P,S,cityGround(S,CX+5,CZ+13)); cityBuilding({P,x0:CX+19,z0:CZ+7,x1:CX+26,z1:CZ+25,S,rnd,pick,lot:[x0,z0,x1,z1]});
+      for(const [tx,tz] of [[CX+9,CZ+22],[CX+14,CZ+23]])streetTree(P,tx,cityGround(S,tx,tz),tz,stk(),rnd); continue; }
     const lm=LM[i+','+j]; if(lm){ lm({P,x0,x1,z0,z1,cx,cz,g:cityGround(S,cx,cz),S,rnd,pick,ck}); continue; }
     if(rnd()<S.park){ cityPark({P,x0,x1,z0,z1,S,rnd,pick}); continue; }
     const split=rnd(); const parts=split<0.3?[[x0,z0,x1,z1]]:split<0.6?[[x0,z0,cx-1,z1],[cx+1,z0,x1,z1]]:[[x0,z0,cx-1,cz-1],[cx+1,z0,x1,cz-1],[x0,cz+1,cx-1,z1],[cx+1,cz+1,x1,z1]];
@@ -2893,7 +3161,8 @@ function cityTree(P,x,g,z,kind,rnd){
   for(let dy=-2;dy<=1;dy++){ const r=dy>=0?1:2; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){ if(Math.abs(dx)===r&&Math.abs(dz)===r&&(dy===1||rnd()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,t+dy,z+dz,ID.leaves); } } }
 function cityPark(o){ const {P,x0,x1,z0,z1,S,rnd}=o;
   for(let x=x0;x<=x1;x++){ const z=(z0+z1)>>1; P(x,cityGround(S,x,z)-1,z,ID.gravel||ID.sand); } // a path across the middle
-  for(let k=0;k<6;k++){ const x=x0+2+Math.floor(rnd()*(x1-x0-3)), z=z0+2+Math.floor(rnd()*(z1-z0-3)); if(Math.abs(z-((z0+z1)>>1))<2)continue; cityTree(P,x,cityGround(S,x,z),z,S.tree,rnd); } }
+  for(let k=0;k<9;k++){ const x=x0+2+Math.floor(rnd()*(x1-x0-3)), z=z0+2+Math.floor(rnd()*(z1-z0-3)); if(Math.abs(z-((z0+z1)>>1))<2)continue; const kd=rnd()<0.3&&S.tree!=='palm'?'cherry':S.tree;
+    if(kd==='cherry')streetTree(P,x,cityGround(S,x,z),z,'cherry',rnd); else cityTree(P,x,cityGround(S,x,z),z,kd,rnd); } }
 // a building: walls with rows of windows, a stripe at each floor, a flat or pointed roof, and a door facing the street
 function cityBuilding(o){ const {P,S,rnd,pick}=o; let {x0,z0,x1,z1}=o; const inset=rnd()<0.4?1:0; x0+=inset; z0+=inset; x1-=inset; z1-=inset; if(x1-x0<3||z1-z0<3)return;
   let g=1e9; for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)g=Math.min(g,cityGround(S,x,z)); // sit on the lowest ground, and fill under the rest
@@ -2933,7 +3202,7 @@ const CITY_LANDMARKS={
       const tower=(x,z,h,r)=>{ for(let y=0;y<h;y++)for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++)if(Math.hypot(a,b)<=r+0.3)put(x+a,y,z+b,(y%5===3&&!a)?ID.glass:W2);
         for(let k=0;k<=r+3;k++){ const rr=r-k*r/(r+3); for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++)if(Math.hypot(a,b)<=rr+0.3)put(x+a,h+k,z+b,BL); } put(x,h+r+4,z,GD); };
       for(const sx of[-9,9])for(const sz of[-9,9])tower(sx,sz,9,2); tower(0,0,20,4); tower(-4,4,14,2); tower(4,4,14,2); tower(0,-5,16,2); },
-    '2,2':o=>{ for(let x=o.x0+1;x<o.x1;x++)for(let z=o.z0+1;z<o.z1;z++)if(Math.hypot(x-o.cx,z-o.cz)<9)o.P(x,o.g-1,z,ID.water); for(let k=0;k<8;k++){ const a=k/8*Math.PI*2; cityTree(o.P,Math.round(o.cx+Math.cos(a)*10.5),o.g,Math.round(o.cz+Math.sin(a)*10.5),'palm',o.rnd); } } }}; // a lake ringed with palms
+    '1,2':o=>{ for(let x=o.x0+1;x<o.x1;x++)for(let z=o.z0+1;z<o.z1;z++)if(Math.hypot(x-o.cx,z-o.cz)<9)o.P(x,o.g-1,z,ID.water); for(let k=0;k<8;k++){ const a=k/8*Math.PI*2; cityTree(o.P,Math.round(o.cx+Math.cos(a)*10.5),o.g,Math.round(o.cz+Math.sin(a)*10.5),'palm',o.rnd); } } }}; // a lake ringed with palms
 // the big sights that sit out on the water
 function cityExtras(ck){ const S=CITY_STYLES[ck];
   if(ck==='sanfran'){ const put=(x,y,z,id)=>{ const X=CX+x, Y=CITY_G+y, Z=10+z; if(inB(X,Y,Z)&&Y>0)world[idx(X,Y,Z)]=id; }; const K=twKit(put); K.use=()=>{}; WON.goldengate.build(K,()=>0); } // the Golden Gate Bridge across the bay
@@ -2943,15 +3212,15 @@ function cityExtras(ck){ const S=CITY_STYLES[ck];
     for(let y=7;y<19;y++){ const r=y<15?2:1; for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++)put(x,y,z,CU); }
     for(let y=19;y<22;y++)for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,y,z,CU); for(const [x,z] of [[-2,0],[2,0],[0,-2],[0,2],[0,0]])put(x,22,z,CU);
     for(let y=15;y<24;y++)put(2,y,0,CU); put(2,24,0,ID.gold); put(2,25,0,ID.gold); for(let y=12;y<15;y++)put(-2,y,-1,CU); } }
-function citySpawn(){ pl.p=[CX+5,cityGround(CITY_STYLES[cityKey()||'seattle'],CX+5,CZ+16),CZ+16.5]; }
+function citySpawn(){ pl.p=[CX+4.5,cityGround(CITY_STYLES[cityKey()||'seattle'],CX+4,CZ+26),CZ+26.5]; }
 // --- street life: traffic lights at every crossing, street lamps, and people walking round the blocks on the sidewalks.
 // None of this is saved: it's made fresh from the road grid whenever you arrive in a city.
 let cityK=null;
 const LIGHT_CYCLE=20; // seconds: east-west green 8, yellow 2, then north-south green 8, yellow 2
 function lightState(axis,t){ const p=((t%LIGHT_CYCLE)+LIGHT_CYCLE)%LIGHT_CYCLE, q=axis==='x'?p:(p+10)%LIGHT_CYCLE; return q<8?'g':q<10?'y':'r'; } // 'x' = traffic driving along x
-function clearCityLife(){ if(!cityK)return; scene.remove(cityK.root); cityK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); for(const p of cityK.people)undress(p.g); cityK=null; }
+function clearCityLife(){ if(!cityK)return; if(drive)exitVehicle(true); for(const v of cityK.vehicles.slice())removeVehicle(v); scene.remove(cityK.root); cityK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); for(const p of cityK.people)undress(p.g); cityK=null; }
 function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck||demo)return; const S=CITY_STYLES[ck], root=new THREE.Group(); scene.add(root);
-  const K=cityK={root,people:[],lights:[],t:0,ck,S}, xs=roadLines(CX,W), zs=roadLines(CZ,D);
+  const K=cityK={root,people:[],lights:[],vehicles:[],t:0,ck,S,tripT:20,trip:null,lastType:null}, xs=roadLines(CX,W), zs=roadLines(CZ,D);
   const crossings=[]; for(const x of xs)for(const z of zs)if(!cityWet(S,x,z)&&!cityWet(S,x+6,z+6)&&!cityWet(S,x-6,z-6))crossings.push([x,z]); K.crossings=crossings;
   // traffic lights: a pole on each corner with a box of three lights facing the cars coming
   const nL=crossings.length*4, poleM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.16,3.4,0.16),lm(0x2a2e34),nL), boxM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.42,1.15,0.32),lm(0x1a1c20),nL);
@@ -2965,17 +3234,18 @@ function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck||demo)retu
       K.lights.push({axis,i:n}); n++; } }
   root.add(poleM,boxM,bulbs.r,bulbs.y,bulbs.g); K.bulbs=bulbs; K.lastLight='';
   // street lamps along the sidewalks
-  const lamps=[]; for(let i=0;i<xs.length;i++)for(const z of zs)for(let k=1;k<4;k++){ const zz=z+k*8; if(zz>=D)continue; for(const s of[-1,1]){ const x=xs[i]+s*5; if(!cityWet(S,x,zz)&&!cityWet(S,x,z))lamps.push([x,zz]); } }
+  const lamps=[]; for(let i=0;i<xs.length;i++)for(const z of zs)for(let k=1;k<4;k++){ const zz=z+k*8; if(zz>=D)continue; for(const s of[-1,1]){ const x=xs[i]+s*5; if(x===CX+5&&zz>=CZ+7&&zz<=CZ+19)continue; if(!cityWet(S,x,zz)&&!cityWet(S,x,z))lamps.push([x,zz]); } } // not in front of the garage
   const lampP=new THREE.InstancedMesh(new THREE.BoxGeometry(0.12,3.6,0.12),lm(0x3a3e46),lamps.length), lampH=new THREE.InstancedMesh(new THREE.BoxGeometry(0.4,0.22,0.4),new THREE.MeshBasicMaterial({color:0xfff2c0}),lamps.length);
   lamps.forEach(([x,z],k)=>{ const g=cityGround(S,x,z); d.rotation.set(0,0,0); d.position.set(x,g+1.8,z); d.updateMatrix(); lampP.setMatrixAt(k,d.matrix); d.position.set(x,g+3.65,z); d.updateMatrix(); lampH.setMatrixAt(k,d.matrix); });
-  root.add(lampP,lampH);
+  root.add(lampP,lampH); K.crossings=crossings; cityVehiclesInit(K);
   // people: each walks round one block on the sidewalk, sometimes turning back or stopping for a chat
-  const rings=[]; for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+4.9, x1=xs[i+1]-4.9, z0=zs[j]+4.9, z1=zs[j+1]-4.9;
+  const rings=[]; for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+4.5, x1=xs[i+1]-4.5, z0=zs[j]+4.5, z1=zs[j+1]-4.5;
     if(cityWet(S,x0,z0)||cityWet(S,x1,z1)||cityWet(S,x0,z1)||cityWet(S,x1,z0))continue; rings.push([x0,z0,x1,z1]); }
   for(let k=0;k<20&&rings.length;k++){ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; if(L.back==='wings'||L.back==='dragon'||L.back==='jetpack')L.back='none';
     const g=new THREE.Group(); g.scale.setScalar(0.94); root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L));
     const ring=rings[k%rings.length], per=2*((ring[2]-ring[0])+(ring[3]-ring[1]));
-    K.people.push({g,R,ring,per,s:Math.random()*per,dir:Math.random()<0.5?1:-1,spd:1.1+Math.random()*0.6,wait:0,ph:Math.random()*6,wave:0}); } }
+    K.people.push({look:cleanLook(L),g,R,ring,per,s:Math.random()*per,dir:Math.random()<0.5?1:-1,spd:1.1+Math.random()*0.6,wait:0,ph:Math.random()*6,wave:0}); } }
+function cityVehiclesInit(K){ garageDecor(K); spawnTraffic(K); if(garageDoorOpen())garageFill(); }
 function ringPos(r,s){ const w=r[2]-r[0], h=r[3]-r[1], per=2*(w+h); s=((s%per)+per)%per;
   if(s<w)return [r[0]+s,r[1]]; s-=w; if(s<h)return [r[2],r[1]+s]; s-=h; if(s<w)return [r[2]-s,r[3]]; s-=w; return [r[0],r[3]-s]; }
 function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
@@ -2983,10 +3253,12 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
   const key=lightState('x',K.t)+lightState('z',K.t); if(key!==K.lastLight){ K.lastLight=key; const col={r:[0xff2a2a,0x3a0a0a],y:[0xffc020,0x3a2a08],g:[0x30ff60,0x0a3a14]}, tmpC=new THREE.Color();
     for(const L of K.lights){ const st=lightState(L.axis,K.t); for(const c of ['r','y','g']){ tmpC.setHex(col[c][st===c?0:1]); K.bulbs[c].setColorAt(L.i,tmpC); } }
     for(const c of ['r','y','g'])K.bulbs[c].instanceColor.needsUpdate=true; }
-  for(const p of K.people){ const [x,z]=ringPos(p.ring,p.s), dPl=Math.hypot(pl.p[0]-x,pl.p[2]-z);
+  for(const v of K.vehicles.slice()){ if(v.npc&&v.npc.ax!==undefined&&v.npc.ph!=='out')trafficTick(K,v,dt); if(v.V.siren)sirenTick(v,dt); }
+  garageDecorTick(K,dt); garageTripTick(K,dt);
+  for(const p of K.people){ if(p.gone)continue; dodgeTick(K,p,dt); const [x,z]=ringPos(p.ring,p.s), dPl=Math.hypot(pl.p[0]-x,pl.p[2]-z);
     const ahead=ringPos(p.ring,p.s+p.dir*0.9), blocked=Math.hypot(pl.p[0]-ahead[0],pl.p[2]-ahead[1])<0.9&&Math.abs(pl.p[1]-p.g.position.y)<2;
-    if(p.wait>0)p.wait-=dt; else if(!blocked){ p.s+=p.dir*p.spd*dt; if(Math.random()<dt*0.04)p.wait=1.5+Math.random()*2.5; if(Math.random()<dt*0.02)p.dir*=-1; }
-    const [nx,nz]=ringPos(p.ring,p.s), mv=p.wait<=0&&!blocked; p.g.position.set(nx,cityGround(K.S,nx,nz),nz);
+    if(p.wait>0)p.wait-=dt; else if(!blocked&&!p.dodge){ p.s+=p.dir*p.spd*dt; if(Math.random()<dt*0.04)p.wait=1.5+Math.random()*2.5; if(Math.random()<dt*0.02)p.dir*=-1; }
+    const [nx,nz]=ringPos(p.ring,p.s), mv=p.wait<=0&&!blocked&&!p.dodge, ox=p.off?p.off[0]:0, oz=p.off?p.off[1]:0; p.g.position.set(nx+ox,cityGround(K.S,nx+ox,nz+oz)+(p.hop||0),nz+oz);
     const fw=ringPos(p.ring,p.s+p.dir*0.5); let face=Math.atan2(-(fw[0]-nx),-(fw[1]-nz));
     p.wave=dPl<3.2&&!mv?Math.min(1,p.wave+dt*3):Math.max(0,p.wave-dt*3); if(p.wave>0)face=Math.atan2(-(pl.p[0]-nx),-(pl.p[2]-nz)); // stop and say hi
     let df=face-p.g.rotation.y; while(df>Math.PI)df-=2*Math.PI; while(df<-Math.PI)df+=2*Math.PI; p.g.rotation.y+=df*Math.min(1,dt*8);
@@ -3024,7 +3296,8 @@ function labelSprite(text){ const c=document.createElement('canvas'); c.width=25
   x.fillStyle='rgba(10,12,20,0.6)'; x.fillRect(8,10,240,44); x.fillStyle='#fff'; x.fillText(text,128,33);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true})); sp.scale.set(2.6,0.65,1); return sp; }
 function refreshPortals(){ for(const m of portalMeshes){ scene.remove(m); if(m.isSprite){ m.material.map.dispose(); m.material.dispose(); } else m.geometry.dispose(); } portalMeshes=[];
-  for(let i=0;i<N;i++){ if(world[i]!==ID.pgate)continue; const x=ix_(i), y=iy_(i), z=iz_(i), m=meta[i], alongX=(m&1)===0, ax=alongX?1:0, az=alongX?0:1;
+  clearSaplings(); for(let i=0;i<N;i++){ if(world[i]===ID.sapling){ addSapling(ix_(i),iy_(i),iz_(i),SEED_KINDS[meta[i]]||'oak'); continue; } // saplings keep growing after a reload
+    if(world[i]!==ID.pgate)continue; const x=ix_(i), y=iy_(i), z=iz_(i), m=meta[i], alongX=(m&1)===0, ax=alongX?1:0, az=alongX?0:1;
     if(get(x-ax,y,z-az)===ID.pgate||get(x,y-1,z)===ID.pgate)continue; // only from the bottom corner of each doorway
     let w=1, h=1; while(get(x+w*ax,y,z+w*az)===ID.pgate)w++; while(get(x,y+h,z)===ID.pgate)h++;
     const dest=DESTS[m>>1]; if(!PLACES[dest])continue; const S=swirlTex(dest);
@@ -3034,7 +3307,7 @@ function refreshPortals(){ for(const m of portalMeshes){ scene.remove(m); if(m.i
 // --- going through
 const warpEl=document.createElement('div'); warpEl.id='warp'; document.body.appendChild(warpEl);
 let portalArmed=false, portalSafe=null, traveling=false;
-function portalCheck(){ if(demo||traveling||dead)return; const x=Math.floor(pl.p[0]), z=Math.floor(pl.p[2]); let g=-1;
+function portalCheck(){ if(demo||traveling||dead||drive)return; const x=Math.floor(pl.p[0]), z=Math.floor(pl.p[2]); let g=-1;
   for(const dy of [0.3,1.2]){ const y=Math.floor(pl.p[1]+dy); if(get(x,y,z)===ID.pgate){ g=meta[idx(x,y,z)]; break; } }
   if(g<0){ portalArmed=true; portalSafe=[pl.p[0],pl.p[1],pl.p[2]]; return; } // you've stepped out: the next portal you touch takes you
   if(portalArmed&&PLACES[DESTS[g>>1]])travel(DESTS[g>>1]); }
@@ -3048,8 +3321,8 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest;
   if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=Math.PI; pitch=-0.1; setFly(false,false); unstick(pl);
-  if(from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])-4; let gy=Math.floor(pl.p[1]); // the way back, 4 blocks behind you (turn round to see it)
+  const city=!!PLACES[dest].city; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?3:-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
   applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); }
@@ -3072,8 +3345,9 @@ function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{..
 
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
-let waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
+let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
+  if(drive)return driveUpdate(dt);
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
   if(demo){ demoInput(dt); if(demo.user){ ix+=pad.lx; iz+=pad.ly; if(demo.sc.act==='concert')return concertUser(dt,ix,iz); }
@@ -3285,15 +3559,17 @@ function update(dt){
     let tt=1; for(let t=0.05;t<=1.0001;t+=0.05){ tmp.lerpVectors(eye,want,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0,t-0.1); break; } }
     camera.position.lerpVectors(eye,want,tt); camDist=camera.position.distanceTo(eye); }
   armL.rotation.z=0;
+  if(drive){ chaseCam(dt); seatHero(); fpHolder.visible=false; }
   if(demo&&demo.sc){ if(!demo.user){ if(demo.sc.cam!=='first')demoCamera(dt); } else if(demo.sc.act==='concert'&&!(demo.lookT>0))concertCam(dt); } // you're driving: the normal camera behind you
   camera.updateMatrixWorld();
 
   // merchant faces player
   const mdx=pl.p[0]-merchant.p[0], mdz=pl.p[2]-merchant.p[2]; if(Math.hypot(mdx,mdz)<12) merchant.g.rotation.y=Math.atan2(-mdx,-mdz);
-  const near=nearMerchant(); $('bTalk').style.display=near&&IS_TOUCH?'flex':'none';
-  const pr=$('prompt'); if(near&&!IS_TOUCH){ pr.textContent='Press E to talk to Flint'; pr.style.display='block'; } else pr.style.display='none';
+  const act=demo?null:nearAction(), bt=$('bTalk'); bt.style.display=act&&IS_TOUCH?'flex':'none'; if(act&&bt.textContent!==act.label)bt.textContent=act.label;
+  const pr=$('prompt'); if(act&&!IS_TOUCH){ const t='Press E: '+act.label.replace(/^\S+ /,''); if(pr.textContent!==t)pr.textContent=t; pr.style.display='block'; } else pr.style.display='none';
+  if(cityK&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
-  portalCheck(); if(portalMeshes.length)drawSwirls(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length)drawSwirls(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -3330,7 +3606,7 @@ hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
