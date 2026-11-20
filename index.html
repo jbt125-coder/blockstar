@@ -338,7 +338,14 @@ makeTile('portal_newyork',94,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90
 makeTile('portal_sanfran',95,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([40,90,160],r,.15); if(x===4||x===11||y===9||(y>=3&&y<9&&Math.abs(y-3-Math.abs(x-7.5)*0.9)<0.8))return [220,70,40]; return nz([200,210,220],r,.1); });
 makeTile('portal_orlando',96,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=8&&x>=3&&x<=12)return (y===8&&x%2)?[120,170,255]:nz([245,245,250],r,.05); if((x>=6&&x<=9&&y>=3&&y<8)||((x===3||x===12)&&y>=5))return y<5?[60,110,230]:[245,245,250]; return nz([110,190,255],r,.1); });
 makeTile('door',97,(x,y,r)=>{ if(x<2||x>13)return nz([90,60,34],r,.1); if(x===11&&y>=7&&y<=8)return [230,200,80]; return nz((y%5===0)?[110,74,40]:[150,104,60],r,.1); });
-const CAT={ Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
+const seedTile=(name,sd,fn)=>makeTile(name,sd,(x,y,r)=>{ if(x<2||x>13||y<1||y>14)return [0,0,0,0]; if(y<4)return nz([200,170,110],r,.1); const c=fn(x-8,y-9,r); return c||nz([236,214,160],r,.06); }); // a little seed packet
+seedTile('seed_apple',101,(x,y,r)=>Math.hypot(x,y)<3.6?nz([215,40,45],r,.1):(x===0&&y<-3&&y>-6)?[90,60,30]:null);
+seedTile('seed_oak',102,(x,y,r)=>y<-1&&Math.abs(x)<4&&y>-4?nz([120,84,40],r,.1):Math.hypot(x,(y-0.5)*1.2)<3.2?nz([170,120,60],r,.1):null);
+seedTile('seed_pine',103,(x,y,r)=>Math.abs(x)<=(y+4)*0.6&&y>-4&&y<4?((x+y)&1?[110,70,36]:[150,100,50]):null);
+seedTile('seed_palm',104,(x,y,r)=>Math.hypot(x,y)<3.8?nz([120,82,46],r,.15):null);
+seedTile('seed_cherry',105,(x,y,r)=>{ const a=Math.atan2(y,x), d=Math.hypot(x,y); return d<1.2?[255,220,90]:d<3.6+Math.cos(a*5)*0.9?nz([255,170,210],r,.08):null; });
+makeTile('leaves_pink',106,(x,y,r)=>{ const q=r(); if(q<.14)return [0,0,0,0]; let c=nz([255,175,212],r,.18); if(q>.86)c=[255,225,240]; return c; });
+const CAT={ Plants:{c:'#8fe07a'}, Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
 function addBlock(k,name,cat,fact,tiles,props){
@@ -404,6 +411,13 @@ addBlock('door','Door','Building','A front door. Soon some of these will lead in
 addBlock('portal_newyork','New York Portal','Portal','Place it and a doorway to New York opens. Walk through to go there.',{t:'portal_newyork'},{portal:'newyork'});
 addBlock('portal_sanfran','San Francisco Portal','Portal','Place it and a doorway to San Francisco opens. Walk through to go there.',{t:'portal_sanfran'},{portal:'sanfran'});
 addBlock('portal_orlando','Orlando Portal','Portal','Place it and a doorway to Orlando opens. Walk through to go there.',{t:'portal_orlando'},{portal:'orlando'});
+addBlock('leaves_pink','Cherry Blossom Leaves','Plants','Cherry trees flower in spring for only a week or two. In Japan people hold picnics under them, called hanami.',{t:'leaves_pink'},{opaque:false,flammable:true});
+addBlock('seed_apple','Apple Seed','Plants','Plant it on grass or soil and an apple tree grows. Apple seeds hide inside the core of every apple.',{t:'seed_apple'},{seed:'apple'});
+addBlock('seed_oak','Acorn (Oak Seed)','Plants','Plant it on grass or soil and an oak tree grows. Squirrels bury acorns and forget some, which is how new oaks get planted!',{t:'seed_oak'},{seed:'oak'});
+addBlock('seed_pine','Pine Cone Seed','Plants','Plant it on grass or soil and a pine tree grows. Pine seeds sit under the scales of a pine cone, and the cone opens in dry weather to let them fly.',{t:'seed_pine'},{seed:'pine'});
+addBlock('seed_palm','Coconut (Palm Seed)','Plants','Plant it on grass, soil or sand and a palm tree grows. A coconut is a seed that can float across the ocean to a new beach.',{t:'seed_palm'},{seed:'palm'});
+addBlock('seed_cherry','Cherry Blossom Seed','Plants','Plant it on grass or soil and a cherry blossom tree grows, covered in pink flowers.',{t:'seed_cherry'},{seed:'cherry'});
+addBlock('sapling','Sapling','Plants','A young tree. Give it a moment to grow!',{t:'leaves'},{hidden:true,solid:false,opaque:false,invisible:true});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -1380,6 +1394,7 @@ function placeAction(){
   if(!inB(x,y,z))return; const cur=get(x,y,z); if(cur&&B[cur].solid)return;
   if(B[sel].solid && x+1>pl.p[0]-pl.hw && x<pl.p[0]+pl.hw && z+1>pl.p[2]-pl.hw && z<pl.p[2]+pl.hw && y+1>pl.p[1] && y<pl.p[1]+pl.h) return;
   if(B[sel].portal){ buildGateway(x,y,z,B[sel].portal); return; }
+  if(B[sel].seed){ plantSeed(x,y,z,B[sel].seed); return; }
   if(cur===ID.fire && sel===ID.water){ setBlock(x,y,z,0); sizzle(x,y,z); }
   setBlock(x,y,z,sel,0); sfx('place');
   queueSave();
@@ -2831,6 +2846,39 @@ function crowdFunTick(K,dt,beat){
   K.mosh=Math.max(0,K.mosh-dt); }
 function crowdBallShot(K){ return K.balls[0].p; }
 
+// ================= TREE SEEDS =================
+// Plant a seed on grass or soil (sand works for palms): a little sapling sprouts and grows into a tree in about half a minute.
+// Apple trees then grow blossoms and apples like the ones in the wild.
+const SEED_KINDS=['apple','oak','pine','palm','cherry'];
+const SEED_INFO={apple:{name:'Apple',leaf:0x3f9a2e},oak:{name:'Oak',leaf:0x3a8a2a},pine:{name:'Pine',leaf:0x2a6a3a},palm:{name:'Palm',leaf:0x58b040},cherry:{name:'Cherry Blossom',leaf:0xffa8d0}};
+const saplings=[]; const GROW_TIME=[24,38];
+function saplingMesh(kind){ const g=new THREE.Group(), stem=box(0.08,0.5,0.08,lm(kind==='palm'?0x9a7a4a:0x6b4a2a)); stem.position.y=0.25; g.add(stem);
+  const leaf=lm(SEED_INFO[kind].leaf); if(kind==='pine'){ for(let k=0;k<3;k++){ const c=box(0.42-k*0.12,0.12,0.42-k*0.12,leaf); c.position.y=0.3+k*0.14; g.add(c); } }
+  else if(kind==='palm'){ for(let k=0;k<4;k++){ const f=box(0.36,0.05,0.1,leaf); f.position.set(Math.cos(k*Math.PI/2)*0.16,0.52,Math.sin(k*Math.PI/2)*0.16); f.rotation.y=-k*Math.PI/2; g.add(f); } }
+  else { const c=box(0.34,0.28,0.34,leaf); c.position.y=0.56; g.add(c); }
+  return g; }
+function addSapling(x,y,z,kind,t){ const s={x,y,z,kind,t:t!==undefined?t:GROW_TIME[0]+rand()*(GROW_TIME[1]-GROW_TIME[0]),mesh:saplingMesh(kind)}; s.t0=s.t; s.mesh.position.set(x+0.5,y,z+0.5); scene.add(s.mesh); saplings.push(s); return s; }
+function clearSaplings(){ for(const s of saplings){ scene.remove(s.mesh); s.mesh.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); } saplings.length=0; }
+function plantSeed(x,y,z,kind){ const below=get(x,y-1,z), ok=below===ID.grass||below===ID.dirt||(kind==='palm'&&(below===ID.sand||below===ID.wetsand));
+  if(!ok){ toast('🌱 Seeds need to go on grass or soil'+(kind==='palm'?' (or sand for a palm).':'.')); return; } if(get(x,y,z)){ toast('🌱 There\'s something in the way.'); return; }
+  setBlock(x,y,z,ID.sapling,SEED_KINDS.indexOf(kind)); if(below===ID.grass)setBlock(x,y-1,z,ID.dirt); addSapling(x,y,z,kind); sfx('place'); burst(x,y-0.6,z,B[ID.dirt].avg,5); queueSave();
+  toast('🌱 You planted '+(kind==='apple'?'an':'a')+' '+SEED_INFO[kind].name+' seed! Watch it grow.'); }
+function saplingTick(dt){ for(const s of saplings.slice()){ if(get(s.x,s.y,s.z)!==ID.sapling){ scene.remove(s.mesh); saplings.splice(saplings.indexOf(s),1); continue; } // dug up
+    s.t-=dt; const f=1-Math.max(0,s.t)/s.t0; s.mesh.scale.setScalar(0.6+f*1.1); s.mesh.rotation.y=Math.sin(s.t*0.8)*0.1;
+    if(s.t<=0){ scene.remove(s.mesh); saplings.splice(saplings.indexOf(s),1); setBlock(s.x,s.y,s.z,0); growTree(s.kind,s.x,s.y,s.z); burst(s.x,s.y+2,s.z,new THREE.Color(SEED_INFO[s.kind].leaf),14); sfx('coin'); queueSave(); } } }
+// grow a full tree: trunk and leaves only go into empty space
+function growTree(kind,x,y,z){ const r=mulberry32((x*73856093)^(z*19349663)^y), P=(a,b,c,id)=>{ if(inB(a,b,c)&&!get(a,b,c))setBlock(a,b,c,id); };
+  if(kind==='palm'||kind==='pine'){ cityTree(P,x,y,z,kind,r); return; }
+  if(kind==='cherry'){ const h=4; for(let k=0;k<h;k++)P(x,y+k,z,ID.log); P(x+1,y+h-1,z,ID.log); P(x-1,y+h-1,z,ID.log); const t=y+h;
+    for(let dy=-1;dy<=1;dy++){ const R=dy===1?2:3; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.3||(r()<0.12&&Math.hypot(dx,dz)>R-1))continue; P(x+dx,t+dy,z+dz,ID.leaves_pink); } } return; }
+  const h=kind==='apple'?4:5; for(let k=0;k<h;k++)P(x,y+k,z,ID.log); const ty=y+h-1;
+  for(let dy=-2;dy<=1;dy++){ const R=dy>=0?1:2; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.abs(dx)===R&&Math.abs(dz)===R&&(dy===1||r()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,ty+dy,z+dz,ID.leaves); } }
+  if(kind==='apple'){ const tr=makeAppleTree(x,ty,z); if(tr)toast('🍎 Your apple tree grew! Watch for blossoms, then pick the apples to heal.'); } }
+// street trees: tall trunks so the leaves stay above people's heads on the sidewalk
+function streetTree(P,x,g,z,kind,rnd){ if(kind==='palm'){ cityTree(P,x,g,z,'palm',rnd); return; }
+  const pink=kind==='cherry'; for(let y=0;y<5;y++)P(x,g+y,z,ID.log);
+  for(const [dy,R] of [[4,2],[5,2],[6,1],[7,0]])for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(R===2&&Math.abs(dx)===2&&Math.abs(dz)===2)continue; if(!dx&&!dz&&dy<5)continue; P(x+dx,g+dy,z+dz,pink?ID.leaves_pink:ID.leaves); } }
+
 // ================= PLACES AND PORTALS =================
 // Every place is its own world with its own size and its own save. Place a portal block and a glowing doorway opens;
 // walk through it and the next world loads while you swirl through. Only one world is ever loaded, so worlds stay fast.
@@ -2845,7 +2893,7 @@ const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
 // water and each city's famous sights. The road grid lines up with the middle of the map (CX, CZ).
-const CITY_G=8, CITY_GRID=32, CITY_VER=2;
+const CITY_G=8, CITY_GRID=32, CITY_VER=3;
 const CITY_STYLES={
   seattle:{walls:['brick','concrete','limestone','window'],trims:['concrete','steel','slate'],roofs:['concrete','slate'],h:[6,26],glass:0.25,park:0.12,tree:'pine',
     wx:'rain',bg:0x9fb2c2,fog:[30,110],water:{x0:0,x1:11}},
@@ -2875,6 +2923,10 @@ function generateCity(s){ const ck=cityKey()||'seattle', S=CITY_STYLES[ck], rnd=
     world[idx(x,g-1,z)]=top; }
   // the blocks between the roads
   const xs=roadLines(CX,W), zs=roadLines(CZ,D), LM=CITY_LANDMARKS[ck]||{};
+  const stk=()=>S.tree==='palm'?'palm':rnd()<0.25?'cherry':'round';
+  for(const x of xs)for(const z of zs)for(const off of [12,20])for(const s of [-1,1]){ // trees along the sidewalks, between the street lamps
+    const tx=x+(s>0?5:-6), tz=z+off; if(tz<D-1&&!cityWet(S,tx,tz)&&!cityWet(S,x,z+off))streetTree(P,tx,cityGround(S,tx,tz),tz,stk(),rnd);
+    const ux=x+off, uz=z+(s>0?5:-6); if(ux<W-1&&!cityWet(S,ux,uz)&&!cityWet(S,x+off,z))streetTree(P,ux,cityGround(S,ux,uz),uz,stk(),rnd); }
   for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+6, x1=xs[i+1]-6, z0=zs[j]+6, z1=zs[j+1]-6, cx=(x0+x1)>>1, cz=(z0+z1)>>1;
     if(cityWet(S,cx,cz)||cityWet(S,x0,z0)||cityWet(S,x1,z1))continue;
     const lm=LM[i+','+j]; if(lm){ lm({P,x0,x1,z0,z1,cx,cz,g:cityGround(S,cx,cz),S,rnd,pick,ck}); continue; }
@@ -2893,7 +2945,8 @@ function cityTree(P,x,g,z,kind,rnd){
   for(let dy=-2;dy<=1;dy++){ const r=dy>=0?1:2; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){ if(Math.abs(dx)===r&&Math.abs(dz)===r&&(dy===1||rnd()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,t+dy,z+dz,ID.leaves); } } }
 function cityPark(o){ const {P,x0,x1,z0,z1,S,rnd}=o;
   for(let x=x0;x<=x1;x++){ const z=(z0+z1)>>1; P(x,cityGround(S,x,z)-1,z,ID.gravel||ID.sand); } // a path across the middle
-  for(let k=0;k<6;k++){ const x=x0+2+Math.floor(rnd()*(x1-x0-3)), z=z0+2+Math.floor(rnd()*(z1-z0-3)); if(Math.abs(z-((z0+z1)>>1))<2)continue; cityTree(P,x,cityGround(S,x,z),z,S.tree,rnd); } }
+  for(let k=0;k<9;k++){ const x=x0+2+Math.floor(rnd()*(x1-x0-3)), z=z0+2+Math.floor(rnd()*(z1-z0-3)); if(Math.abs(z-((z0+z1)>>1))<2)continue; const kd=rnd()<0.3&&S.tree!=='palm'?'cherry':S.tree;
+    if(kd==='cherry')streetTree(P,x,cityGround(S,x,z),z,'cherry',rnd); else cityTree(P,x,cityGround(S,x,z),z,kd,rnd); } }
 // a building: walls with rows of windows, a stripe at each floor, a flat or pointed roof, and a door facing the street
 function cityBuilding(o){ const {P,S,rnd,pick}=o; let {x0,z0,x1,z1}=o; const inset=rnd()<0.4?1:0; x0+=inset; z0+=inset; x1-=inset; z1-=inset; if(x1-x0<3||z1-z0<3)return;
   let g=1e9; for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)g=Math.min(g,cityGround(S,x,z)); // sit on the lowest ground, and fill under the rest
@@ -2943,7 +2996,7 @@ function cityExtras(ck){ const S=CITY_STYLES[ck];
     for(let y=7;y<19;y++){ const r=y<15?2:1; for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++)put(x,y,z,CU); }
     for(let y=19;y<22;y++)for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,y,z,CU); for(const [x,z] of [[-2,0],[2,0],[0,-2],[0,2],[0,0]])put(x,22,z,CU);
     for(let y=15;y<24;y++)put(2,y,0,CU); put(2,24,0,ID.gold); put(2,25,0,ID.gold); for(let y=12;y<15;y++)put(-2,y,-1,CU); } }
-function citySpawn(){ pl.p=[CX+5,cityGround(CITY_STYLES[cityKey()||'seattle'],CX+5,CZ+16),CZ+16.5]; }
+function citySpawn(){ pl.p=[CX+5,cityGround(CITY_STYLES[cityKey()||'seattle'],CX+5,CZ+26),CZ+26.5]; }
 // --- street life: traffic lights at every crossing, street lamps, and people walking round the blocks on the sidewalks.
 // None of this is saved: it's made fresh from the road grid whenever you arrive in a city.
 let cityK=null;
@@ -2970,7 +3023,7 @@ function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck||demo)retu
   lamps.forEach(([x,z],k)=>{ const g=cityGround(S,x,z); d.rotation.set(0,0,0); d.position.set(x,g+1.8,z); d.updateMatrix(); lampP.setMatrixAt(k,d.matrix); d.position.set(x,g+3.65,z); d.updateMatrix(); lampH.setMatrixAt(k,d.matrix); });
   root.add(lampP,lampH);
   // people: each walks round one block on the sidewalk, sometimes turning back or stopping for a chat
-  const rings=[]; for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+4.9, x1=xs[i+1]-4.9, z0=zs[j]+4.9, z1=zs[j+1]-4.9;
+  const rings=[]; for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+4.5, x1=xs[i+1]-4.5, z0=zs[j]+4.5, z1=zs[j+1]-4.5;
     if(cityWet(S,x0,z0)||cityWet(S,x1,z1)||cityWet(S,x0,z1)||cityWet(S,x1,z0))continue; rings.push([x0,z0,x1,z1]); }
   for(let k=0;k<20&&rings.length;k++){ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; if(L.back==='wings'||L.back==='dragon'||L.back==='jetpack')L.back='none';
     const g=new THREE.Group(); g.scale.setScalar(0.94); root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L));
@@ -3024,7 +3077,8 @@ function labelSprite(text){ const c=document.createElement('canvas'); c.width=25
   x.fillStyle='rgba(10,12,20,0.6)'; x.fillRect(8,10,240,44); x.fillStyle='#fff'; x.fillText(text,128,33);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true})); sp.scale.set(2.6,0.65,1); return sp; }
 function refreshPortals(){ for(const m of portalMeshes){ scene.remove(m); if(m.isSprite){ m.material.map.dispose(); m.material.dispose(); } else m.geometry.dispose(); } portalMeshes=[];
-  for(let i=0;i<N;i++){ if(world[i]!==ID.pgate)continue; const x=ix_(i), y=iy_(i), z=iz_(i), m=meta[i], alongX=(m&1)===0, ax=alongX?1:0, az=alongX?0:1;
+  clearSaplings(); for(let i=0;i<N;i++){ if(world[i]===ID.sapling){ addSapling(ix_(i),iy_(i),iz_(i),SEED_KINDS[meta[i]]||'oak'); continue; } // saplings keep growing after a reload
+    if(world[i]!==ID.pgate)continue; const x=ix_(i), y=iy_(i), z=iz_(i), m=meta[i], alongX=(m&1)===0, ax=alongX?1:0, az=alongX?0:1;
     if(get(x-ax,y,z-az)===ID.pgate||get(x,y-1,z)===ID.pgate)continue; // only from the bottom corner of each doorway
     let w=1, h=1; while(get(x+w*ax,y,z+w*az)===ID.pgate)w++; while(get(x,y+h,z)===ID.pgate)h++;
     const dest=DESTS[m>>1]; if(!PLACES[dest])continue; const S=swirlTex(dest);
@@ -3293,7 +3347,7 @@ function update(dt){
   const near=nearMerchant(); $('bTalk').style.display=near&&IS_TOUCH?'flex':'none';
   const pr=$('prompt'); if(near&&!IS_TOUCH){ pr.textContent='Press E to talk to Flint'; pr.style.display='block'; } else pr.style.display='none';
 
-  portalCheck(); if(portalMeshes.length)drawSwirls(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length)drawSwirls(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
