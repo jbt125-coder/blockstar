@@ -119,6 +119,62 @@
   .ibtn.dis{background:#4a5161;color:#9aa1ad}
   .ibtn.eq{background:#7fe3cf}
 
+  /* title: smaller buttons under Start */
+  #title .tsmall{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  #title .tsmall button{font-size:clamp(14px,3.4vw,17px);padding:9px 16px;background:rgba(20,24,32,.75);box-shadow:none;animation:none;border-width:2px}
+  /* character creator */
+  #cc{position:fixed;inset:0;z-index:12;display:none}
+  body.cc #cc{display:block} body.cc #title,body.cc .ui:not(#toast){display:none!important}
+  #ccDrag{position:absolute;inset:0;touch-action:none;cursor:grab}
+  #ccHint{position:absolute;left:calc(14px + env(safe-area-inset-left));top:calc(12px + env(safe-area-inset-top));font:900 22px sans-serif;text-shadow:0 2px 6px #000;pointer-events:none}
+  #ccHint span{display:block;font:700 13px sans-serif;opacity:.85;margin-top:3px}
+  #ccPanel{position:absolute;right:0;top:0;bottom:0;width:min(400px,46vw);background:rgba(18,22,32,.95);border-left:2px solid rgba(255,255,255,.15);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right)}
+  #ccTabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px 10px 6px}
+  #ccTabs::-webkit-scrollbar{display:none}
+  .cctab{flex:0 0 auto;padding:8px 10px;border-radius:10px;background:#232a39;font-weight:800;font-size:13px;cursor:pointer;border:2px solid transparent;white-space:nowrap}
+  .cctab.on{border-color:#7fe3cf;background:#2a3c46}
+  #ccBody{flex:1;overflow-y:auto;padding:0 12px 12px;-webkit-overflow-scrolling:touch;touch-action:pan-y;font-size:14px}
+  .ccl{font-weight:800;font-size:13px;margin:12px 0 6px;color:#7fe3cf}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:7px 10px;border-radius:9px;background:#232a39;border:2px solid transparent;font-size:13px;font-weight:700;cursor:pointer}
+  .chip.on{border-color:#fff;background:#3a4660}
+  .sws{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sw{width:30px;height:30px;border-radius:8px;border:2px solid rgba(255,255,255,.25);cursor:pointer}
+  .sw.on{border:3px solid #fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.55)}
+  .swc{position:relative;width:30px;height:30px;border-radius:8px;border:2px dashed #fff;overflow:hidden;cursor:pointer;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
+  .swc.on{border-style:solid;border-width:3px}
+  .swc input{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);opacity:0;cursor:pointer;border:0;padding:0}
+  .ccrow{display:flex;gap:8px} .ccrow input{flex:1;min-width:0;height:40px;border-radius:9px;border:2px solid rgba(255,255,255,.25);background:#11151d;color:#fff;font-size:16px;padding:0 10px}
+  .ccdots{display:flex;gap:3px} .ccdots i{width:12px;height:26px;border-radius:4px;border:1px solid rgba(255,255,255,.3)}
+  #ccFoot{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.1)}
+  #ccFoot .mbtn{min-width:0}
+  @media (orientation:portrait){ #ccPanel{left:0;right:0;top:auto;width:auto;height:56vh;border-left:none;border-top:2px solid rgba(255,255,255,.15);padding-top:0;border-radius:16px 16px 0 0} }
+  /* demo mode */
+  #mbox.wide{width:min(760px,calc(100vw - 20px))}
+  .dmTot{float:right;font-size:12px;color:#b8c0cf;font-weight:700}
+  .dmScene{background:#232a39;border-radius:12px;padding:8px 10px;margin-top:8px}
+  .dmHead{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .dmHead .ibtn{min-width:36px;height:32px;padding:0 6px}
+  .dmHead .ibtn[disabled]{opacity:.35}
+  .dmGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 8px;margin-top:6px}
+  .dmGrid label,.dmCapL{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:#b8c0cf}
+  .dmCapL{margin-top:6px}
+  #mbox select,#mbox input[type=number],.dmCapL input{height:36px;border-radius:8px;border:2px solid rgba(255,255,255,.2);background:#11151d;color:#fff;font-size:15px;padding:0 6px;width:100%;min-width:0}
+  .dmRow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap} .dmRow select{flex:1}
+  .dmInline{display:flex;gap:8px;align-items:center;font-weight:700} .dmInline input[type=number]{width:90px!important}
+  .dmInline input[type=range]{width:180px}
+  body.demo .ui:not(.dm){display:none!important} body.demo #joyBase,body.demo #joyKnob{display:none!important}
+  #dmFade{inset:0;background:#000;opacity:0;pointer-events:none;z-index:8;display:none}
+  body.demo #dmFade{display:block}
+  #dmCap{left:50%;bottom:calc(9vh + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88vw;text-align:center;font:900 clamp(22px,4.6vw,44px)/1.15 'Trebuchet MS',Verdana,sans-serif;color:#fff;
+    text-shadow:0 3px 0 #3a2a1a,0 4px 14px rgba(0,0,0,.7);opacity:0;transition:opacity 1s;pointer-events:none;z-index:9;display:none}
+  body.demo #dmCap{display:block} #dmCap.on{opacity:1}
+  #dmStop{top:calc(10px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:11;font:800 15px sans-serif;padding:10px 16px;border-radius:12px;border:2px solid #fff;background:rgba(200,40,46,.85);color:#fff;
+    opacity:0;pointer-events:none;transition:opacity .3s;display:none;cursor:pointer}
+  body.demo #dmStop{display:block} #dmStop.on{opacity:1;pointer-events:auto}
+  #ytBox{left:calc(10px + env(safe-area-inset-left));bottom:calc(10px + env(safe-area-inset-bottom));z-index:9;display:none;border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  #ytBox.on{display:block} body:not(.demo) #ytBox{bottom:auto;top:calc(110px + env(safe-area-inset-top))}
+
   .no-touch #act,.no-touch #joyHint,.no-touch #bTalk{display:none!important}
   @media (orientation:portrait){
     #hotwrap{width:calc(100vw - 16px)}
@@ -614,16 +670,16 @@ function rleEncode(a){ const out=[]; let v=a[0],n=1; for(let i=1;i<a.length;i++)
 function rleDecode(r){ const a=new Uint8Array(N); let p=0; for(let i=0;i<r.length;i+=2){ a.fill(r[i],p,p+r[i+1]); p+=r[i+1]; } return a; }
 let saveTimer=null;
 const KIT_KEY='blockstar_kit'; // survival coins + weapons carry over between survival worlds
-function snapshot(){ return {v:3,mode,seed,shirt:gameShirt,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
+function snapshot(){ return {v:3,mode,seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
   apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])}))}; }
-function saveNow(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot())); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
+function saveNow(){ if(demo)return; try{ localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot())); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1000); }
 function validSave(s){ return !!s&&(!s.mode||s.mode==='survival')&&(s.v===2||s.v===3)&&Array.isArray(s.w)&&Array.isArray(s.m)&&Array.isArray(s.p); }
 function cleanArrows(a){ const o={explode:0,fire:0,split:0,seek:0}; if(a&&typeof a==='object') for(const k of ARROW_KEYS)o[k]=Math.max(0,a[k]|0); return o; }
 function cleanOwned(o){ o=Array.isArray(o)?o:['fists']; o=[...new Set(o.map(w=>w==='flint'||w==='slingshot'?'boomerang':w))].filter(w=>WEAPON_IDS.includes(w)); if(!o.includes('fists'))o.unshift('fists'); return o; }
 function applySnapshot(s){
   clearEntities(); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null; placed.clear();
-  mode='survival'; if(typeof s.shirt==='number')gameShirt=s.shirt; shirt.color.setHex(gameShirt);
+  mode='survival';
   seed=s.seed; world=rleDecode(s.w); meta=rleDecode(s.m);
   pl.p=[s.p[0],s.p[1],s.p[2]]; yaw=s.p[3]; pitch=s.p[4]; pl.v=[0,0,0]; pl.kb=[0,0,0];
   if(s.sel&&B[s.sel]&&!B[s.sel].hidden)sel=s.sel; camMode=s.cam===3?3:1;
@@ -650,23 +706,157 @@ function limbOn(parent,x,y,w,h,m,end){ const g=new THREE.Group(); g.position.set
   if(end){ const e=box(w+0.01,0.14,w+0.01,end); e.position.y=-h+0.07; g.add(e);} parent.add(g); return g; }
 
 // --- player
-const model=new THREE.Group(); scene.add(model);
-const skin=lm(0xe0b08a), shirt=lm(0x1f8a8a), pants=lm(0x2f3e7a), shoe=lm(0x3a2a20), hairM=lm(0x3b2a1a);
-const legL=limbOn(model,-0.125,0.72,0.24,0.72,pants,shoe), legR=limbOn(model,0.125,0.72,0.24,0.72,pants,shoe);
-const bodyM=box(0.5,0.72,0.26,shirt); bodyM.position.y=1.08; model.add(bodyM);
-const armL=limbOn(model,-0.37,1.42,0.22,0.7,shirt,skin), armR=limbOn(model,0.37,1.42,0.22,0.7,shirt,skin);
+// What the player looks like. A rig is the jointed skeleton (legs, arms and head swing on their joints); dressRig fills
+// each joint with boxes for the chosen look, so a new outfit never disturbs the weapon, the space suit or the animation.
 function faceTex(draw){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); draw(x);
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
-const faceM=new THREE.MeshLambertMaterial({map:faceTex(fx=>{
-  fx.fillStyle='#e0b08a';fx.fillRect(0,0,8,8); fx.fillStyle='#3b2a1a';fx.fillRect(0,0,8,2);fx.fillRect(0,2,1,2);fx.fillRect(7,2,1,2);
-  fx.fillStyle='#fff';fx.fillRect(1,4,2,1);fx.fillRect(5,4,2,1); fx.fillStyle='#2a4a8a';fx.fillRect(2,4,1,1);fx.fillRect(5,4,1,1);
-  fx.fillStyle='#9a5a4a';fx.fillRect(3,6,2,1); })});
-const sideTex=back=>faceTex(fx=>{ fx.fillStyle='#e0b08a'; fx.fillRect(0,0,8,8); fx.fillStyle='#3b2a1a'; fx.fillRect(0,0,8,3); // hair on top, down the back, and a sideburn
-  if(back<0){ fx.fillRect(0,3,3,4); fx.fillRect(6,3,1,1); } else { fx.fillRect(5,3,3,4); fx.fillRect(1,3,1,1); }
-  fx.fillStyle='#c8946e'; fx.fillRect(back<0?4:3,4,1,2); }); // the ear
-const hairSideR=new THREE.MeshLambertMaterial({map:sideTex(-1)}), hairSideL=new THREE.MeshLambertMaterial({map:sideTex(1)}); // the box's +x side runs back-to-front, its -x side front-to-back
-const head=new THREE.Group(); head.position.y=1.44; model.add(head);
-const headM=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),[hairSideR,hairSideL,hairM,skin,hairM,faceM]); headM.position.y=0.23; head.add(headM);
+const LOOK_KEY='blockstar_look', OUTFIT_KEY='blockstar_outfits';
+const LOOK0={skin:'#e0b08a',eyes:'#2a4a8a',hair:'short',hairC:'#3b2a1a',top:'tee',topC:'#1f8a8a',bottom:'pants',bottomC:'#2f3e7a',shoes:'shoes',shoeC:'#3a2a20',
+  helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',capeC:'#c0282e',sym:'star',symC:'#ffd84a',hat:'none',hatC:'#d8202a',glasses:'none',back:'none',backC:'#6b4a2a'};
+const ARMOR_OPTS=[['none','None'],['leather','Leather'],['iron','Iron'],['gold','Gold'],['diamond','Diamond']];
+const LOOK_OPTS={
+  hair:[['short','Short'],['long','Long'],['ponytail','Ponytail'],['bun','Bun'],['braids','Braids'],['spiky','Spiky'],['curly','Big curly'],['mohawk','Mohawk'],['buzz','Buzz cut'],['bald','Bald']],
+  top:[['tee','T-shirt'],['long','Long sleeves'],['tank','Tank top'],['hoodie','Hoodie'],['stripes','Stripes'],['jacket','Jacket']],
+  bottom:[['pants','Pants'],['shorts','Shorts'],['skirt','Skirt'],['dress','Dress']],
+  shoes:[['shoes','Shoes'],['sneakers','Sneakers'],['boots','Boots'],['bare','Barefoot']],
+  helm:ARMOR_OPTS, chest:ARMOR_OPTS, legs:ARMOR_OPTS, boots:ARMOR_OPTS,
+  cape:[['none','No cape'],['plain','Plain cape'],['symbol','Cape with a symbol']],
+  sym:[['star','⭐ Star'],['heart','❤️ Heart'],['bolt','⚡ Lightning'],['diamond','💎 Diamond'],['moon','🌙 Moon'],['skull','💀 Skull'],['crown','👑 Crown'],['b','🅱️ Letter B']],
+  hat:[['none','None'],['cap','Cap'],['beanie','Beanie'],['tophat','Top hat'],['crown','Crown'],['wizard','Wizard hat'],['cowboy','Cowboy hat'],['headband','Headband']],
+  glasses:[['none','None'],['round','Round'],['shades','Sunglasses'],['goggles','Goggles'],['party','Party glasses']],
+  back:[['none','None'],['backpack','Backpack'],['wings','Angel wings'],['dragon','Dragon wings'],['jetpack','Jetpack'],['quiver','Arrow quiver']]};
+const ARMOR={leather:['#8a5a32','#5e3a1e',0],iron:['#c8ccd2','#8a9098',0],gold:['#f2c230','#b8861a','#3a2800'],diamond:['#6fe6ea','#2aa8b8','#06363a']}; // colour, trim, glow
+function cleanLook(o){ const L=Object.assign({},LOOK0); if(!o||typeof o!=='object')return L;
+  for(const k in LOOK0){ const v=o[k]; if(typeof v!=='string')continue;
+    if(LOOK_OPTS[k]){ if(LOOK_OPTS[k].some(p=>p[0]===v))L[k]=v; } else if(/^#[0-9a-f]{6}$/i.test(v))L[k]=v.toLowerCase(); }
+  return L; }
+let look=LOOK0; try{ look=cleanLook(JSON.parse(localStorage.getItem(LOOK_KEY)||'null')); }catch(e){}
+function shadeHex(h,f){ const c=new THREE.Color(h); if(f<1)c.multiplyScalar(f); else c.lerp(new THREE.Color(1,1,1),Math.min(1,f-1)); return '#'+c.getHexString(); }
+const lookMats={}; // shared colour materials, kept for the whole game
+function cm(hex,glow){ const k=hex+(glow||''); return lookMats[k]||(lookMats[k]=new THREE.MeshLambertMaterial({color:new THREE.Color(hex),emissive:glow?new THREE.Color(glow):new THREE.Color(0)})); }
+function ownMat(tex){ tex.magFilter=tex.minFilter=THREE.NearestFilter; tex.generateMipmaps=false; const m=new THREE.MeshLambertMaterial({map:tex}); m.userData.own=true; return m; }
+function makeRig(root){ // joints: hips for each leg, shoulders, neck, and the torso (which never swings)
+  const j=(x,y)=>{ const g=new THREE.Group(); g.position.set(x,y,0); root.add(g); const d=new THREE.Group(); g.add(d); g.userData.d=d; return g; };
+  return {root,legL:j(-0.125,0.72),legR:j(0.125,0.72),armL:j(-0.37,1.42),armR:j(0.37,1.42),torso:j(0,0),head:j(0,1.44),cape:null,wings:[],jet:null,t:Math.random()*9}; }
+// the head's six faces: +x side, -x side, top, bottom, back, face. The +x side runs back-to-front, the -x side front-to-back
+function headMats(L){ const S=L.skin, H=L.hairC, st=L.hair, none=st==='bald', mo=st==='mohawk', buzz=st==='buzz', longH=st==='long'||st==='curly'||st==='braids';
+  const pix=fn=>{ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); x.fillStyle=S; x.fillRect(0,0,8,8); fn(x); return ownMat(new THREE.CanvasTexture(c)); };
+  const hairF=(x,a,b,w,h)=>{ x.fillStyle=H; x.fillRect(a,b,w,h); };
+  const side=back=>pix(x=>{ const bc=back<0?0:5; // the back three columns
+    if(!none&&!mo){ if(buzz){ hairF(x,0,0,8,2); hairF(x,back<0?0:6,2,2,2); }
+      else if(longH){ hairF(x,0,0,8,3); hairF(x,back<0?0:2,3,6,5); }
+      else { hairF(x,0,0,8,3); hairF(x,bc,3,3,4); hairF(x,back<0?6:1,3,1,1); } }
+    if(!longH||none||mo){ x.fillStyle=shadeHex(S,0.86); x.fillRect(back<0?4:3,4,1,2); } }); // the ear
+  const top=pix(x=>{ if(mo)hairF(x,3,0,2,8); else if(!none)hairF(x,0,0,8,8); });
+  const back=pix(x=>{ if(mo)hairF(x,3,0,2,5); else if(buzz)hairF(x,0,0,8,5); else if(!none)hairF(x,0,0,8,8); });
+  const bottom=pix(()=>{});
+  const face=pix(x=>{
+    if(!none&&!mo){ if(buzz)hairF(x,0,0,8,1); else if(st==='curly'){ hairF(x,0,0,8,2); hairF(x,0,2,1,3); hairF(x,7,2,1,3); hairF(x,2,2,1,1); hairF(x,5,2,1,1); }
+      else if(longH){ hairF(x,0,0,8,2); hairF(x,0,2,1,5); hairF(x,7,2,1,5); } else { hairF(x,0,0,8,2); hairF(x,0,2,1,2); hairF(x,7,2,1,2); } }
+    else if(mo)hairF(x,3,0,2,1);
+    x.fillStyle='#fff'; x.fillRect(1,4,2,1); x.fillRect(5,4,2,1); x.fillStyle=L.eyes; x.fillRect(2,4,1,1); x.fillRect(5,4,1,1);
+    x.fillStyle=shadeHex(S,0.62); x.fillRect(3,6,2,1); });
+  return [side(-1),side(1),top,bottom,back,face]; }
+function symTex(L){ const c=document.createElement('canvas'); c.width=64; c.height=96; const x=c.getContext('2d'); x.fillStyle=L.capeC; x.fillRect(0,0,64,96);
+  x.fillStyle=shadeHex(L.capeC,0.75); x.fillRect(0,88,64,8);
+  if(L.cape==='symbol'){ x.fillStyle=L.symC; x.strokeStyle=L.symC; x.save(); x.translate(32,36); const s=L.sym; x.beginPath();
+    if(s==='star'){ for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, r=i%2?9:22; x.lineTo(Math.cos(a)*r,Math.sin(a)*r); } x.fill(); }
+    else if(s==='heart'){ x.moveTo(0,18); x.bezierCurveTo(-30,-2,-12,-24,0,-8); x.bezierCurveTo(12,-24,30,-2,0,18); x.fill(); }
+    else if(s==='bolt'){ for(const [a,b] of [[6,-24],[-12,3],[-1,3],[-6,24],[13,-4],[2,-4],[10,-24]])x.lineTo(a,b); x.fill(); }
+    else if(s==='diamond'){ for(const [a,b] of [[-20,-6],[-10,-18],[10,-18],[20,-6],[0,20]])x.lineTo(a,b); x.fill(); x.strokeStyle=shadeHex(L.symC,0.7); x.lineWidth=2; x.beginPath(); x.moveTo(-20,-6); x.lineTo(20,-6); x.stroke(); }
+    else if(s==='moon'){ x.arc(0,0,20,0,Math.PI*2); x.fill(); x.globalCompositeOperation='destination-out'; x.beginPath(); x.arc(10,-6,17,0,Math.PI*2); x.fill(); x.globalCompositeOperation='source-over';
+      x.save(); x.beginPath(); x.arc(10,-6,17,0,Math.PI*2); x.clip(); x.fillStyle=L.capeC; x.fillRect(-32,-40,64,80); x.restore(); }
+    else if(s==='skull'){ x.arc(0,-4,17,0,Math.PI*2); x.fill(); x.fillRect(-10,8,20,12); x.fillStyle=L.capeC; x.fillRect(-10,-8,7,7); x.fillRect(3,-8,7,7); x.fillRect(-2,3,4,4); x.fillRect(-5,14,2,6); x.fillRect(3,14,2,6); }
+    else if(s==='crown'){ for(const [a,b] of [[-22,14],[-22,-14],[-11,0],[0,-20],[11,0],[22,-14],[22,14]])x.lineTo(a,b); x.fill(); }
+    else { x.font='900 46px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('B',0,2); }
+    x.restore(); }
+  const t=new THREE.CanvasTexture(c); const m=new THREE.MeshLambertMaterial({map:t}); m.userData.own=true; return m; }
+function stripeTex(hex){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); for(let y=0;y<8;y++){ x.fillStyle=(y>>1)%2?shadeHex(hex,1.75):hex; x.fillRect(0,y,8,1); } return ownMat(new THREE.CanvasTexture(c)); }
+function undress(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material){ for(const m of [].concat(o.material)) if(m.userData.own){ if(m.map)m.map.dispose(); m.dispose(); } } }); g.clear(); }
+function dressRig(R,L){
+  for(const k of ['legL','legR','armL','armR','torso','head'])undress(R[k].userData.d);
+  R.cape=null; R.wings=[]; R.jet=null;
+  const put=(par,w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x||0,y||0,z||0); par.userData&&par.userData.d?par.userData.d.add(b):par.add(b); return b; };
+  const sk=cm(L.skin), dress=L.bottom==='dress', topM=dress?cm(L.bottomC):L.top==='stripes'?stripeTex(L.topC):cm(L.topC), topD=cm(shadeHex(dress?L.bottomC:L.topC,0.72));
+  const T=R.torso, Hd=R.head;
+  // head and hair
+  const hm=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),headMats(L)); hm.position.y=0.23; Hd.userData.d.add(hm);
+  const hc=cm(L.hairC), hs=st=>L.hair===st;
+  if(hs('long'))put(Hd,0.48,0.62,0.08,hc,0,0.12,0.25);
+  if(hs('ponytail')){ put(Hd,0.16,0.14,0.1,cm(shadeHex(L.hairC,0.7)),0,0.33,0.27); const p=put(Hd,0.13,0.44,0.11,hc,0,0.1,0.32); p.rotation.x=0.22; }
+  if(hs('bun'))put(Hd,0.22,0.2,0.22,hc,0,0.5,0.12);
+  if(hs('braids'))for(const sx of [-1,1]){ put(Hd,0.1,0.52,0.1,hc,sx*0.17,0.0,0.2); put(Hd,0.12,0.06,0.12,cm(shadeHex(L.hairC,0.6)),sx*0.17,-0.24,0.2); }
+  if(hs('spiky'))for(const [x,z,h] of [[-0.12,-0.12,0.18],[0.1,-0.1,0.22],[0,0.06,0.26],[-0.13,0.13,0.2],[0.13,0.12,0.18]]){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.08,h,4),hc); c.position.set(x,0.46+h/2,z); c.rotation.y=Math.PI/4; Hd.userData.d.add(c); }
+  if(hs('curly')){ put(Hd,0.54,0.14,0.54,hc,0,0.49,0.02); put(Hd,0.54,0.46,0.1,hc,0,0.22,0.25); for(const sx of [-1,1])put(Hd,0.07,0.3,0.44,hc,sx*0.26,0.33,0.04); }
+  if(hs('mohawk'))put(Hd,0.1,0.16,0.44,hc,0,0.54,0.02);
+  const hatY=0.46+(hs('curly')?0.08:hs('bun')||hs('mohawk')?0.03:0);
+  // top
+  const sleeve=!dress&&(L.top==='long'||L.top==='hoodie'||L.top==='jacket'), tee=!dress&&(L.top==='tee'||L.top==='stripes');
+  put(T,0.5,0.72,0.26,topM,0,1.08,0);
+  for(const A of [R.armL,R.armR]){
+    if(sleeve){ put(A,0.22,0.56,0.22,topM,0,-0.28); put(A,0.22,0.14,0.22,sk,0,-0.63); }
+    else if(tee){ put(A,0.24,0.26,0.24,topM,0,-0.13); put(A,0.22,0.44,0.22,sk,0,-0.48); }
+    else if(dress){ put(A,0.26,0.18,0.26,topM,0,-0.09); put(A,0.22,0.52,0.22,sk,0,-0.44); }
+    else put(A,0.22,0.7,0.22,sk,0,-0.35); }
+  if(!dress&&L.top==='tank')put(T,0.2,0.08,0.02,sk,0,1.4,-0.131);
+  if(!dress&&L.top==='hoodie'){ put(T,0.42,0.2,0.12,topD,0,1.47,0.17); put(T,0.3,0.14,0.02,topD,0,0.86,-0.135); for(const sx of [-1,1])put(T,0.03,0.14,0.02,cm('#f4f0e6'),sx*0.07,1.3,-0.135); }
+  if(!dress&&L.top==='jacket'){ put(T,0.16,0.68,0.02,cm('#f4f0e6'),0,1.08,-0.131); for(const sx of [-1,1])put(T,0.08,0.1,0.03,topD,sx*0.1,1.4,-0.135); }
+  // legs and shoes
+  const bm2=cm(L.bottomC), bare=L.bottom==='skirt'||dress;
+  for(const G of [R.legL,R.legR]){
+    if(L.bottom==='pants')put(G,0.24,0.58,0.24,bm2,0,-0.29);
+    else if(L.bottom==='shorts'){ put(G,0.25,0.26,0.25,bm2,0,-0.13); put(G,0.24,0.32,0.24,sk,0,-0.42); }
+    else put(G,0.24,0.58,0.24,sk,0,-0.29);
+    const sh=cm(L.shoeC);
+    if(L.shoes==='shoes')put(G,0.25,0.14,0.27,sh,0,-0.65,-0.01);
+    else if(L.shoes==='sneakers'){ put(G,0.25,0.1,0.28,sh,0,-0.63,-0.01); put(G,0.26,0.05,0.29,cm('#f4f4f0'),0,-0.695,-0.01); }
+    else if(L.shoes==='boots'){ put(G,0.26,0.3,0.27,sh,0,-0.57,-0.01); put(G,0.27,0.05,0.28,cm(shadeHex(L.shoeC,0.7)),0,-0.43,-0.01); }
+    else put(G,0.24,0.14,0.25,sk,0,-0.65,-0.01); }
+  if(L.bottom==='skirt'){ put(T,0.56,0.08,0.3,cm(shadeHex(L.bottomC,0.75)),0,0.74,0); put(T,0.6,0.3,0.34,bm2,0,0.57,0); }
+  if(dress){ put(T,0.54,0.12,0.3,bm2,0,0.74,0); put(T,0.64,0.4,0.38,bm2,0,0.5,0); put(T,0.66,0.05,0.4,cm(shadeHex(L.bottomC,1.5)),0,0.31,0); }
+  // armour: looks only
+  const arm=k=>{ const a=ARMOR[L[k]]; return a?[cm(a[0],a[2]),cm(a[1],a[2])]:null; };
+  let a=arm('helm'); if(a){ put(Hd,0.53,0.08,0.53,a[0],0,0.5,0); put(Hd,0.53,0.36,0.05,a[0],0,0.31,0.256); for(const sx of [-1,1])put(Hd,0.05,0.36,0.53,a[0],sx*0.256,0.31,0); put(Hd,0.53,0.06,0.05,a[1],0,0.44,-0.256); }
+  a=arm('chest'); if(a){ put(T,0.56,0.62,0.32,a[0],0,1.12,0); put(T,0.58,0.06,0.34,a[1],0,0.8,0); put(T,0.2,0.2,0.02,a[1],0,1.16,-0.165); for(const A of [R.armL,R.armR])put(A,0.28,0.16,0.28,a[0],0,-0.05); }
+  a=arm('legs'); if(a)for(const G of [R.legL,R.legR]){ put(G,0.28,0.4,0.28,a[0],0,-0.2); put(G,0.29,0.06,0.29,a[1],0,-0.38); }
+  a=arm('boots'); if(a)for(const G of [R.legL,R.legR]){ put(G,0.29,0.24,0.31,a[0],0,-0.61,-0.01); put(G,0.3,0.05,0.32,a[1],0,-0.5,-0.01); }
+  // cape: hangs from the shoulders and flaps out behind when you run
+  if(L.cape!=='none'){ const cz=L.back==='jetpack'?0.45:L.back==='backpack'?0.34:L.chest!=='none'?0.18:0.155, pv=new THREE.Group(); pv.position.set(0,1.44,cz); T.userData.d.add(pv); const inner=cm(shadeHex(L.capeC,0.7)); // it hangs outside armour and packs
+    const cp=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.98,0.03),[inner,inner,inner,inner,symTex(L),inner]); cp.position.y=-0.49; pv.add(cp); R.cape=pv;
+    put(T,0.54,0.06,0.06,inner,0,1.44,cz); }
+  // hats
+  const hk=cm(L.hatC), hkD=cm(shadeHex(L.hatC,0.7)), hkL=cm(shadeHex(L.hatC,1.6)), gold=cm('#f2c230','#3a2800');
+  if(L.hat==='cap'){ put(Hd,0.5,0.14,0.5,hk,0,hatY+0.06,0); put(Hd,0.46,0.03,0.22,hkD,0,hatY,-0.34); }
+  else if(L.hat==='beanie'){ put(Hd,0.5,0.2,0.5,hk,0,hatY+0.07,0); put(Hd,0.52,0.06,0.52,hkD,0,hatY-0.02,0); put(Hd,0.12,0.12,0.12,hkL,0,hatY+0.23,0); }
+  else if(L.hat==='tophat'){ put(Hd,0.64,0.03,0.64,hk,0,hatY+0.01,0); put(Hd,0.4,0.42,0.4,hk,0,hatY+0.23,0); put(Hd,0.41,0.06,0.41,hkL,0,hatY+0.06,0); }
+  else if(L.hat==='crown'){ const y=hatY+0.06; put(Hd,0.5,0.12,0.04,gold,0,y,-0.23); put(Hd,0.5,0.12,0.04,gold,0,y,0.23); for(const sx of [-1,1])put(Hd,0.04,0.12,0.5,gold,sx*0.23,y,0);
+    for(const [x,z] of [[-0.21,-0.23],[0,-0.23],[0.21,-0.23],[-0.21,0.23],[0.21,0.23],[-0.23,0],[0.23,0]])put(Hd,0.06,0.08,0.06,gold,x,y+0.1,z); put(Hd,0.08,0.06,0.02,hk,0,y,-0.252); }
+  else if(L.hat==='wizard'){ put(Hd,0.66,0.03,0.66,hk,0,hatY+0.01,0); const c=new THREE.Mesh(new THREE.ConeGeometry(0.3,0.72,4),hk); c.position.set(0,hatY+0.38,0.03); c.rotation.set(-0.12,Math.PI/4,0); Hd.userData.d.add(c); put(Hd,0.08,0.08,0.02,gold,0.08,hatY+0.2,-0.2); }
+  else if(L.hat==='cowboy'){ put(Hd,0.8,0.03,0.8,hk,0,hatY+0.01,0); put(Hd,0.44,0.22,0.44,hk,0,hatY+0.12,0); put(Hd,0.45,0.05,0.45,hkD,0,hatY+0.05,0); for(const sx of [-1,1])put(Hd,0.08,0.05,0.8,hk,sx*0.37,hatY+0.05,0); }
+  else if(L.hat==='headband'){ put(Hd,0.48,0.06,0.48,hk,0,0.37,0); put(Hd,0.06,0.16,0.04,hk,0.06,0.3,0.26); }
+  // glasses sit just in front of the eyes
+  const gz=-0.238, ey=0.2, blk=cm('#18181c');
+  if(L.glasses==='round')for(const sx of [-1,1]){ const cx=sx*0.115; put(Hd,0.15,0.02,0.02,blk,cx,ey+0.06,gz); put(Hd,0.15,0.02,0.02,blk,cx,ey-0.06,gz); put(Hd,0.02,0.12,0.02,blk,cx-0.065,ey,gz); put(Hd,0.02,0.12,0.02,blk,cx+0.065,ey,gz); if(sx>0)put(Hd,0.1,0.02,0.02,blk,0,ey+0.03,gz); }
+  else if(L.glasses==='shades'){ for(const sx of [-1,1])put(Hd,0.16,0.09,0.02,blk,sx*0.115,ey,gz); put(Hd,0.46,0.025,0.02,blk,0,ey+0.04,gz); }
+  else if(L.glasses==='goggles'){ put(Hd,0.48,0.07,0.48,cm('#5e3a1e'),0,ey,0); for(const sx of [-1,1]){ put(Hd,0.15,0.14,0.05,cm('#9aa0a8'),sx*0.115,ey,gz-0.01); put(Hd,0.11,0.1,0.02,cm('#7fe3ff','#0a3a4a'),sx*0.115,ey,gz-0.035); } }
+  else if(L.glasses==='party'){ for(const sx of [-1,1]){ const s=put(Hd,0.13,0.13,0.02,cm('#ff4fb0','#3a0020'),sx*0.115,ey,gz); s.rotation.z=Math.PI/4; } put(Hd,0.06,0.02,0.02,gold,0,ey,gz); }
+  // on the back
+  const bk=cm(L.backC), bkD=cm(shadeHex(L.backC,0.7));
+  if(L.back==='backpack'){ put(T,0.42,0.46,0.18,bk,0,1.1,0.22); put(T,0.3,0.16,0.04,bkD,0,0.98,0.32); for(const sx of [-1,1])put(T,0.06,0.5,0.02,bkD,sx*0.15,1.12,-0.135); }
+  else if(L.back==='wings'||L.back==='dragon'){ const angel=L.back==='wings', wm=angel?cm('#fbfbf6'):bk, wd=angel?cm('#e4e2da'):bkD;
+    for(const sx of [-1,1]){ const w=new THREE.Group(); w.position.set(sx*0.12,1.3,0.16); T.userData.d.add(w); w.userData.sx=sx;
+      if(angel){ for(const [x,y,l] of [[0.22,0,0.5],[0.36,-0.12,0.42],[0.46,-0.26,0.32]]){ const f=box(l,0.12,0.04,x>0.3?wd:wm); f.position.set(sx*x,y,0.06); f.rotation.z=sx*-0.5; w.add(f); } }
+      else { const bone=box(0.62,0.05,0.05,wd); bone.position.set(sx*0.3,0.12,0.06); bone.rotation.z=sx*0.35; w.add(bone);
+        const mem=box(0.56,0.42,0.02,wm); mem.position.set(sx*0.3,-0.12,0.06); mem.rotation.z=sx*0.35; w.add(mem); }
+      R.wings.push(w); } }
+  else if(L.back==='jetpack'){ put(T,0.46,0.5,0.2,cm('#9aa0a8'),0,1.1,0.23); for(const sx of [-1,1]){ put(T,0.14,0.5,0.14,cm('#5a5f68'),sx*0.14,1.08,0.36); put(T,0.16,0.06,0.16,bk,sx*0.14,1.36,0.36); } }
+  else if(L.back==='quiver'){ const q=put(T,0.15,0.52,0.15,bk,0.08,1.15,0.2); q.rotation.z=0.45; for(const dx of [-0.03,0.04]){ const f=put(T,0.04,0.12,0.04,cm('#f4f4f0'),0.2+dx,1.46,0.2); f.rotation.z=0.45; } }
+  return R; }
+// a little life for capes and wings; spd is how fast the character is moving
+function animRig(R,dt,spd){ R.t+=dt; if(R.cape){ const want=0.06+Math.min(1.0,spd*0.16)+Math.sin(R.t*(3+spd))*0.04*(1+spd*0.3); R.cape.rotation.x+=(-want-R.cape.rotation.x)*Math.min(1,dt*6); }
+  for(const w of R.wings)w.rotation.y=w.userData.sx*(0.35+Math.sin(R.t*(spd>3?7:2))*(spd>3?0.35:0.12)); }
+const model=new THREE.Group(); scene.add(model);
+const rig=makeRig(model), {legL,legR,armL,armR,head}=rig; dressRig(rig,look);
 model.scale.setScalar(0.94);
 const suit=(()=>{ const W=lm(0xf2f2ee), G=lm(0x9aa0a8), D=lm(0x5a5f68), parts=[]; const add=(par,m,x,y,z)=>{ m.position.set(x,y,z); par.add(m); parts.push(m); return m; };
   for(const L of [legL,legR]){ add(L,box(0.29,0.74,0.29,W),0,-0.36,0); add(L,box(0.31,0.16,0.33,D),0,-0.66,-0.02); }
@@ -1209,7 +1399,7 @@ let lookId=null, lx=0, ly=0, upHeld=false, downHeld=false;
 const SENS_T=0.0055, SENS_M=0.0025;
 const touchEl=$('touch');
 touchEl.addEventListener('touchstart',e=>{
-  e.preventDefault(); audioInit();
+  e.preventDefault(); audioInit(); if(demo){ demoPoke(); return; }
   for(const t of e.changedTouches){
     if(t.clientX<window.innerWidth*0.42 && joy.id===null){
       joy.id=t.identifier; joy.ox=t.clientX; joy.oy=t.clientY; joy.x=joy.y=0;
@@ -1269,6 +1459,7 @@ $('card').addEventListener('click',()=>$('card').style.display='none');
 $('card').addEventListener('touchstart',e=>{e.preventDefault();$('card').style.display='none';},{passive:false});
 
 window.addEventListener('keydown',e=>{
+  if(demo){ if(e.code==='Escape')demoStop(); else demoPoke(); e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
   if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'&&nearMerchant())openShop();
@@ -1277,7 +1468,7 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{ keys[e.code]=false; });
 if(!IS_TOUCH){
-  touchEl.addEventListener('click',e=>{ audioInit(); if(document.pointerLockElement!==touchEl){ try{ const r=touchEl.requestPointerLock(); if(r&&r.catch)r.catch(()=>{}); }catch(e){} } });
+  touchEl.addEventListener('click',e=>{ audioInit(); if(demo){ demoPoke(); return; } if(document.pointerLockElement!==touchEl){ try{ const r=touchEl.requestPointerLock(); if(r&&r.catch)r.catch(()=>{}); }catch(e){} } });
   document.addEventListener('mousemove',e=>{ if(document.pointerLockElement!==touchEl||paused)return;
     yaw-=e.movementX*SENS_M; pitch-=e.movementY*SENS_M; pitch=Math.max(-1.55,Math.min(1.55,pitch)); });
   touchEl.addEventListener('mousedown',e=>{ if(document.pointerLockElement!==touchEl||paused)return; if(e.button===0)hitAction(); if(e.button===2)placeAction(); });
@@ -1320,9 +1511,11 @@ function tapUp(el,fn){ el.addEventListener('touchend',e=>{ e.preventDefault(); e
 function openSettings(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true;
   $('mbox').innerHTML='<h2>⚙️ Settings</h2>'+
     '<div class="item"><div class="ic">'+(sfxOn?'🔔':'🔕')+'</div><div class="tx"><b>Sound effects</b><div class="fx">Game sounds like digging, splashes, arrows and pops.</div></div><button class="ibtn'+(sfxOn?'':' gray')+'" id="gSfx">'+(sfxOn?'ON':'OFF')+'</button></div>'+
+    '<div class="item"><div class="ic">🎵</div><div class="tx"><b>Music while you play</b><div class="fx">Plays the song picked in 🎬 Demo Mode'+(mus.src==='none'?' (none is picked yet)':'')+'.</div></div><button class="ibtn'+(mus.game?'':' gray')+'" id="gMus">'+(mus.game?'ON':'OFF')+'</button></div>'+
     '<div class="row"><button class="mbtn" id="gBack">'+(titleOn?'Back':'Back to the game')+'</button></div>';
   $('modal').style.display='flex';
   tap($('gBack'),()=>{ if(titleOn)$('modal').style.display='none'; else closeMenu(); });
+  tapUp($('gMus'),()=>{ mus.game=!mus.game; saveMus(); if(!titleOn){ if(mus.game&&mus.src!=='none')musicPlay(); else musicStop(); } openSettings(); });
   tapUp($('gSfx'),()=>{ sfxOn=!sfxOn; try{ localStorage.setItem(SFX_KEY,sfxOn?'1':'0'); }catch(e){} openSettings(); if(sfxOn){ audioInit(); sfx('coin'); } }); }
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.display='none',2200); }
 function toggleCam(){ camMode=camMode===1?3:1; $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3); queueSave(); }
@@ -1364,10 +1557,10 @@ function openMenu(){
   $('mbox').innerHTML=helpHTML()+
     '<div class="row"><button class="mbtn" id="mPlay">Play</button><button class="mbtn gold" id="mSave">💾 Save / Load</button></div>'+
     '<div class="row"><button class="mbtn gray" id="mMobs">Monsters: '+(mobsOn?'ON':'OFF')+'</button><button class="mbtn red" id="mNew">New Game…</button></div>'+
-    '<div class="row"><button class="mbtn gray" id="mTitle">🏠 Main Menu</button></div>'+
+    '<div class="row"><button class="mbtn gray" id="mLook">🎨 My Character</button><button class="mbtn gray" id="mTitle">🏠 Main Menu</button></div>'+
     '<div style="margin-top:8px;font-size:12px;opacity:.7">Your game saves automatically on this device. Use 💾 to keep up to 3 saves, or to save a file you can name and keep anywhere.</div>';
   $('modal').style.display='flex';
-  tap($('mTitle'),toTitle);
+  tap($('mTitle'),toTitle); tap($('mLook'),ccOpen);
   tap($('mPlay'),closeMenu); tap($('mSave'),()=>openSaves(mode)); tap($('mNew'),openNewGame);
   tap($('mMobs'),()=>{ mobsOn=!mobsOn; if(!mobsOn) for(const m of mobs.slice())removeMob(m); queueSave(); openMenu(); });
 }
@@ -1473,7 +1666,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn){ gameShirt=titleShirt; hideTitle(); } clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=true; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -1576,9 +1769,6 @@ function pickFruit(f){ const {tr,sl}=f; aimFruit=null;
 
 // ================= TITLE SCREEN =================
 // A live scene up in the sky: our hero fights his way to a rocket while skeletons shoot arrows at him.
-let gameShirt=0x1f8a8a, titleShirt=0x1f8a8a; // the title screen picks a new shirt colour each time; a new game keeps it
-function randomShirt(){ const old={h:0}; new THREE.Color(titleShirt).getHSL(old); let h, k=0; do{ h=Math.random(); k++; }while(k<20&&Math.min(Math.abs(h-old.h),1-Math.abs(h-old.h))<0.12);
-  return new THREE.Color().setHSL(h,0.6+Math.random()*0.3,0.4+Math.random()*0.14).getHex(); }
 const TT=new THREE.Vector3(48,300,48); let titleOn=false, titleA=0, hadSave=false, titleK=null;
 const titleRoot=new THREE.Group(); titleRoot.position.copy(TT); titleRoot.visible=false; scene.add(titleRoot);
 function buildTitle(){ titleRoot.clear(); const g=titleRoot, grass=lm(0x5fa03a), dirt=lm(0x86603f), stone=lm(0x8a8580), dk=lm(0x5a5654);
@@ -1593,17 +1783,15 @@ function buildTitle(){ titleRoot.clear(); const g=titleRoot, grass=lm(0x5fa03a),
   for(const [x,y,z] of [[1.55,3.2,0.3],[-0.4,3.0,1.55],[-1.55,3.6,-0.5],[0.5,3.9,-1.55],[1.1,4.4,1.1]]){ const ap=box(0.28,0.28,0.28,appleM); ap.position.set(x,y,z); R.add(ap); const st=box(0.05,0.12,0.05,lm(0x5a3a1a)); st.position.set(x,y+0.18,z); R.add(st); }
   // our hero, with a diamond sword
   const hero=new THREE.Group(); g.add(hero); hero.position.set(0,0,2.5);
-  const lL=limbOn(hero,-0.125,0.72,0.24,0.72,pants,shoe), lR=limbOn(hero,0.125,0.72,0.24,0.72,pants,shoe); const bd=box(0.5,0.72,0.26,shirt); bd.position.y=1.08; hero.add(bd);
-  const aL=limbOn(hero,-0.37,1.42,0.22,0.7,shirt,skin), aR=limbOn(hero,0.37,1.42,0.22,0.7,shirt,skin);
-  const hd=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),[hairSideR,hairSideL,hairM,skin,hairM,faceM]); hd.position.y=1.67; hero.add(hd);
+  const hr=dressRig(makeRig(hero),look), lL=hr.legL, lR=hr.legR, aL=hr.armL, aR=hr.armR; // wears the player's own outfit
   const bow=weaponMesh('bow',false); bow.position.set(0,-0.62,-0.08); bow.rotation.x=-Math.PI/2; aL.add(bow); // an archer now
   // skeletons with bows, and zombies coming at him
   const skels=[]; for(const [x,y,z,tx,tz] of [[-6,2,-3,-2.5,-6.5],[-5,3,4,-7,1],[5,2,-6,6.5,-2]]){ const r=mobModel('skeleton'); r.root.position.set(x,y,z); r.bar.visible=false; g.add(r.root); r.armL.rotation.x=1.5; r.armR.rotation.x=1.5;
     const post=box(0.14,1.5,0.14,lm(0x6b4a2a)); post.position.set(tx,0.75,tz); g.add(post); const disc=discMesh(0.5); disc.position.set(tx,1.75,tz); g.add(disc); disc.lookAt(TT.x+x,TT.y+y+1.5,TT.z+z); // its own bullseye
     skels.push({r,t:0.6+Math.random()*1.5,tg:new THREE.Vector3(tx,1.75,tz),disc}); }
   const mons=[{st:'wait',t:0.3,r:null},{st:'wait',t:2.4,r:null}]; // two monsters take turns walking up with a bullseye
-  titleK={hero,lL,lR,aL,aR,skels,mons,arrows:[],shots:[],bits:[],R,t:0,aim:null,fireT:0}; }
-function updateTitle(dt){ const K=titleK; if(!K)return; K.t+=dt; titleA+=dt*0.12; const T=K.t, H=K.hero;
+  titleK={hero,hr,lL,lR,aL,aR,skels,mons,arrows:[],shots:[],bits:[],R,t:0,aim:null,fireT:0}; }
+function updateTitle(dt){ const K=titleK; if(!K)return; K.t+=dt; animRig(K.hr,dt,0); titleA+=dt*0.12; const T=K.t, H=K.hero;
   const rad=camera.aspect<1?17:12, ang=0.25+Math.sin(titleA)*0.6, cx=TT.x+Math.sin(ang)*rad, cz=TT.z+Math.cos(ang)*rad+2; camera.position.set(cx,TT.y+(camera.aspect<1?5:3.8),cz); camera.lookAt(TT.x+1,TT.y+(camera.aspect<1?3.2:2.6),TT.z-0.5); // further back on tall phone screens
   // the hero shoots the bullseye a monster is carrying; hit monsters run away and a new one comes
   const tg=K.mons.find(M=>M.st==='stand'); let face=Math.PI*0.85;
@@ -1644,17 +1832,381 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
-  titleShirt=randomShirt(); shirt.color.setHex(titleShirt);
-  if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
+  if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
   scene.background.setHex(SKY); scene.fog.color.setHex(SKY); scene.fog.near=60; scene.fog.far=150; for(const c of clouds)c.visible=false;
   const c=$('tCont'); c.style.display=hadSave?'':'none'; c.textContent='Continue: '+(MODE_NAME[mode]||'my game'); }
-function hideTitle(){ shirt.color.setHex(gameShirt); titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; }
+function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
+
+// ================= CHARACTER CREATOR =================
+// Opens from the title screen or the ☰ menu. The character stands on a little island up in the sky while you change it.
+const SW={
+  skin:['#ffe0c4','#f6cfa8','#e0b08a','#d29b6e','#b97d50','#9a6236','#7a4a26','#5a341a','#3e2412','#8fd36a','#7ab8f0','#b59ae8'],
+  eyes:['#2a4a8a','#3a7ac8','#2f8a4a','#6a4a2a','#3a2412','#7a7a8a','#8a3ac8','#c8282e','#18181c'],
+  hair:['#1a1410','#3b2a1a','#6a4222','#a0662e','#d8a850','#f2d68a','#e8e2d6','#8a8a90','#c8401e','#e85aa8','#4a8ae8','#3ac878','#8a4ae8'],
+  cloth:['#d8202a','#f07a1a','#f2c230','#3fa34d','#1f8a8a','#2f6ae0','#2f3e7a','#7a3ac8','#e85aa8','#ffffff','#9aa0a8','#2a2a30','#6b4a2a','#c8a878']};
+// each row of the creator: a style picker (opts) or a colour picker (sw); show() hides rows that don't apply
+const CC_ROWS=[
+  {tab:'body',k:'skin',l:'Skin',sw:SW.skin},{tab:'body',k:'eyes',l:'Eyes',sw:SW.eyes},
+  {tab:'body',k:'hair',l:'Hair style'},{tab:'body',k:'hairC',l:'Hair color',sw:SW.hair,show:L=>L.hair!=='bald'},
+  {tab:'clothes',k:'top',l:'Shirt',show:L=>L.bottom!=='dress'},{tab:'clothes',k:'topC',l:'Shirt color',sw:SW.cloth,show:L=>L.bottom!=='dress'},
+  {tab:'clothes',k:'bottom',l:'Pants, shorts, skirt or dress'},{tab:'clothes',k:'bottomC',l:'Color',sw:SW.cloth},
+  {tab:'clothes',k:'shoes',l:'Shoes'},{tab:'clothes',k:'shoeC',l:'Shoe color',sw:SW.cloth,show:L=>L.shoes!=='bare'},
+  {tab:'armor',k:'helm',l:'⛑️ Helmet'},{tab:'armor',k:'chest',l:'🛡️ Chestplate'},{tab:'armor',k:'legs',l:'🦵 Leg armor'},{tab:'armor',k:'boots',l:'🥾 Armor boots'},
+  {tab:'cape',k:'cape',l:'Cape'},{tab:'cape',k:'capeC',l:'Cape color',sw:SW.cloth,show:L=>L.cape!=='none'},
+  {tab:'cape',k:'sym',l:'Symbol',show:L=>L.cape==='symbol'},{tab:'cape',k:'symC',l:'Symbol color',sw:SW.cloth,show:L=>L.cape==='symbol'},
+  {tab:'extras',k:'hat',l:'🎩 Hat'},{tab:'extras',k:'hatC',l:'Hat color',sw:SW.cloth,show:L=>L.hat!=='none'},
+  {tab:'extras',k:'glasses',l:'👓 Glasses'},{tab:'extras',k:'back',l:'🎒 On your back'},{tab:'extras',k:'backC',l:'Color',sw:SW.cloth,show:L=>!['none','wings'].includes(L.back)}];
+const CC_TABS=[['body','🙂 Body'],['clothes','👕 Clothes'],['armor','🛡️ Armor'],['cape','🦸 Cape'],['extras','🎩 Extras'],['outfits','💾 Outfits']];
+let ccOn=false, ccTab='body', ccFrom='', ccSpin=0, ccIdle=0;
+const STUDIO=new THREE.Vector3(48,420,48), studio=new THREE.Group(); studio.position.copy(STUDIO); studio.visible=false; scene.add(studio);
+{ const grass=lm(0x5fa03a), dirt=lm(0x86603f); for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++){ if(Math.abs(x)+Math.abs(z)>3)continue; const g=box(1,0.3,1,grass); g.position.set(x,-0.15,z); studio.add(g); const d=box(1,0.9,1,dirt); d.position.set(x,-0.75,z); studio.add(d); } }
+const ccLight=new THREE.DirectionalLight(0xffffff,0.45); ccLight.position.set(0.3,0.6,-1); ccLight.visible=false; scene.add(ccLight); // a soft light on the face while you dress up
+const ccModel=new THREE.Group(); studio.add(ccModel); ccModel.scale.setScalar(0.94); const ccRig=makeRig(ccModel);
+const ccEl=document.createElement('div'); ccEl.id='cc';
+ccEl.innerHTML='<div id="ccDrag"></div><div id="ccHint">🎨 Make your character<span>drag to spin them around</span></div>'+
+  '<div id="ccPanel"><div id="ccTabs"></div><div id="ccBody"></div><div id="ccFoot"><button class="mbtn gray" id="ccRand">🎲 Surprise me</button><button class="mbtn" id="ccDone">✔ Done</button></div></div>';
+document.body.appendChild(ccEl);
+function saveLook(){ try{ localStorage.setItem(LOOK_KEY,JSON.stringify(look)); }catch(e){} }
+function applyLook(){ dressRig(rig,look); dressRig(ccRig,look); if(titleK)dressRig(titleK.hr,look);
+  const sleeve=look.bottom!=='dress'&&['long','hoodie','jacket'].includes(look.top); fpHandMat.color.set(sleeve?look.topC:look.skin); saveLook(); }
+function readOutfits(){ try{ const a=JSON.parse(localStorage.getItem(OUTFIT_KEY)||'[]'); return Array.isArray(a)?a.filter(o=>o&&typeof o.name==='string').map(o=>({name:o.name.slice(0,30),look:cleanLook(o.look)})):[]; }catch(e){ return []; } }
+function writeOutfits(a){ try{ localStorage.setItem(OUTFIT_KEY,JSON.stringify(a)); return true; }catch(e){ toast('Not enough space on this device to save more outfits.'); return false; } }
+function randomLook(){ const pick=a=>a[Math.floor(Math.random()*a.length)], opt=k=>pick(LOOK_OPTS[k])[0], maybe=(p,k)=>Math.random()<p?opt(k):'none';
+  const L={skin:pick(SW.skin.slice(0,Math.random()<0.85?9:12)),eyes:pick(SW.eyes),hair:opt('hair'),hairC:pick(SW.hair),top:opt('top'),topC:pick(SW.cloth),bottom:opt('bottom'),bottomC:pick(SW.cloth),
+    shoes:opt('shoes'),shoeC:pick(SW.cloth),helm:'none',chest:'none',legs:'none',boots:'none',cape:Math.random()<0.4?pick(['plain','symbol']):'none',capeC:pick(SW.cloth),sym:opt('sym'),symC:pick(SW.cloth),
+    hat:maybe(0.45,'hat'),hatC:pick(SW.cloth),glasses:maybe(0.3,'glasses'),back:maybe(0.3,'back'),backC:pick(SW.cloth)};
+  if(Math.random()<0.3){ const m=pick(ARMOR_OPTS.slice(1))[0]; for(const k of ['helm','chest','legs','boots'])if(Math.random()<0.6)L[k]=m; }
+  for(const k of ['hat','glasses','back','cape'])if(L[k]===undefined)L[k]='none'; return cleanLook(L); }
+function ccOpen(){ if(document.pointerLockElement)document.exitPointerLock(); ccFrom=titleOn?'title':'game'; paused=true; ccOn=true; $('modal').style.display='none';
+  dressRig(ccRig,look); studio.visible=true; ccLight.visible=true; titleRoot.visible=false; ccSpin=0; ccIdle=0; document.body.classList.add('cc'); ccRender(); ccFrame(); }
+function ccClose(){ ccOn=false; studio.visible=false; ccLight.visible=false; document.body.classList.remove('cc'); camera.clearViewOffset(); camera.fov=75; camera.updateProjectionMatrix();
+  if(ccFrom==='title'){ titleRoot.visible=true; showTitle(); } else { closeMenu(); } }
+function ccFrame(){ // keep the character in the part of the screen the panel doesn't cover
+  const w=window.innerWidth, h=window.innerHeight, port=h>w, pr=$('ccPanel').getBoundingClientRect();
+  if(port)camera.setViewOffset(w,h,0,pr.height/2,w,h); else camera.setViewOffset(w,h,pr.width/2,0,w,h); }
+window.addEventListener('resize',()=>{ if(ccOn)ccFrame(); });
+function ccRender(){
+  $('ccTabs').innerHTML=CC_TABS.map(([k,l])=>'<div class="cctab'+(k===ccTab?' on':'')+'" data-tab="'+k+'">'+l+'</div>').join('');
+  $('ccTabs').querySelectorAll('[data-tab]').forEach(t=>onClick(t,()=>{ ccTab=t.dataset.tab; ccRender(); $('ccBody').scrollTop=0; }));
+  let h='';
+  if(ccTab==='outfits'){ const list=readOutfits();
+    h+='<div class="ccl">Save the outfit you have on</div><div class="ccrow"><input id="ccName" maxlength="30" placeholder="Name it, like Knight or Beach day"><button class="ibtn" id="ccSave">💾 Save</button></div>';
+    h+='<div class="ccl">My outfits</div>'+(list.length?'':'<div class="fx" style="opacity:.75">Nothing saved yet. Dress up, give it a name and tap 💾 Save.</div>');
+    list.forEach((o,i)=>{ const L=o.look; h+='<div class="item"><div class="ccdots">'+[L.hairC,L.skin,L.bottom==='dress'?L.bottomC:L.topC,L.bottomC].map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="tx"><b>'+esc(o.name)+'</b></div><div class="sbtns"><button class="ibtn eq" data-wear="'+i+'">Wear</button><button class="ibtn gray" data-del="'+i+'">✕</button></div></div>'; });
+    h+='<div class="row"><button class="mbtn gray" id="ccReset">↺ Back to the starting look</button></div>';
+  } else for(const r of CC_ROWS){ if(r.tab!==ccTab||(r.show&&!r.show(look)))continue; h+='<div class="ccl">'+r.l+'</div>';
+    if(r.sw){ const cur=look[r.k], custom=!r.sw.includes(cur); h+='<div class="sws">'+r.sw.map(c=>'<div class="sw'+(c===cur?' on':'')+'" data-k="'+r.k+'" data-v="'+c+'" style="background:'+c+'"></div>').join('')+
+      '<label class="swc'+(custom?' on':'')+'" title="Pick any color"'+(custom?' style="background:'+cur+'"':'')+'><input type="color" data-ck="'+r.k+'" value="'+cur+'"></label></div>'; }
+    else h+='<div class="chips">'+LOOK_OPTS[r.k].map(([v,l])=>'<div class="chip'+(look[r.k]===v?' on':'')+'" data-k="'+r.k+'" data-v="'+v+'">'+l+'</div>').join('')+'</div>'; }
+  const B2=$('ccBody'); B2.innerHTML=h;
+  B2.querySelectorAll('[data-v]').forEach(el=>onClick(el,()=>{ look=cleanLook(Object.assign({},look,{[el.dataset.k]:el.dataset.v})); applyLook(); ccRender(); }));
+  B2.querySelectorAll('[data-ck]').forEach(el=>{ el.addEventListener('input',()=>{ look=cleanLook(Object.assign({},look,{[el.dataset.ck]:el.value})); applyLook(); el.parentNode.style.background=el.value; });
+    el.addEventListener('change',ccRender); });
+  if(ccTab==='outfits'){ const list=readOutfits();
+    onClick($('ccSave'),()=>{ const n=$('ccName').value.trim()||('Outfit '+(list.length+1)); const i=list.findIndex(o=>o.name.toLowerCase()===n.toLowerCase());
+      if(i>=0){ if(!confirm('Replace your outfit "'+n+'"?'))return; list[i].look=look; } else { if(list.length>=20){ toast('You can keep up to 20 outfits. Delete one first.'); return; } list.push({name:n,look}); }
+      if(writeOutfits(list)){ toast('💾 Saved "'+n+'"'); ccRender(); } });
+    B2.querySelectorAll('[data-wear]').forEach(el=>onClick(el,()=>{ look=cleanLook(list[+el.dataset.wear].look); applyLook(); toast('👕 Wearing "'+list[+el.dataset.wear].name+'"'); }));
+    B2.querySelectorAll('[data-del]').forEach(el=>onClick(el,()=>{ const o=list[+el.dataset.del]; if(!confirm('Delete the outfit "'+o.name+'"?'))return; list.splice(+el.dataset.del,1); writeOutfits(list); ccRender(); }));
+    onClick($('ccReset'),()=>{ if(!confirm('Go back to the starting look? Your saved outfits stay saved.'))return; look=cleanLook(LOOK0); applyLook(); ccRender(); }); } }
+onClick($('ccRand'),()=>{ look=randomLook(); applyLook(); ccRender(); sfx('coin'); });
+onClick($('ccDone'),ccClose);
+{ let dragX=null; const d=$('ccDrag');
+  d.addEventListener('pointerdown',e=>{ dragX=e.clientX; ccIdle=0; try{ d.setPointerCapture(e.pointerId); }catch(er){} });
+  d.addEventListener('pointermove',e=>{ if(dragX===null)return; ccSpin+=(e.clientX-dragX)*0.012; dragX=e.clientX; ccIdle=0; });
+  const up=()=>{ dragX=null; }; d.addEventListener('pointerup',up); d.addEventListener('pointercancel',up); }
+function updateCC(dt){ ccIdle+=dt; if(ccIdle>2.5)ccSpin+=dt*0.5; ccModel.rotation.y=ccSpin;
+  const R=ccRig, t=R.t; R.armL.rotation.x=Math.sin(t*1.6)*0.06; R.armR.rotation.x=-Math.sin(t*1.6)*0.06; R.armL.rotation.z=-0.06; R.armR.rotation.z=0.06; R.head.rotation.y=Math.sin(t*0.7)*0.25;
+  animRig(R,dt,0.6);
+  const port=camera.aspect<1, d=port?4.4:3.6; camera.fov=port?62:55; camera.updateProjectionMatrix();
+  camera.position.set(STUDIO.x,STUDIO.y+1.25,STUDIO.z-d); camera.lookAt(STUDIO.x,STUDIO.y+0.95,STUDIO.z); }
+
+// ================= MUSIC =================
+// A song for Demo Mode (and, if you like, while you play): a built-in tune, your own MP3, or a YouTube link.
+const MUS_KEY='blockstar_music';
+let mus={src:'tune',tune:'adventure',yt:'',start:0,vol:80,game:false};
+try{ const m=JSON.parse(localStorage.getItem(MUS_KEY)||'null'); if(m&&typeof m==='object'){ if(['none','tune','mp3','yt'].includes(m.src))mus.src=m.src; if(typeof m.tune==='string')mus.tune=m.tune; if(typeof m.yt==='string')mus.yt=m.yt.slice(0,300);
+  mus.start=Math.max(0,+m.start||0); mus.vol=Math.max(0,Math.min(100,m.vol===undefined?80:+m.vol||0)); mus.game=!!m.game; } }catch(e){}
+function saveMus(){ try{ localStorage.setItem(MUS_KEY,JSON.stringify(mus)); }catch(e){} }
+const MAJ=[0,2,4,5,7,9,11], MIN=[0,2,3,5,7,8,10];
+const TUNES={
+  adventure:{name:'⚔️ Adventure',bpm:116,root:48,minor:false,prog:[0,5,3,4],lead:'square',drums:2,seed:11},
+  chill:{name:'🌴 Block Chill',bpm:92,root:50,minor:false,prog:[0,3,1,4],lead:'triangle',drums:1,seed:9},
+  sky:{name:'☁️ Sky High',bpm:132,root:53,minor:false,prog:[0,4,5,3],lead:'triangle',drums:2,seed:21},
+  night:{name:'🌙 Night Cave',bpm:78,root:45,minor:true,prog:[0,5,2,6],lead:'sine',drums:0,seed:5},
+  boss:{name:'🔥 Boss Battle',bpm:150,root:45,minor:true,prog:[0,5,6,4],lead:'sawtooth',drums:3,seed:4}};
+if(!TUNES[mus.tune])mus.tune='adventure';
+const midiF=m=>440*Math.pow(2,(m-69)/12);
+function deg(T,d,oct){ const sc=T.minor?MIN:MAJ, o=Math.floor(d/7); return T.root+sc[((d%7)+7)%7]+12*(o+(oct||0)); }
+function tuneScore(T){ // 8 bars of 16 steps: phrases A A B A, with the strong beats snapped onto the chord
+  const r=mulberry32(T.seed); const phrase=()=>{ const rows=[]; let cur=9; for(let b=0;b<2;b++){ const row=new Array(16).fill(null);
+    for(let s=0;s<16;s+=s%4===0&&r()<0.3?1:2){ if(r()<(s%4===0?0.9:0.55)){ cur+=Math.round((r()-0.5)*4.4); cur=Math.max(6,Math.min(15,cur)); row[s]=cur; } } rows.push(row); } return rows; };
+  const A=phrase(), B=phrase(), rows=[A[0],A[1],A[0],B[1],B[0],B[1],A[0],A[1]].map(x=>x.slice());
+  rows.forEach((row,i)=>{ const c=T.prog[i%4]; for(let s=0;s<16;s+=4){ let m=row[s]; if(m==null)continue; for(let k=0;k<4;k++){ const q=(((m-k-c)%7)+7)%7, q2=(((m+k-c)%7)+7)%7; if(q===0||q===2||q===4){ m-=k; break; } if(q2===0||q2===2||q2===4){ m+=k; break; } } row[s]=m; } });
+  rows[7].fill(null,8); rows[7][8]=7+T.prog[0]; return rows; }
+let musGain=null, tuneSt=null;
+function musOut(){ audioInit(); if(!AC)return null; if(!musGain){ musGain=AC.createGain(); musGain.connect(AC.destination); } return musGain; }
+function mn(type,f,t,dur,vol){ const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.012); g.gain.exponentialRampToValueAtTime(vol*0.55,t+dur*0.4); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(musGain); o.start(t); o.stop(t+dur+0.05); }
+function mdrum(k,t){ if(k==='kick'){ const o=AC.createOscillator(), g=AC.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(42,t+0.13); g.gain.setValueAtTime(0.55,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.18); o.connect(g); g.connect(musGain); o.start(t); o.stop(t+0.2); return; }
+  const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=noiseBuf; f.type='highpass'; f.frequency.value=k==='hat'?7000:1400;
+  const v=k==='hat'?0.07:0.22, d=k==='hat'?0.04:0.14; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); s.connect(f); f.connect(g); g.connect(musGain); s.start(t); s.stop(t+d+0.02); }
+function tuneStep(st,i,t,sp){ const T=st.T, bar=Math.floor(i/16)%8, s=i%16, c=T.prog[bar%4];
+  if(s===0||s===8||(T.drums>=2&&(s===6||s===14)))mn('triangle',midiF(deg(T,c,-1)),t,sp*(s%8===0?3.6:1.7),0.32);
+  if(T.drums===0){ if(s===0)for(const k of [0,2,4])mn('sine',midiF(deg(T,c+k,0)),t,sp*15,0.05); }
+  else if(s%2===0)mn('triangle',midiF(deg(T,c+[0,2,4,2][(s/2)%4],1)),t,sp*1.8,0.045);
+  const m=st.score[bar][s]; if(m!=null){ let len=1; while(s+len<16&&st.score[bar][s+len]==null&&len<4)len++;
+    mn(T.lead,midiF(deg(T,m,0)),t,sp*len*0.92,T.lead==='square'||T.lead==='sawtooth'?0.06:0.13); }
+  if(T.drums){ if(s%8===0||(T.drums>=3&&s%8===6))mdrum('kick',t); if(T.drums>=2&&s%8===4)mdrum('snare',t); if(s%2===0)mdrum('hat',t); } }
+function tunePlay(k){ if(!musOut())return false; tuneStop(); const T=TUNES[k]||TUNES.adventure, st={T,score:tuneScore(T),i:0,next:AC.currentTime+0.1};
+  st.timer=setInterval(()=>{ const sp=60/T.bpm/4; while(st.next<AC.currentTime+0.3){ tuneStep(st,st.i,st.next,sp); st.i++; st.next+=sp; } },40); tuneSt=st; return true; }
+function tuneStop(){ if(tuneSt){ clearInterval(tuneSt.timer); tuneSt=null; } }
+// your own song: kept in this browser's storage so it is still there next time
+let mp3Url='', mp3Name=''; try{ mp3Name=localStorage.getItem('blockstar_mp3_name')||''; }catch(e){}
+const songEl=new Audio(); songEl.loop=true; songEl.preload='auto';
+function idb(){ return new Promise((res,rej)=>{ try{ const q=indexedDB.open('blockstar',1); q.onupgradeneeded=()=>q.result.createObjectStore('files'); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }catch(e){ rej(e); } }); }
+async function idbDo(mode,fn){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('files',mode), st=tx.objectStore('files'), q=fn(st); tx.oncomplete=()=>res(q&&q.result); tx.onerror=()=>rej(tx.error); }); }
+async function mp3Load(){ if(mp3Url)return true; try{ const r=await idbDo('readonly',st=>st.get('song')); if(r&&r.blob){ mp3Url=URL.createObjectURL(r.blob); mp3Name=r.name||mp3Name; songEl.src=mp3Url; return true; } }catch(e){} return false; }
+const mp3In=document.createElement('input'); mp3In.type='file'; mp3In.accept='audio/*,.mp3,.m4a,.wav,.ogg'; mp3In.style.display='none'; document.body.appendChild(mp3In);
+let mp3Done=null;
+mp3In.addEventListener('change',()=>{ const f=mp3In.files&&mp3In.files[0]; mp3In.value=''; if(!f)return; if(mp3Url)URL.revokeObjectURL(mp3Url);
+  mp3Url=URL.createObjectURL(f); mp3Name=f.name; songEl.src=mp3Url; try{ localStorage.setItem('blockstar_mp3_name',f.name); }catch(e){}
+  idbDo('readwrite',st=>st.put({blob:f,name:f.name},'song')).then(()=>toast('🎵 Saved "'+f.name+'" in this browser')).catch(()=>toast('🎵 Using "'+f.name+'" (it can\'t be kept after you close the page)'));
+  if(mp3Done)mp3Done(); });
+function mp3Play(){ if(!mp3Url){ toast('🎵 Pick an MP3 file in 🎬 Demo Mode first.'); return false; } try{ songEl.volume=mus.vol/100; songEl.muted=false;
+  const go=()=>{ try{ songEl.currentTime=Math.min(mus.start,(songEl.duration||1e9)-1); }catch(e){} }; if(songEl.readyState>=1)go(); else songEl.addEventListener('loadedmetadata',go,{once:true});
+  const p=songEl.play(); if(p&&p.catch)p.catch(()=>toast('🎵 The browser blocked the music. Tap the screen once, then it will play.')); }catch(e){ return false; } return true; }
+function mp3Stop(){ try{ songEl.pause(); }catch(e){} }
+// YouTube: their rules say the player has to stay visible, so it sits small in a corner while it plays
+function ytParse(link){ const m=String(link||'').trim().match(/(?:youtu\.be\/|[?&]v=|\/(?:embed|shorts|live|v)\/)([\w-]{11})/)||String(link||'').trim().match(/^([\w-]{11})$/); if(!m)return null;
+  let start=0; const t=String(link).match(/[?&#](?:t|start)=([\dhms]+)/); if(t){ const q=t[1]; if(/^\d+$/.test(q))start=+q; else { const h=q.match(/(\d+)h/), mi=q.match(/(\d+)m/), se=q.match(/(\d+)s/); start=(h?+h[1]*3600:0)+(mi?+mi[1]*60:0)+(se?+se[1]:0); } }
+  return {id:m[1],start}; }
+const ytBox=document.createElement('div'); ytBox.id='ytBox'; ytBox.className='ui dm'; ytBox.innerHTML='<div id="ytPlayer"></div>'; document.body.appendChild(ytBox);
+let ytP=null, ytReady=false, ytLoading=false, ytWant=null, ytOn=false, ytVid='';
+function ytApi(cb){ if(window.YT&&YT.Player){ cb(); return; } const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=()=>{ if(prev)try{ prev(); }catch(e){} cb(); };
+  if(!ytLoading){ ytLoading=true; const sc=document.createElement('script'); sc.src='https://www.youtube.com/iframe_api'; sc.onerror=()=>{ ytLoading=false; toast('🎵 Couldn\'t reach YouTube. Check the internet connection.'); }; document.head.appendChild(sc); } }
+function ytApply(){ if(!ytReady||!ytWant)return; const w=ytWant; ytWant=null; try{ ytP.setVolume(mus.vol); ytP.unMute();
+  if(ytVid!==w.id){ ytVid=w.id; ytP.loadVideoById({videoId:w.id,startSeconds:w.start}); } else { ytP.seekTo(w.start,true); ytP.playVideo(); } }catch(e){} }
+function ytPlay(){ const v=ytParse(mus.yt); if(!v){ toast('🎵 That YouTube link doesn\'t look right. Paste the whole link from the Share button.'); return false; }
+  if(!v.start&&mus.start)v.start=mus.start; ytOn=true; ytBox.classList.add('on'); ytWant=v; if(ytP){ ytApply(); return true; }
+  ytApi(()=>{ if(ytP)return; ytP=new YT.Player('ytPlayer',{width:200,height:113,playerVars:{playsinline:1,rel:0,modestbranding:1,controls:1},
+    events:{onReady:()=>{ ytReady=true; ytApply(); },
+      onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED&&ytOn){ const v2=ytParse(mus.yt); if(v2){ ytP.seekTo(v2.start||mus.start||0,true); ytP.playVideo(); } } }, // the song ended before the demo did: play it again
+      onError:e=>{ toast(e.data===101||e.data===150||e.data===153?'🎵 That video\'s owner doesn\'t let it play on other sites. Try another link.':'🎵 YouTube couldn\'t play that video ('+e.data+').'); }}}); });
+  return true; }
+function ytStop(){ if(!ytOn)return; ytOn=false; ytBox.classList.remove('on'); try{ if(ytReady)ytP.pauseVideo(); }catch(e){} }
+let musOnNow='', musFadeT=0;
+function musicPlay(){ musicStop(); const s=mus.src; let ok=false; musFadeT=0;
+  if(s==='tune'){ ok=tunePlay(mus.tune); if(ok)musGain.gain.value=mus.vol/100*0.55; }
+  else if(s==='mp3')ok=mp3Play(); else if(s==='yt')ok=ytPlay();
+  musOnNow=ok?s:''; return ok; }
+function musicStop(){ tuneStop(); mp3Stop(); ytStop(); musOnNow=''; musFadeT=0; }
+function musicFade(){ if(musOnNow)musFadeT=2; }
+function musicTick(dt){ if(musFadeT<=0)return; musFadeT-=dt; const f=Math.max(0,musFadeT/2);
+  try{ if(musOnNow==='tune'&&musGain)musGain.gain.value=mus.vol/100*0.55*f; else if(musOnNow==='mp3')songEl.volume=mus.vol/100*f; else if(musOnNow==='yt'&&ytReady)ytP.setVolume(mus.vol*f); }catch(e){}
+  if(musFadeT<=0)musicStop(); }
+
+// ================= DEMO MODE =================
+// Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
+// the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
+const DEMO_KEY='blockstar_demo';
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',fight:'⚔️ Fight monsters',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
+const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
+const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
+const DM_CAM={cine:'🎥 Cinematic',follow:'🏃 Follow',orbit:'🔄 Circle around',wide:'🏞️ Wide shot',first:'👁 First person'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:''};
+const DEMO0={scenes:[
+  {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
+  {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
+  {act:'build',time:'sunset',wx:'clear',land:'normal',cam:'cine',secs:22,cap:'Building a house'},
+  {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
+  {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
+  {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
+function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM]])if(T[o[k]])s[k]=o[k];
+  s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
+function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
+  return {scenes:c.scenes.slice(0,30).map(cleanScene),loop:c.loop!==false,fades:c.fades!==false,world:c.world==='mine'?'mine':'demo',seed:Math.abs(+c.seed|0)||2026}; }
+let dmCfg=readDemo();
+function saveDemo(){ try{ localStorage.setItem(DEMO_KEY,JSON.stringify(dmCfg)); }catch(e){} }
+const dmEl=document.createElement('div'); dmEl.innerHTML='<div id="dmFade" class="ui dm"></div><div id="dmCap" class="ui dm"></div><button id="dmStop" class="ui dm">■ Stop demo</button>';
+while(dmEl.firstChild)document.body.appendChild(dmEl.firstChild);
+let demo=null, demoUp=false, demoDown=false, dmPokeT=null;
+function dmTime(n){ return Math.floor(n/60)+':'+String(n%60).padStart(2,'0'); }
+function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; mp3Load().then(ok=>{ if(ok&&$('dmMp3'))$('dmMp3').textContent=mp3Name; });
+  const sel=(T,k,i,v)=>'<select data-i="'+i+'" data-k="'+k+'">'+Object.entries(T).map(([a,b])=>'<option value="'+a+'"'+(a===v?' selected':'')+'>'+b+'</option>').join('')+'</select>';
+  const tot=dmCfg.scenes.reduce((a,s)=>a+s.secs,0);
+  let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
+    '<h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
+  dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
+    '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>'+
+    '<label>Land'+sel(DM_LAND,'land',i,s.land)+'</label><label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
+  h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
+  if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
+  if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
+  if(mus.src==='yt')h+='<div class="fld">YouTube link<input id="dmYt" value="'+esc(mus.yt)+'" placeholder="https://youtu.be/..."></div><div class="fx">Needs the internet. The video shows small in a corner while it plays (YouTube requires that). Some videos don\'t allow playing on other sites.</div>';
+  if(mus.src==='mp3'||mus.src==='yt')h+='<div class="dmRow"><label class="dmInline">Start the song at<input type="number" min="0" id="dmStart" value="'+mus.start+'"> seconds</label></div>';
+  if(mus.src!=='none')h+='<div class="dmRow"><label class="dmInline">Volume<input type="range" min="0" max="100" id="dmVol" value="'+mus.vol+'"></label></div>';
+  h+='<h3>⚙️ Options</h3>'+
+    '<div class="item"><div class="ic">🌍</div><div class="tx"><b>World</b><div class="fx">'+(dmCfg.world==='demo'?'A demo world that is the same every time, so you can record it again.':'Your saved Survival world. Nothing the demo does is saved.')+'</div></div><button class="ibtn eq" id="dmWorld">'+(dmCfg.world==='demo'?'Demo world':'My world')+'</button></div>'+
+    (dmCfg.world==='demo'?'<div class="dmRow"><label class="dmInline">Demo world number<input type="number" min="1" id="dmSeed" value="'+dmCfg.seed+'"></label><span class="fx">Change it for a different landscape.</span></div>':'')+
+    '<div class="item"><div class="ic">🔁</div><div class="tx"><b>Repeat</b><div class="fx">'+(dmCfg.loop?'Start again from scene 1 after the last scene.':'Go back to the main menu after the last scene.')+'</div></div><button class="ibtn'+(dmCfg.loop?'':' gray')+'" id="dmLoop">'+(dmCfg.loop?'ON':'OFF')+'</button></div>'+
+    '<div class="item"><div class="ic">🌗</div><div class="tx"><b>Fade between scenes</b><div class="fx">A quick fade to black between scenes.</div></div><button class="ibtn'+(dmCfg.fades?'':' gray')+'" id="dmFades">'+(dmCfg.fades?'ON':'OFF')+'</button></div>'+
+    '<div class="row"><button class="mbtn gold" id="dmPlay">▶ Play demo</button><button class="mbtn gray" id="dmBack">Back</button></div>';
+  $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
+  const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
+  box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; saveDemo(); const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
+  box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
+  box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
+  box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
+  onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
+  onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
+  box2.querySelectorAll('[data-src]').forEach(el=>onClick(el,()=>{ musicStop(); mus.src=el.dataset.src; saveMus(); redraw(); }));
+  if($('dmTune'))$('dmTune').addEventListener('change',()=>{ mus.tune=$('dmTune').value; saveMus(); if(musOnNow)musicPlay(); });
+  if($('dmPrev'))onClick($('dmPrev'),()=>{ if(musOnNow)musicStop(); else musicPlay(); $('dmPrev').textContent=musOnNow?'■ Stop':'▶ Listen'; });
+  if($('dmPick'))onClick($('dmPick'),()=>{ mp3Done=()=>{ mp3Done=null; redraw(); }; mp3In.click(); });
+  if($('dmYt'))$('dmYt').addEventListener('input',()=>{ mus.yt=$('dmYt').value.trim().slice(0,300); saveMus(); });
+  if($('dmStart'))$('dmStart').addEventListener('input',()=>{ mus.start=Math.max(0,+$('dmStart').value||0); saveMus(); });
+  if($('dmVol'))$('dmVol').addEventListener('input',()=>{ mus.vol=+$('dmVol').value; saveMus(); try{ if(musGain)musGain.gain.value=mus.vol/100*0.55; songEl.volume=mus.vol/100; if(ytReady)ytP.setVolume(mus.vol); }catch(e){} });
+  onClick($('dmWorld'),()=>{ dmCfg.world=dmCfg.world==='demo'?'mine':'demo'; saveDemo(); redraw(); });
+  if($('dmSeed'))$('dmSeed').addEventListener('input',()=>{ dmCfg.seed=Math.abs(+$('dmSeed').value|0)||1; saveDemo(); });
+  onClick($('dmLoop'),()=>{ dmCfg.loop=!dmCfg.loop; saveDemo(); redraw(); }); onClick($('dmFades'),()=>{ dmCfg.fades=!dmCfg.fades; saveDemo(); redraw(); });
+  onClick($('dmPlay'),()=>{ if(!dmCfg.scenes.length){ toast('Add a scene first.'); return; } if(mus.src==='yt'&&!ytParse(mus.yt)){ toast('🎵 Paste a YouTube link first, or pick another song.'); return; } demoStart(); });
+  onClick($('dmBack'),()=>{ musicStop(); $('mbox').classList.remove('wide'); $('modal').style.display='none'; if(!titleOn)closeMenu(); }); }
+// --- time of day, weather and land: only the demo changes them, and it puts them back afterwards
+const hemi=scene.children.find(o=>o.isHemisphereLight);
+const DM_SKY={day:{bg:SKY,blk:[1,1,1],hemi:0.85,sun:0.55,sunC:0xffffff,cloud:0xffffff},
+  sunset:{bg:0xf2a272,blk:[1,0.8,0.68],hemi:0.75,sun:0.6,sunC:0xffb070,cloud:0xffc8a0},
+  night:{bg:0x0a1028,blk:[0.3,0.34,0.52],hemi:0.32,sun:0.12,sunC:0x8aa0ff,cloud:0x3a4260}};
+let stars=null;
+function setTime(k){ const S=DM_SKY[k]||DM_SKY.day; scene.background.setHex(S.bg); scene.fog.color.setHex(S.bg); blockMat.color.setRGB(...S.blk); waterMat.color.setRGB(...S.blk); fireMat.color.setRGB(1,1,1);
+  hemi.intensity=S.hemi; sun.intensity=S.sun; sun.color.setHex(S.sunC); cMat.color.setHex(S.cloud);
+  if(k==='night'&&!stars){ const n=900, pos=new Float32Array(n*3); for(let i=0;i<n;i++){ const u=Math.random()*2-1, a=Math.random()*Math.PI*2, r=Math.sqrt(1-u*u); pos[i*3]=r*Math.cos(a)*150; pos[i*3+1]=Math.abs(u)*150+8; pos[i*3+2]=r*Math.sin(a)*150; }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); stars=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.4,sizeAttenuation:false,fog:false})); scene.add(stars); }
+  if(stars)stars.visible=k==='night'; }
+const landOrig={};
+function setLand(k){ const ids=['grass_top','grass_side','leaves'];
+  for(const n of ids){ const id=TILES[n], ox=(id%COLS)*T, oy=Math.floor(id/COLS)*T; if(!landOrig[n])landOrig[n]=actx.getImageData(ox,oy,T,T); actx.putImageData(landOrig[n],ox,oy); }
+  if(k==='snowy'){ paint(TILES.grass_top,101,(x,y,r)=>nz([238,242,248],r,.06)); const fr=[]; for(let x=0;x<T;x++)fr.push(3+((x*7)%3));
+    paint(TILES.grass_side,103,(x,y,r)=>y<fr[x]?nz([240,244,250],r,.05):dirtPx(r)); paint(TILES.leaves,124,(x,y,r)=>{ const q=r(); if(q<.16)return [0,0,0,0]; return q>.55?nz([236,240,246],r,.05):nz([58,110,60],r,.3); }); }
+  else if(k==='desert'){ paint(TILES.grass_top,104,(x,y,r)=>{ let c=nz([226,200,140],r,.1); if(r()<.05)c=[196,166,110]; return c; });
+    paint(TILES.grass_side,105,(x,y,r)=>nz(y<4?[222,196,136]:[200,160,100],r,.1)); paint(TILES.leaves,125,(x,y,r)=>{ const q=r(); if(q<.3)return [0,0,0,0]; return nz([150,140,70],r,.3); }); }
+  tex.needsUpdate=true; }
+let wxPts=null, wxKind='clear';
+function setWeather(k){ wxKind=k; if(wxPts){ scene.remove(wxPts); wxPts.geometry.dispose(); wxPts.material.dispose(); wxPts=null; } if(k==='clear')return;
+  const n=k==='rain'?2200:1500, pos=new Float32Array(n*3*(k==='rain'?2:1)), sp=new Float32Array(n);
+  for(let i=0;i<n;i++){ sp[i]=k==='rain'?22+Math.random()*8:1.2+Math.random()*1.3; const x=(Math.random()-.5)*50, y=Math.random()*34, z=(Math.random()-.5)*50;
+    if(k==='rain'){ pos.set([x,y,z,x,y-0.7,z],i*6); } else pos.set([x,y,z],i*3); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.userData.sp=sp;
+  wxPts=k==='rain'?new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xaac4e8,transparent:true,opacity:0.55})):new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:0.16}));
+  wxPts.frustumCulled=false; scene.add(wxPts); }
+function updateWeather(dt){ if(!wxPts)return; const P=wxPts.geometry.attributes.position, a=P.array, sp=wxPts.geometry.userData.sp, rain=wxKind==='rain', c=camera.position, t=performance.now()/1000;
+  const n=sp.length, st=rain?6:3;
+  for(let i=0;i<n;i++){ const o=i*st; let x=a[o], y=a[o+1]-sp[i]*dt, z=a[o+2]; if(!rain){ x+=Math.sin(t*0.8+i)*0.4*dt; z+=Math.cos(t*0.6+i*1.3)*0.4*dt; }
+    if(y<c.y-14){ y+=34; } if(y>c.y+20)y-=34; if(x<c.x-25)x+=50; if(x>c.x+25)x-=50; if(z<c.z-25)z+=50; if(z>c.z+25)z-=50;
+    a[o]=x; a[o+1]=y; a[o+2]=z; if(rain){ a[o+3]=x; a[o+4]=y-0.7; a[o+5]=z; } }
+  P.needsUpdate=true; }
+// --- run the show
+function demoStart(){ if(document.pointerLockElement)document.exitPointerLock(); saveNow(); musicStop();
+  $('mbox').classList.remove('wide'); $('modal').style.display='none';
+  demo={i:-1,t:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
+  if(titleOn)hideTitle(); mobsOn=false; clearEntities();
+  if(dmCfg.world==='demo'){ placed.clear(); generate(dmCfg.seed); rebuildAll(); }
+  applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
+  if(mus.src!=='none')musicPlay(); demoNext(true); }
+function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; demoUp=demoDown=false; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
+  document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
+  for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
+function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
+  demo.i=i; demo.t=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
+  if(dmCfg.fades){ $('dmFade').style.transition='none'; $('dmFade').style.opacity=1; requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=0; })); } }
+function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&B[b].solid&&b!==ID.leaves&&b!==ID.log)return y+1; } return SPAWN_H; }
+function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
+function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
+  if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
+function demoSetup(sc){ setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+  for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
+  hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
+  weapon=sc.act==='fight'?'diamond':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'?1:3;
+  const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
+  if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
+  else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
+  else if(sc.act==='flint'){ pl.p=landSpot(MX,MZ+12,3); yaw=0; }
+  else if(sc.act==='fight'){ pl.p=landSpot(CX,CZ+4,4); yaw=Math.random()*6.28; P.kills=0; P.spawnT=0.2; }
+  else if(sc.act==='fly'){ setFly(true,false); P.a=Math.random()*6.28; pl.p=[CX+Math.cos(P.a)*28,36,CZ+Math.sin(P.a)*28]; yaw=0; }
+  else if(sc.act==='side'){ setFly(true,false); pl.p=[-13,SEA+8,10+Math.random()*30]; yaw=-Math.PI/2; pitch=-0.12; P.dir=1; }
+  else if(sc.act==='build'){ const bx=CX+2, bz=CZ+2, y0=solidY(CX+4,CZ+4); P.plan=housePlan(bx,y0,bz); P.k=0; P.bt=0; P.y0=y0; P.bx=bx; P.bz=bz;
+    for(let x=bx-3;x<=bx+6;x++)for(let z=bz-2;z<=bz+6;z++){ for(let y=y0;y<y0+9;y++)if(get(x,y,z))setBlock(x,y,z,0); for(let y=y0-3;y<y0;y++){ const b=get(x,y,z); if(!b||!B[b].solid)setBlock(x,y,z,y===y0-1?ID.grass:ID.dirt); } }
+    P.step=Math.max(0.05,Math.min(0.3,(sc.secs-4)/P.plan.length)); pl.p=[bx-2.5,y0,bz+2.5]; yaw=-Math.PI/2; }
+  if(sc.act!=='side')unstick(pl); } // outside the world edge counts as solid, so the side view skips this
+function housePlan(bx,y0,bz){ const L=[], S=4; // a 5×5 cabin: log corners, plank walls, glass windows, a door on the side facing you and a pyramid roof
+  for(let y=0;y<3;y++)for(let x=0;x<=S;x++)for(let z=0;z<=S;z++){ const edgeX=x===0||x===S, edgeZ=z===0||z===S; if(!edgeX&&!edgeZ)continue;
+    if(x===0&&z===2&&y<2)continue; let id=ID.planks; if(edgeX&&edgeZ)id=ID.log; else if(y===1&&(x===2||z===2))id=ID.glass; L.push([bx+x,y0+y,bz+z,id]); }
+  L.sort((a,b)=>a[1]-b[1]); for(let l=0;l<3;l++)for(let x=l;x<=S-l;x++)for(let z=l;z<=S-l;z++)L.push([bx+x,y0+3+l,bz+z,ID.roof]); return L; }
+function turnTo(tx,tz,dt,rate){ let d=Math.atan2(-(tx-pl.p[0]),-(tz-pl.p[2]))-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=Math.max(-rate*dt,Math.min(rate*dt,d)); return d; }
+function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p[0],tz-pl.p[2]); P.t+=dt; P.up=Math.max(0,P.up-dt); demoUp=P.up>0;
+  if(P.t>1.0){ if(P.d-dist<0.35){ P.up=0.4; P.n++; if(P.n>=2){ P.side=0.9; P.dir2=Math.random()<0.5?-1:1; P.n=0; } } else P.n=0; P.t=0; P.d=dist; } // stuck on something? hop, then step aside
+  P.side=Math.max(0,P.side-dt); if(P.side>0)return {ix:P.dir2,iz:-0.4};
+  return {ix:0,iz:dist<0.6?0:Math.abs(d)<1.0?-1:-0.2}; }
+function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
+  pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
+  if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
+  if(sc.act==='explore'){ P.wpT-=dt; if(!P.wp||P.wpT<=0||Math.hypot(P.wp[0]-pl.p[0],P.wp[2]-pl.p[2])<1.2){ P.wp=landSpot(pl.p[0],pl.p[2],14); P.wpT=9; }
+    const m=walkTo(P.wp[0],P.wp[2],dt,P); P.jT-=dt; if(P.jT<=0){ P.jT=4+Math.random()*4; demoUp=true; } return m; }
+  if(sc.act==='flint'){ const tx=merchant.p[0], tz=merchant.p[2]+2.2; if(Math.hypot(tx-pl.p[0],tz-pl.p[2])>0.8)return walkTo(tx,tz,dt,P); turnTo(merchant.p[0],merchant.p[2],dt,3); P.wave=true; return {ix:0,iz:0}; }
+  if(sc.act==='fight'){ P.spawnT-=dt; const foes=mobs.filter(m=>!m.t.flyer);
+    if(foes.length<3&&P.spawnT<=0){ P.spawnT=1.2; const types=['zombie','skeleton','slime','spider','golem','orc','mummy','wolf','troll']; const s=landSpot(pl.p[0],pl.p[2],10);
+      if(Math.hypot(s[0]-pl.p[0],s[2]-pl.p[2])>5)spawnMob(types[Math.floor(Math.random()*types.length)],s[0],s[1],s[2]); }
+    let foe=null, fd=1e9; for(const m of foes){ const q=Math.hypot(m.p[0]-pl.p[0],m.p[2]-pl.p[2]); if(q<fd){ fd=q; foe=m; } }
+    if(!foe)return {ix:0,iz:0};
+    if(fd<2.4){ turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
+    return walkTo(foe.p[0],foe.p[2],dt,P); }
+  if(sc.act==='fly'){ P.a+=dt*0.22; const r=28, tx=CX+Math.cos(P.a+0.5)*r, tz=CZ+Math.sin(P.a+0.5)*r; turnTo(tx,tz,dt,2); const alt=34+Math.sin(demo.t*0.3)*4;
+    demoUp=pl.p[1]<alt-0.6; demoDown=pl.p[1]>alt+0.6; return {ix:0,iz:-1}; }
+  if(sc.act==='side'){ if(pl.p[2]>D-12)P.dir=-1; if(pl.p[2]<12)P.dir=1; yaw+=((-Math.PI/2)-yaw)*Math.min(1,dt*2); return {ix:P.dir*0.3,iz:0}; }
+  if(sc.act==='build'){ const tx=P.bx-2.5, tz=P.bz+2.5; if(Math.hypot(tx-pl.p[0],tz-pl.p[2])>0.8&&P.k===0)return walkTo(tx,tz,dt,P);
+    if(P.k<P.plan.length){ const b=P.plan[P.k]; turnTo(b[0]+0.5,b[2]+0.5,dt,5); pitch=Math.atan2(b[1]+0.5-(pl.p[1]+EYE),Math.max(1,Math.hypot(b[0]+0.5-pl.p[0],b[2]+0.5-pl.p[2])));
+      P.bt-=dt; while(P.bt<=0&&P.k<P.plan.length){ const q=P.plan[P.k++]; setBlock(q[0],q[1],q[2],q[3]); P.bt+=P.step; swingT=0.25; sfx('place'); burst(q[0],q[1],q[2],B[q[3]].avg,3); } return {ix:0,iz:0}; }
+    turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
+  return {ix:0,iz:0}; }
+// the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
+function demoCamera(dt){ const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
+  const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
+  if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
+  const C=demo.cam; let d=base-C.a; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; C.a+=d*Math.min(1,dt*(k==='follow'?2.5:0.9));
+  const far=sc.act==='fly'||sc.act==='side'?1.6:1; let a, dist, hgt;
+  if(k==='follow'){ a=C.a; dist=4.4; hgt=1.3; }
+  else if(k==='orbit'){ C.orb+=dt*0.35; a=C.orb; dist=6.5; hgt=2.2; }
+  else if(k==='wide'){ a=C.a+0.7+Math.sin(T*0.05)*0.5; dist=17; hgt=9; }
+  else { a=C.a+Math.sin(T*0.22)*0.8; dist=5.4; hgt=1.5+Math.sin(T*0.15+1)*0.7; }
+  dist*=far; const want=new THREE.Vector3(tgt.x+Math.sin(a)*dist,tgt.y+hgt,tgt.z+Math.cos(a)*dist);
+  let tt=1; for(let t=0.08;t<=1.0001;t+=0.04){ tmp.lerpVectors(tgt,want,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0.15,t-0.08); break; } }
+  want.lerpVectors(tgt,want,tt);
+  if(!C.p)C.p=want.clone(); else C.p.lerp(want,Math.min(1,dt*(k==='follow'?4:2.2))); C.l.lerp(tgt,Math.min(1,dt*5));
+  camera.position.copy(C.p); camera.lookAt(C.l); }
+function demoTick(dt){ if(!demo||!demo.sc)return; demo.t+=dt; const sc=demo.sc, P=demo.pil;
+  invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
+  if(P.wave||sc.act==='showcase'){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
+  hl.visible=false; updateWeather(dt);
+  const cap=$('dmCap'), showCap=!!sc.cap&&demo.t>0.8&&demo.t<sc.secs-1.2; if(cap.textContent!==sc.cap)cap.textContent=sc.cap; cap.classList.toggle('on',showCap);
+  if(dmCfg.fades&&demo.t>sc.secs-0.7&&!demo.out){ demo.out=true; $('dmFade').style.transition='opacity .7s'; $('dmFade').style.opacity=1; }
+  if(!dmCfg.loop&&demo.i===dmCfg.scenes.length-1&&demo.t>sc.secs-2.2)musicFade();
+  if(demo.t>=sc.secs){ demo.out=false; demoNext(); } }
+function demoPoke(){ const b=$('dmStop'); b.classList.add('on'); clearTimeout(dmPokeT); dmPokeT=setTimeout(()=>b.classList.remove('on'),2500); }
+tap($('dmStop'),demoStop);
+document.addEventListener('mousemove',e=>{ if(demo&&(Math.abs(e.movementX)+Math.abs(e.movementY)>2))demoPoke(); });
 
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
@@ -1662,12 +2214,13 @@ let waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  if(demo){ const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; } // the demo autopilot drives
   const m=Math.hypot(ix,iz); if(m>1){ix/=m;iz/=m;}
   const fwd=-iz, str=ix, s=Math.sin(yaw), c=Math.cos(yaw);
   const env=envAt(pl);
   const speed=(fly?(outsideDist()>0?13:9):4.6)*(webbed?Math.max(0.55,1-webbed*0.12):1)*(env.water&&!fly?0.6:1)*(env.lava?0.4:1);
   pl.v[0]=(-s*fwd+c*str)*speed; pl.v[2]=(-c*fwd-s*str)*speed;
-  const up=upHeld||keys.Space, down=downHeld||keys.ShiftLeft||keys.ShiftRight;
+  const up=demo?demoUp:upHeld||keys.Space, down=demo?demoDown:downHeld||keys.ShiftLeft||keys.ShiftRight;
   if(fly){ pl.v[1]=((up?1:0)-(down?1:0))*7; }
   else if(env.water||env.lava){ pl.v[1]-=9*dt; if(up)pl.v[1]=3.4; if(pl.v[1]<-3.5)pl.v[1]=-3.5; }
   else { pl.v[1]-=28*dt; if(up&&pl.onGround)pl.v[1]=8.6; if(pl.v[1]<-30)pl.v[1]=-30; }
@@ -1856,6 +2409,7 @@ function update(dt){
   armL.rotation.x=-Math.sin(walkPhase)*amp*0.8; armR.rotation.x=Math.sin(walkPhase)*amp*0.8;
   swingT=Math.max(0,swingT-dt); const sw=swingT>0?Math.sin((1-swingT/0.25)*Math.PI):0;
   if(sw>0) armR.rotation.x=1.4*sw+0.3;
+  armR.rotation.z=0; animRig(rig,dt,hs);
   head.rotation.x=pitch*0.7; model.visible=camMode===3;
   fpHolder.visible=camMode===1; fpHolder.rotation.x=-sw*1.1; fpHolder.position.y=-0.36+Math.sin(walkPhase)*0.015*amp;
 
@@ -1868,6 +2422,7 @@ function update(dt){
     let tt=1; for(let t=0.05;t<=1.0001;t+=0.05){ tmp.lerpVectors(eye,want,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0,t-0.1); break; } }
     camera.position.lerpVectors(eye,want,tt); camDist=camera.position.distanceTo(eye); }
   armL.rotation.z=0;
+  if(demo&&demo.sc&&demo.sc.cam!=='first')demoCamera(dt);
   camera.updateMatrixWorld();
 
   // merchant faces player
@@ -1886,6 +2441,7 @@ function update(dt){
   // particles, clouds
   for(const p of parts){ if(p.life<=0)continue; p.life-=dt; p.v.y-=15*dt; p.m.position.addScaledVector(p.v,dt); if(p.life<=0)p.m.visible=false; }
   for(const c2 of clouds){ c2.position.x+=dt*0.8; if(c2.position.x>140)c2.position.x=-40; }
+  if(demo)demoTick(dt);
 }
 function animate(dt){
   animT+=dt; if(animT>0.14){ animT=0; animPh+=0.35;
@@ -1895,7 +2451,7 @@ function animate(dt){
 let last=performance.now();
 function frame(now){
   const dt=Math.min(0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
-  update(dt); if(titleOn)updateTitle(dt); animate(dt);
+  update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
   let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
   renderer.render(scene,camera); requestAnimationFrame(frame);
 }
@@ -1905,12 +2461,13 @@ graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
 { const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'); const r=mulberry32(7);
   for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){ const v=0.8+r()*0.35; x.fillStyle='rgb('+cl(120*v)+','+cl(88*v)+','+cl(55*v)+')'; x.fillRect(xx,yy,1,1); }
   mudTex=new THREE.CanvasTexture(c); mudTex.magFilter=mudTex.minFilter=THREE.NearestFilter; mudTex.generateMipmaps=false; }
+applyLook();
 hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get target(){return target;},get cam(){return camera;},get shirtHex(){return shirt.color.getHex();},get gameShirt(){return gameShirt;},get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
-  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get dead(){return dead;}}; // a handle for testing in the browser console
+window.__bs={get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
 </script>
