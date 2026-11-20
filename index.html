@@ -334,6 +334,10 @@ for(let f=0;f<4;f++){ const img=fctx.createImageData(16,16); const rr=mulberry32
 makeTile('portal_frame',91,(x,y,r)=>{ const v=Math.sin(x*0.7+y*0.5)+Math.sin(y*0.9-x*0.4); return v>1.3?[200,120,255]:nz([34,22,48],r,.3); });
 makeTile('portal_city',92,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; const bh=[9,5,11,7,12,6,10,4][x>>1]; if(y>=16-bh&&y<15)return (x%2===0&&y%2===0)?[255,230,120]:[70,80,110]; return nz([255,190,70],r,.15); });
 makeTile('portal_survival',93,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(x>=7&&x<=8&&y>=9&&y<15)return [110,74,40]; if(Math.hypot(x-7.5,y-6.5)<4.5)return nz([60,170,60],r,.25); return nz([140,210,255],r,.1); });
+makeTile('portal_newyork',94,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if((x>=6&&x<=9&&y>=5&&y<14)||(x>=10&&x<=11&&y>=2&&y<7)||(x>=7&&x<=8&&y>=3&&y<5))return nz([90,190,150],r,.15); if(x>=10&&x<=11&&y<2+1)return [255,200,60]; return nz([120,180,240],r,.1); });
+makeTile('portal_sanfran',95,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([40,90,160],r,.15); if(x===4||x===11||y===9||(y>=3&&y<9&&Math.abs(y-3-Math.abs(x-7.5)*0.9)<0.8))return [220,70,40]; return nz([200,210,220],r,.1); });
+makeTile('portal_orlando',96,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=8&&x>=3&&x<=12)return (y===8&&x%2)?[120,170,255]:nz([245,245,250],r,.05); if((x>=6&&x<=9&&y>=3&&y<8)||((x===3||x===12)&&y>=5))return y<5?[60,110,230]:[245,245,250]; return nz([110,190,255],r,.1); });
+makeTile('door',97,(x,y,r)=>{ if(x<2||x>13)return nz([90,60,34],r,.1); if(x===11&&y>=7&&y<=8)return [230,200,80]; return nz((y%5===0)?[110,74,40]:[150,104,60],r,.1); });
 const CAT={ Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
@@ -394,8 +398,12 @@ addBlock('wetsand','Wet Sand (Aquifer)','Soil','Sand soaked with groundwater. Wa
 // portals (always added last, so the numbers of older blocks never change)
 addBlock('pframe','Portal Frame','Portal','The frame around a portal doorway. Break it to close the portal.',{t:'portal_frame'},{hidden:true});
 addBlock('pgate','Portal','Portal','A doorway to another world.',{t:'portal_frame'},{hidden:true,solid:false,opaque:false,target:false,invisible:true});
-addBlock('portal_city','City Portal','Portal','Place it and a doorway to the City opens. Walk through to go there. Each world is its own map, so worlds stay fast however many you visit.',{t:'portal_city'},{portal:'city'});
+addBlock('portal_city','Seattle Portal','Portal','Place it and a doorway to Seattle opens. Walk through to go there. Each world is its own map, so worlds stay fast however many you visit.',{t:'portal_city'},{portal:'city'});
 addBlock('portal_survival','Survival Portal','Portal','Place it and a doorway to your Survival world opens. Walk through to go there.',{t:'portal_survival'},{portal:'survival'});
+addBlock('door','Door','Building','A front door. Soon some of these will lead inside.',{t:'door'},{hidden:true,flammable:true});
+addBlock('portal_newyork','New York Portal','Portal','Place it and a doorway to New York opens. Walk through to go there.',{t:'portal_newyork'},{portal:'newyork'});
+addBlock('portal_sanfran','San Francisco Portal','Portal','Place it and a doorway to San Francisco opens. Walk through to go there.',{t:'portal_sanfran'},{portal:'sanfran'});
+addBlock('portal_orlando','Orlando Portal','Portal','Place it and a doorway to Orlando opens. Walk through to go there.',{t:'portal_orlando'},{portal:'orlando'});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -687,7 +695,7 @@ function rleEncode(a){ const out=[]; let v=a[0],n=1; for(let i=1;i<a.length;i++)
 function rleDecode(r){ const a=new Uint8Array(N); let p=0; for(let i=0;i<r.length;i+=2){ a.fill(r[i],p,p+r[i+1]); p+=r[i+1]; } return a; }
 let saveTimer=null;
 const KIT_KEY='blockstar_kit'; // survival coins + weapons carry over between survival worlds
-function snapshot(){ return {v:3,mode,place,dims:[W,H,D],seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
+function snapshot(){ return {v:3,mode,place,cityVer:CITY_VER,dims:[W,H,D],seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
   apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])}))}; }
 function saveNow(){ if(demo)return; try{ localStorage.setItem(PLACES[place].key,JSON.stringify(snapshot())); localStorage.setItem(PLACE_KEY,place); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1000); }
@@ -707,7 +715,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals();
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife();
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1695,7 +1703,7 @@ function clearEntities(){ if(titleOn)hideTitle(); clearApples(); for(const m of 
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
-  viewF=-1; updateViewRange(0); }
+  viewF=-1; updateViewRange(0); applyPlaceSky(); }
 function loadKit(){ try{ const k=JSON.parse(localStorage.getItem(KIT_KEY)||'null'); if(k){ const o=cleanOwned(k.owned); return {coins:k.coins|0,owned:o,weapon:o.includes(k.weapon)?k.weapon:'fists',arrows:cleanArrows(k.arrows)}; } }catch(e){}
   return {coins:0,owned:['fists'],weapon:'fists',arrows:cleanArrows()}; }
 function startSurvival(){
@@ -1703,7 +1711,7 @@ function startSurvival(){
   clearEntities(); mode='survival'; place='survival'; placed.clear(); setWorldSize(96,48,96); generate((Math.random()*1e9)|0);
   coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); arrowSel='normal'; hp=MAXHP; webbed=0; dead=false; burning=0;
   pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=0; pitch=-0.2; setFly(false,false); unstick(pl);
-  applyMode(); rebuildAll(); refreshPortals(); refreshWeapon(); updateHUD(); updateWebHUD(); saveNow();
+  clearCityLife(); applyMode(); rebuildAll(); refreshPortals(); refreshWeapon(); updateHUD(); updateWebHUD(); saveNow();
 }
 // ================= SPECIAL ARROWS =================
 const ARROWS={explode:{name:'Exploding arrow',icon:'💥',price:25,qty:1,desc:'Blows up where it lands, hurting every monster nearby and blasting a hole.'},
@@ -1857,16 +1865,16 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
   scene.background.setHex(SKY); scene.fog.color.setHex(SKY); scene.fog.near=60; scene.fog.far=150; for(const c of clouds)c.visible=false;
-  const c=$('tCont'); c.style.display=hadSave?'':'none'; c.textContent='Continue: '+(MODE_NAME[mode]||'my game'); }
+  const c=$('tCont'); c.style.display=hadSave?'':'none'; c.textContent='Continue: '+(place!=='survival'&&PLACES[place]?PLACES[place].icon+' '+PLACES[place].name:(MODE_NAME[mode]||'my game')); }
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
@@ -2321,7 +2329,7 @@ function updateWeather(dt){ if(!wxPts)return; const P=wxPts.geometry.attributes.
 function demoStart(){ if(document.pointerLockElement)document.exitPointerLock(); saveNow(); musicStop();
   $('mbox').classList.remove('wide'); $('modal').style.display='none';
   demo={i:-1,t:0,st:0,user:false,idle:0,lookT:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
-  if(titleOn)hideTitle(); mobsOn=false; clearEntities();
+  if(titleOn)hideTitle(); mobsOn=false; clearEntities(); clearCityLife();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
@@ -2827,21 +2835,168 @@ function crowdBallShot(K){ return K.balls[0].p; }
 // Every place is its own world with its own size and its own save. Place a portal block and a glowing doorway opens;
 // walk through it and the next world loads while you swirl through. Only one world is ever loaded, so worlds stay fast.
 const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dims:[96,48,96],col:[95,208,104]},
-  city:{name:'City',icon:'🏙️',key:'blockstar_city',dims:[160,48,160],col:[255,194,58]}};
-const DESTS=['survival','city']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+  city:{name:'Seattle',icon:'☔',key:'blockstar_city',dims:[160,48,160],col:[90,200,190],city:'seattle',blurb:'The Space Needle, Pike Place Market, evergreen trees and plenty of rain.'},
+  newyork:{name:'New York',icon:'🗽',key:'blockstar_city_ny',dims:[160,48,160],col:[120,220,160],city:'newyork',blurb:'Skyscrapers, the Empire State Building, Central Park, and the Statue of Liberty out in the harbor.'},
+  sanfran:{name:'San Francisco',icon:'🌉',key:'blockstar_city_sf',dims:[160,48,160],col:[255,110,70],city:'sanfran',blurb:'Steep hills, foggy skies, the Painted Ladies, the Transamerica Pyramid and the Golden Gate Bridge.'},
+  orlando:{name:'Orlando',icon:'🏰',key:'blockstar_city_orl',dims:[160,48,160],col:[90,150,255],city:'orlando',blurb:'Sunshine, palm trees, a lake and a theme-park castle.'}};
+const CITY_PLACES=['city','newyork','sanfran','orlando'];
+const DESTS=['survival','city','newyork','sanfran','orlando']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
-function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; applySnapshot(s); return true; }catch(e){ return false; } }
-// --- the City, for now: flat land and a grid of roads with sidewalks. Buildings, people and cars come next
-const CITY_G=8, CITY_GRID=32;
-function cityRoad(v,c){ const d=((v-c+CITY_GRID/2)%CITY_GRID+CITY_GRID)%CITY_GRID-CITY_GRID/2; return Math.abs(d); } // distance from the middle of the nearest road
-function generateCity(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null; placed.clear();
-  const G=CITY_G;
-  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const rx=cityRoad(x+0.5,CX), rz=cityRoad(z+0.5,CZ), road=rx<=3.5||rz<=3.5, walk=!road&&(rx<=5.5||rz<=5.5);
-    for(let y=0;y<G;y++)world[idx(x,y,z)]=y===0?ID.basalt:y<G-3?ID.limestone:y<G-1?ID.dirt:ID.grass;
+function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
+// --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
+// water and each city's famous sights. The road grid lines up with the middle of the map (CX, CZ).
+const CITY_G=8, CITY_GRID=32, CITY_VER=2;
+const CITY_STYLES={
+  seattle:{walls:['brick','concrete','limestone','window'],trims:['concrete','steel','slate'],roofs:['concrete','slate'],h:[6,26],glass:0.25,park:0.12,tree:'pine',
+    wx:'rain',bg:0x9fb2c2,fog:[30,110],water:{x0:0,x1:11}},
+  newyork:{walls:['brick','limestone','sandstone','window','steel'],trims:['limestone','steel','concrete'],roofs:['concrete','slate'],h:[12,38],glass:0.35,park:0.05,tree:'round',
+    wx:'clear',bg:0x8fc0ec,fog:[45,140],water:{z0:140,z1:160}},
+  sanfran:{walls:['paint_white','concrete','limestone','sandstone','brick'],trims:['concrete','limestone'],roofs:['roof','concrete'],h:[5,18],glass:0.15,park:0.12,tree:'round',hills:true,
+    wx:'clear',bg:0xb4c2cc,fog:[22,95],fogC:0xc8d0d6,water:{z0:0,z1:21}},
+  orlando:{walls:['paint_white','paint_yellow','quartz','sandstone','paint_blue'],trims:['paint_white','quartz','sandstone'],roofs:['roof','concrete'],h:[4,12],glass:0.1,park:0.2,tree:'palm',
+    wx:'clear',bg:0x6ec0ff,fog:[55,170]}};
+function cityKey(){ return PLACES[place]&&PLACES[place].city; }
+function cityRoad(v,c){ const d=((v-c+CITY_GRID/2)%CITY_GRID+CITY_GRID)%CITY_GRID-CITY_GRID/2; return Math.abs(d); } // how far from the middle of the nearest road
+function cityWet(S,x,z){ const w=S.water; return !!w&&((w.x1!==undefined&&x>=w.x0&&x<w.x1)||(w.z1!==undefined&&z>=w.z0&&z<w.z1)); }
+function cityGround(S,x,z){ if(!S.hills)return CITY_G; return CITY_G+Math.max(0,Math.round(2.6*(Math.sin(x*0.05+1)+Math.cos(z*0.043))+2.4)); } // San Francisco's hills: where you stand
+function roadLines(c,n){ const a=[]; for(let v=c%CITY_GRID;v<n;v+=CITY_GRID)a.push(v); return a; } // the middle of each road
+function generateCity(s){ const ck=cityKey()||'seattle', S=CITY_STYLES[ck], rnd=mulberry32(s);
+  seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null; placed.clear();
+  const P=(x,y,z,id)=>{ if(x>=0&&y>0&&z>=0&&x<W&&y<H&&z<D)world[idx(x,y,z)]=typeof id==='string'?ID[id]:id; }, pick=a=>a[Math.floor(rnd()*a.length)];
+  // ground, water, roads and sidewalks
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const g=cityGround(S,x,z), wet=cityWet(S,x,z);
+    if(wet){ for(let y=0;y<CITY_G;y++)world[idx(x,y,z)]=y===0?ID.basalt:y<3?ID.limestone:y<4?ID.sand:ID.water; continue; }
+    for(let y=0;y<g;y++)world[idx(x,y,z)]=y===0?ID.basalt:y<g-3?ID.limestone:y<g-1?ID.dirt:ID.grass;
+    const rx=cityRoad(x+0.5,CX), rz=cityRoad(z+0.5,CZ), road=rx<=3.5||rz<=3.5, walk=!road&&(rx<=5.5||rz<=5.5);
     let top=ID.grass; if(walk)top=ID.concrete;
-    if(road){ top=ID.asphalt; const cross=rx<=3.5&&rz<=3.5, along=rx<=3.5?z:x, mid=rx<=3.5?rx:rz; if(!cross&&mid<0.6&&((along>>1)&1))top=ID.paint_yellow; } // dashed yellow middle line
-    world[idx(x,G-1,z)]=top; } }
-function spawnInPlace(){ pl.p=[CX+5.5,CITY_G,CZ+5.5]; }
+    if(road){ top=ID.asphalt; const cross=rx<=3.5&&rz<=3.5, along=rx<=3.5?z:x, mid=rx<=3.5?rx:rz, across=rx<=3.5?rz:rx, wid=rx<=3.5?x:z;
+      if(!cross&&across>3.5&&across<6.5){ if(wid&1)top=ID.paint_white; } // zebra crossing next to each corner
+      else if(!cross&&mid<0.6&&((along>>1)&1))top=ID.paint_yellow; } // dashed middle line
+    world[idx(x,g-1,z)]=top; }
+  // the blocks between the roads
+  const xs=roadLines(CX,W), zs=roadLines(CZ,D), LM=CITY_LANDMARKS[ck]||{};
+  for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+6, x1=xs[i+1]-6, z0=zs[j]+6, z1=zs[j+1]-6, cx=(x0+x1)>>1, cz=(z0+z1)>>1;
+    if(cityWet(S,cx,cz)||cityWet(S,x0,z0)||cityWet(S,x1,z1))continue;
+    const lm=LM[i+','+j]; if(lm){ lm({P,x0,x1,z0,z1,cx,cz,g:cityGround(S,cx,cz),S,rnd,pick,ck}); continue; }
+    if(rnd()<S.park){ cityPark({P,x0,x1,z0,z1,S,rnd,pick}); continue; }
+    const split=rnd(); const parts=split<0.3?[[x0,z0,x1,z1]]:split<0.6?[[x0,z0,cx-1,z1],[cx+1,z0,x1,z1]]:[[x0,z0,cx-1,cz-1],[cx+1,z0,x1,cz-1],[x0,cz+1,cx-1,z1],[cx+1,cz+1,x1,z1]];
+    for(const [a,b,c,d] of parts)cityBuilding({P,x0:a,z0:b,x1:c,z1:d,S,rnd,pick,lot:[x0,z0,x1,z1]}); }
+  // trees along the edges of the map beyond the last roads
+  for(let k=0;k<80;k++){ const x=2+Math.floor(rnd()*(W-4)), z=2+Math.floor(rnd()*(D-4)); if(cityWet(S,x,z))continue; const rx=cityRoad(x+0.5,CX), rz=cityRoad(z+0.5,CZ);
+    if(rx<7||rz<7)continue; const inLot=x>xs[0]&&x<xs[xs.length-1]&&z>zs[0]&&z<zs[zs.length-1]; if(inLot)continue; cityTree(P,x,cityGround(S,x,z),z,S.tree,rnd); } }
+function cityTree(P,x,g,z,kind,rnd){
+  if(kind==='palm'){ const h=6+Math.floor(rnd()*3); for(let y=0;y<h;y++)P(x,g+y,z,ID.log); const t=g+h;
+    P(x,t,z,ID.leaves); for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ for(let k=1;k<=3;k++)P(x+dx*k,t-(k===3?1:0),z+dz*k,ID.leaves); } return; }
+  if(kind==='pine'){ const h=5+Math.floor(rnd()*3); for(let y=0;y<h;y++)P(x,g+y,z,ID.log);
+    for(let y=2;y<=h+1;y++){ const r=y>=h?0:y>=h-2?1:2; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++)if(Math.abs(dx)+Math.abs(dz)<=r+(r>1?0:1)&&(dx||dz||y>=h))P(x+dx,g+y,z+dz,ID.leaves); } return; }
+  const h=4+Math.floor(rnd()*2); for(let y=0;y<h;y++)P(x,g+y,z,ID.log); const t=g+h-1;
+  for(let dy=-2;dy<=1;dy++){ const r=dy>=0?1:2; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){ if(Math.abs(dx)===r&&Math.abs(dz)===r&&(dy===1||rnd()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,t+dy,z+dz,ID.leaves); } } }
+function cityPark(o){ const {P,x0,x1,z0,z1,S,rnd}=o;
+  for(let x=x0;x<=x1;x++){ const z=(z0+z1)>>1; P(x,cityGround(S,x,z)-1,z,ID.gravel||ID.sand); } // a path across the middle
+  for(let k=0;k<6;k++){ const x=x0+2+Math.floor(rnd()*(x1-x0-3)), z=z0+2+Math.floor(rnd()*(z1-z0-3)); if(Math.abs(z-((z0+z1)>>1))<2)continue; cityTree(P,x,cityGround(S,x,z),z,S.tree,rnd); } }
+// a building: walls with rows of windows, a stripe at each floor, a flat or pointed roof, and a door facing the street
+function cityBuilding(o){ const {P,S,rnd,pick}=o; let {x0,z0,x1,z1}=o; const inset=rnd()<0.4?1:0; x0+=inset; z0+=inset; x1-=inset; z1-=inset; if(x1-x0<3||z1-z0<3)return;
+  let g=1e9; for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)g=Math.min(g,cityGround(S,x,z)); // sit on the lowest ground, and fill under the rest
+  const wall=ID[pick(S.walls)], trim=ID[pick(S.trims)], roof=ID[pick(S.roofs)], glassy=rnd()<S.glass||wall===ID.window;
+  let h=Math.round(S.h[0]+Math.pow(rnd(),1.6)*(S.h[1]-S.h[0])); h=Math.min(h,H-g-3);
+  const tiers=h>22?[[0,Math.round(h*0.6),0],[Math.round(h*0.6),Math.round(h*0.85),2],[Math.round(h*0.85),h,4]]:[[0,h,0]]; // tall towers step in as they go up
+  for(const [ya,yb,ins] of tiers){ const a=x0+ins, b=x1-ins, c=z0+ins, d=z1-ins; if(b-a<2||d-c<2)break;
+    for(let y=ya;y<yb;y++)for(let x=a;x<=b;x++)for(let z=c;z<=d;z++){ const edgeX=x===a||x===b, edgeZ=z===c||z===d; if(!edgeX&&!edgeZ)continue;
+      const along=edgeX?z-c:x-a, f=y%4; let id;
+      if((edgeX&&edgeZ)||f===0)id=trim; else if(glassy)id=ID.window; else id=(f===1||f===2)&&along%3!==0?ID.window:wall;
+      P(x,g+y,z,id); }
+    for(let x=a;x<=b;x++)for(let z=c;z<=d;z++)P(x,g+yb,z,roof); }
+  for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)for(let y=cityGround(S,x,z)-1;y>=g-1;y--)if(world[idx(x,y,z)]!==ID.basalt)P(x,y,z,y===g-1?ID.concrete:ID.limestone);
+  for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)for(let y=g;y<cityGround(S,x,z);y++)P(x,y,z,0); // dig into the hill so the ground floor is clear
+  if(S.roofs.includes('roof')&&h<14&&roof===ID.roof){ for(let k=1;k<=Math.min(x1-x0,z1-z0)/2;k++)for(let x=x0+k;x<=x1-k;x++)for(let z=z0+k;z<=z1-k;z++)P(x,g+h+k,z,ID.roof); } // a pointed roof on small houses
+  else if(h>8&&rnd()<0.5){ const ax=x0+1+Math.floor(rnd()*(x1-x0-2)), az=z0+1+Math.floor(rnd()*(z1-z0-2)); P(ax,g+h+1,az,ID.steel); P(ax+1,g+h+1,az,ID.steel); } // air conditioning on the roof
+  // the front door, on the side nearest a street
+  const L=o.lot, dists=[[z0-L[1],'n'],[L[3]-z1,'s'],[x0-L[0],'w'],[L[2]-x1,'e']].sort((p,q)=>p[0]-q[0]), side=dists[0][1];
+  const dx=side==='w'?x0:side==='e'?x1:(x0+x1)>>1, dz=side==='n'?z0:side==='s'?z1:(z0+z1)>>1;
+  P(dx,g,dz,ID.door); P(dx,g+1,dz,ID.door); }
+// --- the famous sights: which block they go in (i,j counted from the top left) and how to build them
+function lmKit(o,ox,oz){ const g=o.g, put=(x,y,z,id)=>o.P(ox+x,g+y,oz+z,typeof id==='string'?ID[id]:id), K=twKit(put); K.use=()=>{}; return {put,K}; }
+const CITY_LANDMARKS={
+  seattle:{'1,1':o=>{ const {K}=lmKit(o,o.cx,o.cz); cityPark(o); WON.needle.build(K,()=>0); }, // the Space Needle
+    '0,2':o=>{ for(let x=o.x0;x<=o.x1;x++)for(let z=o.z0;z<=o.z1;z++){ const e=x===o.x0||x===o.x1||z===o.z0||z===o.z1; for(let y=0;y<4;y++)if(e&&!(y<3&&((x+z)%3===0)))o.P(x,o.g+y,z,ID.brick); o.P(x,o.g+4,z,ID.planks); }
+      const {put}=lmKit(o,o.cx,o.z0); for(let x=-6;x<=6;x++){ put(x,5,0,ID.paint_red); put(x,6,0,ID.paint_red); } } }, // Pike Place Market, with its big red sign
+  newyork:{'2,1':o=>{ const {put}=lmKit(o,o.cx,o.cz); // the Empire State Building
+      const tiers=[[0,10,8],[10,22,6],[22,30,4],[30,34,2]]; for(const [a,b,r] of tiers)for(let y=a;y<b;y++)for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++){ if(Math.abs(x)!==r&&Math.abs(z)!==r)continue; put(x,y,z,y%4===0||(Math.abs(x)===r&&Math.abs(z)===r)?ID.limestone:(x+z)%2?ID.window:ID.limestone); }
+      for(let y=34;y<39;y++)put(0,y,0,ID.steel); },
+    '1,2':o=>{ cityPark(o); for(let x=o.cx-4;x<=o.cx+4;x++)for(let z=o.cz+3;z<=o.cz+7;z++)if(Math.hypot(x-o.cx,(z-o.cz-5)*1.6)<4.5)o.P(x,o.g-1,z,ID.water); }, // Central Park, with a pond
+    '0,3':o=>{} },
+  sanfran:{'2,1':o=>{ const {put}=lmKit(o,o.cx,o.cz); for(let y=0;y<34;y++){ const r=Math.max(0,Math.round(8*(1-y/36))); for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++){ if(Math.abs(x)!==r&&Math.abs(z)!==r&&y%5)continue; put(x,y,z,(x+y)%3===0?ID.window:ID.quartz); } } put(0,34,0,ID.steel); put(0,35,0,ID.steel); }, // the Transamerica Pyramid
+    '1,2':o=>{ const cols=['paint_blue','paint_yellow','paint_green','paint_red','paint_white']; for(let k=0;k<5;k++){ const a=o.x0+k*4, b=a+3; // the Painted Ladies
+        const S2=Object.assign({},o.S,{walls:[cols[k]],trims:['paint_white'],roofs:['roof'],h:[7,7],glass:0}); cityBuilding({P:o.P,x0:a,z0:o.z0,x1:b,z1:o.z0+7,S:S2,rnd:()=>0.7,pick:x=>x[0],lot:[o.x0,o.z0,o.x1,o.z1]}); } } },
+  orlando:{'1,1':o=>{ const {put}=lmKit(o,o.cx,o.cz), W2=ID.paint_white, BL=ID.paint_blue, GD=ID.gold; // a theme-park castle
+      for(let x=-9;x<=9;x++)for(let z=-9;z<=9;z++){ const e=Math.abs(x)===9||Math.abs(z)===9; for(let y=0;y<6;y++)if(e&&!(z===9&&Math.abs(x)<=1&&y<3))put(x,y,z,W2); if(e&&(x+z)%2===0)put(x,6,z,W2); }
+      const tower=(x,z,h,r)=>{ for(let y=0;y<h;y++)for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++)if(Math.hypot(a,b)<=r+0.3)put(x+a,y,z+b,(y%5===3&&!a)?ID.glass:W2);
+        for(let k=0;k<=r+3;k++){ const rr=r-k*r/(r+3); for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++)if(Math.hypot(a,b)<=rr+0.3)put(x+a,h+k,z+b,BL); } put(x,h+r+4,z,GD); };
+      for(const sx of[-9,9])for(const sz of[-9,9])tower(sx,sz,9,2); tower(0,0,20,4); tower(-4,4,14,2); tower(4,4,14,2); tower(0,-5,16,2); },
+    '2,2':o=>{ for(let x=o.x0+1;x<o.x1;x++)for(let z=o.z0+1;z<o.z1;z++)if(Math.hypot(x-o.cx,z-o.cz)<9)o.P(x,o.g-1,z,ID.water); for(let k=0;k<8;k++){ const a=k/8*Math.PI*2; cityTree(o.P,Math.round(o.cx+Math.cos(a)*10.5),o.g,Math.round(o.cz+Math.sin(a)*10.5),'palm',o.rnd); } } }}; // a lake ringed with palms
+// the big sights that sit out on the water
+function cityExtras(ck){ const S=CITY_STYLES[ck];
+  if(ck==='sanfran'){ const put=(x,y,z,id)=>{ const X=CX+x, Y=CITY_G+y, Z=10+z; if(inB(X,Y,Z)&&Y>0)world[idx(X,Y,Z)]=id; }; const K=twKit(put); K.use=()=>{}; WON.goldengate.build(K,()=>0); } // the Golden Gate Bridge across the bay
+  if(ck==='newyork'){ const ix=40, iz=150; for(let x=-6;x<=6;x++)for(let z=-6;z<=6;z++)if(Math.hypot(x,z)<=6.5){ for(let y=1;y<CITY_G;y++)world[idx(ix+x,y,iz+z)]=y===CITY_G-1?ID.grass:ID.limestone; } // Liberty Island
+    const g=CITY_G, put=(x,y,z,id)=>{ if(inB(ix+x,g+y,iz+z))world[idx(ix+x,g+y,iz+z)]=id; }, CU=ID.paint_green; // the Statue of Liberty
+    for(let y=0;y<7;y++)for(let x=-3;x<=3;x++)for(let z=-3;z<=3;z++)put(x,y,z,ID.granite);
+    for(let y=7;y<19;y++){ const r=y<15?2:1; for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++)put(x,y,z,CU); }
+    for(let y=19;y<22;y++)for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,y,z,CU); for(const [x,z] of [[-2,0],[2,0],[0,-2],[0,2],[0,0]])put(x,22,z,CU);
+    for(let y=15;y<24;y++)put(2,y,0,CU); put(2,24,0,ID.gold); put(2,25,0,ID.gold); for(let y=12;y<15;y++)put(-2,y,-1,CU); } }
+function citySpawn(){ pl.p=[CX+5,cityGround(CITY_STYLES[cityKey()||'seattle'],CX+5,CZ+16),CZ+16.5]; }
+// --- street life: traffic lights at every crossing, street lamps, and people walking round the blocks on the sidewalks.
+// None of this is saved: it's made fresh from the road grid whenever you arrive in a city.
+let cityK=null;
+const LIGHT_CYCLE=20; // seconds: east-west green 8, yellow 2, then north-south green 8, yellow 2
+function lightState(axis,t){ const p=((t%LIGHT_CYCLE)+LIGHT_CYCLE)%LIGHT_CYCLE, q=axis==='x'?p:(p+10)%LIGHT_CYCLE; return q<8?'g':q<10?'y':'r'; } // 'x' = traffic driving along x
+function clearCityLife(){ if(!cityK)return; scene.remove(cityK.root); cityK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); for(const p of cityK.people)undress(p.g); cityK=null; }
+function buildCityLife(){ clearCityLife(); const ck=cityKey(); if(!ck||demo)return; const S=CITY_STYLES[ck], root=new THREE.Group(); scene.add(root);
+  const K=cityK={root,people:[],lights:[],t:0,ck,S}, xs=roadLines(CX,W), zs=roadLines(CZ,D);
+  const crossings=[]; for(const x of xs)for(const z of zs)if(!cityWet(S,x,z)&&!cityWet(S,x+6,z+6)&&!cityWet(S,x-6,z-6))crossings.push([x,z]); K.crossings=crossings;
+  // traffic lights: a pole on each corner with a box of three lights facing the cars coming
+  const nL=crossings.length*4, poleM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.16,3.4,0.16),lm(0x2a2e34),nL), boxM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.42,1.15,0.32),lm(0x1a1c20),nL);
+  const bulbs={}; for(const c of ['r','y','g'])bulbs[c]=new THREE.InstancedMesh(new THREE.BoxGeometry(0.24,0.24,0.06),new THREE.MeshBasicMaterial({color:0xffffff}),nL);
+  const d=new THREE.Object3D(); let n=0;
+  for(const [x,z] of crossings){ const g=cityGround(S,x,z);
+    for(const [sx,sz,axis,face] of [[-1,-1,'z',0],[1,1,'z',Math.PI],[1,-1,'x',-Math.PI/2],[-1,1,'x',Math.PI/2]]){ const px=x+sx*4.6, pz=z+sz*4.6;
+      d.position.set(px,g+1.7,pz); d.rotation.set(0,face,0); d.updateMatrix(); poleM.setMatrixAt(n,d.matrix);
+      d.position.set(px,g+3.0,pz); d.updateMatrix(); boxM.setMatrixAt(n,d.matrix);
+      ['r','y','g'].forEach((c,k)=>{ d.position.set(px,g+3.36-k*0.36,pz); d.updateMatrix(); d.translateZ(0.17); d.updateMatrix(); bulbs[c].setMatrixAt(n,d.matrix); });
+      K.lights.push({axis,i:n}); n++; } }
+  root.add(poleM,boxM,bulbs.r,bulbs.y,bulbs.g); K.bulbs=bulbs; K.lastLight='';
+  // street lamps along the sidewalks
+  const lamps=[]; for(let i=0;i<xs.length;i++)for(const z of zs)for(let k=1;k<4;k++){ const zz=z+k*8; if(zz>=D)continue; for(const s of[-1,1]){ const x=xs[i]+s*5; if(!cityWet(S,x,zz)&&!cityWet(S,x,z))lamps.push([x,zz]); } }
+  const lampP=new THREE.InstancedMesh(new THREE.BoxGeometry(0.12,3.6,0.12),lm(0x3a3e46),lamps.length), lampH=new THREE.InstancedMesh(new THREE.BoxGeometry(0.4,0.22,0.4),new THREE.MeshBasicMaterial({color:0xfff2c0}),lamps.length);
+  lamps.forEach(([x,z],k)=>{ const g=cityGround(S,x,z); d.rotation.set(0,0,0); d.position.set(x,g+1.8,z); d.updateMatrix(); lampP.setMatrixAt(k,d.matrix); d.position.set(x,g+3.65,z); d.updateMatrix(); lampH.setMatrixAt(k,d.matrix); });
+  root.add(lampP,lampH);
+  // people: each walks round one block on the sidewalk, sometimes turning back or stopping for a chat
+  const rings=[]; for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+4.9, x1=xs[i+1]-4.9, z0=zs[j]+4.9, z1=zs[j+1]-4.9;
+    if(cityWet(S,x0,z0)||cityWet(S,x1,z1)||cityWet(S,x0,z1)||cityWet(S,x1,z0))continue; rings.push([x0,z0,x1,z1]); }
+  for(let k=0;k<20&&rings.length;k++){ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; if(L.back==='wings'||L.back==='dragon'||L.back==='jetpack')L.back='none';
+    const g=new THREE.Group(); g.scale.setScalar(0.94); root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L));
+    const ring=rings[k%rings.length], per=2*((ring[2]-ring[0])+(ring[3]-ring[1]));
+    K.people.push({g,R,ring,per,s:Math.random()*per,dir:Math.random()<0.5?1:-1,spd:1.1+Math.random()*0.6,wait:0,ph:Math.random()*6,wave:0}); } }
+function ringPos(r,s){ const w=r[2]-r[0], h=r[3]-r[1], per=2*(w+h); s=((s%per)+per)%per;
+  if(s<w)return [r[0]+s,r[1]]; s-=w; if(s<h)return [r[2],r[1]+s]; s-=h; if(s<w)return [r[2]-s,r[3]]; s-=w; return [r[0],r[3]-s]; }
+function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
+  // the lights change for everyone at once
+  const key=lightState('x',K.t)+lightState('z',K.t); if(key!==K.lastLight){ K.lastLight=key; const col={r:[0xff2a2a,0x3a0a0a],y:[0xffc020,0x3a2a08],g:[0x30ff60,0x0a3a14]}, tmpC=new THREE.Color();
+    for(const L of K.lights){ const st=lightState(L.axis,K.t); for(const c of ['r','y','g']){ tmpC.setHex(col[c][st===c?0:1]); K.bulbs[c].setColorAt(L.i,tmpC); } }
+    for(const c of ['r','y','g'])K.bulbs[c].instanceColor.needsUpdate=true; }
+  for(const p of K.people){ const [x,z]=ringPos(p.ring,p.s), dPl=Math.hypot(pl.p[0]-x,pl.p[2]-z);
+    const ahead=ringPos(p.ring,p.s+p.dir*0.9), blocked=Math.hypot(pl.p[0]-ahead[0],pl.p[2]-ahead[1])<0.9&&Math.abs(pl.p[1]-p.g.position.y)<2;
+    if(p.wait>0)p.wait-=dt; else if(!blocked){ p.s+=p.dir*p.spd*dt; if(Math.random()<dt*0.04)p.wait=1.5+Math.random()*2.5; if(Math.random()<dt*0.02)p.dir*=-1; }
+    const [nx,nz]=ringPos(p.ring,p.s), mv=p.wait<=0&&!blocked; p.g.position.set(nx,cityGround(K.S,nx,nz),nz);
+    const fw=ringPos(p.ring,p.s+p.dir*0.5); let face=Math.atan2(-(fw[0]-nx),-(fw[1]-nz));
+    p.wave=dPl<3.2&&!mv?Math.min(1,p.wave+dt*3):Math.max(0,p.wave-dt*3); if(p.wave>0)face=Math.atan2(-(pl.p[0]-nx),-(pl.p[2]-nz)); // stop and say hi
+    let df=face-p.g.rotation.y; while(df>Math.PI)df-=2*Math.PI; while(df<-Math.PI)df+=2*Math.PI; p.g.rotation.y+=df*Math.min(1,dt*8);
+    p.ph+=mv?dt*p.spd*5:0; const sw=mv?Math.sin(p.ph)*0.6:0, R=p.R; R.legL.rotation.x=sw; R.legR.rotation.x=-sw; R.armL.rotation.x=-sw*0.8; R.armR.rotation.x=sw*0.8;
+    R.armR.rotation.z=p.wave>0?2.4+Math.sin(K.t*9)*0.3:0; if(p.wave>0)R.armR.rotation.x=0; animRig(R,dt,mv?p.spd:0);
+    if(dPl<3&&!p.said&&p.wave>0.9){ p.said=true; } } }
+// each city's weather and sky
+function applyPlaceSky(){ const ck=cityKey(); if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
+  scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
+
 // --- building a doorway: a 2 wide, 3 tall opening in a frame, facing whoever placed it
 function gatewayCells(x,y,z,alongX){ const ax=alongX?1:0, az=alongX?0:1, cells=[], frame=[];
   for(let i=-1;i<=2;i++)for(let j=0;j<=3;j++){ const c=[x+i*ax,y+j,z+i*az]; (i===-1||i===2||j===3?frame:cells).push(c); } return {cells,frame}; }
@@ -2889,15 +3044,31 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     place=dest; if(!loadPlace(dest))newPlace(dest,from);
     coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=kit.hp; refreshWeapon(); updateHUD(); refreshArrowBtn(); // your coins and weapons come with you
     portalArmed=false; saveNow(); setTimeout(()=>{ warpEl.classList.remove('on'); traveling=false; },120);
-    toast(PLACES[dest].icon+' Welcome to the '+PLACES[dest].name+'!'+(dest==='city'?' It\'s still being built: roads first, then buildings, people and cars.':'')); },650); }
+    toast(PLACES[dest].icon+' Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!'); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest;
-  if(dest==='city'){ generateCity((Math.random()*1e9)|0); spawnInPlace(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
   pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=Math.PI; pitch=-0.1; setFly(false,false); unstick(pl);
   if(from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])-4; let gy=Math.floor(pl.p[1]); // the way back, 4 blocks behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); }
+
+// --- picking a city from the title screen (or the menu)
+function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
+function openCities(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true;
+  let h='<h2>🏙️ City</h2><div class="say">Pick a city to explore. Each city keeps its own save, and your Survival world stays safe. You can also travel between worlds with portal blocks.</div>';
+  for(const k of CITY_PLACES){ const P=PLACES[k], has=citySaved(k); h+='<div class="item"><div class="ic">'+P.icon+'</div><div class="tx"><b>'+P.name+'</b><div class="fx">'+P.blurb+'</div></div><div style="display:flex;gap:6px">'+
+    (has?'<button class="ibtn gray" data-cnew="'+k+'">New</button>':'')+'<button class="ibtn" data-city="'+k+'">'+(has?'Go':'Visit')+'</button></div></div>'; }
+  h+='<div class="row"><button class="mbtn gray" id="cBack">Back</button></div>';
+  $('mbox').innerHTML=h; $('modal').style.display='flex';
+  $('mbox').querySelectorAll('[data-city]').forEach(b=>onClick(b,()=>goCity(b.dataset.city,false)));
+  $('mbox').querySelectorAll('[data-cnew]').forEach(b=>onClick(b,()=>{ if(confirm('Build a brand new '+PLACES[b.dataset.cnew].name+'? Everything you built in this one will be gone.'))goCity(b.dataset.cnew,true); }));
+  tap($('cBack'),()=>{ if(titleOn)$('modal').style.display='none'; else closeMenu(); }); }
+function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{...arrows}}; if(place!==k)saveNow(); if(fresh)try{ localStorage.removeItem(PLACES[k].key); }catch(e){}
+  if(place!==k||fresh){ place=k; if(!loadPlace(k))newPlace(k,'survival'); }
+  coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=MAXHP; refreshWeapon(); updateHUD(); saveNow(); hadSave=true;
+  if(titleOn)hideTitle(); applyMode(); closeMenu(); toast(PLACES[k].icon+' Welcome to '+PLACES[k].name+'! A portal back to your Survival world is right behind you.'); }
 
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
@@ -3122,7 +3293,7 @@ function update(dt){
   const near=nearMerchant(); $('bTalk').style.display=near&&IS_TOUCH?'flex':'none';
   const pr=$('prompt'); if(near&&!IS_TOUCH){ pr.textContent='Press E to talk to Flint'; pr.style.display='block'; } else pr.style.display='none';
 
-  portalCheck(); if(portalMeshes.length)drawSwirls(dt);
+  portalCheck(); if(portalMeshes.length)drawSwirls(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
