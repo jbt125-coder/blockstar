@@ -149,6 +149,8 @@
   #ccFoot{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.1)}
   #ccFoot .mbtn{min-width:0}
   @media (orientation:portrait){ #ccPanel{left:0;right:0;top:auto;width:auto;height:56vh;border-left:none;border-top:2px solid rgba(255,255,255,.15);padding-top:0;border-radius:16px 16px 0 0} }
+  #warp{position:fixed;inset:-50%;z-index:30;pointer-events:none;opacity:0;transition:opacity .45s;background:conic-gradient(from 0deg,#ff7ae8,#7ad7ff,#ffe27a,#7aff9a,#ff7ae8);animation:warpspin 0.8s linear infinite}
+  #warp.on{opacity:1} @keyframes warpspin{to{transform:rotate(360deg)}}
   /* demo mode */
   #mbox.wide{width:min(760px,calc(100vw - 20px))}
   .dmTot{float:right;font-size:12px;color:#b8c0cf;font-weight:700}
@@ -229,8 +231,8 @@ const $ = id => document.getElementById(id);
 const rand=Math.random;
 
 // ================= WORLD =================
-const W=96, H=48, D=96, CH=16, N=W*H*D;
-const NCX=W/CH, NCZ=D/CH;
+let W=96, H=48, D=96, N=W*H*D; const CH=16; // each place sets its own size (setWorldSize)
+let NCX=W/CH, NCZ=D/CH;
 const SEA=8, SPAWN_H=11;
 let world=new Uint8Array(N), meta=new Uint8Array(N), seed=1;
 const idx=(x,y,z)=>x+z*W+y*W*D;
@@ -240,7 +242,7 @@ const inB=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<W&&y<H&&z<D;
 
 // ================= TEXTURES =================
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const T=16, COLS=16, ROWS=4;
+const T=16, COLS=16, ROWS=6;
 const atlas=document.createElement('canvas'); atlas.width=COLS*T; atlas.height=ROWS*T;
 const actx=atlas.getContext('2d');
 const TILES={}; let tileCount=0;
@@ -329,7 +331,10 @@ for(let f=0;f<4;f++){ const img=fctx.createImageData(16,16); const rr=mulberry32
   fctx.putImageData(img,0,f*16); }
 
 // ================= BLOCKS =================
-const CAT={ Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
+makeTile('portal_frame',91,(x,y,r)=>{ const v=Math.sin(x*0.7+y*0.5)+Math.sin(y*0.9-x*0.4); return v>1.3?[200,120,255]:nz([34,22,48],r,.3); });
+makeTile('portal_city',92,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; const bh=[9,5,11,7,12,6,10,4][x>>1]; if(y>=16-bh&&y<15)return (x%2===0&&y%2===0)?[255,230,120]:[70,80,110]; return nz([255,190,70],r,.15); });
+makeTile('portal_survival',93,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(x>=7&&x<=8&&y>=9&&y<15)return [110,74,40]; if(Math.hypot(x-7.5,y-6.5)<4.5)return nz([60,170,60],r,.25); return nz([140,210,255],r,.1); });
+const CAT={ Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
 function addBlock(k,name,cat,fact,tiles,props){
@@ -386,6 +391,11 @@ addBlock('server','Server Rack','Building','A dead computer server. Real data ce
 addBlock('screen','Broken Screen','Building','A flickering computer screen. Screens are made of glass, a material made from quartz sand.',{t:'screen'},{hidden:true});
 addBlock('steel','Steel','Building','Steel is iron mixed with a little carbon, which makes it much stronger.',{t:'steel'},{hidden:true});
 addBlock('wetsand','Wet Sand (Aquifer)','Soil','Sand soaked with groundwater. Water fills the tiny spaces (pores) between the grains. Sand is very permeable: water moves through it easily.',{t:'wetsand'},{hidden:true});
+// portals (always added last, so the numbers of older blocks never change)
+addBlock('pframe','Portal Frame','Portal','The frame around a portal doorway. Break it to close the portal.',{t:'portal_frame'},{hidden:true});
+addBlock('pgate','Portal','Portal','A doorway to another world.',{t:'portal_frame'},{hidden:true,solid:false,opaque:false,target:false,invisible:true});
+addBlock('portal_city','City Portal','Portal','Place it and a doorway to the City opens. Walk through to go there. Each world is its own map, so worlds stay fast however many you visit.',{t:'portal_city'},{portal:'city'});
+addBlock('portal_survival','Survival Portal','Portal','Place it and a doorway to your Survival world opens. Walk through to go there.',{t:'portal_survival'},{portal:'survival'});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -453,7 +463,7 @@ function buildChunk(cx,cz){
   const S=newBuf(), Wt=newBuf(), Fi=newBuf();
   const x0=cx*CH,z0=cz*CH;
   for(let y=0;y<H;y++)for(let z=z0;z<z0+CH;z++)for(let x=x0;x<x0+CH;x++){
-    const id=world[idx(x,y,z)]; if(!id)continue; const bl=B[id];
+    const id=world[idx(x,y,z)]; if(!id)continue; const bl=B[id]; if(bl.invisible)continue;
     if(id===ID.fire){ const b=Fi.pos.length/3; const h=1.15;
       Fi.pos.push(x,y,z, x+1,y,z+1, x,y+h,z, x+1,y+h,z+1,  x+1,y,z, x,y,z+1, x+1,y+h,z, x,y+h,z+1);
       Fi.uv.push(0,0,1,0,0,1,1,1, 0,0,1,0,0,1,1,1); Fi.ind.push(b,b+1,b+2,b+2,b+1,b+3, b+4,b+5,b+6,b+6,b+5,b+7); continue; }
@@ -482,6 +492,10 @@ function markDirty(x,z){
   const zs=[cz]; if(lz===0)zs.push(cz-1); if(lz===CH-1)zs.push(cz+1);
   for(const a of xs)for(const b of zs) if(a>=0&&b>=0&&a<NCX&&b<NCZ) dirty.add(a+b*NCX);
 }
+function setWorldSize(w,h,d){ if(w===W&&h===H&&d===D)return; W=w; H=h; D=d; N=W*H*D; NCX=W/CH; NCZ=D/CH; CX=W/2; CZ=D/2; MX=CX; MZ=CZ-6;
+  world=new Uint8Array(N); meta=new Uint8Array(N); // a new size: throw away the old world's pieces
+  for(const c of chunks)if(c){ scene.remove(c.s,c.w,c.f); c.s.geometry.dispose(); c.w.geometry.dispose(); c.f.geometry.dispose(); } chunks.length=0; dirty.clear();
+  merchant.p=[MX+0.5,SPAWN_H,MZ+0.5]; merchant.g.position.set(merchant.p[0],merchant.p[1],merchant.p[2]); }
 function rebuildAll(){ for(let cz=0;cz<NCZ;cz++)for(let cx=0;cx<NCX;cx++)buildChunk(cx,cz); dirty.clear(); }
 
 // ================= BLOCK CHANGES, FLUIDS, FIRE =================
@@ -561,7 +575,7 @@ function makeNoise(s){ const r=mulberry32(s); const P=new Float32Array(65536); f
   return (x,z)=>{ const xi=Math.floor(x),zi=Math.floor(z), xf=x-xi, zf=z-zi; const g=(a,b)=>P[((a&255)<<8)|(b&255)];
     const u=xf*xf*(3-2*xf), v=zf*zf*(3-2*zf); const a=g(xi,zi),b=g(xi+1,zi),c=g(xi,zi+1),d=g(xi+1,zi+1);
     return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; }; }
-const CX=W/2, CZ=D/2, MX=CX, MZ=CZ-6;
+let CX=W/2, CZ=D/2, MX=CX, MZ=CZ-6;
 function generate(s){
   seed=s; world=new Uint8Array(N); meta=new Uint8Array(N);
   activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
@@ -668,21 +682,21 @@ const ARROW_KEYS=['explode','fire','split','seek']; let arrows={explode:0,fire:0
 const placed=new Set(); // blocks the player built (troll rocks can smash these)
 
 // ================= SAVE =================
-const SAVE_KEY='blockstar_v2';
+let place='survival'; // which world you're in (see PLACES)
 function rleEncode(a){ const out=[]; let v=a[0],n=1; for(let i=1;i<a.length;i++){ if(a[i]===v&&n<65535)n++; else {out.push(v,n);v=a[i];n=1;} } out.push(v,n); return out; }
 function rleDecode(r){ const a=new Uint8Array(N); let p=0; for(let i=0;i<r.length;i+=2){ a.fill(r[i],p,p+r[i+1]); p+=r[i+1]; } return a; }
 let saveTimer=null;
 const KIT_KEY='blockstar_kit'; // survival coins + weapons carry over between survival worlds
-function snapshot(){ return {v:3,mode,seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
+function snapshot(){ return {v:3,mode,place,dims:[W,H,D],seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
   apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])}))}; }
-function saveNow(){ if(demo)return; try{ localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot())); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
+function saveNow(){ if(demo)return; try{ localStorage.setItem(PLACES[place].key,JSON.stringify(snapshot())); localStorage.setItem(PLACE_KEY,place); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1000); }
 function validSave(s){ return !!s&&(!s.mode||s.mode==='survival')&&(s.v===2||s.v===3)&&Array.isArray(s.w)&&Array.isArray(s.m)&&Array.isArray(s.p); }
 function cleanArrows(a){ const o={explode:0,fire:0,split:0,seek:0}; if(a&&typeof a==='object') for(const k of ARROW_KEYS)o[k]=Math.max(0,a[k]|0); return o; }
 function cleanOwned(o){ o=Array.isArray(o)?o:['fists']; o=[...new Set(o.map(w=>w==='flint'||w==='slingshot'?'boomerang':w))].filter(w=>WEAPON_IDS.includes(w)); if(!o.includes('fists'))o.unshift('fists'); return o; }
 function applySnapshot(s){
   clearEntities(); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null; placed.clear();
-  mode='survival';
+  mode='survival'; place=PLACES[s.place]?s.place:'survival'; const dm=Array.isArray(s.dims)&&s.dims.length===3?s.dims.map(v=>v|0):[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]);
   seed=s.seed; world=rleDecode(s.w); meta=rleDecode(s.m);
   pl.p=[s.p[0],s.p[1],s.p[2]]; yaw=s.p[3]; pitch=s.p[4]; pl.v=[0,0,0]; pl.kb=[0,0,0];
   if(s.sel&&B[s.sel]&&!B[s.sel].hidden)sel=s.sel; camMode=s.cam===3?3:1;
@@ -693,11 +707,11 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll();
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals();
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
-function loadCurrent(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); if(!validSave(s))return false; applySnapshot(s); return true; }catch(e){ return false; } }
+function loadCurrent(){ let k='survival'; try{ const q=localStorage.getItem(PLACE_KEY); if(PLACES[q])k=q; }catch(e){} return loadPlace(k)||(k!=='survival'&&loadPlace('survival')); } // back to wherever you were last
 document.addEventListener('visibilitychange',()=>{ if(document.hidden)saveNow(); });
 window.addEventListener('pagehide',saveNow);
 
@@ -1213,7 +1227,7 @@ function updateTarget(){
   if(WP[weapon].ranged&&!target){ const far=raycast(o,d,mreach); if(far)bt=far.t; }
   aimMob=null; let best=Math.min(bt,mreach);
   for(const m of mobs){ const t=rayBox(o,d,m); if(t!==null&&t<best){best=t;aimMob=m;} }
-  const nt=mode==='survival'?rayBox(o,d,merchant):null; aimNPC = !aimMob && nt!==null && nt<Math.min(bt,mreach+1.5);
+  const nt=mode==='survival'&&place==='survival'?rayBox(o,d,merchant):null; aimNPC = !aimMob && nt!==null && nt<Math.min(bt,mreach+1.5);
   aimFruit=null; if(!aimMob&&!aimNPC){ let fb=Math.min(bt,5+(camMode===1?0:camDist));
     for(const tr of appleTrees)for(const sl of tr.slots){ const c=sl.pos, ox=c[0]-o.x, oy=c[1]-o.y, oz=c[2]-o.z, tt=ox*d.x+oy*d.y+oz*d.z;
       if(tt<0||tt>fb)continue; const px=ox-d.x*tt, py=oy-d.y*tt, pz=oz-d.z*tt; if(px*px+py*py+pz*pz<0.36*0.36){ fb=tt; aimFruit={tr,sl}; } } }
@@ -1345,6 +1359,7 @@ function killMob(m){
 function doBreak(){
   if(!target)return;
   if(target.y===0){ toast('The bottom layer is bedrock basalt. It can\'t be broken!'); return; }
+  if(target.b===ID.pframe){ removeGateway(target.x,target.y,target.z); burst(target.x,target.y,target.z,B[ID.pframe].avg); return; }
   const b=B[target.b]; setBlock(target.x,target.y,target.z,0);
   burst(target.x,target.y,target.z,b.avg); sfx('break');
   queueSave();
@@ -1356,6 +1371,7 @@ function placeAction(){
   const x=target.x+target.face[0], y=target.y+target.face[1], z=target.z+target.face[2];
   if(!inB(x,y,z))return; const cur=get(x,y,z); if(cur&&B[cur].solid)return;
   if(B[sel].solid && x+1>pl.p[0]-pl.hw && x<pl.p[0]+pl.hw && z+1>pl.p[2]-pl.hw && z<pl.p[2]+pl.hw && y+1>pl.p[1] && y<pl.p[1]+pl.h) return;
+  if(B[sel].portal){ buildGateway(x,y,z,B[sel].portal); return; }
   if(cur===ID.fire && sel===ID.water){ setBlock(x,y,z,0); sizzle(x,y,z); }
   setBlock(x,y,z,sel,0); sfx('place');
   queueSave();
@@ -1545,7 +1561,7 @@ function updateHUD(){
   if(hp!==lastHP){ let s=''; for(let i=0;i<MAXHP;i++)s+='<span class="'+(i<hp?'h':'e')+'">♥</span>'; $('hearts').innerHTML=s; lastHP=hp; }
   if(coins!==lastCoins){ $('coins').textContent='🪙 '+coins; lastCoins=coins; }
 }
-const nearMerchant=()=>mode==='survival' && Math.hypot(pl.p[0]-merchant.p[0],pl.p[2]-merchant.p[2])<3.6 && Math.abs(pl.p[1]-merchant.p[1])<2.5;
+const nearMerchant=()=>mode==='survival' && place==='survival' && Math.hypot(pl.p[0]-merchant.p[0],pl.p[2]-merchant.p[2])<3.6 && Math.abs(pl.p[1]-merchant.p[1])<2.5;
 
 function helpHTML(){
   return '<h2>⛏ Blockstar</h2>Build with real rocks, minerals and soils. Pick a block to learn a fact about it. Fight monsters for coins and spend them at <b>Flint\'s Shop</b> (right in front of you).'+
@@ -1677,17 +1693,17 @@ function openNewGame(fromTitle){
 // ================= GAME MODES =================
 function clearEntities(){ if(titleOn)hideTitle(); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
-function applyMode(){ merchant.g.visible=true; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
+function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
   viewF=-1; updateViewRange(0); }
 function loadKit(){ try{ const k=JSON.parse(localStorage.getItem(KIT_KEY)||'null'); if(k){ const o=cleanOwned(k.owned); return {coins:k.coins|0,owned:o,weapon:o.includes(k.weapon)?k.weapon:'fists',arrows:cleanArrows(k.arrows)}; } }catch(e){}
   return {coins:0,owned:['fists'],weapon:'fists',arrows:cleanArrows()}; }
 function startSurvival(){
   const kit=mode==='survival'?{coins,owned:owned.slice(),weapon,arrows:{...arrows}}:loadKit();
-  clearEntities(); mode='survival'; placed.clear(); generate((Math.random()*1e9)|0);
+  clearEntities(); mode='survival'; place='survival'; placed.clear(); setWorldSize(96,48,96); generate((Math.random()*1e9)|0);
   coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); arrowSel='normal'; hp=MAXHP; webbed=0; dead=false; burning=0;
   pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=0; pitch=-0.2; setFly(false,false); unstick(pl);
-  applyMode(); rebuildAll(); refreshWeapon(); updateHUD(); updateWebHUD(); saveNow();
+  applyMode(); rebuildAll(); refreshPortals(); refreshWeapon(); updateHUD(); updateWebHUD(); saveNow();
 }
 // ================= SPECIAL ARROWS =================
 const ARROWS={explode:{name:'Exploding arrow',icon:'💥',price:25,qty:1,desc:'Blows up where it lands, hurting every monster nearby and blasting a hole.'},
@@ -2306,7 +2322,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
   $('mbox').classList.remove('wide'); $('modal').style.display='none';
   demo={i:-1,t:0,st:0,user:false,idle:0,lookT:0,sc:null,phase:'',fade:0,was:{mobsOn,weapon},cam:null,pil:{}}; // demo is set first so nothing it does gets saved
   if(titleOn)hideTitle(); mobsOn=false; clearEntities();
-  if(dmCfg.world==='demo'){ placed.clear(); generate(dmCfg.seed); rebuildAll(); }
+  if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
 function demoStop(){ if(!demo)return; mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); setTime('day'); setLand('normal'); setWeather('clear');
@@ -2807,6 +2823,82 @@ function crowdFunTick(K,dt,beat){
   K.mosh=Math.max(0,K.mosh-dt); }
 function crowdBallShot(K){ return K.balls[0].p; }
 
+// ================= PLACES AND PORTALS =================
+// Every place is its own world with its own size and its own save. Place a portal block and a glowing doorway opens;
+// walk through it and the next world loads while you swirl through. Only one world is ever loaded, so worlds stay fast.
+const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dims:[96,48,96],col:[95,208,104]},
+  city:{name:'City',icon:'🏙️',key:'blockstar_city',dims:[160,48,160],col:[255,194,58]}};
+const DESTS=['survival','city']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const PLACE_KEY='blockstar_place';
+function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; applySnapshot(s); return true; }catch(e){ return false; } }
+// --- the City, for now: flat land and a grid of roads with sidewalks. Buildings, people and cars come next
+const CITY_G=8, CITY_GRID=32;
+function cityRoad(v,c){ const d=((v-c+CITY_GRID/2)%CITY_GRID+CITY_GRID)%CITY_GRID-CITY_GRID/2; return Math.abs(d); } // distance from the middle of the nearest road
+function generateCity(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null; placed.clear();
+  const G=CITY_G;
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const rx=cityRoad(x+0.5,CX), rz=cityRoad(z+0.5,CZ), road=rx<=3.5||rz<=3.5, walk=!road&&(rx<=5.5||rz<=5.5);
+    for(let y=0;y<G;y++)world[idx(x,y,z)]=y===0?ID.basalt:y<G-3?ID.limestone:y<G-1?ID.dirt:ID.grass;
+    let top=ID.grass; if(walk)top=ID.concrete;
+    if(road){ top=ID.asphalt; const cross=rx<=3.5&&rz<=3.5, along=rx<=3.5?z:x, mid=rx<=3.5?rx:rz; if(!cross&&mid<0.6&&((along>>1)&1))top=ID.paint_yellow; } // dashed yellow middle line
+    world[idx(x,G-1,z)]=top; } }
+function spawnInPlace(){ pl.p=[CX+5.5,CITY_G,CZ+5.5]; }
+// --- building a doorway: a 2 wide, 3 tall opening in a frame, facing whoever placed it
+function gatewayCells(x,y,z,alongX){ const ax=alongX?1:0, az=alongX?0:1, cells=[], frame=[];
+  for(let i=-1;i<=2;i++)for(let j=0;j<=3;j++){ const c=[x+i*ax,y+j,z+i*az]; (i===-1||i===2||j===3?frame:cells).push(c); } return {cells,frame}; }
+function makeGateway(x,y,z,alongX,dest){ const {cells,frame}=gatewayCells(x,y,z,alongX), m=DESTS.indexOf(dest)*2+(alongX?0:1);
+  for(const c of frame)setBlock(c[0],c[1],c[2],ID.pframe); for(const c of cells)setBlock(c[0],c[1],c[2],ID.pgate,m); }
+function buildGateway(x,y,z,dest){ const f=lookDir(), alongX=Math.abs(f.z)>=Math.abs(f.x), {cells,frame}=gatewayCells(x,y,z,alongX);
+  if(dest===place){ toast(PLACES[dest].icon+' You\'re already in the '+PLACES[dest].name+'! This portal would lead right back here.'); return; }
+  for(const c of [...cells,...frame]){ const b=inB(c[0],c[1],c[2])?get(c[0],c[1],c[2]):-1; if(b<0||(b&&B[b].solid)){ toast('🌀 Not enough room for a portal here. It needs a clear space 4 blocks wide and 4 tall.'); return; } }
+  makeGateway(x,y,z,alongX,dest); refreshPortals(); sfx('zap'); queueSave();
+  toast('🌀 A portal to the '+PLACES[dest].icon+' '+PLACES[dest].name+'! Walk through it to go there.'); }
+function removeGateway(x,y,z){ const seen=new Set(), q=[[x,y,z]]; // everything connected to the frame or doorway you hit
+  while(q.length){ const [a,b,c]=q.pop(), k=a+','+b+','+c; if(seen.has(k))continue; seen.add(k); const id=get(a,b,c); if(id!==ID.pframe&&id!==ID.pgate)continue;
+    setBlock(a,b,c,0); for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++)if(dx||dy||dz)q.push([a+dx,b+dy,c+dz]); }
+  refreshPortals(); sfx('glass'); queueSave(); }
+// --- what a doorway looks like: a swirl in the place's colour, with its name floating above
+const portalSwirl={}; let portalMeshes=[], swirlT=0;
+function swirlTex(dest){ if(portalSwirl[dest])return portalSwirl[dest]; const c=document.createElement('canvas'); c.width=c.height=64; const t=new THREE.CanvasTexture(c);
+  return portalSwirl[dest]={c,x:c.getContext('2d'),t,col:PLACES[dest].col}; }
+function drawSwirls(dt){ swirlT+=dt; for(const k in portalSwirl){ const S=portalSwirl[k], x=S.x, [r,g,b]=S.col;
+    const gr=x.createRadialGradient(32,32,2,32,32,40); gr.addColorStop(0,'rgba(255,255,255,0.95)'); gr.addColorStop(0.35,'rgba('+r+','+g+','+b+',0.9)'); gr.addColorStop(1,'rgba('+(r>>2)+','+(g>>2)+','+(b>>1)+',0.85)');
+    x.globalCompositeOperation='source-over'; x.fillStyle=gr; x.fillRect(0,0,64,64); x.strokeStyle='rgba(255,255,255,0.55)'; x.lineWidth=3;
+    for(let a=0;a<4;a++){ x.beginPath(); for(let s=0;s<40;s++){ const ang=swirlT*2.4+a*Math.PI/2+s*0.16, rr=s*0.8; const px=32+Math.cos(ang)*rr, py=32+Math.sin(ang)*rr; s?x.lineTo(px,py):x.moveTo(px,py); } x.stroke(); }
+    S.t.needsUpdate=true; } }
+function labelSprite(text){ const c=document.createElement('canvas'); c.width=256; c.height=64; const x=c.getContext('2d'); x.font='bold 30px sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillStyle='rgba(10,12,20,0.6)'; x.fillRect(8,10,240,44); x.fillStyle='#fff'; x.fillText(text,128,33);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true})); sp.scale.set(2.6,0.65,1); return sp; }
+function refreshPortals(){ for(const m of portalMeshes){ scene.remove(m); if(m.isSprite){ m.material.map.dispose(); m.material.dispose(); } else m.geometry.dispose(); } portalMeshes=[];
+  for(let i=0;i<N;i++){ if(world[i]!==ID.pgate)continue; const x=ix_(i), y=iy_(i), z=iz_(i), m=meta[i], alongX=(m&1)===0, ax=alongX?1:0, az=alongX?0:1;
+    if(get(x-ax,y,z-az)===ID.pgate||get(x,y-1,z)===ID.pgate)continue; // only from the bottom corner of each doorway
+    let w=1, h=1; while(get(x+w*ax,y,z+w*az)===ID.pgate)w++; while(get(x,y+h,z)===ID.pgate)h++;
+    const dest=DESTS[m>>1]; if(!PLACES[dest])continue; const S=swirlTex(dest);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:S.t,transparent:true,opacity:0.88,side:THREE.DoubleSide,depthWrite:false}));
+    mesh.position.set(x+(alongX?w/2:0.5),y+h/2,z+(alongX?0.5:w/2)); if(!alongX)mesh.rotation.y=Math.PI/2; scene.add(mesh); portalMeshes.push(mesh);
+    const lb=labelSprite(PLACES[dest].icon+' '+PLACES[dest].name); lb.position.set(mesh.position.x,y+h+1.6,mesh.position.z); scene.add(lb); portalMeshes.push(lb); } }
+// --- going through
+const warpEl=document.createElement('div'); warpEl.id='warp'; document.body.appendChild(warpEl);
+let portalArmed=false, portalSafe=null, traveling=false;
+function portalCheck(){ if(demo||traveling||dead)return; const x=Math.floor(pl.p[0]), z=Math.floor(pl.p[2]); let g=-1;
+  for(const dy of [0.3,1.2]){ const y=Math.floor(pl.p[1]+dy); if(get(x,y,z)===ID.pgate){ g=meta[idx(x,y,z)]; break; } }
+  if(g<0){ portalArmed=true; portalSafe=[pl.p[0],pl.p[1],pl.p[2]]; return; } // you've stepped out: the next portal you touch takes you
+  if(portalArmed&&PLACES[DESTS[g>>1]])travel(DESTS[g>>1]); }
+function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpEl.classList.add('on');
+  setTimeout(()=>{ const from=place, kit={coins,owned:owned.slice(),weapon,arrows:{...arrows},hp};
+    if(portalSafe)pl.p=portalSafe.slice(); yaw+=Math.PI; saveNow(); // step back out of the doorway and turn round, so you come back facing away from it
+    place=dest; if(!loadPlace(dest))newPlace(dest,from);
+    coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=kit.hp; refreshWeapon(); updateHUD(); refreshArrowBtn(); // your coins and weapons come with you
+    portalArmed=false; saveNow(); setTimeout(()=>{ warpEl.classList.remove('on'); traveling=false; },120);
+    toast(PLACES[dest].icon+' Welcome to the '+PLACES[dest].name+'!'+(dest==='city'?' It\'s still being built: roads first, then buildings, people and cars.':'')); },650); }
+// the first visit to a place: make it, and put a portal back where you came from just behind you
+function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest;
+  if(dest==='city'){ generateCity((Math.random()*1e9)|0); spawnInPlace(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=Math.PI; pitch=-0.1; setFly(false,false); unstick(pl);
+  if(from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])-4; let gy=Math.floor(pl.p[1]); // the way back, 4 blocks behind you (turn round to see it)
+    for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
+    makeGateway(gx,gy,gz,true,from); }
+  applyMode(); rebuildAll(); refreshPortals(); }
+
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
 let waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
@@ -2906,8 +2998,8 @@ function updateMobs(dt){
   // spawning
   spawnT-=dt;
   if(spawnT<=0){ spawnT=2.5;
-    if(mobsOn && !dead && mobs.filter(m=>m.t.flyer).length<3 && rand()<0.35) spawnFlyer();
-    if(mobsOn && mobs.filter(m=>!m.t.flyer).length<6 && !dead){
+    if(mobsOn && place==='survival' && !dead && mobs.filter(m=>m.t.flyer).length<3 && rand()<0.35) spawnFlyer();
+    if(mobsOn && place==='survival' && mobs.filter(m=>!m.t.flyer).length<6 && !dead){
       for(let a=0;a<8;a++){
         const ang=rand()*6.28, r=14+rand()*14, x=Math.floor(pl.p[0]+Math.sin(ang)*r), z=Math.floor(pl.p[2]+Math.cos(ang)*r);
         if(x<1||z<1||x>=W-1||z>=D-1)continue; if(Math.hypot(x-MX,z-MZ)<12)continue;
@@ -3030,6 +3122,7 @@ function update(dt){
   const near=nearMerchant(); $('bTalk').style.display=near&&IS_TOUCH?'flex':'none';
   const pr=$('prompt'); if(near&&!IS_TOUCH){ pr.textContent='Press E to talk to Flint'; pr.style.display='block'; } else pr.style.display='none';
 
+  portalCheck(); if(portalMeshes.length)drawSwirls(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
