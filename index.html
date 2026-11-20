@@ -2057,7 +2057,7 @@ let ytP=null, ytReady=false, ytLoading=false, ytWant=null, ytOn=false, ytVid='';
 function ytApi(cb){ if(window.YT&&YT.Player){ cb(); return; } const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=()=>{ if(prev)try{ prev(); }catch(e){} cb(); };
   if(!ytLoading){ ytLoading=true; const sc=document.createElement('script'); sc.src='https://www.youtube.com/iframe_api'; sc.onerror=()=>{ ytLoading=false; toast('🎵 Couldn\'t reach YouTube. Check the internet connection.'); }; document.head.appendChild(sc); } }
 function ytApply(){ if(!ytReady||!ytWant)return; const w=ytWant; ytWant=null; try{ ytP.setVolume(mus.vol); ytP.unMute();
-  if(ytVid!==w.id){ ytVid=w.id; ytP.loadVideoById({videoId:w.id,startSeconds:w.start}); } else { ytP.seekTo(w.start,true); ytP.playVideo(); } }catch(e){} }
+  if(ytVid!==w.id){ ytVid=w.id; ytP.loadVideoById({videoId:w.id,startSeconds:w.start}); } else if(ytP.getPlayerState&&ytP.getPlayerState()===YT.PlayerState.PLAYING){ /* already playing: leave it alone */ } else { ytP.seekTo(w.start,true); ytP.playVideo(); } }catch(e){} }
 function ytPlay(){ const v=ytParse(mus.yt); if(!v){ toast('🎵 That YouTube link doesn\'t look right. Paste the whole link from the Share button.'); return false; }
   if(!v.start&&mus.start)v.start=mus.start; ytOn=true; ytBox.classList.add('on'); ytWant=v; if(ytP){ ytApply(); return true; }
   ytApi(()=>{ if(ytP)return; ytP=new YT.Player('ytPlayer',{width:200,height:113,playerVars:{playsinline:1,rel:0,modestbranding:1,controls:1},
@@ -3283,7 +3283,7 @@ function textPlane(lines,w,h,o){ o=o||{}; const c=document.createElement('canvas
   lines.forEach((l,k)=>x.fillText(l,c.width/2,c.height*(k+1)/(lines.length+1)));
   const t=new THREE.CanvasTexture(c); return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t})); }
 function wallSign(root,lines,w,h,x,y,z,ry,o){ const m=textPlane(lines,w,h,o); m.position.set(x,y,z); m.rotation.y=ry||0; root.add(m); return m; }
-function clearInteriorLife(){ if(!intK)return; if(drive&&(intK.vehicles||[]).includes(drive))exitVehicle(true,true); for(const v of (intK.vehicles||[]).slice())removeVehicle(v); if(intK.club){ club.visible=false; club.position.copy(CLUB); if(!mus.game)musicStop(); } scene.remove(intK.root);
+function clearInteriorLife(){ if(!intK)return; if(drive&&(intK.vehicles||[]).includes(drive))exitVehicle(true,true); for(const v of (intK.vehicles||[]).slice())removeVehicle(v); if(intK.club){ club.visible=false; club.position.copy(CLUB); if(intK.ownMusic)musicStop(); } scene.remove(intK.root);
   intK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material&&o.material.map&&o.material.map.dispose)o.material.map.dispose(); }); for(const p of intK.people)undress(p.g); intK=null; }
 function intPerson(K,L,x,y,z,ry,sit){ const g=new THREE.Group(); g.scale.setScalar(0.94); g.position.set(x,y,z); g.rotation.y=ry; K.root.add(g); const R=makeRig(g); dressRig(R,cleanLook(L));
   if(sit){ R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.9; } const p={g,R,sit,ph:Math.random()*6}; K.people.push(p); return p; }
@@ -3315,7 +3315,7 @@ function buildInteriorLife(){ clearInteriorLife(); const P=PLACES[curPlace()]; i
   if(kind.slice(0,5)==='house'){ const tv=new THREE.Group(), scr=textPlane(['📺 Blockstar TV'],2.2,1.3,{bg:'#1a2a6a',fg:'#fff'}); scr.position.z=0.06; tv.add(box(2.4,1.5,0.1,lm(0x111111)),scr); tv.position.set(4+5.5,3,6+11.5); tv.rotation.y=0; root.add(tv);
     wallSign(root,['🏠 Home Sweet Home'],5,1,16,5.1,25-0.02,Math.PI,{bg:'#fff4e0',fg:'#8a4a2a'}); intPerson(K,look(),4+16,1,6+15,Math.random()*6,false).walk={x0:4+14,x1:4+21}; }
   if(kind==='club'){ if(!clubK)clubK=buildClub(); const C=clubK; club.visible=true; club.position.set(16,1,14); K.club=true; if(C.nSing!==2)setSingers(C,2); if(C.crowdKind!=='mixed')setCrowd(C,'mixed');
-    C.emit.length=0; C.px.life.fill(0); C.micHand.visible=false; C.micStand.visible=true; if(!musOnNow){ if(mus.src==='none'||mus.src==='yt'){ if(tunePlay('boss')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.55; } } else musicPlay(); } } }
+    C.emit.length=0; C.px.life.fill(0); C.micHand.visible=false; C.micStand.visible=true; if(!musOnNow){ K.ownMusic=true; if(mus.src==='none'||mus.src==='yt'){ if(tunePlay('boss')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.55; } } else musicPlay(); } } }
 function x1Int(kind){ return 26; }
 function interiorTick(dt){ const K=intK; if(!K)return; K.t+=dt;
   if(K.club){ const C=clubK; C.t+=dt; clubVenueTick(dt,musBeat(),0.4,C.t); return; }
@@ -3705,12 +3705,13 @@ function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{..
 const tmp=new THREE.Vector3();
 let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
-  if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return driveUpdate(dt); }
+  let piloted=null; if(drive&&demo){ demoInput(dt); if(!demo.user)piloted=demoPilot(dt); } // (the demo may get out of the vehicle here)
+  if(drive)return driveUpdate(dt);
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
   if(enterCD>0)enterCD-=dt; else if((!demo||demo.user)&&(Math.abs(ix)+Math.abs(iz)>0.1||Math.abs(pad.lx)+Math.abs(pad.ly)>0.1)&&bumpEnter())return {hs:0};
-  if(demo){ demoInput(dt); if(demo.user){ ix+=pad.lx; iz+=pad.ly; if(demo.sc.act==='concert')return concertUser(dt,ix,iz); }
-    else { const D2=demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } } // the demo autopilot drives (concerts and wonders move the hero themselves)
+  if(demo){ if(!piloted)demoInput(dt); if(demo.user){ ix+=pad.lx; iz+=pad.ly; if(demo.sc.act==='concert')return concertUser(dt,ix,iz); }
+    else { const D2=piloted||demoPilot(dt); ix=D2.ix; iz=D2.iz; if(demo.puppet){ pl.v=[0,0,0]; return {hs:demo.pil.hs||0}; } } } // the demo autopilot drives (concerts and wonders move the hero themselves)
   const m=Math.hypot(ix,iz); if(m>1){ix/=m;iz/=m;}
   const fwd=-iz, str=ix, s=Math.sin(yaw), c=Math.cos(yaw);
   const env=envAt(pl);
@@ -3949,11 +3950,12 @@ function animate(dt){
     fireTex.offset.y=(Math.floor(animPh/0.35)%4)*0.25; }
 }
 let last=performance.now();
-function frame(now){
+let frameErr=0;
+function frame(now){ requestAnimationFrame(frame); // ask for the next frame first, so a mistake can never freeze the game
   const dt=Math.min(0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
-  update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
+  try{ update(dt); }catch(e){ if(frameErr++<5)console.error(e); } if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
   let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
-  renderer.render(scene,camera); requestAnimationFrame(frame);
+  renderer.render(scene,camera);
 }
 
 // ================= START =================
