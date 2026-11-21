@@ -4678,9 +4678,9 @@ function ridePilot(dt,P){ const K=ranchK, a=K&&K.ride; if(!a)return; const path=
   if(P.dir>0&&i>=path.length-3){ P.view=P.viewLen=P.story?Math.max(4,Math.min(9,demo.sc.secs*0.09)):6; P.viewK=0; return; } // the top: the view of the waterfall
   if(P.dir<0&&i<=2){ if(P.story){ P.pre=[[60,90],[59.5,96.5]]; P.homeBound=true; return; } P.dir=1; P.stop=3; return; }
   if(!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
-  const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*7))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:1;
+  P.tight=Math.max(0,(P.tight||0)-dt); const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*(P.tight>0?2:5)))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:P.tight>0?0.6:1;
   P.jT-=dt; if(P.jT<=0&&off<0.25&&a.p[1]<FY+5&&a.onGround){ rideIn.jump=true; P.jT=9; } // a gallop on the flat
-  P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.i=Math.max(0,Math.min(path.length-1,P.i+P.dir*3)); } // stuck on something: hop over it
+  P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.tight=3; } // stuck on something: hop over it
   if(!P.story&&P.lassoT<0&&demo.st>5&&!K.rope&&!K.lasso){ const d=lookDir(); for(const s of K.animals){ if(!s.wild||s.kind!=='steer')continue; const dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], dist=Math.hypot(dx,dz);
       if(dist<11&&dist>2&&(dx*d.x+dz*d.z)/(dist*Math.hypot(d.x,d.z))>0.9){ ranchHit(); P.lassoT=0; break; } } }
   if(P.lassoT>=0&&K.rope){ P.lassoT+=dt; if(P.lassoT>12){ ranchHit(); P.lassoT=99; } } } // lead it for a bit, then let it go
