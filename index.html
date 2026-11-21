@@ -2313,7 +2313,7 @@ const DEMO0={scenes:[
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
-  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:120,cap:'',horse:'random',rstory:'day'},
+  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:150,cap:'',horse:'random',rstory:'day'},
   {act:'fire',time:'night',wx:'clear',land:'normal',cam:'cine',secs:45,cap:'',mouth:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
@@ -4486,7 +4486,7 @@ function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==
   for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
   for(let i=0;i<4;i++)spawnGame('deer'); for(let i=0;i<6;i++)spawnGame('bunny');
   if(!ranchSkyK){ ranchSkyK=buildRanchSky(); buildVista(ranchSkyK); } ranchSky.visible=true;
-  K.decor=[]; K.chair=chairMesh(); K.chair.position.set(CHAIR.x,FY,CHAIR.z); K.chair.rotation.y=-Math.PI/2; scene.add(K.chair); K.decor.push(K.chair); equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
+  K.decor=[]; K.chair=chairMesh(); K.chair.position.set(CHAIR.x,FY,CHAIR.z); K.chair.rotation.y=-Math.PI/2; scene.add(K.chair); K.decor.push(K.chair); K.table=tableMesh(); K.table.position.set(TABLE.x,FY,TABLE.z); K.table.rotation.y=-Math.PI/2; scene.add(K.table); K.decor.push(K.table); equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
 function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
 function placeOwned(o,i){ const s=STALLS[i]; let a;
   if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:-Math.PI/2,zone:null,y:FY}); // facing out to the aisle
@@ -4656,8 +4656,9 @@ function catchPilot(dt,P,a,steer){ const K=ranchK, late=demo.st>P.tCatch, s=P.st
   if(P.cmode==='seek'){ if(!s||!K.animals.includes(s)||late){ P.cmode='done'; return; }
     const d=go([s.p[0],s.p[2]],0.8), dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], f=[-Math.sin(yaw),-Math.cos(yaw)];
     if(d<7)rideIn.thr=0; if(d<12&&(dx*f[0]+dz*f[1])/d>0.93&&!K.lasso&&!K.rope)ranchHit();
-    if(K.rope){ P.cmode='lead'; P.lw=[[79,77],[79,89]]; } return; }
-  if(P.cmode==='lead'){ if(s&&s.st==='pen'){ P.cmode='out'; P.lw=[[79,77],[64,78]]; return; }
+    if(K.rope){ P.cmode='lead'; P.lw=[[79.5,77],[79.5,89]]; } return; }
+  P.cstuck=Math.abs(a.spd)<0.8&&rideIn.thr>0?(P.cstuck||0)+dt:0; if(P.cstuck>1.4&&a.onGround){ rideIn.jump=true; P.cstuck=0; }
+  if(P.cmode==='lead'){ if(s&&s.st==='pen'){ P.cmode='out'; P.lw=[[79.5,88],[79.5,84],[79.5,77],[64,78]]; return; }
     if(late&&K.rope&&demo.st>P.tCatch+6){ ranchHit(); P.cmode='done'; return; }
     const q=P.lw[0]; if(!q){ rideIn.thr=0; rideIn.turn=0; return; } if(go(q,0.6)<1.6)P.lw.shift(); return; }
   if(P.cmode==='out'){ const q=P.lw[0]; if(!q){ P.cmode='done'; P.i=0; return; } if(go(q,0.8)<1.8)P.lw.shift(); } }
@@ -4676,10 +4677,10 @@ function ridePilot(dt,P){ const K=ranchK, a=K&&K.ride; if(!a)return; const path=
   if(P.story&&P.dir>0&&demo.st>P.tTurn&&i<path.length-10){ const q=path[path.length-8]; a.p=[q[0],standY(Math.floor(q[0]),Math.floor(q[1]))+0.01,q[1]]; P.i=path.length-8; if(demo.cam){ demo.cam.cur=null; demo.cam.st=0; } return; } // running late: jump ahead (on a camera cut) to near the top
   if(P.dir>0&&i>=path.length-3){ P.view=P.viewLen=P.story?Math.max(4,Math.min(9,demo.sc.secs*0.09)):6; P.viewK=0; return; } // the top: the view of the waterfall
   if(P.dir<0&&i<=2){ if(P.story){ P.pre=[[60,90],[59.5,96.5]]; P.homeBound=true; return; } P.dir=1; P.stop=3; return; }
-  if(!P.story&&!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
-  const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*7))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:1;
+  if(!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
+  P.tight=Math.max(0,(P.tight||0)-dt); const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*(P.tight>0?2:5)))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:P.tight>0?0.6:1;
   P.jT-=dt; if(P.jT<=0&&off<0.25&&a.p[1]<FY+5&&a.onGround){ rideIn.jump=true; P.jT=9; } // a gallop on the flat
-  P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.i=Math.max(0,Math.min(path.length-1,P.i+P.dir*3)); } // stuck on something: hop over it
+  P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.tight=3; } // stuck on something: hop over it
   if(!P.story&&P.lassoT<0&&demo.st>5&&!K.rope&&!K.lasso){ const d=lookDir(); for(const s of K.animals){ if(!s.wild||s.kind!=='steer')continue; const dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], dist=Math.hypot(dx,dz);
       if(dist<11&&dist>2&&(dx*d.x+dz*d.z)/(dist*Math.hypot(d.x,d.z))>0.9){ ranchHit(); P.lassoT=0; break; } } }
   if(P.lassoT>=0&&K.rope){ P.lassoT+=dt; if(P.lassoT>12){ ranchHit(); P.lassoT=99; } } } // lead it for a bit, then let it go
@@ -4704,15 +4705,23 @@ function rideDemoCam(dt){ const K=ranchK, a=K&&K.ride; if(!a)return; const C=dem
 // --- a day on the ranch in Demo Mode: hay for the horses, saddle up and ride the trail to the view at the top, ride home, plant and
 // water a row of crops, then sit in the rocking chair with a guitar while they grow. Each part gets a share of the scene's seconds.
 const hayMat=lm(0xd8b060), hayCarry=box(0.62,0.42,0.42,hayMat); hayCarry.position.set(0,1.02,-0.5); hayCarry.visible=false; model.add(hayCarry);
-const heldGuitar=guitarMesh(0x9a4a1a,0.9,false); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.z=0.95; heldGuitar.visible=false; model.add(heldGuitar);
+const heldGuitar=guitarMesh(0x9a4a1a,0.62,false); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.z=0.95; heldGuitar.visible=false; model.add(heldGuitar);
 model.rotation.order='YXZ'; // so the hero can rock back and forth in the chair
-// (the held guitar has a long neck so the left hand, on a straight arm, can reach it)
-function storyReset(){ hayCarry.visible=false; heldGuitar.visible=false; model.rotation.x=0; }
+const lemonGlass=new THREE.Group(); { const g=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.06,0.18,10),new THREE.MeshLambertMaterial({color:0xf6e66a,transparent:true,opacity:0.85}));
+  const ice=box(0.05,0.05,0.05,lm(0xeef8ff)); ice.position.y=0.07; lemonGlass.add(g,ice); lemonGlass.position.set(0,-0.7,-0.06); lemonGlass.visible=false; armR.add(lemonGlass); }
+function tableMesh(){ const g=new THREE.Group(), w=lm(0x8a5a2e), add=(W,h,d,m,x,y,z)=>{ const b=box(W,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
+  add(0.7,0.06,0.6,w,0,0.62,0); for(const [x,z] of [[-0.29,-0.24],[0.29,-0.24],[-0.29,0.24],[0.29,0.24]])add(0.06,0.6,0.06,w,x,0.3,z);
+  const lem=new THREE.MeshLambertMaterial({color:0xf6e66a,transparent:true,opacity:0.8}); const pit=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.13,0.3,12),lem); pit.position.set(-0.12,0.8,0.05); g.add(pit);
+  const hd=box(0.03,0.18,0.08,lm(0xe8f0f4)); hd.position.set(-0.26,0.82,0.05); g.add(hd); const gl=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.05,0.15,10),lem); gl.position.set(0.18,0.73,-0.1); g.add(gl);
+  for(const [x,z] of [[-0.1,0],[-0.14,0.1]]){ const l=box(0.05,0.02,0.05,lm(0xf8e040)); l.position.set(x,0.96,z); g.add(l); }
+  return g; }
+const TABLE={x:82.1,z:117.3};
+function storyReset(){ hayCarry.visible=false; heldGuitar.visible=false; lemonGlass.visible=false; model.rotation.x=0; if(heldGuitar.parent!==model){ heldGuitar.parent&&heldGuitar.parent.remove(heldGuitar); model.add(heldGuitar); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.set(0,0,0.95); } }
 function walkTo2(P,x,z,dt,sp){ const dx=x-pl.p[0], dz=z-pl.p[2], d=Math.hypot(dx,dz); if(d<0.12){ P.hs=0; return true; } const st=Math.min(d,(sp||2.6)*dt);
   pl.p[0]+=dx/d*st; pl.p[2]+=dz/d*st; pl.p[1]=FY; P.hs=st/Math.max(dt,1e-3); let w=Math.atan2(-dx,-dz)-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*8); return false; }
 function faceTo(yw,dt){ let w=yw-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*6); }
 function storyStart(sc,P,o){ const S=sc.secs, stalls=[0,1,2].filter(i=>STALLS[i]);
-  Object.assign(P,{story:true,ph:'hay',o,hay:stalls.map(i=>STALLS[i]),hi:0,drop:0,hays:[],pre:null,tHay:S*0.09,tCatch:S*0.25,tTurn:S*0.55,tHome:S*0.72,tFarm:S*0.88,planted:[],pi:0,wi:0,act:0});
+  Object.assign(P,{story:true,ph:'hay',o,hay:stalls.map(i=>STALLS[i]),hi:0,drop:0,hays:[],pre:null,tHay:S*0.07,tCatch:S*0.2,tTurn:S*0.47,tHome:S*0.62,tFarm:S*0.74,planted:[],pi:0,wi:0,act:0});
   pl.p=[54.5,FY,96.5]; yaw=Math.PI/2; pitch=-0.05; demo.puppet=true; hayCarry.visible=true;
   const st=ranchK.animals.find(a=>a.wild&&a.kind==='steer'); // a steer grazing in the meadow, to rope and bring in
   if(st){ st.p=[70.5,standY(70,74),74.5]; st.v=[0,0,0]; st.zone={x0:66,x1:76,z0:70,z1:78}; st.tgt=null; P.steer=st; } }
@@ -4733,7 +4742,10 @@ function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
       else { const b=get(x,FY-1,122); if(isFarm(b)){ setBlock(x,FY-1,122,soil(isRich(b),true)); K.wet.set(x+','+(FY-1)+','+122,WET_TIME); } for(let n=0;n<5;n++)burst(x,FY+0.3,122,new THREE.Color(0.45,0.7,1),1); sfx('whoosh'); } } return; }
   if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.3,CHAIR.z-1.2,dt,3)){ P.ph='chair'; heldGuitar.visible=true; hayCarry.visible=false; } return; }
   if(P.ph==='chair'){ pl.p=[CHAIR.x+0.3,FY,CHAIR.z-1.2]; faceTo(-Math.PI/2,dt); pitch=0.05; P.hs=0;
-    return; } }
+    if(P.gDur===undefined)P.gDur=Math.min(20,Math.max(5,(demo.sc.secs-T)*0.5));
+    P.gT=(P.gT||0)+dt; if(P.gT>P.gDur){ P.ph='sit'; model.remove(heldGuitar); scene.add(heldGuitar); heldGuitar.position.set(TABLE.x+0.55,FY+0.45,TABLE.z+0.15); heldGuitar.rotation.set(0,-Math.PI/2,0.18); lemonGlass.visible=true; P.sipT=2; }
+    return; }
+  if(P.ph==='sit'){ pl.p=[CHAIR.x,FY+0.5-0.72,CHAIR.z]; yaw=-Math.PI/2; pitch=0.05; P.hs=0; P.sipT-=dt; if(P.sipT<-1.4)P.sipT=5+Math.random()*2; return; } }
 // the crops grow fast (a time-lapse), ripe just before the scene ends
 function storyGrow(dt,P){ if(!P.planted.length)return; const left=Math.max(2,demo.sc.secs-1.5-demo.st); for(const c of P.planted){ if(!ranchK.crops.includes(c)||c.g>=1)continue; c.g=Math.min(1,c.g+dt*(1-c.g)/left); cropLook(c); } }
 // the cameras for the parts on foot, and the view from the top
@@ -4743,7 +4755,7 @@ function storyCam(dt,P){ const C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:
     side:t=>[h.clone().addScaledVector(rt,4).add(V(0,0.8,0)),h], garden:t=>[V(97,FY+4.5,127-t*0.3),V(87,FY+0.5,121)], back:t=>[h.clone().addScaledVector(f,-3.6).add(V(0,1.2,0)),h.clone().addScaledVector(f,3)],
     porch:t=>[h.clone().addScaledVector(f,3.2).addScaledVector(rt,0.8-t*0.1).add(V(0,-0.1,0)),h.clone().add(V(0,-0.3,0))], shoulder:t=>[h.clone().addScaledVector(f,-0.8).addScaledVector(rt,1.4).add(V(0,0.5,0)),V(88,FY+0.6,121)],
     crops:t=>[V(88+t*0.2,FY+0.5,123.2),h.clone().add(V(0,-0.4,0))], wide:t=>[V(100,FY+11,136-t*0.4),V(84,FY+1,116)], guitar:t=>[h.clone().addScaledVector(f,1.3).addScaledVector(rt,-0.5).add(V(0,-0.5,0)),h.clone().add(V(0,-0.55,0))]};
-  const seqs={hay:['aisle','stall','front'],saddle:['stall','aisle'],walk:['back','side','garden'],plant:['side','garden','front'],water:['garden','side','front'],tochair:['garden','back'],chair:['porch','shoulder','crops','guitar','wide']};
+  const seqs={hay:['aisle','stall','front'],saddle:['stall','aisle'],walk:['back','side','garden'],plant:['side','garden','front'],water:['garden','side','front'],tochair:['garden','back'],chair:['porch','shoulder','crops','guitar','wide'],sit:['porch','shoulder','crops','wide']};
   const seq=seqs[P.ph]||['side'], bt=Math.floor(musBeat()); if(C.ph!==P.ph){ C.ph=P.ph; C.cur=null; C.i=-1; } C.st-=dt; C.k+=dt;
   if(!C.cur||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.4+Math.random()*1.6; C.k=0; } C.lb=bt;
   const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
@@ -4755,9 +4767,12 @@ const STRUM_SPEED=0.05; // how fast the strumming hand moves when the cowboy pla
 function storyPose(dt,P){ const K=ranchK, t=demo.t, beat=musBeat(), s=Math.sin;
   if(P.ph==='hay'&&hayCarry.visible){ armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=0.12; armR.rotation.z=-0.12; }
   else if(P.ph==='hay'||P.ph==='saddle'){ if(P.drop>0||P.act>0){ armR.rotation.x=1.3; armL.rotation.x=0.9; } }
+  else if(P.ph==='sit'){ const rock=0.07*s(t*1.2); model.rotation.x=rock; K.chair.rotation.x=rock;
+    legL.rotation.set(1.45,0,-0.06); legR.rotation.set(1.45,0,0.06); armL.rotation.x=0.55; armL.rotation.z=-0.1; head.rotation.x=-0.05;
+    if(P.sipT<0){ armR.rotation.x=2.35; armR.rotation.z=-0.55; head.rotation.x=0.2; } else { armR.rotation.x=0.65; armR.rotation.z=-0.2; } }
   else if(P.ph==='chair'){ const hop=Math.abs(s(beat*Math.PI)); K.chair.rotation.x=0.06*s(t*1.6); // standing by the chair: strumming, singing, the empty chair rocking
     model.position.y+=hop*0.04; legL.rotation.set(0,0,-0.12); legR.rotation.set(0,0,0.12); armR.rotation.x=0.5+0.12*s(beat*Math.PI*4*STRUM_SPEED); armR.rotation.z=-0.38;
-    armL.rotation.x=2.35+(Math.floor(beat/8)%2?0.06:0); armL.rotation.z=-0.99; head.rotation.x=0.06-0.22*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
+    armL.rotation.x=0.75; armL.rotation.z=-0.35+0.05*s(beat*Math.PI*2); head.rotation.x=0.06-0.22*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
 // ================= RANCH FARMING AND WILDLIFE =================
 // The tool shed hands out tools: a hoe tills grass into farmland, the seed bag plants corn, wheat, carrots or tomatoes, the watering
 // can makes them grow faster (refill it at the lake or the trough), compost makes rich soil (faster again, and a bigger harvest),
