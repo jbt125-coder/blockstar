@@ -113,6 +113,8 @@
   #dragHud i{display:inline-block;width:15px;height:15px;border-radius:50%;background:rgba(60,60,60,.7);border:1px solid rgba(255,255,255,.3)} #dragHud b{margin-left:6px;min-width:60px}
   #dragSlip{left:50%;top:50%;transform:translate(-50%,-50%);background:#fffbe8;color:#222;font-family:ui-monospace,Menlo,monospace;padding:12px 16px;border-radius:8px;max-width:92vw;max-height:78vh;overflow:auto;display:none;box-shadow:0 6px 24px rgba(0,0,0,.6);border-top:8px solid #ffc83a;cursor:pointer;font-size:13px}
   #dragSlip .dsT{font:900 20px sans-serif;text-align:center;margin-bottom:6px} #dragSlip table{border-collapse:collapse;width:100%} #dragSlip td{padding:2px 8px;border-bottom:1px dashed #ccc;white-space:nowrap} #dragSlip td+td{text-align:right}
+  #dinBar{left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));display:none;gap:8px} body.dinner #dinBar{display:flex} body.dinner #hotwrap{display:none!important}
+  #dinBar .dbtn{background:rgba(120,50,15,.88);color:#ffe9c0;border:2px solid #ffc870;border-radius:18px;padding:8px 12px;font-weight:900;font-size:14px;cursor:pointer;white-space:nowrap}
   #dragSlip .dsB{text-align:center;font-weight:900;margin-top:6px;color:#b07800} #dragSlip .dsH{text-align:center;font:12px sans-serif;color:#777;margin-top:6px}
   #toast{left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(15,18,26,.85);padding:8px 14px;border-radius:10px;
     font-size:14px;font-weight:700;display:none;pointer-events:none;text-align:center;max-width:80vw}
@@ -264,6 +266,7 @@
 </div>
 <div id="dragHud" class="ui"><i id="dh0"></i><i id="dh1"></i><i id="dha0"></i><i id="dha1"></i><i id="dha2"></i><i id="dhg"></i><i id="dhr"></i><b id="dhTxt"></b></div>
 <div id="dragSlip" class="ui"></div>
+<div id="dinBar" class="ui"><div class="dbtn" id="dnEat">🍽️ Eat</div><div class="dbtn" id="dnToast">🥂 Toast</div><div class="dbtn" id="dnWish">🦴 Wishbone</div><div class="dbtn" id="dnUp">🚪 Stand up</div></div>
 <div id="bTalk" class="ui">💬 Talk</div>
 <div id="prompt" class="ui"></div>
 <div id="joyBase"></div><div id="joyKnob"></div>
@@ -291,7 +294,7 @@ const inB=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<W&&y<H&&z<D;
 
 // ================= TEXTURES =================
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const T=16, COLS=16, ROWS=6;
+const T=16, COLS=16, ROWS=8;
 const atlas=document.createElement('canvas'); atlas.width=COLS*T; atlas.height=ROWS*T;
 const actx=atlas.getContext('2d');
 const TILES={}; let tileCount=0;
@@ -387,6 +390,11 @@ makeTile('portal_newyork',94,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90
 makeTile('portal_sanfran',95,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([40,90,160],r,.15); if(x===4||x===11||y===9||(y>=3&&y<9&&Math.abs(y-3-Math.abs(x-7.5)*0.9)<0.8))return [220,70,40]; return nz([200,210,220],r,.1); });
 makeTile('portal_orlando',96,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=8&&x>=3&&x<=12)return (y===8&&x%2)?[120,170,255]:nz([245,245,250],r,.05); if((x>=6&&x<=9&&y>=3&&y<8)||((x===3||x===12)&&y>=5))return y<5?[60,110,230]:[245,245,250]; return nz([110,190,255],r,.1); });
 makeTile('door',97,(x,y,r)=>{ if(x<2||x>13)return nz([90,60,34],r,.1); if(x===11&&y>=7&&y<=8)return [230,200,80]; return nz((y%5===0)?[110,74,40]:[150,104,60],r,.1); });
+makeTile('portal_mansion',131,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y<=6&&Math.abs(x-7.5)<=y+0.5)return y<=1?[180,60,40]:nz([150,50,40],r,.12); if(y>6&&y<14&&x>=3&&x<=12){ if((x===5||x===10)&&y>=8&&y<=10)return [255,220,120]; if(x>=7&&x<=8&&y>=10)return [110,70,40]; return nz([240,232,214],r,.05); } return nz([255,150,60],r,.15); });
+makeTile('bookshelf',132,(x,y,r)=>{ if(y===0||y===15||y===7||y===8||x===0||x===15)return nz([110,74,40],r,.1); const cols=[[150,40,40],[40,70,140],[50,120,60],[200,160,60],[120,60,130],[180,90,40]], c=cols[Math.floor(x/2+(y>8?3:0))%6]; return (x%2===0&&r()<0.25)?mul(c,0.7):nz(c,r,.1); });
+makeTile('leaves_orange',133,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[220,110,30]:[240,140,40],r,.2); });
+makeTile('leaves_red',134,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[170,40,30]:[200,60,40],r,.2); });
+makeTile('leaves_gold',135,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[220,180,40]:[245,210,70],r,.2); });
 const seedTile=(name,sd,fn)=>makeTile(name,sd,(x,y,r)=>{ if(x<2||x>13||y<1||y>14)return [0,0,0,0]; if(y<4)return nz([200,170,110],r,.1); const c=fn(x-8,y-9,r); return c||nz([236,214,160],r,.06); }); // a little seed packet
 seedTile('seed_apple',101,(x,y,r)=>Math.hypot(x,y)<3.6?nz([215,40,45],r,.1):(x===0&&y<-3&&y>-6)?[90,60,30]:null);
 seedTile('seed_oak',102,(x,y,r)=>y<-1&&Math.abs(x)<4&&y>-4?nz([120,84,40],r,.1):Math.hypot(x,(y-0.5)*1.2)<3.2?nz([170,120,60],r,.1):null);
@@ -482,6 +490,11 @@ addBlock('farmland','Farmland','Soil','Soil loosened with a hoe so roots can pus
 addBlock('farmland_wet','Watered Farmland','Soil','Damp soil. Plants pull water up through their roots, so watered crops grow faster.',{top:'farm_wet',side:'dirt',bottom:'dirt'},{hidden:true});
 addBlock('farmland_rich','Rich Farmland','Soil','Soil mixed with compost: rotted plants and manure full of nutrients like nitrogen. Crops grow faster and bigger.',{top:'farm_rich',side:'dirt',bottom:'dirt'},{hidden:true});
 addBlock('farmland_rich_wet','Rich Watered Farmland','Soil','Rich, damp soil: the best place to grow crops.',{top:'farm_rich_wet',side:'dirt',bottom:'dirt'},{hidden:true});
+addBlock('portal_mansion','Thanksgiving Mansion Portal','Portal','Place it and a doorway to a big mansion opens, where the whole family is sitting down to Thanksgiving dinner. The first Thanksgiving feast was in 1621 and lasted three days!',{t:'portal_mansion'},{portal:'mansion'});
+addBlock('bookshelf','Bookshelf','Building','Shelves full of books. The Library of Congress in Washington, D.C. is the biggest library in the world, with more than 170 million items.',{top:'planks',side:'bookshelf',bottom:'planks'},{flammable:true});
+addBlock('leaves_orange','Orange Fall Leaves','Plants','In fall, trees stop making green chlorophyll, so the yellow and orange colors that were hiding in the leaves show through.',{t:'leaves_orange'},{opaque:false,flammable:true});
+addBlock('leaves_red','Red Fall Leaves','Plants','Red fall leaves, like a maple\'s, get their color from a pigment the tree makes in autumn, when days are sunny and nights are cool.',{t:'leaves_red'},{opaque:false,flammable:true});
+addBlock('leaves_gold','Golden Fall Leaves','Plants','Golden leaves, like an aspen\'s or a birch\'s. Their yellow pigments were in the leaf all summer, hidden by green.',{t:'leaves_gold'},{opaque:false,flammable:true});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -774,7 +787,7 @@ function rleDecode(r){ const a=new Uint8Array(N); let p=0; for(let i=0;i<r.lengt
 let saveTimer=null;
 const KIT_KEY='blockstar_kit'; // survival coins + weapons carry over between survival worlds
 function snapshot(){ return {v:3,mode,place,cityVer:CITY_VER,intVer:INT_VER,dims:[W,H,D],seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
-  apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])})),ranch:place==='ranch'&&ranchK?ranchSave():undefined,drag:place==='drag'&&dragK?dragSave():undefined}; }
+  apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])})),ranch:place==='ranch'&&ranchK?ranchSave():undefined,drag:place==='drag'&&dragK?dragSave():undefined,mansion:place==='mansion'&&mansionK?mansionSave():undefined}; }
 function saveNow(){ if(demo)return; try{ localStorage.setItem(PLACES[place].key,JSON.stringify(snapshot())); localStorage.setItem(PLACE_KEY,place); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1000); }
 function validSave(s){ return !!s&&(!s.mode||s.mode==='survival')&&(s.v===2||s.v===3)&&Array.isArray(s.w)&&Array.isArray(s.m)&&Array.isArray(s.p); }
@@ -793,7 +806,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag);
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion);
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1345,7 +1358,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
-  if(drive)return; if(ranchK&&ranchHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
+  if(drive)return; if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   const w=WP[weapon];
@@ -1594,6 +1607,7 @@ window.addEventListener('keydown',e=>{
   if(paused)return; keys[e.code]=true;
   if(drive){ if(!e.repeat){ if(e.code==='KeyH')honk(drive); if(e.code==='KeyL')toggleSiren(); if(e.code==='KeyE')exitVehicle(); if(e.code==='KeyC')dragChute(drive); if(e.code==='KeyB')lowHop(drive); if(e.code==='KeyR'&&dragK){ const a=dragDriveAction(); if(a)a.fn(); } } if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault(); return; } // driving: the keys drive
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
+  if(mansionK&&mansionK.seated&&!e.repeat){ if(e.code==='KeyT')startPhase('toast'); if(e.code==='KeyY')startPhase('wish'); }
   if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'){ const a=nearAction(); if(a)a.fn(); }
   if(e.code.startsWith('Digit')){ const n=parseInt(e.code.slice(5)); const list=order(); if(n>=1&&n<=9&&list[n-1])select(list[n-1]); }
   if(e.code==='Space')e.preventDefault();
@@ -1660,7 +1674,7 @@ const OUT_MAX=70;
 function outsideDist(){ const ox=Math.max(0,-pl.p[0],pl.p[0]-W), oz=Math.max(0,-pl.p[2],pl.p[2]-D); return Math.hypot(ox,oz); }
 let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
-  if(curPlace()==='drag'){ viewF=0; return; }
+  if(curPlace()==='drag'||curPlace()==='mansion'){ viewF=0; return; }
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
   const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
@@ -1794,6 +1808,7 @@ function openNewGame(fromTitle){
     '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
     '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
     '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Saddle up a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
+    '<div class="item"><div class="ic">🦃</div><div class="tx"><b>Thanksgiving Mansion</b><div class="fx">'+PLACES.mansion.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="mansion">Start</button></div>'+
     '<div class="item"><div class="ic">🏁</div><div class="tx"><b>Car World</b><div class="fx">'+PLACES.drag.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="drag">Start</button></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
   $('mbox').innerHTML=h; $('modal').style.display='flex';
@@ -1807,7 +1822,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -1974,7 +1989,7 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
@@ -1983,7 +1998,7 @@ function showTitle(){ if(document.pointerLockElement)document.exitPointerLock();
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
@@ -2321,7 +2336,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2380,11 +2395,12 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      s.act==='thanks'?'':
       s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
       s.act==='ride'?'<label>Story'+sel(DM_RSTORY,'rstory',i,s.rstory)+'</label><label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2478,7 +2494,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2492,6 +2508,7 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding
   if(sc.act==='fire'){ fireSetup(sc,P); return; }
   if(sc.act==='ride'){ demoRanchSetup(sc,P); return; }
   if(sc.act==='drag'){ demoDragSetup(sc,P); return; }
+  if(sc.act==='thanks'){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2516,6 +2533,7 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
   if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='drag'){ dragPilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='thanks')return mansionPilot(dt,P);
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
@@ -2537,7 +2555,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -3706,7 +3724,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(ranchK){ const r=ranchAction(); if(r)return r; }
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -3926,7 +3944,7 @@ function demoRoute(tx,tz){ const xs=roadLines(CX,W), zs=roadLines(CZ,D), ax=near
 function ringProject(r,x,z){ const w=r[2]-r[0], h=r[3]-r[1], c=[[Math.max(0,Math.min(w,x-r[0])),Math.abs(z-r[1])],[w+Math.max(0,Math.min(h,z-r[1])),Math.abs(x-r[2])],[w+h+Math.max(0,Math.min(w,r[2]-x)),Math.abs(z-r[3])],[2*w+h+Math.max(0,Math.min(h,r[3]-z)),Math.abs(x-r[0])]];
   return c.sort((a,b)=>a[1]-b[1])[0][0]; }
 // --- the scene: a fresh city, or your own saved one (never saved back)
-function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
+function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
   demo.cityPlace=k; demo.vplace=k; demo.cityKey=PLACES[k].city; demo.inKind=null; demo.stack=[]; demo.cityWorld=true;
   clearCityLife(); clearInteriorLife(); setWorldSize(...PLACES[k].dims); let mine=false;
   if(sc.dsrc==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(s&&Array.isArray(s.w)&&s.cityVer===CITY_VER){ world=rleDecode(s.w); meta=rleDecode(s.m); mine=true; } }catch(e){}
@@ -3934,7 +3952,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4036,9 +4054,10 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   sanfran:{name:'San Francisco',icon:'🌉',key:'blockstar_city_sf',dims:[160,48,160],col:[255,110,70],city:'sanfran',blurb:'Steep hills, foggy skies, the Painted Ladies, the Transamerica Pyramid and the Golden Gate Bridge.'},
   ranch:{name:'Mountain Ranch',icon:'🐴',key:'blockstar_ranch',dims:[128,64,128],col:[214,160,90],ranch:true,blurb:'Tall snowy mountains, a stable full of horses, wild herds and a trail to the top.'},
   orlando:{name:'Orlando',icon:'🏰',key:'blockstar_city_orl',dims:[160,48,160],col:[90,150,255],city:'orlando',blurb:'Sunshine, palm trees, a lake and a theme-park castle.'},
+  mansion:{name:'Thanksgiving Mansion',icon:'🦃',key:'blockstar_mansion',dims:[112,40,112],col:[240,140,60],mansion:true,blurb:'A big mansion on an autumn evening. The whole family is sitting down to Thanksgiving dinner, and there\'s a seat saved for you.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4205,6 +4224,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
 // each city's weather and sky
 function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
   if(cp==='drag'){ applyDragSky(); return; }
+  if(cp==='mansion'){ applyMansionSky(); return; }
   if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
@@ -4262,12 +4282,12 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest; const inner=PLACES[dest].interior; let sp=null;
-  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
   if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -4718,7 +4738,7 @@ function ranchAction(){ const K=ranchK; if(!onRanch())return null; if(K.ride)ret
 
 // --- the horse ride in Demo Mode: up the trail past the lake (with a drink), a gallop across the meadow, a steer roped
 // along the way, the view from the top, then back down
-function demoRanchSetup(sc,P){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
+function demoRanchSetup(sc,P){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
   generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
   const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
   const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
@@ -5021,6 +5041,7 @@ let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return driveUpdate(dt); }
   if(riding())return rideUpdate(dt);
+  if(mansionK&&mansionK.seated){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // sitting at the dinner table
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
   if(enterCD>0)enterCD-=dt; else if((!demo||demo.user)&&(Math.abs(ix)+Math.abs(iz)>0.1||Math.abs(pad.lx)+Math.abs(pad.ly)>0.1)&&bumpEnter())return {hs:0};
@@ -5245,7 +5266,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -5277,6 +5298,7 @@ function frame(now){
 // In every vehicle. Touch: turn the wheel with one thumb, hold the pedals with the other. Keys, a controller or the joystick
 // still work, and the wheel and pedals move along with them. The speedometer reads in miles per hour (1 block is 1 meter).
 const dash={wheel:0,ang:0,gas:0,brake:0,up:0,dn:0,wid:null,a0:0,w0:0,spdShown:-1,maxShown:0};
+tap($('dnEat'),()=>{ if(mansionK&&mansionK.seated)eatDish(mansionAim()); }); tap($('dnToast'),()=>{ if(mansionK)startPhase('toast'); }); tap($('dnWish'),()=>{ if(mansionK)startPhase('wish'); }); tap($('dnUp'),()=>{ if(mansionK)standUp(); });
 { const wh=$('dWheel'), WMAX=2.4; tap($('dragSlip'),()=>{ $('dragSlip').style.display='none'; });
   const ang=e=>{ const r=wh.getBoundingClientRect(); return Math.atan2(e.clientX-(r.left+r.width/2),-(e.clientY-(r.top+r.height/2))); };
   wh.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); audioInit(); if(demo){ demoPoke(); demoTake(); } dash.wid=e.pointerId; try{ wh.setPointerCapture(e.pointerId); }catch(er){} dash.a0=ang(e); dash.w0=dash.ang; });
@@ -5759,7 +5781,7 @@ function dragHudTick(){ const R=dragK.race, el=$('dragHud'); if(!R||!drive){ if(
 // pulls the chute and stops on the yellow lines, or keeps going off the ramp and flies the jet over the city
 const dragAuto={gas:0,brk:0,str:0,pin:0};
 for(const k of DR.LEFT.concat(DR.RIGHT))DM_DCAR[k]=VEH[k].icon+' '+VEH[k].name+(k.startsWith('lift')?' ('+['white','black','red'][+k[4]-1]+')':'');
-function demoDragSetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demo.vplace='drag'; demo.dragWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples();
+function demoDragSetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='drag'; demo.dragWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples();
   setWorldSize(...PLACES.drag.dims); generateDrag(dmCfg.seed+23); rebuildAll(); refreshPortals(); buildDragLife(null); applyPlaceSky();
   const K=dragK, t=VEH[sc.dcar]&&K.cars.some(c=>c.type===sc.dcar)?sc.dcar:K.cars[Math.floor(Math.random()*K.cars.length)].type, v=K.cars.find(c=>c.type===t), L=v.home.side<0?0:1;
   v.p=[DR.LANE[L],DR.GY,DR.Z0+30]; v.h=0; vehPlace(v); pl.p=v.p.slice(); enterVehicle(v,true); camMode=3; chase.p=null;
@@ -5783,6 +5805,334 @@ function dragDemoCam(dt){ const P=demo.pil, v=drive; if(!v||v.jet||v.air||!(P.ph
   const want=new THREE.Vector3(DR.CXL+0.5+(P.L?-6:6),DR.GY+2.2,DR.Z0-9), look=new THREE.Vector3(DR.CXL+0.5,DR.GY+1.6,DR.Z0+3);
   if(!demo.cam||demo.cam.k!=='drag'){ demo.cam={k:'drag',p:want.clone(),l:look.clone()}; } demo.cam.p.lerp(want,Math.min(1,dt*2)); demo.cam.l.lerp(look,Math.min(1,dt*3)); camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
 
+// ================= THE THANKSGIVING MANSION =================
+// A big house on an autumn evening, where the whole family is sitting down to Thanksgiving dinner (there's an empty chair
+// for you). Ground floor: the foyer with a grand staircase, the living room (football on TV), the library with a secret
+// room, the dining room, the kitchen and a gym. Upstairs: bedrooms, bathrooms and a kids' room. Downstairs: a disco, a
+// game room and a movie theater. Out back: a pool, a hot tub and a fire pit. A 4-car garage on the side.
+// Floors: the basement floor is at y=6, the ground floor y=12, upstairs y=19.
+const MN={X0:28,X1:84,Z0:30,Z1:70,FB:6,F1:12,F2:19,spawn:[56.5,12,96.5],
+  seat:{x:56,z:39.4}, table:{x0:44,x1:68,z0:40.6,z1:44.4,y:12.8},
+  garage:{x0:85,x1:104,z0:46,z1:70}, pool:{x0:42,x1:70,z0:12,z1:24}, tub:{x0:74,x1:78,z0:14,z1:18},
+  secret:{x:78,z0:59,z1:60}};
+function generateMansion(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
+  const P=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, F=(x0,y0,z0,x1,y1,z1,id)=>{ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)P(x,y,z,id); }, r=mulberry32(s), {X0,X1,Z0,Z1}=MN;
+  // the ground
+  for(let x=0;x<W;x++)for(let z=0;z<D;z++){ for(let y=0;y<11;y++)P(x,y,z,y<6?ID.granite:ID.dirt); P(x,11,z,ID.grass); }
+  // the basement: dug out, with concrete walls and floor
+  F(X0,5,Z0,X1,10,Z1,ID.concrete); F(X0+1,6,Z0+1,X1-1,10,Z1-1,0);
+  // the outside walls (two stories), the floors and the ceiling
+  F(X0,11,Z0,X1,11,Z1,ID.planks); F(X0,12,Z0,X1,24,Z1,ID.limestone); F(X0+1,12,Z0+1,X1-1,24,Z1-1,0); F(X0+1,18,Z0+1,X1-1,18,Z1-1,ID.planks); F(X0,25,Z0,X1,25,Z1,ID.quartz);
+  for(const y of [18,25])for(let x=X0;x<=X1;x++){ P(x,y,Z0,ID.quartz); P(x,y,Z1,ID.quartz); } for(const y of [18,25])for(let z=Z0;z<=Z1;z++){ P(X0,y,z,ID.quartz); P(X1,y,z,ID.quartz); }
+  for(const [x,z] of [[X0,Z0],[X1,Z0],[X0,Z1],[X1,Z1]])F(x,12,z,x,24,z,ID.quartz);
+  // a hip roof
+  for(let k=0;k<8;k++){ const a=X0-1+k*3, b=X1+1-k*3, c=Z0-1+k*3, d=Z1+1-k*3; if(a>b||c>d)break; for(let x=a;x<=b;x++)for(let z=c;z<=d;z++){ const inner=x>a+2&&x<b-2&&z>c+2&&z<d-2; if(!inner||k===7||a+3>b-3||c+3>d-3)P(x,26+k,z,ID.roof); } }
+  // the windows, two to a bay, on both floors
+  for(const y0 of [13,20]){ for(let x=X0+3;x<=X1-3;x+=5){ for(const z of [Z0,Z1])F(x,y0,z,x+1,y0+2,z,ID.glass); } for(let z=Z0+3;z<=Z1-3;z+=5){ for(const x of [X0,X1])F(x,y0,z,x,y0+2,z+1,ID.glass); } }
+  // --- the ground floor (y 12-17)
+  const wall=(x0,z0,x1,z1,y0,y1,id)=>F(x0,y0,z0,x1,y1,z1,id||ID.paint_white), door=(x0,z0,x1,z1,y0)=>F(x0,y0,z0,x1,y0+2,z1,0);
+  wall(X0+1,55,X1-1,55,12,17); door(33,55,34,55,12); door(54,55,58,55,12); // front rooms | back rooms
+  wall(47,56,47,69,12,17); door(47,61,47,63,12); wall(65,56,65,69,12,17); door(65,61,65,63,12); // living | foyer | library
+  wall(39,31,39,54,12,17); door(39,42,39,43,12); wall(73,31,73,54,12,17); door(73,40,73,43,12); // gym | dining | kitchen
+  door(55,Z1,57,Z1,12); F(55,15,Z1,57,15,Z1,ID.glass); door(44,Z0,45,Z0,12); F(X1,12,48,X1,14,49,0); // the front door (with a window over it), the back door to the patio, the door to the garage
+  F(29,12,Z0,38,16,Z0,ID.glass); // the gym looks out at the pool
+  F(48,11,56,64,11,69,ID.marble); F(74,11,31,83,11,54,ID.quartz); F(46,11,38,66,11,47,ID.paint_red); // marble in the foyer, a white kitchen floor, a red rug under the dinner table
+  // the library: bookshelves all round, and a secret room behind them (pull the red book to open it)
+  for(let z=56;z<=69;z++)for(let y=12;y<=16;y++){ P(X1-1,y,z,ID.bookshelf); } for(let x=66;x<=83;x++)for(let y=12;y<=16;y++){ if(x<66||x>83)continue; P(x,y,56,ID.bookshelf); if(!(x>=73&&x<=75&&y<=14))P(x,y,69,ID.bookshelf); }
+  F(66,12,69,83,16,69,ID.bookshelf); door(55,Z1,57,Z1,12);
+  wall(79,57,83,57,12,16,ID.bookshelf); wall(78,57,78,63,12,16,ID.bookshelf); wall(79,63,83,63,12,16,ID.bookshelf); F(79,12,58,82,16,62,0); F(79,11,58,82,11,62,ID.gold); // the secret room (a gold floor!)
+  // the kitchen: counters round the walls, an island, the fridge
+  F(74,12,31,83,12,31,ID.quartz); F(83,12,32,83,12,46,ID.quartz); F(77,12,38,80,12,44,ID.quartz); F(74,12,32,75,13,32,ID.iron); F(75,13,Z0,82,14,Z0,ID.glass);
+  // the fireplaces (living room and dining room, with the main bedroom's above the living room's) and a chimney through the roof
+  const hearth=(x0,z0,x1,z1,y0,ox,oz)=>{ F(x0,y0,z0,x1,y0+4,z1,ID.brick); if(ox!==undefined)F(ox[0],y0,oz[0],ox[1],y0+1,oz[1],0); };
+  hearth(29,60,30,64,12,[30,30],[61,63]); hearth(29,60,30,64,19,[30,30],[61,63]); F(28,24,60,29,35,64,ID.brick); F(29,24,61,29,35,63,0);
+  hearth(54,31,58,32,12,[55,57],[32,32]); F(55,25,30,57,35,31,ID.brick);
+  // the grand staircase (up) and the stairs down to the basement, in the foyer
+  for(let k=1;k<=6;k++)F(52,12,64-k,60,11+k,64-k,ID.marble); F(52,18,58,60,18,63,0); F(51,19,58,51,19,64,ID.glass); F(61,19,58,61,19,64,ID.glass); F(52,19,64,60,19,64,ID.glass);
+  F(62,11,58,64,11,63,0); for(let k=1;k<=6;k++){ F(62,6,57+k,64,10,57+k,0); if(k<6)F(62,6,57+k,64,11-k,57+k,ID.concrete); } F(61,12,58,61,12,63,ID.glass); F(62,12,64,64,12,64,ID.glass);
+  // --- upstairs (y 19-24): bedrooms, bathrooms and the kids' room off a big landing
+  wall(47,31,47,69,19,24); wall(65,31,65,69,19,24); door(47,60,47,61,19); door(65,60,65,61,19); door(47,37,47,38,19); door(65,37,65,38,19); door(65,49,65,50,19);
+  wall(X0+1,55,46,55,19,24); door(40,55,41,55,19); wall(66,55,X1-1,55,19,24); wall(X0+1,43,46,43,19,24); wall(66,43,X1-1,43,19,24); door(47,49,47,50,19);
+  F(29,18,44,46,18,54,ID.quartz); F(66,18,44,83,18,54,ID.quartz); F(66,18,31,83,18,42,ID.paint_blue); // tiled bathrooms, a blue carpet in the kids' room
+  for(const [x0,z0] of [[31,46],[70,46]]){ F(x0,19,z0,x0+5,19,z0+2,ID.quartz); F(x0+1,19,z0+1,x0+4,19,z0+1,ID.water); } // bathtubs
+  // --- the basement: the disco, the game room and the movie theater
+  wall(47,31,47,69,6,10,ID.concrete); door(47,60,47,62,6); wall(65,31,65,69,6,10,ID.concrete); door(65,60,65,62,6); door(65,40,65,42,6);
+  F(66,5,31,83,5,69,ID.paint_red); for(let k=0;k<4;k++)F(68,6,36+k*6,81,6+(k>1?1:0),36+k*6,ID.paint_red); // the theater's carpet and its stepped rows
+  // --- outside: the porch, the patio and pool, the hot tub, the garage, the driveway, the front walk and fall trees
+  F(49,11,71,63,11,76,ID.limestone); for(const x of [50,54,58,62])F(x,12,75,x,18,75,ID.quartz); F(48,19,70,64,19,77,ID.limestone);
+  F(30,11,6,82,11,29,ID.limestone); const Pl=MN.pool; F(Pl.x0-1,11,Pl.z0-1,Pl.x1+1,11,Pl.z1+1,ID.quartz); F(Pl.x0,8,Pl.z0,Pl.x1,10,Pl.z1,ID.quartz); F(Pl.x0,9,Pl.z0,Pl.x1,11,Pl.z1,ID.water);
+  const T=MN.tub; F(T.x0,11,T.z0,T.x1,12,T.z1,ID.quartz); F(T.x0+1,11,T.z0+1,T.x1-1,12,T.z1-1,ID.water);
+  const G=MN.garage; F(G.x0,11,G.z0,G.x1,11,G.z1,ID.concrete); F(G.x0,12,G.z0,G.x1,17,G.z1,ID.brick); F(G.x0,12,G.z0+1,G.x1-1,17,G.z1-1,0); F(G.x0,18,G.z0,G.x1,18,G.z1,ID.slate); F(G.x0+2,12,G.z1,G.x1-2,15,G.z1,0);
+  F(G.x0+3,11,G.z1+1,G.x1-3,11,D-1,ID.asphalt); F(54,11,77,58,11,D-1,ID.limestone);
+  const trees=[]; for(let i=0;i<70&&trees.length<26;i++){ const x=4+Math.floor(r()*(W-8)), z=4+Math.floor(r()*(D-8));
+    if(x>X0-5&&x<G.x1+5&&z>2&&z<Z1+10)continue; if(x>48&&x<66&&z>70)continue; if(x>G.x0&&x<G.x1+4&&z>G.z1)continue; if(trees.some(t=>Math.hypot(t[0]-x,t[1]-z)<7))continue; trees.push([x,z]); }
+  const LV=[ID.leaves_orange,ID.leaves_red,ID.leaves_gold]; for(const [x,z] of trees){ const h=5+Math.floor(r()*2), c=LV[Math.floor(r()*3)], c2=LV[Math.floor(r()*3)]; F(x,12,z,x,11+h,z,ID.log);
+    for(let dy=-2;dy<=2;dy++){ const R=dy===2?1:dy===-2?2:3; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.3||(r()<0.15&&Math.hypot(dx,dz)>R-1))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,11+h+dy,z+dz,r()<0.25?c2:c); } } } }
+
+// --- furniture, food and decorations are models (the walls and floors are blocks). Each floor has its own group, and only the
+// floors you can see are drawn, so the house stays fast
+let mansionK=null;
+function onMansion(){ return curPlace()==='mansion'&&!!mansionK; }
+const mm=(c,o)=>lm(c,o), glowM=c=>new THREE.MeshBasicMaterial({color:c});
+function mb(par,w,h,d,m,x,y,z,ry){ const b=box(w,h,d,m); b.position.set(x,y,z); if(ry)b.rotation.y=ry; par.add(b); return b; }
+function mcyl(par,r1,r2,h,m,x,y,z,seg){ const c=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg||14),m); c.position.set(x,y,z); par.add(c); return c; }
+function msph(par,r,m,x,y,z,sx,sy,sz){ const s=new THREE.Mesh(new THREE.SphereGeometry(r,12,9),m); s.position.set(x,y,z); s.scale.set(sx||1,sy||1,sz||1); par.add(s); return s; }
+function grp(par,x,y,z,ry){ const g=new THREE.Group(); g.position.set(x,y,z); if(ry)g.rotation.y=ry; par.add(g); return g; }
+function canvasTex(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; const t=new THREE.CanvasTexture(c); return {c,x:c.getContext('2d'),t}; }
+// --- the food. Each dish knows its name and what the family says when you eat some
+const DISHES=[
+  ['turkey','🦃 Roast turkey','Grandpa\'s been cooking that turkey since 6 this morning!'],['mash','🥔 Mashed potatoes','Save some mashed potatoes for me!'],['gravy','Gravy','Pass the gravy, please!'],
+  ['stuffing','Stuffing','Grandma\'s stuffing is the best in the world.'],['cran','Cranberry sauce','The cranberry sauce still has the can ridges. Classic!'],['beans','Green bean casserole','Crunchy onions on top. Yum!'],
+  ['yams','Sweet potatoes with marshmallows','Marshmallows on sweet potatoes? Genius.'],['corn','Corn on the cob','Corn was one of the foods at the very first Thanksgiving in 1621!'],['rolls','Dinner rolls','Who wants a warm roll?'],
+  ['mac','Mac and cheese','Mac and cheese is my favorite vegetable!'],['salad','Salad','At least someone is eating a salad.'],['ppie','🥧 Pumpkin pie','Pumpkin pie with whipped cream. The best part!'],
+  ['apie','🥧 Apple pie','Apple pie. Is there any ice cream?'],['pecan','🥧 Pecan pie','Pecan pie! Pecans grow on trees in the southern US.'],['cider','Apple cider','Fresh apple cider from the orchard.']];
+function dishMesh(k){ const g=new THREE.Group(), W2=mm(0xf6f4ee), add=(...a)=>mb(g,...a), cy=(...a)=>mcyl(g,...a), sp=(...a)=>msph(g,...a);
+  if(k==='turkey'){ cy(0.62,0.62,0.05,W2,0,0.03,0,20); const br=mm(0xb8641e); sp(0.42,br,0,0.3,0,1.05,0.72,0.85); for(const s of[-1,1]){ const d=mcyl(g,0.08,0.13,0.42,br,s*0.3,0.28,-0.32); d.rotation.x=1.1; d.rotation.z=s*0.3; sp(0.06,W2,s*0.36,0.36,-0.5); sp(0.13,br,s*0.38,0.3,0.15); }
+    for(let i=0;i<6;i++)sp(0.06,mm(0x3a8a2a),Math.cos(i)*0.5,0.08,Math.sin(i)*0.5); }
+  else if(k==='mash'){ cy(0.3,0.24,0.18,W2,0,0.09,0); sp(0.26,mm(0xf2e6c4),0,0.2,0,1,0.6,1); add(0.08,0.04,0.08,mm(0xffe060),0,0.36,0); }
+  else if(k==='gravy'){ sp(0.16,mm(0xeeeeea),0,0.12,0,1.5,0.7,0.9); add(0.2,0.03,0.12,mm(0x6a3a16),0,0.2,0); add(0.04,0.1,0.1,mm(0xeeeeea),0.26,0.16,0); }
+  else if(k==='stuffing'){ add(0.64,0.14,0.44,W2,0,0.07,0); for(let i=0;i<14;i++)add(0.12,0.08,0.12,mm(i%3?0x8a5a2a:0x6a8a2a),(i%5-2)*0.11,0.16,(Math.floor(i/5)-1)*0.12); }
+  else if(k==='cran'){ cy(0.22,0.22,0.03,W2,0,0.02,0); const c=cy(0.13,0.13,0.24,mm(0xa0142a),0,0.15,0); for(let i=0;i<3;i++)cy(0.135,0.135,0.02,mm(0x80101e),0,0.06+i*0.08,0); }
+  else if(k==='beans'){ add(0.6,0.13,0.42,W2,0,0.065,0); add(0.54,0.04,0.36,mm(0x4a8a2a),0,0.14,0); for(let i=0;i<10;i++)add(0.08,0.03,0.08,mm(0xd8902a),(i%4-1.5)*0.12,0.17,(Math.floor(i/4)-1)*0.12); }
+  else if(k==='yams'){ add(0.6,0.13,0.42,W2,0,0.065,0); add(0.54,0.04,0.36,mm(0xe07020),0,0.14,0); for(let i=0;i<12;i++)add(0.08,0.07,0.08,mm(0xfff8ee),(i%4-1.5)*0.12,0.18,(Math.floor(i/4)-1)*0.11); }
+  else if(k==='corn'){ add(0.5,0.03,0.34,W2,0,0.02,0); for(let i=0;i<3;i++){ const c=mcyl(g,0.06,0.06,0.4,mm(0xf2c830),0,0.1,(i-1)*0.11,8); c.rotation.z=Math.PI/2; } }
+  else if(k==='rolls'){ add(0.5,0.1,0.36,mm(0x8a5a2a),0,0.05,0); for(let i=0;i<6;i++)sp(0.09,mm(0xd8a050),(i%3-1)*0.14,0.14,(Math.floor(i/3)-0.5)*0.14,1,0.8,1); }
+  else if(k==='mac'){ cy(0.28,0.24,0.14,W2,0,0.07,0); cy(0.25,0.25,0.04,mm(0xf2b020),0,0.15,0); }
+  else if(k==='salad'){ cy(0.3,0.2,0.18,mm(0xb8e0f0,{transparent:true,opacity:0.7}),0,0.09,0); for(let i=0;i<8;i++)sp(0.08,mm(i%4?0x4aa02a:0xd02a2a),Math.cos(i)*0.14,0.2,Math.sin(i)*0.14); }
+  else if(k==='ppie'||k==='apie'||k==='pecan'){ cy(0.3,0.26,0.08,mm(0xd8a060),0,0.04,0); cy(0.26,0.26,0.03,mm(k==='ppie'?0xd0701a:k==='apie'?0xe0b060:0x5a3014),0,0.09,0); if(k==='ppie')sp(0.07,W2,0,0.12,0); if(k==='apie')for(let i=-1;i<=1;i++){ add(0.04,0.02,0.48,mm(0xc89050),i*0.14,0.12,0); add(0.48,0.02,0.04,mm(0xc89050),0,0.12,i*0.14); } }
+  else if(k==='cider'){ cy(0.12,0.14,0.36,mm(0xc8e8f0,{transparent:true,opacity:0.6}),0,0.18,0); cy(0.11,0.13,0.26,mm(0xc87818),0,0.14,0); add(0.04,0.18,0.08,mm(0xc8e8f0),0.15,0.2,0); }
+  g.userData.dish=k; return g; }
+// --- the family
+const FAM=[['Grandpa','gp'],['Grandma','gm'],['Mom'],['Dad'],['Aunt Rose'],['Uncle Joe'],['Aunt Lily'],['Uncle Sam'],['Cousin Mia','kid'],['Cousin Leo','kid'],['Cousin Ava','kid'],['Cousin Max','kid'],['Baby Theo','baby']];
+const FAM_CHAT=['Happy Thanksgiving, everyone!','Can someone pass the rolls?','This is the best turkey yet!','I\'m saving room for pie.','Who\'s watching the football game later?','Did you hear the Pilgrims and the Wampanoag shared the first feast?',
+  'Mmm, gravy on everything!','Grandma, can I have your stuffing recipe?','I ate too much... I need a nap.','More cranberry sauce, please!','I\'m thankful we\'re all together.','Pie! Pie! Pie!','Don\'t forget the disco downstairs after dinner!','Who wants to swim after dinner?'];
+const THANKFUL=['I\'m thankful for this amazing family!','I\'m thankful for Grandma\'s cooking!','I\'m thankful for my friends and my dog.','I\'m thankful for all this pie!','I\'m thankful we\'re all together.','I\'m thankful for football and naps!'];
+function familyLook(role){ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; if(L.back==='wings'||L.back==='dragon'||L.back==='jetpack')L.back='none'; if(L.beard!==undefined&&role!=='gp')L.beard='none';
+  if(role==='gp'||role==='gm'){ L.hairC='#d8d8d4'; L.hair=role==='gp'?'short':'long'; } if(role==='gp'){ L.top='flannel'; L.topC='#8a2a1a'; } return cleanLook(L); }
+function seatPerson(par,x,y,z,ry,role){ const g=grp(par,x,y,z,ry), R=makeRig(g); dressRig(R,familyLook(role)); const k=role==='kid'?0.74:role==='baby'?0.5:1; g.scale.setScalar(k);
+  R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.9; return {g,R,k,ry,ph:Math.random()*6,biteT:2+Math.random()*4,bite:0}; }
+function chairMesh2(par,x,z,ry){ const g=grp(par,x,MN.F1,z,ry), w=mm(0x6a4428), cu=mm(0xa0402a); mb(g,0.62,0.1,0.6,w,0,0.5,0); mb(g,0.56,0.05,0.54,cu,0,0.57,0); mb(g,0.62,1.0,0.08,w,0,1.0,0.28); for(const [a,b] of [[-0.26,-0.24],[0.26,-0.24],[-0.26,0.24],[0.26,0.24]])mb(g,0.07,0.5,0.07,w,a,0.25,b); return g; }
+// --- a fireplace's flames
+function flames(par,x,y,z,w){ const g=grp(par,x,y,z), fl=[]; for(let i=0;i<5;i++){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.18+Math.random()*0.1,0.6+Math.random()*0.4,6),new THREE.MeshBasicMaterial({color:i%2?0xffa020:0xff5a10,transparent:true,opacity:0.9}));
+    c.position.set((i/4-0.5)*w,0.35,(Math.random()-0.5)*0.2); g.add(c); fl.push(c); } for(let i=0;i<3;i++){ const l=mcyl(g,0.08,0.08,w*0.9,mm(0x4a2a14),0,0.06,(i-1)*0.15,6); l.rotation.z=Math.PI/2; }
+  const pl2=new THREE.PointLight(0xff8a30,1.2,9); pl2.position.set(0,0.8,0); g.add(pl2); return {g,fl,pl:pl2}; }
+// --- the TV: a blocky football game, with a touchdown now and then
+function footballDraw(K){ const T=K.tv, x=T.x, t=K.t; x.fillStyle='#2a8a2a'; x.fillRect(0,0,256,144); x.strokeStyle='rgba(255,255,255,0.6)'; x.lineWidth=2; for(let i=0;i<=10;i++){ const px=8+i*24; x.beginPath(); x.moveTo(px,20); x.lineTo(px,140); x.stroke(); }
+  x.fillStyle='#1a5a9a'; x.fillRect(0,20,8,120); x.fillStyle='#9a1a1a'; x.fillRect(248,20,8,120);
+  const run=(t*0.06)%1, bx=20+run*226, by=80+Math.sin(t*1.3)*30; for(let i=0;i<6;i++){ x.fillStyle='#d82a2a'; x.fillRect(bx-30-i*6+Math.sin(t*3+i)*6,by-30+i*12,8,12); x.fillStyle='#1a4ad8'; x.fillRect(bx+20+i*7+Math.sin(t*2+i)*8,by-34+i*13,8,12); }
+  x.fillStyle='#d82a2a'; x.fillRect(bx,by,9,13); x.fillStyle='#8a4a1a'; x.fillRect(bx+8,by+3,6,4);
+  x.fillStyle='rgba(0,0,0,0.75)'; x.fillRect(0,0,256,20); x.fillStyle='#fff'; x.font='bold 13px sans-serif'; x.fillText('TURKEYS '+K.score[0]+'  —  PILGRIMS '+K.score[1]+'   Q4',8,15);
+  if(K.tdT>0){ x.fillStyle='rgba(255,210,40,'+(0.6+0.4*Math.sin(t*12))+')'; x.font='bold 34px sans-serif'; x.fillText('TOUCHDOWN!',36,90); } T.t.needsUpdate=true; }
+function movieDraw(K){ const M=K.movie, x=M.x, t=K.t; const g=x.createLinearGradient(0,0,0,144); g.addColorStop(0,'#ffb070'); g.addColorStop(1,'#ff7a50'); x.fillStyle=g; x.fillRect(0,0,256,144);
+  x.fillStyle='#3a8a2a'; x.fillRect(0,110,256,34); const p=(t*40)%340-40; // a turkey running from a pilgrim
+  x.fillStyle='#6a3a1a'; x.beginPath(); x.arc(p+40,96,14,0,Math.PI*2); x.fill(); for(let i=0;i<5;i++){ x.fillStyle=['#c0301a','#e0a020','#6a3a1a','#e0a020','#c0301a'][i]; x.beginPath(); x.arc(p+52,90,18,-1.6+i*0.5,-1.2+i*0.5); x.lineTo(p+52,90); x.fill(); }
+  x.fillStyle='#8aa0c0'; x.fillRect(p+24,80,8,10); x.fillStyle='#d82a2a'; x.fillRect(p+22,88,4,6); x.fillStyle='#e0a020'; x.fillRect(p+36,108-Math.abs(Math.sin(t*10))*4,3,8); x.fillRect(p+44,108-Math.abs(Math.cos(t*10))*4,3,8);
+  const q=p-70; x.fillStyle='#222'; x.fillRect(q,70,16,30); x.fillRect(q-4,66,24,5); x.fillRect(q+2,54,12,12); x.fillStyle='#ffd'; x.fillRect(q+6,72,4,6); x.fillStyle='#f2c8a0'; x.fillRect(q+2,64,12,8); x.fillStyle='#ffd23a'; x.fillRect(q+6,56,4,4);
+  x.fillStyle='rgba(0,0,0,0.5)'; x.fillRect(0,0,256,22); x.fillStyle='#fff'; x.font='bold 14px serif'; x.textAlign='center'; x.fillText('THE GREAT TURKEY CHASE',128,16); x.textAlign='left'; M.t.needsUpdate=true; }
+
+function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof saved==='object'?saved:{};
+  mansionK={t:0,G:{},seated:false,carved:false,phase:null,people:[],couch:[],dancers:[],dishes:[],fires:[],chest:!!sv.chest,score:[14,10],tdT:0,tdNext:14,chatT:3,leaves:null,bites:0};
+  const K=mansionK, G=K.G; for(const k of ['base','ground','upper','out']){ G[k]=new THREE.Group(); scene.add(G[k]); }
+  const g1=G.ground, F1=MN.F1, F2=MN.F2, FB=MN.FB, T=MN.table, wood=mm(0x6a4428), dk=mm(0x2a2a2e), white=mm(0xf4f2ee);
+  // === the dining room: the table, the chairs, the family, the feast
+  mb(g1,T.x1-T.x0,0.12,T.z1-T.z0,wood,(T.x0+T.x1)/2,T.y-0.06,(T.z0+T.z1)/2); mb(g1,T.x1-T.x0+0.3,0.04,T.z1-T.z0+0.3,mm(0xf6f0e2),(T.x0+T.x1)/2,T.y+0.02,(T.z0+T.z1)/2);
+  mb(g1,T.x1-T.x0-1,0.045,1.0,mm(0xd8742a),(T.x0+T.x1)/2,T.y+0.03,(T.z0+T.z1)/2); for(const x of [T.x0+0.5,T.x1-0.5,56])for(const z of [T.z0+0.4,T.z1-0.4])mb(g1,0.16,0.75,0.16,wood,x,F1+0.38,z);
+  const ty=T.y+0.05, cz=(T.z0+T.z1)/2, seats=[]; for(const x of [46,50,54,58,62,66]){ seats.push([x,T.z0-1.0,Math.PI]); seats.push([x,T.z1+1.0,0]); } seats.push([T.x0-1.4,cz,-Math.PI/2]); seats.push([T.x1+1.4,cz,Math.PI/2]);
+  const mine=seats.findIndex(s=>s[0]===58&&s[2]===0); K.mySeat=seats[mine]; let fi=0;
+  seats.forEach((s,i)=>{ chairMesh2(g1,s[0],s[1],s[2]); const f=Math.sin(s[2]), c=Math.cos(s[2]), px=s[0]-f*-0.95*0, pz=s[1];
+    const plate=grp(g1,s[0]-Math.sin(s[2])*1.35,ty,s[1]-Math.cos(s[2])*1.35); mcyl(plate,0.26,0.24,0.03,white,0,0.015,0,16); mcyl(plate,0.2,0.2,0.035,mm(0xe8dcc0),0,0.02,0,16); mb(plate,0.03,0.01,0.34,mm(0xc0c4cc),0.34,0.01,0); mb(plate,0.03,0.01,0.34,mm(0xc0c4cc),-0.34,0.01,0);
+    const gl=mcyl(g1,0.06,0.05,0.18,mm(0xd8f0ff,{transparent:true,opacity:0.6}),plate.position.x+0.3,ty+0.09,plate.position.z+(s[2]===0?-0.3:0.3),10); plate.userData.slice=null; K['plate'+i]=plate;
+    s.plate=plate; });
+  const order=seats.map((s,i)=>i).filter(i=>i!==mine).sort((a,b)=>{ const pr=i=>seats[i][2]===Math.PI&&seats[i][0]===54?0:seats[i][2]===Math.PI&&seats[i][0]===58?1:2+i; return pr(a)-pr(b); }); // Grandpa and Grandma sit by the turkey
+  order.forEach(i=>{ const s=seats[i]; const role=FAM[fi]?FAM[fi][1]:'kid', name=FAM[fi]?FAM[fi][0]:'Cousin'; fi++; const k=role==='kid'?0.74:role==='baby'?0.5:1;
+    const p=seatPerson(g1,s[0],F1+0.57-0.72*k,s[1],s[2],role); p.name=name; p.role=role; p.plate=s.plate; p.seat=s; K.people.push(p); });
+  K.grandpa=K.people.find(p=>p.role==='gp');
+  const place=(k,x,z)=>{ const d=dishMesh(k); d.position.set(x,ty,z); g1.add(d); K.dishes.push(d); return d; };
+  K.turkey=place('turkey',56,cz); [['mash',50,cz-0.6],['gravy',51.4,cz+0.5],['stuffing',53,cz+0.6],['cran',53.4,cz-0.6],['beans',59.5,cz+0.6],['yams',60,cz-0.6],['corn',62.6,cz+0.5],['rolls',63,cz-0.55],['mac',47.4,cz+0.5],['salad',47.4,cz-0.6],
+    ['ppie',65.5,cz],['apie',45,cz],['pecan',64.6,cz-0.7],['cider',58.4,cz-0.75],['cider',52,cz+0.1]].forEach(a=>place(...a));
+  { const c=grp(g1,57.8,ty,cz+0.15), horn=new THREE.Mesh(new THREE.ConeGeometry(0.22,0.7,10),mm(0xa06a2a)); horn.rotation.z=Math.PI/2; horn.position.set(0,0.2,0); c.add(horn); for(let i=0;i<4;i++)msph(c,0.1,mm([0xe07020,0xf2b020,0x8a3a1a,0xd04a1a][i]),0.4+(i%2)*0.15,0.1,(i-1.5)*0.14);
+    for(const x of [-2.5,2.5,-7.5,7.5]){ const cd=grp(g1,56+x,ty,cz); mcyl(cd,0.06,0.06,0.4,mm(0xfff4dc),0,0.2,0,8); const fl=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.12,6),glowM(0xffb030)); fl.position.y=0.47; cd.add(fl); K.fires.push({fl:[fl]}); } }
+  { const ch=grp(g1,56,F2-1.4,cz); mcyl(ch,0.03,0.03,1.2,dk,0,0.6,0,6); mcyl(ch,1.0,0.6,0.15,mm(0xd8b048),0,0,0,16); for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; mcyl(ch,0.05,0.05,0.25,glowM(0xfff0c0),Math.cos(a)*0.9,0.18,Math.sin(a)*0.9,6); msph(ch,0.05,mm(0xe8f4ff,{transparent:true,opacity:0.7}),Math.cos(a)*0.7,-0.2,Math.sin(a)*0.7); } }
+  K.knife=new THREE.Group(); mb(K.knife,0.04,0.04,0.5,mm(0xd8dce4),0,0,-0.35); mb(K.knife,0.06,0.06,0.18,wood,0,0,0); K.knife.visible=false;
+  // === fireplaces: living room, dining room, main bedroom
+  for(const [x,y,z,w,gp] of [[30.5,F1,62.5,2.4,g1],[56.5,F1,32.5,2.4,g1],[30.5,F2,62.5,2.4,G.upper]]){ const f=flames(gp,x,y,z,w); K.fires.push(f); if(x<31){ f.g.rotation.y=Math.PI/2; mb(gp,0.6,0.15,5.4,wood,31.25,y+2.6,z); } }
+  mb(g1,5.4,0.15,0.6,wood,56.5,F1+2.6,33.25);
+  // === the living room: a big TV with the football game, couches with two cousins who'd rather watch than eat
+  { const tv=canvasTex(256,144); K.tv=tv; const scr=new THREE.Mesh(new THREE.PlaneGeometry(6,3.4),new THREE.MeshBasicMaterial({map:tv.t})); scr.position.set(38,F1+2.4,56.6); g1.add(scr); mb(g1,6.3,3.7,0.12,dk,38,F1+2.4,56.5); mb(g1,4,0.6,0.7,wood,38,F1+0.3,57.2);
+    const sofa=(x,z,ry,w)=>{ const s=grp(g1,x,F1,z,ry), c=mm(0x8a5a3a); mb(s,w,0.5,1.0,c,0,0.25,0); mb(s,w,0.9,0.3,c,0,0.65,0.4); mb(s,0.3,0.7,1.0,c,-w/2,0.35,0); mb(s,0.3,0.7,1.0,c,w/2,0.35,0); for(let i=0;i<Math.round(w/1.2);i++)mb(s,0.9,0.2,0.85,mm(0xc89a6a),(i-(Math.round(w/1.2)-1)/2)*1.1,0.58,-0.05); return s; };
+    sofa(38,64,0,4.6); sofa(33.4,61,-Math.PI/2,3.4); mb(g1,2.4,0.4,1.2,wood,38,F1+0.2,60.8); mb(g1,6,0.03,5,mm(0x9a3a2a),38,F1+0.02,61.5); for(const x of [36.6,39.4]){ const p=seatPerson(g1,x,F1+0.55-0.72*0.74,63.8,0,'kid'); p.name=x<38?'Cousin Zoe':'Cousin Ben'; K.couch.push(p); } }
+  // === the foyer: a crystal chandelier, a grand piano and a welcome banner
+  { const ch=grp(g1,56,F2+3.6,66); mcyl(ch,0.03,0.03,2,dk,0,1,0,6); for(let r2=0;r2<3;r2++)for(let i=0;i<8+r2*4;i++){ const a=i/(8+r2*4)*Math.PI*2, R2=0.4+r2*0.45; msph(ch,0.08,mm(0xeaf6ff,{transparent:true,opacity:0.75,emissive:0x406080}),Math.cos(a)*R2,-r2*0.35,Math.sin(a)*R2); mcyl(ch,0.04,0.04,0.12,glowM(0xfff0c0),Math.cos(a)*R2,-r2*0.35+0.12,Math.sin(a)*R2,6); }
+    const pn=grp(g1,50.5,F1,67,0.4); mb(pn,1.6,0.25,2.0,dk,0,1.0,0); mb(pn,1.5,0.06,0.3,white,0,1.12,-0.9); for(let i=0;i<10;i++)mb(pn,0.06,0.07,0.12,dk,-0.7+i*0.155,1.15,-0.95); for(const [a,b] of [[-0.6,-0.8],[0.6,-0.8],[0,0.8]])mb(pn,0.12,0.9,0.12,dk,a,0.45,b); const lid=mb(pn,1.55,0.04,1.9,dk,0,1.5,0.1); lid.rotation.x=-0.5;
+    const ban=canvasTex(512,80); ban.x.fillStyle='#8a3a12'; ban.x.fillRect(0,0,512,80); ban.x.fillStyle='#ffd86a'; ban.x.font='bold 46px serif'; ban.x.textAlign='center'; ban.x.fillText('🍂 Happy Thanksgiving! 🦃',256,56); ban.t.needsUpdate=true;
+    const b=new THREE.Mesh(new THREE.PlaneGeometry(8,1.25),new THREE.MeshBasicMaterial({map:ban.t,side:THREE.DoubleSide})); b.position.set(56,F2+1.2,64.6); G.upper.add(b); mb(g1,4,0.03,2.6,mm(0x8a1a1a),56,F1+0.02,67.5); }
+  // === the library: armchairs, a globe, a desk, and the red book that opens the secret room
+  { mb(g1,1.2,0.7,1.1,mm(0x6a2a1a),70,F1+0.35,63); mb(g1,1.2,0.9,0.3,mm(0x6a2a1a),70,F1+0.9,63.5); mb(g1,1.2,0.7,1.1,mm(0x6a2a1a),73.5,F1+0.35,63); mb(g1,1.2,0.9,0.3,mm(0x6a2a1a),73.5,F1+0.9,63.5);
+    mcyl(g1,0.05,0.05,0.8,wood,68,F1+0.4,60); msph(g1,0.4,mm(0x2a6ad8),68,F1+1.2,60); msph(g1,0.25,mm(0x3a9a3a),68.2,F1+1.3,59.8,1,0.6,0.8); mb(g1,2.4,0.1,1.2,wood,71.5,F1+0.85,59); mb(g1,0.1,0.85,1.1,wood,70.4,F1+0.42,59); mb(g1,0.1,0.85,1.1,wood,72.6,F1+0.42,59);
+    const lamp=grp(g1,72.3,F1+0.9,58.8); mcyl(lamp,0.03,0.03,0.4,mm(0xd8b048),0,0.2,0,6); mcyl(lamp,0.08,0.18,0.18,mm(0x2a8a4a,{emissive:0x103018}),0,0.45,0,10);
+    K.book=mb(g1,0.14,0.42,0.32,glowM(0xd81a1a),MN.secret.x-0.06,F1+1.5,59.5); const sign=labelSprite('🗝️ The Secret Room'); sign.position.set(81,F1+3.6,60); G.ground.add(sign);
+    K.chestG=grp(g1,81,F1,60.5,-Math.PI/2); mb(K.chestG,1.0,0.55,0.7,mm(0x7a4a1a),0,0.28,0); K.lid=grp(K.chestG,0,0.55,0.35); mb(K.lid,1.02,0.2,0.72,mm(0x8a5a22),0,0.1,-0.35); mb(K.chestG,0.14,0.2,0.04,mm(0xffd040),0,0.45,-0.37);
+    K.gold=grp(K.chestG,0,0.5,0); for(let i=0;i<12;i++)mcyl(K.gold,0.08,0.08,0.03,mm(0xffd040,{emissive:0x403000}),(i%4-1.5)*0.18,0.02+Math.floor(i/4)*0.03,(Math.floor(i/4)-1)*0.15,10); K.gold.visible=K.chest; if(K.chest)K.lid.rotation.x=-1.6; }
+  // === the kitchen: the stove with pots, cabinets, pies cooling, a sink
+  { mb(g1,1.8,1.0,1.0,dk,80,F1+0.5,31.6); for(const x of [79.5,80.5]){ mcyl(g1,0.25,0.25,0.3,mm(0x9aa0a8),x,F1+1.15,31.6); } K.potY=F1+1.4; for(let x=74;x<=83;x+=1.6)mb(g1,1.4,1.0,0.6,mm(0xf2eee4),x+0.5,F1+3.4,31.4);
+    for(const [k,x] of [['ppie',78],['apie',79.2],['pecan',80.4]]){ const d=dishMesh(k); d.position.set(x,F1+1.0,41); g1.add(d); K.dishes.push(d); } mb(g1,0.8,0.1,0.5,mm(0x9aa0a8),83.4,F1+1.0,36); }
+  // === the gym (with a wall of glass looking out at the pool)
+  { const tm=grp(g1,31,F1,33.5); mb(tm,0.9,0.15,2.0,dk,0,0.2,0); mb(tm,0.8,0.02,1.8,mm(0x3a3a3a),0,0.29,0); mb(tm,0.06,1.2,0.06,dk,-0.4,0.8,-0.9); mb(tm,0.06,1.2,0.06,dk,0.4,0.8,-0.9); mb(tm,0.9,0.3,0.15,mm(0x2a6ad8,{emissive:0x0a2040}),0,1.4,-0.9);
+    mb(g1,0.5,0.45,1.6,dk,35,F1+0.25,36); mb(g1,0.06,0.06,2.0,mm(0xb8bcc4),35,F1+1.1,35.2).rotation.y=Math.PI/2; for(const x of [34,36])mcyl(g1,0.32,0.32,0.08,dk,x,F1+1.1,35.2).rotation.z=Math.PI/2;
+    mb(g1,0.4,0.9,2.4,dk,37.7,F1+0.45,45); for(let i=0;i<5;i++){ const db=mb(g1,0.5,0.12,0.12,mm(0x2a2a2e),37.4,F1+0.95,44+i*0.5); } const bag=mcyl(g1,0.35,0.35,1.3,mm(0xb82a1a),31,F1+1.4,50,12); mcyl(g1,0.02,0.02,1.4,dk,31,F1+2.8,50,4);
+    mb(g1,0.05,2.6,8,mm(0xd8eef8,{emissive:0x203040}),38.4,F1+1.6,44); mb(g1,1.0,0.02,2.0,mm(0x6a3ab8),33.5,F1+0.01,42); }
+  // === upstairs: beds, a canopy bed in the main bedroom, bunk beds in the kids' room, bathrooms
+  const gu=G.upper, bed=(x,z,ry,w,col,canopy)=>{ const b=grp(gu,x,F2,z,ry); mb(b,w,0.45,2.4,wood,0,0.22,0); mb(b,w-0.1,0.25,2.2,mm(0xf6f4ee),0,0.55,0.05); mb(b,w,0.12,1.6,mm(col),0,0.7,0.4); mb(b,w,1.3,0.15,wood,0,0.65,-1.15);
+    for(let i=0;i<Math.max(1,Math.round(w/0.9));i++)mb(b,0.7,0.2,0.45,mm(0xffffff),(i-(Math.round(w/0.9)-1)/2)*0.85,0.75,-0.8); if(canopy){ for(const [a,c] of [[-1,-1],[1,-1],[-1,1],[1,1]])mb(b,0.1,2.6,0.1,wood,a*w/2,1.3,c*1.15); mb(b,w+0.2,0.1,2.5,mm(col),0,2.6,0); } return b; };
+  bed(37,65,Math.PI/2,2.4,0x8a1a2a,true); bed(75,64,-Math.PI/2,2.0,0x2a5a9a); bed(37,36,Math.PI/2,1.8,0x3a8a4a);
+  for(const [x,z] of [[33.5,65],[33.5,63],[78.5,65]])mb(gu,0.7,0.7,0.7,wood,x,F2+0.35,z); for(const [x,z] of [[33.5,65],[78.5,65]]){ mcyl(gu,0.12,0.16,0.3,mm(0xd8b048),x,F2+0.85,z,8); mcyl(gu,0.15,0.25,0.25,mm(0xfff0d0,{emissive:0x403020}),x,F2+1.12,z,10); }
+  mb(gu,4,0.03,3,mm(0xd8c8a8),38,F2+0.02,65); mb(gu,3,0.03,2.5,mm(0x5a6aa8),74,F2+0.02,64);
+  { const bunk=(x,z,c1,c2)=>{ const b=grp(gu,x,F2,z); for(const [a,c] of [[-0.55,-1.15],[0.55,-1.15],[-0.55,1.15],[0.55,1.15]])mb(b,0.1,2.6,0.1,mm(0xd84a2a),a,1.3,c); for(const [y,c] of [[0.35,c1],[1.75,c2]]){ mb(b,1.1,0.15,2.3,mm(0xd84a2a),0,y,0); mb(b,1.0,0.15,2.1,mm(c),0,y+0.15,0.05); mb(b,0.6,0.15,0.4,mm(0xffffff),0,y+0.25,-0.85); } for(let i=0;i<4;i++)mb(b,0.6,0.06,0.06,mm(0xd84a2a),0.65,0.5+i*0.4,0.9); };
+    bunk(68,34,0x2a6ad8,0x3ab04a); bunk(81,34,0xf2c21a,0xa02ad8); const toy=grp(gu,74.5,F2,40); mb(toy,1.4,0.7,0.8,mm(0x2a8ad8),0,0.35,0); for(let i=0;i<6;i++)mb(gu,0.3,0.3,0.3,mm([0xd82a2a,0x2a6ad8,0xf2c21a,0x3ab04a,0xa02ad8,0xff8a1a][i]),71+i*0.5,F2+0.15+(i%2)*0.3,37.5+(i%3)*0.3);
+    const bear=grp(gu,77,F2,41.5,Math.PI); msph(bear,0.3,mm(0x9a6a3a),0,0.3,0); msph(bear,0.22,mm(0x9a6a3a),0,0.72,0); for(const s of[-1,1])msph(bear,0.08,mm(0x9a6a3a),s*0.16,0.9,0); msph(bear,0.07,mm(0x3a2a1a),0,0.68,-0.2);
+    const rug=canvasTex(64,64); rug.x.fillStyle='#2a3a6a'; rug.x.fillRect(0,0,64,64); rug.x.fillStyle='#fff'; for(let i=0;i<30;i++)rug.x.fillRect(Math.random()*64,Math.random()*64,1,1); rug.x.fillStyle='#d8d8e0'; rug.x.fillRect(28,14,8,30); rug.x.fillStyle='#d82a2a'; rug.x.beginPath(); rug.x.moveTo(28,14); rug.x.lineTo(32,4); rug.x.lineTo(36,14); rug.x.fill(); rug.x.fillStyle='#ffa020'; rug.x.fillRect(29,44,6,8); rug.t.needsUpdate=true;
+    const rg=new THREE.Mesh(new THREE.PlaneGeometry(4,4),new THREE.MeshLambertMaterial({map:rug.t})); rg.rotation.x=-Math.PI/2; rg.position.set(74.5,F2+0.03,36.5); gu.add(rg); }
+  for(const [x0,z0] of [[29,44],[66,44]]){ const t=grp(gu,x0+12,F2,z0+2.5); mb(t,0.5,0.45,0.7,white,0,0.23,0); mb(t,0.5,0.1,0.6,white,0,0.5,0.05); mb(t,0.5,0.6,0.2,white,0,0.6,0.35); mb(gu,1.2,0.8,0.5,white,x0+16,F2+0.4,z0+0.6); mb(gu,0.7,0.06,0.3,mm(0xb8bcc4),x0+16,F2+0.82,z0+0.6); mb(gu,1.4,1.0,0.05,mm(0xd8eef8,{emissive:0x304050}),x0+16,F2+1.8,z0+0.06);
+    for(let i=0;i<3;i++)mb(gu,0.06,0.9,0.5,mm([0x2a8ad8,0xf2f2f2,0xd84a8a][i]),x0+0.15,F2+1.4,z0+5+i*0.7); }
+  // === the basement: the disco (a light-up floor, a mirror ball, a DJ booth, dancing cousins), the game room and the movie theater
+  const gb=G.base;
+  { K.tiles=[]; for(let x=30;x<46;x+=2)for(let z=33;z<68;z+=2){ const m=new THREE.MeshBasicMaterial({color:0x222222}); const t=new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.9),m); t.rotation.x=-Math.PI/2; t.position.set(x+1,FB+0.02,z+1); gb.add(t); K.tiles.push({m,x,z}); }
+    const mc=canvasTex(32,32); for(let i=0;i<32;i+=4)for(let j=0;j<32;j+=4){ mc.x.fillStyle=(i+j)%8?'#ddeeff':'#8899aa'; mc.x.fillRect(i,j,4,4); } mc.t.needsUpdate=true; K.ball=new THREE.Mesh(new THREE.SphereGeometry(0.8,16,12),new THREE.MeshBasicMaterial({map:mc.t})); K.ball.position.set(38,FB+3.9,50); gb.add(K.ball); mcyl(gb,0.02,0.02,0.6,dk,38,FB+4.6,50,4);
+    K.beams=[]; for(let i=0;i<5;i++){ const b=new THREE.Mesh(new THREE.ConeGeometry(1.2,4.5,12,1,true),new THREE.MeshBasicMaterial({color:[0xff2a8a,0x2affd0,0xffd02a,0x8a2aff,0x2a8aff][i],transparent:true,opacity:0.18,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+      const h=grp(gb,32+i*3.2,FB+4.4,38+i*6); b.position.y=-2.2; h.add(b); K.beams.push(h); }
+    const dj=grp(gb,38,FB,33.2); mb(dj,4,1.1,1.0,dk,0,0.55,0); mb(dj,3.8,0.06,0.9,mm(0x2a2a3a),0,1.13,0); for(const x of [-1,1])mcyl(dj,0.35,0.35,0.05,mm(0x111111),x,1.18,0,16); K.djLights=[]; for(let i=0;i<8;i++){ const m=glowM(0xff2a8a); mb(dj,0.3,0.1,0.02,m,-1.6+i*0.45,0.7,-0.51); K.djLights.push(m); }
+    for(const x of [34,42]){ const sp=grp(gb,x,FB,33); mb(sp,1.2,2.6,1.0,dk,0,1.3,0); for(const y of [0.7,1.7])mcyl(sp,0.4,0.4,0.05,mm(0x333333),0,y,-0.51,14).rotation.x=Math.PI/2; }
+    for(let i=0;i<3;i++){ const g=grp(gb,35+i*3,FB,45+i*4), R=makeRig(g); dressRig(R,familyLook('kid')); g.scale.setScalar(0.74); K.dancers.push({g,R,ph:i*2}); } }
+  { const pt=grp(gb,56,FB,42); mb(pt,2.4,0.8,4.4,wood,0,0.4,0); mb(pt,2.0,0.06,4.0,mm(0x1a7a3a),0,0.83,0); for(let i=0;i<9;i++)msph(pt,0.08,mm([0xffffff,0xf2c21a,0x2a6ad8,0xd82a2a,0x6a2ad8,0xff8a1a,0x2a9a3a,0x8a1a1a,0x111111][i]),(i%3-1)*0.2,0.94,-0.8+Math.floor(i/3)*0.18);
+    const cue=mb(pt,0.04,0.04,2.4,mm(0xd8b078),0.6,0.95,0.6); cue.rotation.y=0.3; K.arcade=[];
+    for(let i=0;i<4;i++){ const a=grp(gb,49.5+i*2,FB,31.8); mb(a,1.2,2.4,1.0,mm([0x2a2a8a,0x8a2a2a,0x2a7a2a,0x6a2a8a][i]),0,1.2,0); const m=new THREE.MeshBasicMaterial({color:0x2a8aff}); const s=mb(a,0.9,0.7,0.05,m,0,1.7,-0.5); K.arcade.push(m); mb(a,1.2,0.12,0.5,dk,0,1.05,-0.6); }
+    const fz=grp(gb,56,FB,51); mb(fz,1.4,0.9,2.4,wood,0,0.45,0); mb(fz,1.2,0.04,2.2,mm(0x2a8a3a),0,0.9,0); for(let i=0;i<4;i++)mb(fz,1.8,0.04,0.04,mm(0xb8bcc4),0,1.05,-0.8+i*0.55);
+    const dart=new THREE.Mesh(new THREE.CircleGeometry(0.6,20),mm(0x2a2a2a)); dart.position.set(48.1,FB+2.2,46); dart.rotation.y=Math.PI/2; gb.add(dart); for(const [r2,c] of [[0.45,0xd82a2a],[0.3,0xf2e6c4],[0.12,0x2a8a3a]]){ const d=new THREE.Mesh(new THREE.CircleGeometry(r2,20),mm(c)); d.position.set(48.12+(0.45-r2)*0.02,FB+2.2,46); d.rotation.y=Math.PI/2; gb.add(d); } }
+  { const mv=canvasTex(256,144); K.movie=mv; const scr=new THREE.Mesh(new THREE.PlaneGeometry(14,7.8),new THREE.MeshBasicMaterial({map:mv.t})); scr.position.set(75,FB+2.6,31.3); scr.scale.setScalar(0.62); gb.add(scr);
+    for(let k=0;k<4;k++)for(let i=0;i<6;i++){ const s=grp(gb,69.5+i*2.2,FB+(k>1?2:1),36.5+k*6); mb(s,1.4,0.5,1.2,mm(0xa01a2a),0,0.25,0); mb(s,1.4,1.0,0.3,mm(0xa01a2a),0,0.75,0.5); mb(s,0.2,0.7,1.2,mm(0x801020),-0.7,0.35,0); }
+    const pop=grp(gb,82,FB,52); mb(pop,1.0,1.0,0.8,mm(0xd82a2a),0,0.5,0); mb(pop,0.9,1.0,0.7,mm(0xfff4d0,{transparent:true,opacity:0.6}),0,1.5,0); for(let i=0;i<14;i++)msph(pop,0.08,mm(0xfff4c0),(Math.random()-0.5)*0.7,1.1+Math.random()*0.4,(Math.random()-0.5)*0.5);
+    for(let i=0;i<40;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(0.05,4,4),glowM(0xfff8d0)); st.position.set(66.5+Math.random()*17,FB+4.9,32+Math.random()*37); gb.add(st); } }
+  // === the garage: four cars you can drive out and around the lawn
+  { const Gr=MN.garage; ['sports','muscle','lowrider','pickup'].forEach((t,i)=>{ if(!VEH[t])return; const v=makeVehicle(t,Gr.x0+3.5+i*4.6,F1,Gr.z0+12,Math.PI); freeVehicles.push(v); }); mb(g1,6,1.0,0.8,mm(0x8a2a1a),94.5,F1+0.5,Gr.z0+1.5); }
+  // === outside: the porch, the patio and pool, the fire pit, string lights, pumpkins, hay bales and falling leaves
+  const go=G.out;
+  for(const [x,z,s] of [[51,73,1],[52.2,72.6,0.7],[60.8,73,1],[61.8,72.4,0.6],[49.5,76.5,0.8],[63,76.6,0.9]]){ const p=grp(go,x,F1,z); msph(p,0.4*s,mm(0xe07020),0,0.32*s,0,1.2,0.85,1.2); mcyl(p,0.04,0.05,0.18*s,mm(0x3a5a1a),0,0.72*s,0,6); }
+  for(const [x,z] of [[47.5,73],[64.5,73]]){ mb(go,1.4,0.9,0.9,mm(0xd8b04a),x,F1+0.45,z); }
+  for(let i=0;i<6;i++){ const ch=grp(go,46+i*4,F1,22+((i%2)?1:0)*0), dz=MN.pool.z1+3.2; ch.position.z=dz; mb(ch,0.7,0.2,1.8,white,0,0.35,0); const bk=mb(ch,0.7,0.1,0.8,white,0,0.7,0.85); bk.rotation.x=-0.6; mb(ch,0.7,0.06,1.6,mm([0x2a8ad8,0xf2c21a,0xd84a2a][i%3]),0,0.47,0); }
+  for(const [x,z] of [[44,27.5],[56,27.5],[68,27.5]]){ mcyl(go,0.05,0.05,2.6,white,x,F1+1.3,z,6); const u=new THREE.Mesh(new THREE.ConeGeometry(1.5,0.6,8),mm(0xf2f2ee)); u.position.set(x,F1+2.7,z); go.add(u); }
+  { const fp=grp(go,76,F1,24); mcyl(fp,1.0,1.0,0.4,mm(0x7a7a7a),0,0.2,0,16); const f=flames(fp,0,0.35,0,1.2); K.fires.push(f); for(let i=0;i<4;i++){ const a=i/4*Math.PI*2+0.4; const c=grp(go,76+Math.cos(a)*2.4,F1,24+Math.sin(a)*2.4,-a-Math.PI/2); mb(c,0.7,0.45,0.7,mm(0x8a5a3a),0,0.22,0); mb(c,0.7,0.7,0.1,mm(0x8a5a3a),0,0.6,0.32); } }
+  K.bulbs=[]; for(let i=0;i<34;i++){ const x=38+i, z=29.4-1.2*Math.sin(Math.PI*((i%8)/8)); const m=glowM([0xffe08a,0xff8a3a,0xffd04a][i%3]); const b=new THREE.Mesh(new THREE.SphereGeometry(0.09,6,5),m); b.position.set(x,F1+5.2-0.6*Math.sin(Math.PI*((i%8)/8)),z-0.3); go.add(b); K.bulbs.push(m); }
+  { const n=300, pos=new Float32Array(n*3); for(let i=0;i<n;i++){ pos[i*3]=Math.random()*W; pos[i*3+1]=F1+Math.random()*18; pos[i*3+2]=Math.random()*D; } const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    K.leaves=new THREE.Points(g,new THREE.PointsMaterial({color:0xe07a2a,size:0.22})); go.add(K.leaves); }
+  if(!mansionSkyK)mansionSkyK=buildMansionSky(); mansionSky.visible=true; }
+function clearMansionLife(){ const K=mansionK; if(!K)return; if(K.seated)standUp(true); for(const k of Object.keys(K.G)){ scene.remove(K.G[k]); K.G[k].traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.isPointLight)o.dispose&&o.dispose(); }); }
+  document.body.classList.remove('dinner'); mansionK=null; mansionSky.visible=false; mansionMusic(false); }
+function mansionSave(){ return {chest:!!mansionK.chest}; }
+// --- the sky: an autumn sunset, with hills in fall colors all around
+const mansionSky=new THREE.Group(); mansionSky.visible=false; scene.add(mansionSky); let mansionSkyK=null;
+function buildMansionSky(){ const G=mansionSky; const far=mountainRing(300,120,40,90,0x8a4a3a,0xb86a3a,0xd89a4a,17), near=mountainRing(200,100,18,45,0x6a3a1a,0xc8601a,0xe0a030,23); far.position.set(W/2,MN.F1-1,D/2); near.position.set(W/2,MN.F1-1,D/2); G.add(far,near);
+  const grass=new THREE.MeshLambertMaterial({color:0x7a8a3a}); for(const [x0,x1,z0,z1] of [[-500,0,-500,612],[W,612,-500,612],[0,W,-500,0],[0,W,D,612]]){ const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),grass); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,MN.F1-0.4,(z0+z1)/2); G.add(m); }
+  const sc=document.createElement('canvas'); sc.width=sc.height=64; const x=sc.getContext('2d'), gr=x.createRadialGradient(32,32,4,32,32,32); gr.addColorStop(0,'rgba(255,240,190,1)'); gr.addColorStop(0.35,'rgba(255,190,90,0.9)'); gr.addColorStop(1,'rgba(255,140,60,0)'); x.fillStyle=gr; x.fillRect(0,0,64,64);
+  const sun=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(sc),fog:false,depthWrite:false})); sun.scale.set(140,140,1); sun.position.set(-420,40,D/2-80); G.add(sun); return {}; }
+function applyMansionSky(){ scene.background.setHex(0xf0a070); scene.fog.color.setHex(0xe8a07a); scene.fog.near=70; scene.fog.far=320; if(camera.far<700){ camera.far=700; camera.updateProjectionMatrix(); }
+  for(const c of clouds)c.visible=false; blockMat.color.setRGB(1,0.9,0.8); waterMat.color.setRGB(1,0.9,0.8); setWeather('clear'); }
+
+// --- life in the mansion: the family eats and chats, the fires flicker, football on TV, the disco, the movie, falling leaves
+function inHouse(p){ return p[0]>MN.X0&&p[0]<MN.X1&&p[2]>MN.Z0&&p[2]<MN.Z1; }
+function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!demo.user&&demo.cam&&demo.cam.k==='man'?[camera.position.x,camera.position.y-1.6,camera.position.z]:pl.p, inH=inHouse(eye)||(eye[0]>MN.garage.x0&&eye[0]<MN.garage.x1&&eye[2]>MN.garage.z0&&eye[2]<MN.garage.z1);
+  const lvl=!inH?1:eye[1]<11.5?0:eye[1]<18.5?1:2; G.base.visible=lvl===0; G.ground.visible=lvl>=1; G.upper.visible=lvl>=1&&(lvl===2||!inH||Math.abs(eye[0]-56)<9&&eye[2]>55); G.out.visible=lvl>=1;
+  for(const f of K.fires){ for(const c of f.fl){ c.scale.y=0.75+Math.random()*0.5; c.scale.x=0.85+Math.random()*0.3; } if(f.pl)f.pl.intensity=1.0+Math.random()*0.4; }
+  const P2=K.phase; if(P2){ P2.t+=dt; phaseTick(P2,dt); }
+  // the family at the table
+  const near=Math.hypot(eye[0]-56,eye[2]-42.5)<16&&lvl===1;
+  for(const p of K.people){ const R=p.R; if(P2&&P2.k==='carve'&&p===K.grandpa)continue; if(P2&&P2.k==='toast'&&P2.t<8){ R.armR.rotation.x+=(2.6-R.armR.rotation.x)*Math.min(1,dt*6); continue; }
+    p.biteT-=dt; if(p.biteT<=0){ p.biteT=2.5+Math.random()*4; p.bite=0.01; } if(p.bite>0){ p.bite+=dt*1.6; if(p.bite>=1)p.bite=0; }
+    R.armR.rotation.x=0.9+(p.bite>0?Math.sin(p.bite*Math.PI)*1.3:0); R.armL.rotation.x=0.9; R.head.rotation.y=Math.sin(K.t*0.4+p.ph)*0.35; R.head.rotation.x=p.bite>0?-0.15*Math.sin(p.bite*Math.PI):0; animRig(R,dt,0); }
+  const talkers=K.people.concat(K.couch); for(const p of talkers)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } }
+  K.chatT-=dt; if(K.chatT<=0&&near&&!P2){ K.chatT=3.5+Math.random()*3; const p=K.people[Math.floor(Math.random()*K.people.length)]; npcSay(p,FAM_CHAT[Math.floor(Math.random()*FAM_CHAT.length)]); }
+  // football on the TV: now and then a touchdown, and the cousins on the couch jump up
+  K.tvT=(K.tvT||0)-dt; K.tdNext-=dt; if(K.tdNext<=0){ K.tdNext=18+Math.random()*14; K.tdT=3; K.score[Math.random()<0.55?0:1]+=7; for(const p of K.couch)npcSay(p,Math.random()<0.5?'TOUCHDOWN!!':'Yeah! Go Turkeys!'); if(Math.hypot(eye[0]-38,eye[2]-61)<14&&lvl===1)snd(()=>{ noise(900,1.2,0.18,'bandpass'); }); }
+  if(K.tdT>0)K.tdT-=dt; for(const p of K.couch){ const cheer=K.tdT>0; p.g.position.y=MN.F1+0.55-0.72*0.74+(cheer?Math.abs(Math.sin(K.t*9))*0.3:0); p.R.armL.rotation.x=p.R.armR.rotation.x=cheer?3.0:0.9; p.R.legL.rotation.x=p.R.legR.rotation.x=1.45; animRig(p.R,dt,0); }
+  if(K.tvT<=0&&lvl===1){ K.tvT=0.08; footballDraw(K); }
+  // downstairs: the disco floor, the mirror ball, the light beams, the dancers and the music; the movie
+  if(lvl===0){ const beat=Math.floor(K.t*2.2); if(beat!==K.beat){ K.beat=beat; for(const t of K.tiles)t.m.color.setHSL(((t.x*7+t.z*13+beat*37)%100)/100,1,(beat+t.x+t.z)%3?0.5:0.15); for(const m of K.djLights)m.color.setHSL(Math.random(),1,0.55); for(const m of K.arcade)m.color.setHSL(Math.random(),1,0.55); }
+    K.ball.rotation.y+=dt*0.8; K.beams.forEach((h,i)=>{ h.rotation.z=Math.sin(K.t*1.2+i)*0.6; h.rotation.x=Math.cos(K.t*0.9+i*2)*0.5; });
+    for(const d of K.dancers){ d.ph+=dt*4.4; const R=d.R, s=Math.sin(d.ph); R.armL.rotation.z=-1.2-0.6*s; R.armR.rotation.z=1.2-0.6*s; R.legL.rotation.x=0.4*s; R.legR.rotation.x=-0.4*s; d.g.position.y=MN.FB+Math.abs(s)*0.15; d.g.rotation.y+=dt*0.8; animRig(R,dt,0); }
+    K.mvT=(K.mvT||0)-dt; if(K.mvT<=0){ K.mvT=0.08; movieDraw(K); } }
+  const disco=lvl===0&&eye[0]<47.5; mansionMusic(disco); if(disco)discoBeat(dt);
+  // outside: falling leaves; the pots on the stove steam
+  if(G.out.visible){ const a=K.leaves.geometry.attributes.position, A=a.array; for(let i=0;i<A.length;i+=3){ A[i+1]-=dt*(0.8+(i%7)*0.1); A[i]+=Math.sin(K.t+i)*dt*0.6; if(A[i+1]<MN.F1){ A[i+1]=MN.F1+16; A[i]=Math.random()*W; A[i+2]=Math.random()*D; } } a.needsUpdate=true;
+    K.bulbs.forEach((m,i)=>m.color.setHSL(0.1+0.03*Math.sin(K.t*2+i),1,0.6+0.1*Math.sin(K.t*3+i))); }
+  K.stT=(K.stT||0)-dt; if(K.stT<=0&&lvl===1&&Math.hypot(eye[0]-80,eye[2]-34)<18){ K.stT=0.6; puff(79.5+Math.random(),MN.F1+1.5,31.6,false); }
+  // you, sitting at the table
+  if(K.seated){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=0.9; armR.rotation.x=0.9+(K.myBite>0?Math.sin(K.myBite*Math.PI)*1.3:0); if(K.myBite>0){ K.myBite+=dt*1.6; if(K.myBite>=1)K.myBite=0; } if(P2&&P2.k==='toast'&&P2.t<8)armR.rotation.x=2.6; } }
+// --- the dinner: sit down, grandpa carves the turkey, eat, a toast, the wishbone
+function sitDown(){ const K=mansionK, s=K.mySeat; if(K.seated)return; K.seated=true; pl.p=[s[0],MN.F1+0.6-0.72+0.22,s[1]-0.15]; pl.v=[0,0,0]; yaw=0; pitch=-0.12; document.body.classList.add('dinner'); sfx('place');
+  if(!K.carved)startPhase('carve'); else rtoast('🍽️ Back at the table! Click (or tap Eat) on any dish to have some.'); }
+function standUp(quiet){ const K=mansionK; if(!K||!K.seated)return; K.seated=false; const s=K.mySeat; pl.p=[s[0],MN.F1,s[1]+1.3]; pl.v=[0,0,0]; document.body.classList.remove('dinner'); if(!quiet)sfx('place'); }
+function startPhase(k){ const K=mansionK; if(K.phase&&!(k==='carve'))return; K.phase={k,t:0,step:0}; const P=K.phase;
+  if(k==='carve'){ K.carved=true; npcSay(K.grandpa,'Time to carve the turkey! 🦃'); const R=K.grandpa.R; R.armR.add(K.knife); K.knife.position.set(0,-0.75,-0.1); K.knife.visible=true; }
+  if(k==='toast'){ P.order=K.people.slice().sort(()=>Math.random()-0.5).slice(0,3); P.glasses=K.people.map(p=>{ const g=mcyl(p.R.armR,0.07,0.05,0.2,mm(0xe8a040,{transparent:true,opacity:0.75}),0,-0.8,-0.1,8); return g; }); rtoast('🥂 A toast! Everyone raises a glass…'); }
+  if(k==='wish'){ const s=K.mySeat; P.who=K.people.filter(p=>p.seat&&p.seat[2]===0).sort((a,b)=>Math.abs(a.seat[0]-s[0])-Math.abs(b.seat[0]-s[0]))[0]; const w=new THREE.Group(), m=mm(0xf2e6c8);
+    for(const sx of[-1,1]){ const a=mb(w,0.05,0.5,0.05,m,sx*0.14,0.2,0); a.rotation.z=sx*0.5; } mb(w,0.12,0.06,0.06,m,0,0.42,0); w.position.set((s[0]+P.who.seat[0])/2,MN.F1+1.9,s[1]-0.4); w.rotation.x=Math.PI; mansionK.G.ground.add(w); P.bone=w; rtoast('🦴 The wishbone! Pull…'); npcSay(P.who,'Ready? Pull!'); } }
+function phaseTick(P,dt){ const K=mansionK;
+  if(P.k==='carve'){ const g=K.grandpa, R=g.R; g.g.position.y=MN.F1; R.legL.rotation.x=R.legR.rotation.x=0; R.armR.rotation.x=1.2+Math.sin(P.t*12)*0.25; R.armL.rotation.x=1.0; g.g.position.z=g.seat[1]+0.6; animRig(R,dt,0);
+    if(P.t>1+P.step&&P.step<6){ P.step++; const plates=K.people.map(p=>p.plate).concat([K.plate5||null]).filter(Boolean), pl2=P.step===3?myPlate():plates[Math.floor(Math.random()*plates.length)]; flySlice(pl2); snd(()=>noise(3000,0.08,0.06,'highpass')); }
+    if(P.t>3.2&&!P.s1){ P.s1=1; npcSay(K.grandpa,'Who wants a drumstick?'); } if(P.t>7.5){ K.knife.visible=false; R.armR.remove(K.knife); g.g.position.y=MN.F1+0.57-0.72; g.g.position.z=g.seat[1]; R.legL.rotation.x=R.legR.rotation.x=1.45; npcSay(K.grandpa,'Dig in, everyone!'); K.phase=null;
+      rtoast(IS_TOUCH?'🍽️ Aim at a dish and tap 🍽️ Eat. Try 🥂 Toast and 🦴 Wishbone too!':'🍽️ Aim at a dish and click to eat. T for a toast, Y for the wishbone, E to stand up.'); } }
+  for(const sl of K.slices||[]){ if(sl.t>=1)continue; sl.t=Math.min(1,sl.t+dt*1.5); const t=sl.t; sl.m.position.lerpVectors(sl.a,sl.b,t); sl.m.position.y+=Math.sin(t*Math.PI)*1.2; sl.m.rotation.y+=dt*8; }
+  if(P.k==='toast'){ for(let i=0;i<3;i++)if(P.t>0.6+i*2.2&&P.step===i){ P.step++; npcSay(P.order[i],THANKFUL[Math.floor(Math.random()*THANKFUL.length)]); }
+    if(P.t>7.2&&P.step===3){ P.step++; npcSay(K.grandpa,'Cheers! 🥂'); for(let k=0;k<4;k++)snd(()=>tone('sine',2200+k*180,2100+k*180,0.25,0.04,k*0.07)); rtoast('🥂 Cheers! You say: "I\'m thankful for my family!"'); }
+    if(P.t>9){ for(const g of P.glasses)g.parent.remove(g); K.phase=null; } }
+  if(P.k==='wish'){ const b=P.bone; if(P.t<2.4){ b.rotation.z=Math.sin(P.t*30)*0.12; } else if(!P.snap){ P.snap=1; burst(b.position.x-0.5,b.position.y-0.5,b.position.z-0.5,new THREE.Color(0xf2e6c8),12); sfx('break'); b.visible=false; const win=Math.random()<0.55;
+      if(win){ rtoast('🦴 You got the bigger piece! Make a wish ⭐'); sfx('coin'); npcSay(P.who,'Aww! What did you wish for?'); } else { npcSay(P.who,'I won! I wished for more pie!'); rtoast('🦴 '+P.who.name+' got the bigger piece. Maybe next year!'); } }
+    if(P.t>4){ b.parent.remove(b); K.phase=null; } } }
+function myPlate(){ const K=mansionK; for(let i=0;i<16;i++){ const p=K['plate'+i]; if(p&&!K.people.some(q=>q.plate===p))return p; } return null; }
+function flySlice(plate){ const K=mansionK; if(!plate)return; const m=mb(K.G.ground,0.3,0.05,0.2,mm(0xe8c898),0,0,0); const a=K.turkey.position.clone().add(new THREE.Vector3(0,0.4,0)), b=plate.position.clone().add(new THREE.Vector3(0,0.06,0)); (K.slices||(K.slices=[])).push({m,a,b,t:0}); }
+function mansionAim(){ const K=mansionK; const rc=new THREE.Raycaster(); rc.setFromCamera({x:0,y:0},camera); rc.far=6; const h=rc.intersectObjects(K.dishes,true)[0]; if(!h)return null; let o=h.object; while(o&&!o.userData.dish)o=o.parent; return o; }
+function eatDish(d){ const K=mansionK; if(!d){ const s=K.mySeat; d=K.dishes.slice().sort((a,b)=>a.position.distanceTo(new THREE.Vector3(s[0],MN.F1+1,s[1]))-b.position.distanceTo(new THREE.Vector3(s[0],MN.F1+1,s[1])))[Math.floor(Math.random()*4)]; }
+  const info=DISHES.find(q=>q[0]===d.userData.dish)||['?','Food','Yum!']; hp=Math.min(MAXHP,hp+1); updateHUD(); K.myBite=0.01; K.bites++;
+  d.scale.multiplyScalar(0.93); if(d.scale.x<0.45)d.scale.setScalar(0.45); burst(d.position.x-0.5,d.position.y-0.3,d.position.z-0.5,new THREE.Color(0xe8c898),6); for(let k=0;k<3;k++)snd(()=>noise(700,0.06,0.12,'lowpass'));
+  setTimeout(()=>{ for(let k=0;k<2;k++)snd(()=>noise(600,0.06,0.1,'lowpass')); },180);
+  const p=K.people.slice().sort((a,b)=>a.g.position.distanceTo(d.position)-b.g.position.distanceTo(d.position))[Math.floor(Math.random()*3)]; if(p)npcSay(p,info[2]); rtoast('😋 '+info[1]+'. Yum! ❤️+1'); }
+function mansionHit(){ const K=mansionK; if(!onMansion())return false; const d=mansionAim(); if(d){ eatDish(d); return true; } return K.seated; }
+function mansionAction(){ const K=mansionK; if(!onMansion())return null; if(K.seated)return {label:'🚪 Stand up',fn:()=>standUp()};
+  const s=K.mySeat; if(Math.hypot(pl.p[0]-s[0],pl.p[2]-s[1])<1.6&&Math.abs(pl.p[1]-MN.F1)<1)return {label:'🪑 Sit down for dinner',fn:sitDown};
+  const S=MN.secret; if(Math.abs(pl.p[1]-MN.F1)<1&&Math.hypot(pl.p[0]-(S.x-0.6),pl.p[2]-59.5)<1.8){ const open=get(S.x,MN.F1,S.z0)!==ID.bookshelf; return {label:open?'📕 Push the book back':'📕 Pull the red book',fn:()=>secretDoor(!open)}; }
+  if(!K.chest&&Math.hypot(pl.p[0]-81,pl.p[2]-60.5)<1.8&&Math.abs(pl.p[1]-MN.F1)<1)return {label:'💰 Open the treasure chest',fn:openChest};
+  return null; }
+function secretDoor(open){ const S=MN.secret; for(let y=MN.F1;y<MN.F1+3;y++)for(let z=S.z0;z<=S.z1;z++)setBlock(S.x,y,z,open?0:ID.bookshelf); mansionK.book.rotation.z=open?0.5:0; snd(()=>{ tone('sawtooth',70,50,0.8,0.12); noise(300,0.7,0.2,'lowpass'); });
+  rtoast(open?'🗝️ The bookshelf swings open… a secret room!':'📚 The bookshelf slides shut.'); queueSave(); }
+function openChest(){ const K=mansionK; K.chest=true; K.lid.rotation.x=-1.6; K.gold.visible=true; coins+=50; updateHUD(); sfx('buy'); burst(80.5,MN.F1+1,60,new THREE.Color(1,0.85,0.2),20); rtoast('💰 Treasure! You found 50 coins in the secret room!'); queueSave(); }
+// --- disco music: a four-on-the-floor beat with a bass line and a little tune
+const DISCO_BASS=[33,45,33,45,31,43,31,43,36,48,36,48,38,50,38,50], DISCO_TUNE=[69,72,76,72,74,76,79,76,72,76,79,84,83,79,76,74];
+let discoOn=false; function mansionMusic(on){ discoOn=on; }
+function discoBeat(dt){ const K=mansionK; if(!AC||!sfxOn)return; K.dt2=(K.dt2||0)-dt; if(K.dt2>0)return; K.dt2=60/124/2; K.ds=((K.ds||0)+1)%32; const s=K.ds;
+  try{ if(s%2===0)tone('sine',140,45,0.14,0.2); if(s%4===2)noise(2000,0.09,0.1,'bandpass'); noise(8000,0.03,0.035,'highpass'); tone('sawtooth',midiF(DISCO_BASS[s%16]),midiF(DISCO_BASS[s%16]),0.18,0.05); if(s%2===0)tone('square',midiF(DISCO_TUNE[(s>>1)%16]),midiF(DISCO_TUNE[(s>>1)%16]),0.16,0.025); }catch(e){} }
+// --- Demo Mode: Thanksgiving dinner. Up the front walk, a quick tour (the foyer, the football game, the library's secret room),
+// dinner with the family (carving, eating, a toast, the wishbone), then dancing in the disco
+const MAN_SHOTS=[[0,'walk'],[7,'foyer'],[12,'tv'],[17,'library'],[23,'sit'],[46,'wish'],[51,'disco']];
+function demoMansionSetup(sc,P){ demo.vplace='mansion'; demo.mansionWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.mansion.dims); generateMansion(dmCfg.seed+31); rebuildAll(); refreshPortals(); buildMansionLife(null); applyPlaceSky();
+  pl.p=[56.5,MN.F1,92]; yaw=0; pitch=-0.05; Object.assign(P,{t:0,shot:-1,hs:0}); demo.cam={k:'man',p:new THREE.Vector3(48,15,84),l:new THREE.Vector3(56,15,70)}; }
+function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt; let i=0; for(let k=0;k<MAN_SHOTS.length;k++)if(P.t>=MAN_SHOTS[k][0])i=k; const sh=MAN_SHOTS[i][1], st=P.t-MAN_SHOTS[i][0];
+  if(i!==P.shot){ P.shot=i; P.done={}; if(K.seated&&sh!=='wish')standUp(true);
+    if(sh==='foyer'){ pl.p=[56.5,MN.F1,69]; yaw=0; } if(sh==='tv'){ pl.p=[40.5,MN.F1,66]; yaw=0; K.tdNext=1.5; } if(sh==='library'){ pl.p=[74,MN.F1,62]; yaw=Math.PI/2; } if(sh==='sit')sitDown(); if(sh==='disco'){ pl.p=[38,MN.FB,47]; yaw=0; } }
+  const walk=(tx,tz)=>{ const dx=tx-pl.p[0], dz=tz-pl.p[2]; if(Math.hypot(dx,dz)<0.4)return {ix:0,iz:0}; yaw=Math.atan2(-dx,-dz); return {ix:0,iz:-0.7}; };
+  if(sh==='walk')return walk(56.5,74); if(sh==='foyer')return walk(56.5,65.5); if(sh==='tv')return walk(40.5,62.5);
+  if(sh==='library'){ if(st>2.5&&!P.done.book){ P.done.book=1; secretDoor(true); } return st<2.5?walk(77,59.6):walk(80.5,60.5); }
+  if(sh==='sit'){ yaw=Math.sin(P.t*0.4)*0.25; pitch=-0.3; if(st>9&&!P.done.e1){ P.done.e1=1; eatDish(K.turkey); } if(st>11.5&&!P.done.e2){ P.done.e2=1; eatDish(K.dishes[1]); } if(st>13.5&&!P.done.toast){ P.done.toast=1; startPhase('toast'); } return {ix:0,iz:0}; }
+  if(sh==='wish'){ if(!P.done.w){ P.done.w=1; if(!K.seated)sitDown(); startPhase('wish'); } return {ix:0,iz:0}; }
+  if(sh==='disco'){ P.hs=0; return {ix:0,iz:0}; } return {ix:0,iz:0}; }
+function mansionDemoCam(dt){ const P=demo.pil, K=mansionK; if(!K)return; const sh=MAN_SHOTS[Math.max(0,P.shot)][1], st=P.t-MAN_SHOTS[Math.max(0,P.shot)][0]; let want, look;
+  if(sh==='walk'){ want=new THREE.Vector3(44-st*0.6,14.5+st*0.2,84-st*0.8); look=new THREE.Vector3(56,17,68); }
+  else if(sh==='foyer'){ want=new THREE.Vector3(49.2,15.6,57.6); look=new THREE.Vector3(56,13.8,66); }
+  else if(sh==='tv'){ want=new THREE.Vector3(43,15.5,67.5); look=new THREE.Vector3(38,13.5,57); }
+  else if(sh==='library'){ want=new THREE.Vector3(70,15.5,66); look=new THREE.Vector3(79,13,60); }
+  else if(sh==='sit'||sh==='wish'){ const a=-0.5+st*0.03; want=new THREE.Vector3(56+Math.sin(a)*9,16.5,42.5+Math.cos(a)*9); look=new THREE.Vector3(56,13,42.5); if(K.phase&&K.phase.k==='carve'){ want=new THREE.Vector3(60,15,47); look=new THREE.Vector3(55,13,41); } }
+  else { const a=st*0.25; want=new THREE.Vector3(38+Math.sin(a)*6,MN.FB+2.8,50+Math.cos(a)*7); look=new THREE.Vector3(38,MN.FB+1,49); if(st>0){ const s=Math.sin(K.t*4.4); legL.rotation.x=0.4*s; legR.rotation.x=-0.4*s; armL.rotation.z=-1.2-0.6*s; armR.rotation.z=1.2-0.6*s; model.visible=true; } }
+  if(!demo.cam||demo.cam.k!=='man')demo.cam={k:'man',p:want.clone(),l:look.clone()}; const jump=demo.cam.p.distanceTo(want)>12; if(jump){ demo.cam.p.copy(want); demo.cam.l.copy(look); } else { demo.cam.p.lerp(want,Math.min(1,dt*2)); demo.cam.l.lerp(look,Math.min(1,dt*3)); }
+  camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); model.visible=true; }
+
 // ================= START =================
 graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
 { const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'); const r=mulberry32(7);
@@ -5793,7 +6143,7 @@ hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
