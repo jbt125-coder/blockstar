@@ -4449,7 +4449,7 @@ function placeOwned(o,i){ const s=STALLS[i]; let a;
 function mount(a,quiet){ const K=ranchK; if(!a||K.ride)return; saddleUp(a,true); if(K.rope&&K.rope.a===a)K.rope=null; K.ride=a; a.st='ridden'; a.spd=0; yaw=a.hd; pitch=-0.12; if(fly)setFly(false,false);
   if(camMode===1)camMode=3; tpWeapon.visible=false; document.body.classList.add('ride');
   if(!quiet){ rtoast('🐴 '+(a.own>=0?K.own[a.own].name:'Your horse')+'! '+(IS_TOUCH?'Drag the joystick to ride. ⬆ Jump leaps over things, or gallops faster. ⛏ throws your lasso.':'W to go, A/D or the mouse to steer, Space to jump (or gallop faster), click to throw your lasso, E to get off.')); sfx('catch'); } }
-function dismount(quiet){ const K=ranchK, a=K&&K.ride; if(!a)return; K.ride=null; a.st='idle'; a.t=20; a.spd=0; document.body.classList.remove('ride'); refreshHeld();
+function dismount(quiet){ const K=ranchK, a=K&&K.ride; if(!a)return; K.ride=null; a.st='idle'; a.t=20; a.wait=120; // it waits two minutes for you, then heads home a.spd=0; document.body.classList.remove('ride'); refreshHeld();
   const r=[Math.cos(a.hd),-Math.sin(a.hd)]; let spot=[a.p[0]+r[0]*1.2,a.p[1],a.p[2]+r[1]*1.2];
   for(const sx of [1,-1,1.6,-1.6]){ const x=a.p[0]+r[0]*sx, z=a.p[2]+r[1]*sx; if(!boxHits(x,a.p[1]+0.02,z,pl.hw,pl.h)){ spot=[x,a.p[1]+0.02,z]; break; } }
   pl.p=spot; pl.v=[0,0,0]; unstick(pl); legL.rotation.z=legR.rotation.z=0; if(!quiet)rtoast('🐴 You hop down.'); }
@@ -4534,8 +4534,16 @@ function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt);
   const C=RANCH.corral;
   for(const a of K.animals.slice()){ if(a===K.ride)continue; a.t-=dt; let spd=0, mode='';
     if(a.love>0){ a.love-=dt; if(a.heart){ a.heart.visible=true; a.heart.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'?3.1:2.0)+Math.sin(K.t*3)*0.1,a.p[2]); }
-      if(a.love<=0){ if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } if(a.st==='follow')a.st=a.wild?'wander':'idle'; } }
-    if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
+      if(a.love<=0){ if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } if(a.st==='follow'){ a.st=a.wild?'wander':'idle'; a.wait=120; } } }
+    if(a.st==='idle'&&a.own>=0&&a.kind==='horse'){ a.wait=(a.wait===undefined?120:a.wait)-dt; if(a.wait<=0){ a.st='home'; a.route=homeRoute(a); a.ri=0; a.stuckT=0;
+        rtoast('🐴 '+horseName(a)+' got tired of waiting and is walking back to the stable.'); } }
+    if(a.st==='home'){ const q=a.route[a.ri], last=a.ri===a.route.length-1, dx=q[0]-a.p[0], dz=q[1]-a.p[2], d=Math.hypot(dx,dz);
+      if(d<(last?0.35:1.1)){ if(last){ homeArrive(a); } else a.ri++; }
+      else { turnAnimal(a,Math.atan2(-dx,-dz),dt,3.5); spd=last?1:2.4;
+        a.chk=(a.chk||0)+dt; if(a.chk>1){ const mv=a.lastP?Math.hypot(a.p[0]-a.lastP[0],a.p[2]-a.lastP[1]):9; a.lastP=[a.p[0],a.p[2]]; a.chk=0; a.stuckT=mv<0.4?a.stuckT+1:0; }
+        if(a.stuckT>=2&&a.onGround)a.v[1]=8.5; // stuck on something: hop
+        if(a.stuckT>=8&&Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>25){ a.p=[q[0],standY(Math.floor(q[0]),Math.floor(q[1])),q[1]]; a.stuckT=0; } } } // still stuck and nobody's looking: on to the next spot
+    else if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
       spd=d>3.6?Math.min(12,(d-3)*2.2):0; if(a.st==='roped'&&d>9){ a.p[0]+=dx/d*(d-9); a.p[2]+=dz/d*(d-9); } // the rope pulls it along
       if(a.wild&&a.p[0]>C.x0+1&&a.p[0]<C.x1-1&&a.p[2]>C.z0+1&&a.p[2]<C.z1-1)tame(a); }
     else if(a.st==='stall'){ mode=Math.sin(K.t*0.3+a.ph)>0.4?'graze':''; }
@@ -4546,10 +4554,15 @@ function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt);
       // keep out of the lake (but drink at the edge now and then)
       const f=[-Math.sin(a.hd),-Math.cos(a.hd)], ah=surfaceAt(Math.floor(a.p[0]+f[0]*1.4),Math.floor(a.p[2]+f[1]*1.4)); if(ah.id===ID.water&&spd>0){ spd=0; if(a.kind!=='chicken'&&a.kind!=='pig'){ mode='drink'; if(a.t<1)a.tgt=null; } else a.tgt=null; } }
     a.spd+=(spd-a.spd)*Math.min(1,dt*4); const far=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>70;
-    if(!far||a.st==='roped')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
+    if(!far||a.st==='roped'||a.st==='home')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
   // new wild animals wander in from the hills to keep the herds going
   K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const game=K.animals.filter(a=>a.game); if(game.filter(a=>a.kind==='deer').length<3)spawnGame('deer'); if(game.filter(a=>a.kind==='bunny').length<5)spawnGame('bunny'); const wild=K.animals.filter(a=>a.wild&&!a.game); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
     const kind=wild.filter(a=>a.kind==='horse').length<5?'horse':'steer', x=12+Math.random()*104, z=40+Math.random()*6; makeAnimal(kind,kind==='horse'?['chestnut','appaloosa','grullo','bay','black'][Math.floor(Math.random()*5)]:Object.keys(STEERS)[Math.floor(Math.random()*4)],x,z,{wild:true}); } } }
+// the way home: back down the trail if it's up the mountain, then in through the stable door to its own stall (or into the corral)
+function homeRoute(a){ const R=[], path=ranchPath(); let bi=0, bd=1e9; path.forEach((q,i)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=i; } });
+  if(bd<9&&bi>3)for(let i=bi;i>=0;i-=3)R.push(path[i]);
+  const s=STALLS[a.own], C=RANCH.corral; if(s)R.push(RANCH.hitch,[53,96.5],[s[0]+1.8,s[1]],[s[0],s[1]]); else R.push([79,102],[79,96],[79,90]); return R; }
+function homeArrive(a){ const s=STALLS[a.own]; a.route=null; a.spd=0; if(s){ a.st='stall'; a.p[0]=s[0]; a.p[2]=s[1]; a.hd=-Math.PI/2; a.zone=null; } else { a.st='pen'; a.zone=penZone(); } }
 function turnAnimal(a,want,dt,rate){ let d=want-a.hd; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; a.hd+=Math.max(-rate*dt,Math.min(rate*dt,d)); }
 function tame(a){ const K=ranchK; if(K.rope&&K.rope.a===a){ K.rope=null; ropeLine.visible=false; } a.wild=false; a.love=0; if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } burst(a.p[0]-0.5,a.p[1]+1.5,a.p[2]-0.5,new THREE.Color(1,0.85,0.2),14); sfx('coin');
   if(a.kind==='steer'){ a.st='pen'; a.zone=penZone(); rtoast('🐄 The '+STEERS[a.breed].n+' steer is yours! It lives in the corral now.'); }
