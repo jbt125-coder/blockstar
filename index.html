@@ -3310,18 +3310,20 @@ function spawnFoes(P,types,dt,max){ P.spawnT=(P.spawnT===undefined?0.2:P.spawnT)
   const s=landSpot(pl.p[0],pl.p[2],11); if(Math.hypot(s[0]-pl.p[0],s[2]-pl.p[2])<5)return; const t=types[Math.floor(Math.random()*types.length)]; spawnMob(t,s[0],s[1]+(MOBT[t].flyer?4:0),s[2]); }
 // sword up close; bomb arrows when the monster is far away or the hero is stuck (a tree, a wall...)
 function fightPilot(dt,P,big){ const foes=mobs; let foe=null, fd=1e9; for(const m of foes){ const q=Math.hypot(m.p[0]-pl.p[0],m.p[2]-pl.p[2]); if(q<fd){ fd=q; foe=m; } }
-  P.bowPose=false; const wield=id=>{ if(weapon!==id){ weapon=id; refreshWeapon(); } };
-  if(!foe){ wield('diamond'); return {ix:0,iz:0}; }
+  P.bowPose=false; const wield=id=>{ if(weapon!==id){ weapon=id; refreshWeapon(); } }, wasWalk=P.walking; P.walking=false;
+  if(!foe){ wield('diamond'); P.wpT=(P.wpT||0)-dt; // nobody to fight right now: walk about looking for the next one (instead of standing still)
+    if(!P.wp||P.wpT<=0||Math.hypot(P.wp[0]-pl.p[0],P.wp[2]-pl.p[2])<1.2){ P.wp=landSpot(pl.p[0],pl.p[2],9); P.wpT=5; }
+    P.walking=true; return walkTo(P.wp[0],P.wp[2],dt,P); }
   P.chk=(P.chk||0)+dt; if(P.chk>=1){ P.chk=0; const moved=P.lastP?Math.hypot(pl.p[0]-P.lastP[0],pl.p[2]-P.lastP[1]):9; P.lastP=[pl.p[0],pl.p[2]];
-    if(moved<0.5&&fd>2.4){ P.stuckN=(P.stuckN||0)+1; P.bowT=3; } else P.stuckN=0;
-    if(P.stuckN>=5){ P.stuckN=0; pl.p=landSpot(pl.p[0],pl.p[2],5); } } // still stuck after all that: hop down somewhere else
+    if(moved<0.5&&fd>2.4&&wasWalk){ P.stuckN=(P.stuckN||0)+1; P.bowT=3; } else P.stuckN=0; // stuck only counts while trying to walk (not while standing to shoot)
+    if(P.stuckN>=3){ P.stuckN=0; pl.p=landSpot(pl.p[0],pl.p[2],5); } } // still stuck after all that: hop down somewhere else
   P.bowT=Math.max(0,(P.bowT||0)-dt);
   const fx=Math.floor(pl.p[0]), fz=Math.floor(pl.p[2]), fy=Math.floor(pl.p[1]), leafy=[fy-1,fy,fy+1].some(y=>get(fx,y,fz)===ID.leaves), high=foe.t.flyer&&foe.p[1]-pl.p[1]>2;
   if(fd<2.4&&!high){ wield('diamond'); turnTo(foe.p[0],foe.p[2],dt,6); if(atkCd<=0){ swingT=0.25; sfx('swing'); attackMob(foe); } return {ix:0,iz:0}; }
   if(fd>3.5&&(fd>7||P.bowT>0||leafy||high)){ wield('bow'); P.bowPose=true; turnTo(foe.p[0],foe.p[2],dt,6);
     const o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.1,pl.p[2]), t=new THREE.Vector3(foe.p[0],foe.p[1]+foe.h*0.5,foe.p[2]), fl=o.distanceTo(t)/42, d=t.sub(o); d.y+=0.5*7*fl*fl; d.normalize();
     pitch=Math.max(-1,Math.min(1,Math.asin(d.y))); if(atkCd<=0){ atkCd=0.9; arrows.explode=999; fireSpecial('explode',o,d,WP.bow); if(big)shots[shots.length-1].big=big; } return {ix:0,iz:0}; }
-  wield('diamond'); return walkTo(foe.p[0],foe.p[2],dt,P); }
+  wield('diamond'); P.walking=true; return walkTo(foe.p[0],foe.p[2],dt,P); }
 // the local monsters at each wonder (from StrataCraft's World Tour); swimmers only where there's water
 const WON_SPEC={eiffel:['gargoyle'],pyramid:['mummy','mummy','scorpion'],colosseum:['lion','lion','skeleton'],burj:['scorpion'],goldengate:['serpent'],opera:['serpent'],atomium:['golem'],
   needle:['bigfoot'],petronas:['orangutan'],guggenheim:['spider'],louvre:['gargoyle'],shard:['raven'],dancing:['golem'],fallingwater:['koi','zombie'],millau:['wolf','wolf']};
