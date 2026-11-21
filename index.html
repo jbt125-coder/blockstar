@@ -4704,8 +4704,9 @@ function rideDemoCam(dt){ const K=ranchK, a=K&&K.ride; if(!a)return; const C=dem
 // --- a day on the ranch in Demo Mode: hay for the horses, saddle up and ride the trail to the view at the top, ride home, plant and
 // water a row of crops, then sit in the rocking chair with a guitar while they grow. Each part gets a share of the scene's seconds.
 const hayMat=lm(0xd8b060), hayCarry=box(0.62,0.42,0.42,hayMat); hayCarry.position.set(0,1.02,-0.5); hayCarry.visible=false; model.add(hayCarry);
-const heldGuitar=guitarMesh(0x9a4a1a,0.62,false); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.z=0.95; heldGuitar.visible=false; model.add(heldGuitar);
+const heldGuitar=guitarMesh(0x9a4a1a,0.9,false); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.z=0.95; heldGuitar.visible=false; model.add(heldGuitar);
 model.rotation.order='YXZ'; // so the hero can rock back and forth in the chair
+// (the held guitar has a long neck so the left hand, on a straight arm, can reach it)
 function storyReset(){ hayCarry.visible=false; heldGuitar.visible=false; model.rotation.x=0; }
 function walkTo2(P,x,z,dt,sp){ const dx=x-pl.p[0], dz=z-pl.p[2], d=Math.hypot(dx,dz); if(d<0.12){ P.hs=0; return true; } const st=Math.min(d,(sp||2.6)*dt);
   pl.p[0]+=dx/d*st; pl.p[2]+=dz/d*st; pl.p[1]=FY; P.hs=st/Math.max(dt,1e-3); let w=Math.atan2(-dx,-dz)-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*8); return false; }
@@ -4730,7 +4731,7 @@ function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
     if(P.act>(P.ph==='plant'?0.45:0.35)){ P.act=0; P.pi++;
       if(P.ph==='plant'){ if(!get(x,FY,122)&&!cropAt(x,FY-1,122)){ P.planted.push(plantCrop(x,FY-1,122,['corn','wheat','carrot','tomato'][x%4],0)); sfx('place'); } }
       else { const b=get(x,FY-1,122); if(isFarm(b)){ setBlock(x,FY-1,122,soil(isRich(b),true)); K.wet.set(x+','+(FY-1)+','+122,WET_TIME); } for(let n=0;n<5;n++)burst(x,FY+0.3,122,new THREE.Color(0.45,0.7,1),1); sfx('whoosh'); } } return; }
-  if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.3,CHAIR.z-1.2,dt,3)){ P.ph='chair'; heldGuitar.visible=true; } return; }
+  if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.3,CHAIR.z-1.2,dt,3)){ P.ph='chair'; heldGuitar.visible=true; hayCarry.visible=false; } return; }
   if(P.ph==='chair'){ pl.p=[CHAIR.x+0.3,FY,CHAIR.z-1.2]; faceTo(-Math.PI/2,dt); pitch=0.05; P.hs=0;
     return; } }
 // the crops grow fast (a time-lapse), ripe just before the scene ends
@@ -4750,12 +4751,13 @@ function vistaCam(dt,P){ const a=ranchK.ride, V=(x,y,z)=>new THREE.Vector3(x,y,z
   const first=k<P.viewLen*0.5, farm=V(70,FY+2,100), df=farm.clone().sub(h).setY(0).normalize(), rf=V(df.z,0,-df.x); // the waterfall first, then the farm far below
   const cam=first?h.clone().addScaledVector(d,-4.5).addScaledVector(r,1.2).add(V(0,0.8,0)):h.clone().addScaledVector(df,-5).addScaledVector(rf,1.6).add(V(0,1.6,0));
   camera.position.copy(cam); camera.lookAt(first?m.clone().add(V(0,-20,0)):farm); model.visible=true; }
+const STRUM_SPEED=0.05; // how fast the strumming hand moves when the cowboy plays guitar by the rocking chair (1 = the old speed)
 function storyPose(dt,P){ const K=ranchK, t=demo.t, beat=musBeat(), s=Math.sin;
   if(P.ph==='hay'&&hayCarry.visible){ armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=0.12; armR.rotation.z=-0.12; }
   else if(P.ph==='hay'||P.ph==='saddle'){ if(P.drop>0||P.act>0){ armR.rotation.x=1.3; armL.rotation.x=0.9; } }
-  else if(P.ph==='chair'){ const solo=(beat%32)>=24, hop=Math.abs(s(beat*Math.PI)); K.chair.rotation.x=0.06*s(t*1.6); // standing by the chair: strumming, singing, the empty chair rocking
-    model.position.y+=hop*0.04; legL.rotation.set(0,0,-0.12); legR.rotation.set(0,0,0.12); armR.rotation.x=0.5+0.22*s(beat*Math.PI*2*(solo?4:2)); armR.rotation.z=-0.38;
-    armL.rotation.x=0.75; armL.rotation.z=-0.35+0.05*s(beat*Math.PI*2); head.rotation.x=0.06-0.22*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
+  else if(P.ph==='chair'){ const hop=Math.abs(s(beat*Math.PI)); K.chair.rotation.x=0.06*s(t*1.6); // standing by the chair: strumming, singing, the empty chair rocking
+    model.position.y+=hop*0.04; legL.rotation.set(0,0,-0.12); legR.rotation.set(0,0,0.12); armR.rotation.x=0.5+0.12*s(beat*Math.PI*4*STRUM_SPEED); armR.rotation.z=-0.38;
+    armL.rotation.x=2.35+(Math.floor(beat/8)%2?0.06:0); armL.rotation.z=-0.99; head.rotation.x=0.06-0.22*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
 // ================= RANCH FARMING AND WILDLIFE =================
 // The tool shed hands out tools: a hoe tills grass into farmland, the seed bag plants corn, wheat, carrots or tomatoes, the watering
 // can makes them grow faster (refill it at the lake or the trough), compost makes rich soil (faster again, and a bigger harvest),
