@@ -167,7 +167,7 @@
   .dmRow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap} .dmRow select{flex:1}
   .dmInline{display:flex;gap:8px;align-items:center;font-weight:700} .dmInline input[type=number]{width:90px!important}
   .dmInline input[type=range]{width:180px}
-  body.demo .ui:not(.dm){display:none!important} body.demo:not(.duser) #joyBase,body.demo:not(.duser) #joyKnob{display:none!important}
+  body.demo:not(.duser) .ui:not(.dm){display:none!important} body.demo:not(.duser) #joyBase,body.demo:not(.duser) #joyKnob{display:none!important}
   body.demo.duser:not(.no-touch) #act{display:block!important} body.duser #bPlace{display:none!important} #bSwap{right:0;top:20px;display:none}
   body.demo.duser:not(.dconc) #bSwap{display:flex!important} body.demo.duser.dconc #bBreak{display:none!important} body.demo.duser:not(.dconc) #cross{display:block!important}
   #dmFade{inset:0;background:#000;opacity:0;pointer-events:none;z-index:8;display:none}
@@ -1550,7 +1550,8 @@ window.addEventListener('keydown',e=>{
   if(demo){ if(e.code==='Escape')demoStop(); // in a concert: WASD/arrows walk, P is pyro, every other key sings. Anywhere else: WASD, Space, Shift take over; Q swaps weapon; E or Enter attacks
     else if(isConc(demo.sc)){ if(e.code==='KeyP'){ if(!e.repeat)pyroGo(); } else if(CONC_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); } else singKeys.add(e.code); }
     else if(DEMO_MOVE.has(e.code)){ keys[e.code]=true; demoTake(); }
-    else if(e.code==='KeyQ'){ if(!e.repeat)demoSwap(); } else if(e.code==='KeyE'||e.code==='Enter')demoHit(); else demoPoke();
+    else if(e.code==='KeyQ'){ if(!e.repeat)demoSwap(); }
+    else if(e.code==='KeyE'||e.code==='Enter'){ const a=demo.user?nearAction():null; if(a){ if(!e.repeat)a.fn(); } else demoHit(); } else demoPoke();
     e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
   if(drive){ if(!e.repeat){ if(e.code==='KeyH')honk(drive); if(e.code==='KeyL')toggleSiren(); if(e.code==='KeyE')exitVehicle(); } if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault(); return; } // driving: the keys drive
@@ -1624,7 +1625,7 @@ function updateViewRange(dt){ // fog thins out as you fly away so the whole land
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
   const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
-function cycleWeapon(){ if(ranchK&&onRanch()&&!demo){ cycleTool(); return; } const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
+function cycleWeapon(){ if(ranchK&&onRanch()&&(!demo||demo.user)){ cycleTool(); return; } if(demo){ demoSwap(); return; } const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
 let lastHP=-1, lastCoins=-1;
 function updateHUD(){
   if(hp!==lastHP){ let s=''; for(let i=0;i<MAXHP;i++)s+='<span class="'+(i<hp?'h':'e')+'">♥</span>'; $('hearts').innerHTML=s; lastHP=hp; }
@@ -2473,7 +2474,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
-  if(sc.act==='ride'){ if(P.story&&!riding())storyPilot(dt,P); else ridePilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='ride'){ if(P.story&&!riding())storyPilot(dt,P); else if(!riding())rejoinHorse(dt,P); else ridePilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
@@ -2514,7 +2515,7 @@ function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!de
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='stadium')stadiumTick(dt);
   if(sc.act==='fire')fireConcertTick(dt);
-  if(sc.act==='ride'&&P.story){ storyGrow(dt,P); if(!riding())storyPose(dt,P); }
+  if(sc.act==='ride'&&P.story){ storyGrow(dt,P); if(!riding()&&!demo.user)storyPose(dt,P); }
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
   if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
   if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
@@ -3271,15 +3272,25 @@ function wonderCam(dt){ const sc=demo.sc, P=demo.pil, k=sc.cam, C=demo.cam||(dem
 const DEMO_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
 const CONC_MOVE=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 let pad={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false}, padHitWas=false, padSwapWas=false, padRep=0;
-function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(drive&&drive.npc)drive.npc=null; // you're driving now if(look)demo.lookT=5;
-  if(!demo.user){ demo.user=true; document.body.classList.add('duser'); if(demo.sc.act!=='concert')camMode=3; demoPoke(); } }
-function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.remove('duser'); for(const k of DEMO_MOVE)keys[k]=false; hitHeld=false; upHeld=downHeld=false;
+function demoTake(look){ if(!demo||!demo.sc)return; demo.idle=0; if(drive&&drive.npc)drive.npc=null;
+  if(look)demo.lookT=5;
+  if(!demo.user){ demo.user=true; document.body.classList.add('duser'); if(demo.sc.act!=='concert')camMode=3; heroToPlay(); demoPoke(); } }
+// taking over from the demo: whatever the hero was doing (sitting, carrying hay, playing guitar...), they stand up and you're playing
+function heroToPlay(){ const sc=demo.sc, P=demo.pil; demo.puppet=false;
+  hayCarry.visible=false; lemonGlass.visible=false; if(heldGuitar.parent===model)heldGuitar.visible=false; model.rotation.x=0; model.rotation.z=0;
+  for(const L of [legL,legR,armL,armR])L.rotation.z=0; legL.rotation.x=legR.rotation.x=0; setMouth(rig,0);
+  if(ranchK&&ranchK.chair)ranchK.chair.rotation.x=0;
+  if(sc.act==='ride'&&P.story&&!riding()&&(P.ph==='sit'||P.ph==='chair'))pl.p=[CHAIR.x+0.3,FY,CHAIR.z-1.2];
+  if(!riding()&&!drive&&!isConc(sc)){ if(fly&&sc.act!=='fly'&&sc.act!=='side')setFly(false,false); pl.v=[0,0,0];
+    const gy=standY(Math.max(0,Math.min(W-1,Math.floor(pl.p[0]))),Math.max(0,Math.min(D-1,Math.floor(pl.p[2])))); if(pl.p[1]<gy)pl.p[1]=gy; unstick(pl); }
+  if(onRanch()){ refreshToolChip(); if(ranchK.tool!=='lasso'&&ranchK.tool!=='bow')toolHand.visible=true; } }
+function demoRelease(){ if(demo.sc&&demo.sc.act==='ride')rideResume(demo.pil); demo.user=false; demo.lookT=0; document.body.classList.remove('duser'); for(const k of DEMO_MOVE)keys[k]=false; hitHeld=false; upHeld=downHeld=false;
   if(document.pointerLockElement)document.exitPointerLock(); camMode=demo.sc.cam==='first'?1:3; demo.cam=null;
   const P=demo.pil; if(demo.sc.act==='concert'){ P.x=pl.p[0]-CLUB.x; P.z=pl.p[2]-CLUB.z; } if(demo.sc.act==='fire')P.a=Math.atan2(pl.p[2]-camp.position.z,pl.p[0]-camp.position.x); P.d=1e9; P.t=0; P.tree=null; }
 function doHit(){ if(demo)demoHit(); else hitAction(); }
 function demoHit(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
   const n=shots.length; hitAction(); if(demo.sc.act==='wonder'&&weapon==='bow'&&shots.length>n)shots[shots.length-1].big=demo.pil.phase==='blast'?3.4:2.4; }
-function demoSwap(){ if(!demo||!demo.sc||isConc(demo.sc)||demo.sc.act==='ride')return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
+function demoSwap(){ if(!demo||!demo.sc||isConc(demo.sc))return; if(onRanch()){ demoTake(); cycleTool(); return; } demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
 function demoInput(dt){ pad=padRead(); const conc=isConc(demo.sc);
   const mv=Math.abs(pad.lx)+Math.abs(pad.ly)>0, lk=Math.abs(pad.rx)+Math.abs(pad.ry)>0;
   if(mv||lk||(!conc&&pad.any))demoTake(lk);
@@ -4646,7 +4657,7 @@ function demoRanchSetup(sc,P){ demo.vplace='ranch'; demo.ranchWorld=true; demo.c
   generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
   const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
   const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
-  rideIn={thr:0,turn:0,jump:false}; Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5,view:0,story:false});
+  K.tools=RTOOL_ORDER.slice(); rideIn={thr:0,turn:0,jump:false}; Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5,view:0,story:false});
   if(sc.rstory!=='ride'){ storyStart(sc,P,o); dressHero(); return; } // a whole day on the ranch
   a.p=[path[0][0],FY+0.01,path[0][1]]; a.v=[0,0,0]; a.zone=null; a.hd=Math.atan2(-(path[6][0]-path[0][0]),-(path[6][1]-path[0][1])); mount(a,true); dressHero();
   Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5}); rideIn={thr:0,turn:0,jump:false}; }
@@ -4732,6 +4743,7 @@ function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
     const s=P.hay[P.hi]; if(!s||T>P.tHay){ hayCarry.visible=false; P.ph='saddle'; return; }
     if(walkTo2(P,s[0]+2.6,s[1],dt)){ faceTo(Math.PI/2,dt); if(Math.abs(yaw-Math.PI/2)<0.2){ hayCarry.visible=false; P.drop=1.0; sfx('place');
       const h=box(0.6,0.4,0.42,hayMat); h.position.set(s[0]+1.95,FY+0.2,s[1]); scene.add(h); K.decor.push(h); const a=K.own.find(q=>q.a&&Math.abs(q.a.p[2]-s[1])<0.6&&Math.abs(q.a.p[0]-s[0])<0.6); if(a)a.a.hayT=99; } } return; }
+  if(P.ph==='ride'){ rejoinHorse(dt,P); return; }
   if(P.ph==='saddle'){ const a=P.o.a; if(walkTo2(P,a.p[0]+2.2,a.p[2],dt)){ faceTo(Math.PI/2,dt); P.act+=dt; if(P.act>0.8){ P.act=0; saddleUp(a,true); burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(0.55,0.35,0.15),6);
       a.hayT=0; mount(a,true); P.ph='ride'; P.i=0; P.dir=1; P.pre=[[52,a.p[2]],[56.6,96.5],[61,97]]; P.cmode='seek'; } } return; }
   if(P.ph==='walk'){ const W=[[62,104],[81.6,104],[81.6,113],[84.5,121.5]], q=W[P.wi]; if(!q){ P.ph='plant'; P.pi=0; equipTool('seeds',true); return; } if(walkTo2(P,q[0],q[1],dt,3.2))P.wi++; return; }
@@ -4764,6 +4776,18 @@ function vistaCam(dt,P){ const a=ranchK.ride, V=(x,y,z)=>new THREE.Vector3(x,y,z
   const cam=first?h.clone().addScaledVector(d,-4.5).addScaledVector(r,1.2).add(V(0,0.8,0)):h.clone().addScaledVector(df,-5).addScaledVector(rf,1.6).add(V(0,1.6,0));
   camera.position.copy(cam); camera.lookAt(first?m.clone().add(V(0,-20,0)):farm); model.visible=true; }
 const STRUM_SPEED=0.05; // how fast the strumming hand moves when the cowboy plays guitar by the rocking chair (1 = the old speed)
+// the demo carries on after you've played: the story picks up near where it was. If you wandered far off, the hero pops back
+// (the camera cuts as the demo starts again); if you rode off on a horse during a part on foot, they get off; and if the
+// ride was going on, they walk back to the saddled horse and get on
+function rideResume(P){ if(!ranchK)return; const foot=P.story&&P.ph!=='ride';
+  if(foot&&riding())dismount(true);
+  const horse=(P.story&&P.o&&P.o.a)||(ranchK.own.find(o=>o.a&&o.a.M.saddle)||{}).a;
+  const W=[[62,104],[81.6,104],[81.6,113],[84.5,121.5]], anchor=!foot?(horse?[horse.p[0]+1.5,horse.p[2]]:null):P.ph==='hay'?[54.5,96.5]:P.ph==='saddle'&&horse?[horse.p[0]+2,horse.p[2]]:P.ph==='walk'?W[Math.min(P.wi,3)]:P.ph==='plant'||P.ph==='water'?[84.5,121.5]:[CHAIR.x+0.3,CHAIR.z-1.2];
+  if(!riding()&&anchor&&Math.hypot(pl.p[0]-anchor[0],pl.p[2]-anchor[1])>14){ pl.p=[anchor[0],standY(Math.floor(anchor[0]),Math.floor(anchor[1])),anchor[1]]; pl.v=[0,0,0]; }
+  if(P.story){ heldGuitar.visible=P.ph==='chair'||heldGuitar.parent!==model; lemonGlass.visible=P.ph==='sit'; hayCarry.visible=P.ph==='hay'&&!(P.drop>0); }
+  if(!riding())demo.puppet=true; }
+function rejoinHorse(dt,P){ const h=(P.story&&P.o&&P.o.a)||(ranchK&&(ranchK.own.find(o=>o.a&&o.a.M.saddle)||{}).a); if(!h)return;
+  if(walkTo2(P,h.p[0]+1.4,h.p[2],dt,3.2)){ mount(h,true); if(P.story)P.ph='ride'; } }
 function storyPose(dt,P){ const K=ranchK, t=demo.t, beat=musBeat(), s=Math.sin;
   if(P.ph==='hay'&&hayCarry.visible){ armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=0.12; armR.rotation.z=-0.12; }
   else if(P.ph==='hay'||P.ph==='saddle'){ if(P.drop>0||P.act>0){ armR.rotation.x=1.3; armL.rotation.x=0.9; } }
@@ -4826,7 +4850,7 @@ function cycleTool(){ const K=ranchK, own=RTOOL_ORDER.filter(t=>K.tools.includes
 const toolChip=document.createElement('div'); toolChip.id='rTool'; toolChip.className='ui';
 toolChip.style.cssText='position:fixed;top:calc(64px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));background:rgba(20,24,32,.68);color:#fff;font:800 13px sans-serif;padding:5px 10px;border-radius:10px;display:none;z-index:4;cursor:pointer;max-width:70vw';
 document.body.appendChild(toolChip); tap(toolChip,()=>{ if(onRanch())cycleTool(); });
-function refreshToolChip(){ const K=ranchK; if(!K||!onRanch()||demo){ toolChip.style.display='none'; return; } const T=RTOOLS[K.tool], b=K.bag;
+function refreshToolChip(){ const K=ranchK; if(!K||!onRanch()||(demo&&!demo.user)){ toolChip.style.display='none'; return; } const T=RTOOLS[K.tool], b=K.bag;
   const inv=[['🍎',K.apples],...Object.keys(BAG_PRICE).map(k=>[k==='egg'?'🥚':CROPS[k].i,b[k]])].filter(q=>q[1]>0).map(q=>q[0]+q[1]).join(' ');
   toolChip.innerHTML=T.i+' '+T.n+(K.tool==='seeds'?' · '+CROPS[K.seed].i:'')+(K.tool==='water'?' · 💧'+K.can:'')+(K.tools.length>1?' <span style="opacity:.6">⇄</span>':'')+(inv?'<br><span style="font-weight:700">'+inv+'</span>':''); toolChip.style.display='block'; }
 // --- the farm: crops, and what each tool does to the soil
@@ -5146,7 +5170,7 @@ function update(dt){
 
   // merchant faces player
   const mdx=pl.p[0]-merchant.p[0], mdz=pl.p[2]-merchant.p[2]; if(Math.hypot(mdx,mdz)<12) merchant.g.rotation.y=Math.atan2(-mdx,-mdz);
-  const act=demo?null:nearAction(), bt=$('bTalk'); bt.style.display=act&&IS_TOUCH?'flex':'none'; if(act&&bt.textContent!==act.label)bt.textContent=act.label;
+  const act=!demo||demo.user?nearAction():null, bt=$('bTalk'); bt.style.display=act&&IS_TOUCH?'flex':'none'; if(act&&bt.textContent!==act.label)bt.textContent=act.label;
   const pr=$('prompt'); if(act&&!IS_TOUCH){ const t='Press E: '+act.label.replace(/^\S+ /,''); if(pr.textContent!==t)pr.textContent=t; pr.style.display='block'; } else pr.style.display='none';
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
