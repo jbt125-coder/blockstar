@@ -1996,7 +1996,7 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button><button id="tOdyssey">🏛️ Odyssey</button><button id="tPets">🐾 Pet Shop</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
@@ -2005,7 +2005,7 @@ function showTitle(){ if(document.pointerLockElement)document.exitPointerLock();
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tOdyssey'),()=>{ audioInit(); goCity('odyssey',false); }); tap($('tPets'),()=>{ audioInit(); goCity('petshop',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
