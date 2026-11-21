@@ -2297,11 +2297,12 @@ const DM_FSTAT={random:'🎲 A random statue',golem:'🗿 Giant Rock Golem',slim
 const DM_FBAND={cycle:'🔀 Switch members at random',sing:'🎤 Always the singer (you!)',gtr:'🎸 Always guitar',drm:'🥁 Always drums',sx:'🎹 Always the synth scratcher',bass:'🎸 Always bass',off:'🚫 No giant band'};
 const DM_FCROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monsters:'🧟 Monsters',none:'🙋 Just me'};
 const DM_HORSE={random:'🎲 A random horse',bay:'🐴 Bay',black:'🐴 Black',white:'🐴 White',palomino:'🐴 Palomino',chestnut:'🐴 Chestnut',pinto:'🐴 Pinto',appaloosa:'🐴 Appaloosa',grullo:'🐴 Grullo'}; // the breeds in HORSES
+const DM_RSTORY={day:'🌄 A day on the ranch (hay, ride, farm, guitar)',ride:'🐴 Just the ride'};
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2312,12 +2313,12 @@ const DEMO0={scenes:[
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
-  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Saddle up!',horse:'random'},
+  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:100,cap:'',horse:'random',rstory:'day'},
   {act:'fire',time:'night',wx:'clear',land:'normal',cam:'cine',secs:45,cap:'',mouth:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2336,7 +2337,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
-      s.act==='ride'?'<label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
+      s.act==='ride'?'<label>Story'+sel(DM_RSTORY,'rstory',i,s.rstory)+'</label><label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
@@ -2433,7 +2434,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2472,7 +2473,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
-  if(sc.act==='ride'){ ridePilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='ride'){ if(P.story&&!riding())storyPilot(dt,P); else ridePilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
@@ -2490,7 +2491,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2513,6 +2514,7 @@ function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!de
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='stadium')stadiumTick(dt);
   if(sc.act==='fire')fireConcertTick(dt);
+  if(sc.act==='ride'&&P.story){ storyGrow(dt,P); if(!riding())storyPose(dt,P); }
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
   if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
   if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
@@ -4248,6 +4250,11 @@ function generateRanch(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(
   const near=new Float32Array(W*D).fill(99), nty=new Float32Array(W*D);
   P.forEach(([px,pz],i)=>{ for(let z=Math.floor(pz-7);z<=pz+7;z++)for(let x=Math.floor(px-7);x<=px+7;x++){ if(x<0||z<0||x>=W||z>=D)continue; const d=Math.hypot(x+0.5-px,z+0.5-pz), k=x+z*W; if(d<near[k]){ near[k]=d; nty[k]=ty[i]; } } });
   for(let k=0;k<W*D;k++){ const d=near[k]; if(d>6.5)continue; const t=nty[k]; HM[k]=d<=2.2?t:t+(HM[k]-t)*Math.pow((d-2.2)/4.3,1.5); }
+  // the summit: a flat lookout at the end of the trail, with nothing taller close by, so the view opens up all round (it only cuts rock
+  // down, never builds up, so the trail climbs straight onto it)
+  { const [ex,ez]=RANCH.trail[RANCH.trail.length-1], eh=Math.round(ty[ty.length-1]);
+    for(let z=Math.max(0,ez-16);z<Math.min(D,ez+16);z++)for(let x=Math.max(0,ex-16);x<Math.min(W,ex+16);x++){ const k=x+z*W, d=Math.hypot(x+0.5-ex+2,z+0.5-ez);
+      if(d<3)HM[k]=eh; else if(d<7)HM[k]=Math.min(HM[k],eh); else if(d<15&&HM[k]>eh){ const t=(d-7)/8; HM[k]=eh+(HM[k]-eh)*t*t; } } }
   // the lake: a flat shore and a basin three blocks deep
   const [lx,lz,lr]=R.lake, LH=FY+1;
   for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const d=Math.hypot(x+0.5-lx,z+0.5-lz); if(d<lr+4){ const t=Math.max(0,(d-lr-1)/3); HM[x+z*W]=LH+(HM[x+z*W]-LH)*t*t; } }
@@ -4400,8 +4407,47 @@ function buildRanchSky(){ const G=ranchSky, K={mats:[]}, cx=64, cz=64;
   const r=mulberry32(11); for(let i=0;i<34;i++){ const a=r()*Math.PI*2, R=150+r()*120, y=FY+30+r()*34, puff=new THREE.Group(); puff.position.set(Math.cos(a)*R,y,Math.sin(a)*R); puff.rotation.y=-a;
     for(let k=0;k<3;k++){ const b=box(10+r()*16,3+r()*3,8+r()*10,cm2); b.position.set((k-1)*9+(r()-0.5)*4,(r()-0.5)*2,(r()-0.5)*6); puff.add(b); } K.clouds.add(puff); }
   return K; }
-function ranchSkyTick(dt){ const K=ranchSkyK; if(!K)return; const t=blockMat.color; for(const m of K.mats)m.color.setRGB(Math.min(1,t.r*1.05),Math.min(1,t.g*1.05),Math.min(1,t.b*1.05)); K.cloudMat.color.copy(cMat.color); K.clouds.rotation.y+=dt*0.004; }
+function ranchSkyTick(dt){ const K=ranchSkyK; if(!K)return; vistaTick(K,dt); const t=blockMat.color; for(const m of K.mats)m.color.setRGB(Math.min(1,t.r*1.05),Math.min(1,t.g*1.05),Math.min(1,t.b*1.05)); K.cloudMat.color.copy(cMat.color); K.clouds.rotation.y+=dt*0.004; }
 
+// --- the view from the top of the trail: a great mountain just past the west edge, with a waterfall pouring down its cliffs in two
+// drops into a misty pool, and eagles circling it (and the summit). Built from big blocks so it matches the world.
+const VISTA={x:-92,z:14,y:FY-18,s:1.3}; // (s: how much bigger it's drawn) // the mountain's middle (its cliffs face east, toward the summit)
+const FALL_TOP=[VISTA.x+25*VISTA.s,VISTA.y+86*VISTA.s,VISTA.z]; // where the camera looks for the waterfall
+function waterTex(){ const c=document.createElement('canvas'); c.width=32; c.height=128; const x=c.getContext('2d'), r=mulberry32(4);
+  x.fillStyle='#7cc4f0'; x.fillRect(0,0,32,128); for(let i=0;i<70;i++){ x.fillStyle=r()<0.5?'rgba(255,255,255,0.75)':'rgba(40,120,200,0.5)'; x.fillRect(Math.floor(r()*32),Math.floor(r()*128),1+Math.floor(r()*2),8+Math.floor(r()*30)); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t; }
+function buildVista(K){ const G=new THREE.Group(); G.position.set(VISTA.x,VISTA.y,VISTA.z); G.scale.setScalar(VISTA.s); ranchSky.add(G); const r=mulberry32(21), mats=[];
+  const mat=c=>{ const m=new THREE.MeshLambertMaterial({color:c,fog:false}); mats.push(m); return m; }, add=(w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); G.add(b); return b; };
+  const forest=mat(0x3f6a3a), rock=mat(0x7d7f86), rock2=mat(0x9a9ca2), snow=mat(0xf2f6fa), dk=mat(0x5f6168);
+  // four tiers, each stepped back from the one below; the front (+x) faces the ranch
+  add(90,50,110,forest,0,25,0); add(65,40,76,rock,-7.5,70,0); add(40,32,48,rock2,-12,106,0); add(20,24,24,snow,-14,134,0);
+  add(65.4,2,76.4,snow,-7.5,90.5,0); add(40.4,2,48.4,snow,-12,122.5,0); // snowy ledges
+  for(let i=0;i<60;i++){ const t=Math.floor(r()*3), [w,y0,y1,x1,zd]=[[90,14,50,45,55],[65,50,90,25,38],[40,90,122,8,24]][t], sz=4+r()*7;
+    const z=(r()-0.5)*zd*2, side=r()<0.55; if(Math.abs(z)<10&&!side)continue; // keep the waterfall clear
+    if(side)add(sz,sz,sz,t===0?forest:r()<0.5?rock:dk,x1-w*r(),y0+r()*(y1-y0),(z>0?1:-1)*zd); else add(sz*0.6,sz,sz,t===0?forest:dk,x1,y0+r()*(y1-y0),z); } // rocks and clumps of trees on the faces
+  // the waterfall: down the middle cliff, across the ledge, down the big cliff, into a pool with mist
+  const wt=waterTex(), wm=new THREE.MeshBasicMaterial({map:wt,fog:false,transparent:true,opacity:0.92,side:THREE.DoubleSide}); mats.push(wm); wt.repeat.set(1,3);
+  const fall=(h,x,y)=>{ const p=new THREE.Mesh(new THREE.PlaneGeometry(13,h),wm); p.rotation.y=Math.PI/2; p.position.set(x,y,0); G.add(p); };
+  fall(40,25.4,70); fall(36,45.4,32); const st=new THREE.Mesh(new THREE.PlaneGeometry(20,13),wm); st.rotation.x=-Math.PI/2; st.position.set(35,50.3,0); G.add(st);
+  add(18,0.8,26,mat(0x4a9ad8),54,14.2,0); // the pool
+  const tex=glowTex(), mist=[]; for(let i=0;i<14;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:0xffffff,transparent:true,opacity:0.55,depthWrite:false,fog:false}));
+    const low=i<9; s.position.set(low?47+r()*8:27+r()*4,low?15+r()*4:51+r()*2,(r()-0.5)*12); s.scale.setScalar(low?6+r()*5:4+r()*3); s.userData={y0:s.position.y,ph:r()*6}; G.add(s); mist.push(s); }
+  // eagles: big ones round the far mountain, smaller ones over the summit
+  const eagles=[]; for(let i=0;i<6;i++){ const m=mobModel('eagle'); m.bar.visible=false; for(const q of m.mats)q.fog=false; const far=i<4; m.root.scale.setScalar(far?3.2:1.4); ranchSky.add(m.root);
+    eagles.push({m,far,a:r()*6.28,R:far?28+r()*26:12+r()*8,y:far?VISTA.y+118+r()*30:FY+50+r()*8,sp:(far?0.12:0.28)*(r()<0.5?1:-1),ph:r()*6}); }
+  Object.assign(K,{vista:{G,mats,wt,mist,eagles}}); }
+function vistaTick(K,dt){ const V=K.vista; if(!V)return; V.wt.offset.y+=dt*0.9; const t=performance.now()/1000, c=blockMat.color;
+  for(const m of V.mats)if(m.color&&!m.map){ if(m.userData.c0===undefined)m.userData.c0=m.color.getHex(); m.color.setHex(m.userData.c0).multiply(c); } // the time of day
+  for(const s of V.mist){ s.position.y=s.userData.y0+Math.sin(t*0.8+s.userData.ph)*1.2; s.material.opacity=0.4+0.2*Math.sin(t*1.3+s.userData.ph); }
+  for(const e of V.eagles){ e.a+=dt*e.sp; const cx=e.far?VISTA.x+12:44, cz=e.far?VISTA.z:24, x=cx+Math.cos(e.a)*e.R, z=cz+Math.sin(e.a)*e.R; e.m.root.position.set(x,(e.far?VISTA.y+(e.y-VISTA.y)*VISTA.s:e.y)+Math.sin(t*0.5+e.ph)*3,z);
+    e.m.body.rotation.y=Math.atan2(Math.sin(e.a)*e.sp,-Math.cos(e.a)*e.sp); e.m.body.rotation.z=-Math.sign(e.sp)*0.25; const fl=Math.sin(t*(e.far?2.2:3.5)+e.ph); for(const w of e.m.wings||[])w.rotation.z=fl*0.5*w.userData.sd; } }
+// the rocking chair by the garden (where the hero plays guitar and watches the crops grow)
+const CHAIR={x:82.1,z:116.2};
+function chairMesh(){ const g=new THREE.Group(), w=lm(0x8a5a2e), dk=lm(0x6b4220), add=(W,h,d,m,x,y,z)=>{ const b=box(W,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
+  for(const sx of [-1,1]){ const rk=add(0.06,0.06,1.1,dk,sx*0.28,0.04,0.02); rk.rotation.x=0; for(const [z,y] of [[-0.5,0.09],[0.52,0.1]])add(0.06,0.06,0.2,dk,sx*0.28,y,z+(z<0?-0.08:0.08)).rotation.x=z<0?0.5:-0.5;
+    for(const z of [-0.2,0.22])add(0.06,0.42,0.06,w,sx*0.28,0.27,z); add(0.06,0.06,0.5,w,sx*0.3,0.68,0); add(0.06,0.24,0.06,w,sx*0.3,0.56,-0.22); }
+  add(0.62,0.06,0.52,w,0,0.48,0); for(let i=0;i<4;i++)add(0.08,0.72,0.04,w,-0.21+i*0.14,0.86,0.25); add(0.66,0.08,0.06,dk,0,1.24,0.25);
+  g.rotation.order='YXZ'; return g; }
 function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
 function riding(){ return !!(ranchK&&ranchK.ride); }
 function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
@@ -4409,7 +4455,7 @@ function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
   return look; }
 function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); }
-function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const c of ranchK.crops.slice())removeCrop(c); for(const q of ranchK.scare)scene.remove(q.m);
+function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const m of ranchK.decor||[])scene.remove(m); storyReset(); for(const c of ranchK.crops.slice())removeCrop(c); for(const q of ranchK.scare)scene.remove(q.m);
   if(weapon==='bow'&&ranchK.tool==='bow')weapon=ranchK.prevWeapon||'fists'; toolHand.clear(); toolChip.style.display='none'; refreshWeapon(); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; ranchSky.visible=false; dressRig(rig,look); }
 function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples,
   saddle:K.saddled,farm:1,tools:K.tools,tool:K.tool,seed:K.seed,can:K.can,bag:K.bag,crops:K.crops.map(c=>[c.x,c.y,c.z,c.type,Math.round(c.g*1000)/1000]),scare:K.scare.map(q=>[q.x,q.y,q.z])}; }
@@ -4439,7 +4485,8 @@ function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==
   const Y=R.yard; for(let i=0;i<7;i++)makeAnimal('chicken',i%3?'white':'brown',Y.x0+2+rnd()*12,Y.z0+2+rnd()*(Y.z1-Y.z0-4),{zone:Y,y:FY});
   for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
   for(let i=0;i<4;i++)spawnGame('deer'); for(let i=0;i<6;i++)spawnGame('bunny');
-  if(!ranchSkyK)ranchSkyK=buildRanchSky(); ranchSky.visible=true; equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
+  if(!ranchSkyK){ ranchSkyK=buildRanchSky(); buildVista(ranchSkyK); } ranchSky.visible=true;
+  K.decor=[]; K.chair=chairMesh(); K.chair.position.set(CHAIR.x,FY,CHAIR.z); K.chair.rotation.y=-Math.PI/2; scene.add(K.chair); K.decor.push(K.chair); equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
 function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
 function placeOwned(o,i){ const s=STALLS[i]; let a;
   if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:-Math.PI/2,zone:null,y:FY}); // facing out to the aisle
@@ -4546,7 +4593,7 @@ function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt);
     else if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
       spd=d>3.6?Math.min(12,(d-3)*2.2):0; if(a.st==='roped'&&d>9){ a.p[0]+=dx/d*(d-9); a.p[2]+=dz/d*(d-9); } // the rope pulls it along
       if(a.wild&&a.p[0]>C.x0+1&&a.p[0]<C.x1-1&&a.p[2]>C.z0+1&&a.p[2]<C.z1-1)tame(a); }
-    else if(a.st==='stall'){ mode=Math.sin(K.t*0.3+a.ph)>0.4?'graze':''; }
+    else if(a.st==='stall'){ mode=a.hayT>0||Math.sin(K.t*0.3+a.ph)>0.4?'graze':''; }
     else if(a.game&&(()=>{ const gs=gameAI(a,dt,hero,riding()); if(gs<0)return false; spd=gs; if(gs===0&&a.crop)mode='graze'; return true; })()){} // deer and bunnies run off, or sneak to the crops
     else { const Z=a.zone; if(!a.tgt||a.t<=0||Math.hypot(a.tgt[0]-a.p[0],a.tgt[1]-a.p[2])<1){ a.t=3+Math.random()*7; a.graze=Math.random()<0.45?a.t:0;
         a.tgt=Z?[Z.x0+Math.random()*(Z.x1-Z.x0),Z.z0+Math.random()*(Z.z1-Z.z0)]:null; if(a.tgt&&a.kind!=='chicken'&&a.kind!=='pig'&&a.st!=='pen'){ const s=surfaceAt(Math.floor(a.tgt[0]),Math.floor(a.tgt[1])); if(s.id===ID.water||s.y>34)a.tgt=null; } }
@@ -4599,16 +4646,24 @@ function demoRanchSetup(sc,P){ demo.vplace='ranch'; demo.ranchWorld=true; demo.c
   generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
   const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
   const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
+  rideIn={thr:0,turn:0,jump:false}; Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5,view:0,story:false});
+  if(sc.rstory!=='ride'){ storyStart(sc,P,o); dressHero(); return; } // a whole day on the ranch
   a.p=[path[0][0],FY+0.01,path[0][1]]; a.v=[0,0,0]; a.zone=null; a.hd=Math.atan2(-(path[6][0]-path[0][0]),-(path[6][1]-path[0][1])); mount(a,true); dressHero();
   Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5}); rideIn={thr:0,turn:0,jump:false}; }
 function ridePilot(dt,P){ const K=ranchK, a=K&&K.ride; if(!a)return; const path=ranchPath(), [lx,lz]=RANCH.lake;
   const steer=(tx,tz)=>{ let d=Math.atan2(-(tx-a.p[0]),-(tz-a.p[2]))-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; rideIn.turn=Math.max(-1,Math.min(1,-d*2.2)); return Math.abs(d); };
   rideIn.jump=false;
+  if(P.view>0){ P.view-=dt; P.viewK+=dt; rideIn.thr=0; steer(FALL_TOP[0],FALL_TOP[2]); if(P.view<=0){ P.view=0; P.dir=-1; P.viewed=true; } return; } // stop and look at the waterfall
+  if(P.pre&&P.pre.length){ const q=P.pre[0], off=steer(q[0],q[1]); rideIn.thr=off>0.8?0.3:0.7; if(Math.hypot(q[0]-a.p[0],q[1]-a.p[2])<1.5)P.pre.shift();
+    if(!P.pre.length&&P.homeBound){ P.homeBound=false; dismount(true); P.ph='walk'; P.wi=0; } return; }
+  if(P.story&&P.viewed&&demo.st>P.tHome&&!P.homeBound){ a.p=[path[2][0],FY+0.01,path[2][1]]; P.i=2; P.dir=-1; } // running late: skip ahead to the bottom of the trail
   if(P.stop>0){ P.stop-=dt; rideIn.thr=0; rideIn.turn=0; if(P.stop<=0&&P.mode==='drink'){ P.mode='trail'; let bi=0, bd=1e9; path.forEach((q,j)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=j; } }); P.i=bi; } return; }
   if(P.mode==='tolake'){ steer(lx,lz); rideIn.thr=0.35; const wet=get(Math.floor(a.p[0]-Math.sin(a.hd)*1.3),Math.floor(a.p[1]-0.5),Math.floor(a.p[2]-Math.cos(a.hd)*1.3))===ID.water;
     if(wet||Math.hypot(a.p[0]-lx,a.p[2]-lz)<RANCH.lake[2]+1){ P.mode='drink'; P.stop=4.5; } return; }
   let i=P.i; for(let k=0;k<40;k++){ const j=i+P.dir; if(j<0||j>=path.length)break; if(Math.hypot(path[j][0]-a.p[0],path[j][1]-a.p[2])<=Math.hypot(path[i][0]-a.p[0],path[i][1]-a.p[2])+0.05)i=j; else break; } P.i=i;
-  if((P.dir>0&&i>=path.length-3)||(P.dir<0&&i<=2)){ P.dir*=-1; P.stop=3; return; } // the end of the trail: take in the view, then turn round
+  if(P.story&&P.dir>0&&demo.st>P.tTurn&&!P.view){ P.view=P.viewLen=Math.max(3,Math.min(7,demo.sc.secs*0.06)); P.viewK=0; return; } // out of time: take in the view from here
+  if(P.dir>0&&i>=path.length-3){ P.view=P.viewLen=P.story?Math.max(3,Math.min(7,demo.sc.secs*0.06)):4.5; P.viewK=0; return; } // the top: the view of the waterfall
+  if(P.dir<0&&i<=2){ if(P.story){ P.pre=[[60,90],[59.5,96.5]]; P.homeBound=true; return; } P.dir=1; P.stop=3; return; }
   if(!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
   const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*7))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:1;
   P.jT-=dt; if(P.jT<=0&&off<0.25&&a.p[1]<FY+5&&a.onGround){ rideIn.jump=true; P.jT=9; } // a gallop on the flat
@@ -4634,6 +4689,58 @@ function rideDemoCam(dt){ const K=ranchK, a=K&&K.ride; if(!a)return; const C=dem
     const cam=h.clone().lerp(to,tt), g=gyAt(cam)+0.9; return {cam,look:pr[1],ok:tt>0.55&&cam.y>g-0.4,g}; };
   let sh=tryShot(C.cur); if(!sh.ok&&C.cur!=='chase')sh=tryShot('chase'); // blocked: the view from behind, along the trail we just rode
   camera.position.copy(sh.cam); camera.position.y=Math.max(sh.cam.y,sh.g); camera.lookAt(sh.look); if(C.cur==='pov'&&sh.ok)model.visible=false; } // the rider's eye view: just the horse's head and the trail
+// --- a day on the ranch in Demo Mode: hay for the horses, saddle up and ride the trail to the view at the top, ride home, plant and
+// water a row of crops, then sit in the rocking chair with a guitar while they grow. Each part gets a share of the scene's seconds.
+const hayMat=lm(0xd8b060), hayCarry=box(0.62,0.42,0.42,hayMat); hayCarry.position.set(0,1.02,-0.5); hayCarry.visible=false; model.add(hayCarry);
+const heldGuitar=guitarMesh(0x9a4a1a,0.62,false); heldGuitar.position.set(0.02,1.0,-0.25); heldGuitar.rotation.z=0.95; heldGuitar.visible=false; model.add(heldGuitar);
+model.rotation.order='YXZ'; // so the hero can rock back and forth in the chair
+function storyReset(){ hayCarry.visible=false; heldGuitar.visible=false; model.rotation.x=0; }
+function walkTo2(P,x,z,dt,sp){ const dx=x-pl.p[0], dz=z-pl.p[2], d=Math.hypot(dx,dz); if(d<0.12){ P.hs=0; return true; } const st=Math.min(d,(sp||2.6)*dt);
+  pl.p[0]+=dx/d*st; pl.p[2]+=dz/d*st; pl.p[1]=FY; P.hs=st/Math.max(dt,1e-3); let w=Math.atan2(-dx,-dz)-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*8); return false; }
+function faceTo(yw,dt){ let w=yw-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*6); }
+function storyStart(sc,P,o){ const S=sc.secs, stalls=[0,1,2].filter(i=>STALLS[i]);
+  Object.assign(P,{story:true,ph:'hay',o,hay:stalls.map(i=>STALLS[i]),hi:0,drop:0,hays:[],pre:null,tHay:S*0.11,tTurn:S*0.42,tHome:S*0.64,tFarm:S*0.84,planted:[],pi:0,wi:0,act:0});
+  pl.p=[54.5,FY,96.5]; yaw=Math.PI/2; pitch=-0.05; demo.puppet=true; hayCarry.visible=true; }
+// the parts of the day that happen on foot (the ride itself is ridePilot)
+function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
+  if(P.ph==='hay'){ // carrying a bale of hay down the aisle to each stall
+    if(P.drop>0){ P.drop-=dt; if(P.drop<=0){ hayCarry.visible=true; P.hi++; } return; }
+    const s=P.hay[P.hi]; if(!s||T>P.tHay){ hayCarry.visible=false; P.ph='saddle'; return; }
+    if(walkTo2(P,s[0]+2.6,s[1],dt)){ faceTo(Math.PI/2,dt); if(Math.abs(yaw-Math.PI/2)<0.2){ hayCarry.visible=false; P.drop=1.0; sfx('place');
+      const h=box(0.6,0.4,0.42,hayMat); h.position.set(s[0]+1.95,FY+0.2,s[1]); scene.add(h); K.decor.push(h); const a=K.own.find(q=>q.a&&Math.abs(q.a.p[2]-s[1])<0.6&&Math.abs(q.a.p[0]-s[0])<0.6); if(a)a.a.hayT=99; } } return; }
+  if(P.ph==='saddle'){ const a=P.o.a; if(walkTo2(P,a.p[0]+2.2,a.p[2],dt)){ faceTo(Math.PI/2,dt); P.act+=dt; if(P.act>0.8){ P.act=0; saddleUp(a,true); burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(0.55,0.35,0.15),6);
+      a.hayT=0; mount(a,true); P.ph='ride'; P.i=0; P.dir=1; P.pre=[[52,a.p[2]],[56.6,96.5],[60,96.5],[60,88]]; } } return; }
+  if(P.ph==='walk'){ const W=[[62,104],[81.6,104],[81.6,113],[84.5,121.5]], q=W[P.wi]; if(!q){ P.ph='plant'; P.pi=0; equipTool('seeds',true); return; } if(walkTo2(P,q[0],q[1],dt,3.2))P.wi++; return; }
+  if(P.ph==='plant'||P.ph==='water'){ const x=P.ph==='plant'?84+P.pi:91-P.pi; if(x<84||x>91||T>P.tFarm&&P.ph==='water'){ if(P.ph==='plant'){ P.ph='water'; P.pi=0; equipTool('water',true); } else { P.ph='tochair'; toolHand.clear(); } return; }
+    if(!walkTo2(P,x+0.5,121.5,dt,2.4))return; faceTo(Math.PI,dt); P.act+=dt; swingT=Math.max(swingT,0.2);
+    if(P.act>(P.ph==='plant'?0.45:0.35)){ P.act=0; P.pi++;
+      if(P.ph==='plant'){ if(!get(x,FY,122)&&!cropAt(x,FY-1,122)){ P.planted.push(plantCrop(x,FY-1,122,['corn','wheat','carrot','tomato'][x%4],0)); sfx('place'); } }
+      else { const b=get(x,FY-1,122); if(isFarm(b)){ setBlock(x,FY-1,122,soil(isRich(b),true)); K.wet.set(x+','+(FY-1)+','+122,WET_TIME); } for(let n=0;n<5;n++)burst(x,FY+0.3,122,new THREE.Color(0.45,0.7,1),1); sfx('whoosh'); } } return; }
+  if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.1,CHAIR.z,dt,3)){ P.ph='chair'; heldGuitar.visible=true; } return; }
+  if(P.ph==='chair'){ pl.p=[CHAIR.x,FY-0.17,CHAIR.z]; yaw=-Math.PI/2; pitch=0.05; P.hs=0;
+    return; } }
+// the crops grow fast (a time-lapse), ripe just before the scene ends
+function storyGrow(dt,P){ if(!P.planted.length)return; const left=Math.max(2,demo.sc.secs-1.5-demo.st); for(const c of P.planted){ if(!ranchK.crops.includes(c)||c.g>=1)continue; c.g=Math.min(1,c.g+dt*(1-c.g)/left); cropLook(c); } }
+// the cameras for the parts on foot, and the view from the top
+function storyCam(dt,P){ const C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:-1}), V=(x,y,z)=>new THREE.Vector3(x,y,z), h=V(pl.p[0],pl.p[1]+1.5,pl.p[2]), f=V(-Math.sin(yaw),0,-Math.cos(yaw)), rt=V(Math.cos(yaw),0,-Math.sin(yaw));
+  const s0=P.hay[Math.min(P.hi,P.hay.length-1)]||STALLS[0];
+  const SH={aisle:t=>[V(55.2,FY+2.6,96.5+Math.sin(t*0.3)),h], stall:t=>[V(s0[0]+3.4,FY+1.7,s0[1]+2.2),V(s0[0]+1,FY+1,s0[1])], front:t=>[h.clone().addScaledVector(f,2.8).add(V(0,0.1,0)),h],
+    side:t=>[h.clone().addScaledVector(rt,4).add(V(0,0.8,0)),h], garden:t=>[V(97,FY+4.5,127-t*0.3),V(87,FY+0.5,121)], back:t=>[h.clone().addScaledVector(f,-3.6).add(V(0,1.2,0)),h.clone().addScaledVector(f,3)],
+    porch:t=>[V(CHAIR.x+2.8,FY+1.4,CHAIR.z-0.6+t*0.1),V(CHAIR.x,FY+1.1,CHAIR.z)], shoulder:t=>[V(CHAIR.x-1.1,FY+2.0,CHAIR.z+0.8),V(88,FY+0.6,121)],
+    crops:t=>[V(88+t*0.2,FY+0.5,123.2),V(CHAIR.x,FY+1.1,CHAIR.z)], wide:t=>[V(100,FY+11,136-t*0.4),V(84,FY+1,117)], guitar:t=>[V(CHAIR.x+1.2,FY+1.0,CHAIR.z-0.5),V(CHAIR.x,FY+0.9,CHAIR.z)]};
+  const seqs={hay:['aisle','stall','front'],saddle:['stall','aisle'],walk:['back','side','garden'],plant:['side','garden','front'],water:['garden','side','front'],tochair:['garden','back'],chair:['porch','shoulder','crops','guitar','wide']};
+  const seq=seqs[P.ph]||['side'], bt=Math.floor(musBeat()); if(C.ph!==P.ph){ C.ph=P.ph; C.cur=null; C.i=-1; } C.st-=dt; C.k+=dt;
+  if(!C.cur||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.4+Math.random()*1.6; C.k=0; } C.lb=bt;
+  const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
+function vistaCam(dt,P){ const a=ranchK.ride, V=(x,y,z)=>new THREE.Vector3(x,y,z), h=V(a.p[0],a.p[1]+a.yo+2.4,a.p[2]), m=V(...FALL_TOP), d=m.clone().sub(h).setY(0).normalize(), r=V(d.z,0,-d.x), k=P.viewK||0;
+  const first=k<P.viewLen*0.5, cam=first?h.clone().addScaledVector(d,-4.5).addScaledVector(r,1.2).add(V(0,0.8,0)):h.clone().addScaledVector(d,-7-k*0.4).addScaledVector(r,-3).add(V(0,6.5,0)); // over the shoulder, then pulling back wide
+  camera.position.copy(cam); camera.lookAt(m.clone().add(V(0,first?-20:-10,0))); model.visible=true; }
+function storyPose(dt,P){ const K=ranchK, t=demo.t, beat=musBeat(), s=Math.sin;
+  if(P.ph==='hay'&&hayCarry.visible){ armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=0.12; armR.rotation.z=-0.12; }
+  else if(P.ph==='hay'||P.ph==='saddle'){ if(P.drop>0||P.act>0){ armR.rotation.x=1.3; armL.rotation.x=0.9; } }
+  else if(P.ph==='chair'){ const rock=0.1*s(t*1.8); model.rotation.x=rock; K.chair.rotation.x=rock; // rocking, strumming and singing
+    legL.rotation.set(1.35,0,-0.1); legR.rotation.set(1.35,0,0.1); armR.rotation.x=0.5+0.22*s(beat*Math.PI*4); armR.rotation.z=-0.38; armL.rotation.x=0.75; armL.rotation.z=-0.35;
+    head.rotation.x=0.06-0.2*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
 // ================= RANCH FARMING AND WILDLIFE =================
 // The tool shed hands out tools: a hoe tills grass into farmland, the seed bag plants corn, wheat, carrots or tomatoes, the watering
 // can makes them grow faster (refill it at the lake or the trough), compost makes rich soil (faster again, and a bigger harvest),
@@ -4771,8 +4878,9 @@ function huntHit(a){ const n=a.kind==='deer'?4+Math.floor(Math.random()*4):1+Mat
   dropCoins(a.p[0],a.p[1]+0.5,a.p[2],n); if(!ranchK.said.hunt){ ranchK.said.hunt=1; rtoast('🏹 Got one! Walk over the coins to pick them up.'); } removeAnimal(a); }
 // how deer and bunnies behave: they run when you get close, and bunnies sneak off to nibble crops that no scarecrow is guarding
 function gameAI(a,dt,hero,riding2){ const K=ranchK, dx=a.p[0]-hero[0], dz=a.p[2]-hero[2], d=Math.hypot(dx,dz), scare=riding2?15:a.kind==='deer'?11:7;
-  if(d<scare){ a.flee=2.5; a.fleeH=Math.atan2(-dx,-dz)+Math.PI; }
-  if(a.flee>0){ a.flee-=dt; turnAnimal(a,a.fleeH,dt,6); return a.kind==='deer'?8:5.5; }
+  if(d<scare){ a.flee=2.5; } if(a.flee>0&&d<scare*1.8)a.fleeH=Math.atan2(-dx,-dz); // straight away from you, until they're well clear
+  if(a.flee>0){ a.flee-=dt; if(a.wall&&!(a.slideT>0)){ a.slideT=0.9; a.slideH=a.fleeH+(Math.random()<0.5?1:-1)*Math.PI/2; } // run into a fence or a wall: slip along it
+    if(a.slideT>0){ a.slideT-=dt; turnAnimal(a,a.slideH,dt,10); } else turnAnimal(a,a.fleeH,dt,8); return a.kind==='deer'?9:6.5; }
   if(a.kind==='bunny'){ a.nibT=(a.nibT===undefined?8+Math.random()*10:a.nibT)-dt;
     if(a.nibT<=0&&!a.crop){ const open=K.crops.filter(c=>c.g>0.2&&!guarded(c.x,c.z)); a.nibT=12+Math.random()*12; if(open.length)a.crop=open[Math.floor(Math.random()*open.length)]; }
     const c=a.crop; if(c){ if(!K.crops.includes(c)||guarded(c.x,c.z)){ a.crop=null; return 0; } const cx=c.x+0.5-a.p[0], cz=c.z+0.5-a.p[2], cd=Math.hypot(cx,cz);
