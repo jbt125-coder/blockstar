@@ -1583,7 +1583,7 @@ document.addEventListener('touchmove',e=>{ if(e.touches.length!==2||!pinch0)retu
 document.addEventListener('touchend',e=>{ if(e.touches.length<2)pinch0=0; if(e.touches.length===0&&zoomed())resetZoom(); },{passive:true});
 document.addEventListener('gesturestart',e=>{ if(!zoomed())e.preventDefault(); });
 document.addEventListener('gesturechange',e=>{ if(!zoomed())e.preventDefault(); });
-document.addEventListener('touchmove',e=>{ if(!e.target.closest('#hotbar,#modal'))e.preventDefault(); },{passive:false});
+document.addEventListener('touchmove',e=>{ if(!e.target.closest('#hotbar,#modal,#ccBody,#ccTabs,#dragSlip'))e.preventDefault(); },{passive:false}); // menus and the character maker's lists can scroll
 
 function bindHold(el,down,up){
   const on=e=>{ e.preventDefault(); e.stopPropagation(); audioInit(); el.classList.add('down'); down(); };
@@ -2399,7 +2399,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   const sel=(T,k,i,v)=>'<select data-i="'+i+'" data-k="'+k+'">'+Object.entries(T).map(([a,b])=>'<option value="'+a+'"'+(a===v?' selected':'')+'>'+b+'</option>').join('')+'</select>';
   const tot=dmCfg.scenes.reduce((a,s)=>a+s.secs,0);
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
-    '<h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
+    '<div class="row"><button class="mbtn gold" id="dmPlayTop">▶ Quick start: play the demo</button></div><h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
@@ -2450,6 +2450,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   onClick($('dmWorld'),()=>{ dmCfg.world=dmCfg.world==='demo'?'mine':'demo'; saveDemo(); redraw(); });
   if($('dmSeed'))$('dmSeed').addEventListener('input',()=>{ dmCfg.seed=Math.abs(+$('dmSeed').value|0)||1; saveDemo(); });
   onClick($('dmLoop'),()=>{ dmCfg.loop=!dmCfg.loop; saveDemo(); redraw(); }); onClick($('dmFades'),()=>{ dmCfg.fades=!dmCfg.fades; saveDemo(); redraw(); });
+  onClick($('dmPlayTop'),()=>$('dmPlay').click()); // the quick start at the top does the same as Play at the bottom
   onClick($('dmPlay'),()=>{ if(!dmCfg.scenes.length){ toast('Add a scene first.'); return; } if(mus.src==='yt'&&!ytParse(mus.yt)){ toast('🎵 Paste a YouTube link first, or pick another song.'); return; } demoStart(); });
   onClick($('dmBack'),()=>{ musicStop(); $('mbox').classList.remove('wide'); $('modal').style.display='none'; if(!titleOn)closeMenu(); }); }
 // --- time of day, weather and land: only the demo changes them, and it puts them back afterwards
