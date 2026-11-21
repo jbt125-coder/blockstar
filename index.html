@@ -4740,7 +4740,7 @@ function storyCam(dt,P){ const C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:
   const s0=P.hay[Math.min(P.hi,P.hay.length-1)]||STALLS[0];
   const SH={aisle:t=>[V(55.2,FY+2.6,96.5+Math.sin(t*0.3)),h], stall:t=>[V(s0[0]+3.4,FY+1.7,s0[1]+2.2),V(s0[0]+1,FY+1,s0[1])], front:t=>[h.clone().addScaledVector(f,2.8).add(V(0,0.1,0)),h],
     side:t=>[h.clone().addScaledVector(rt,4).add(V(0,0.8,0)),h], garden:t=>[V(97,FY+4.5,127-t*0.3),V(87,FY+0.5,121)], back:t=>[h.clone().addScaledVector(f,-3.6).add(V(0,1.2,0)),h.clone().addScaledVector(f,3)],
-    porch:t=>[h.clone().addScaledVector(f,3.2).addScaledVector(rt,0.8-t*0.1).add(V(0,-0.1,0)),h.clone().add(V(0,-0.3,0))], shoulder:t=>[h.clone().addScaledVector(f,-1.6).addScaledVector(rt,0.7).add(V(0,0.4,0)),V(88,FY+0.6,121)],
+    porch:t=>[h.clone().addScaledVector(f,3.2).addScaledVector(rt,0.8-t*0.1).add(V(0,-0.1,0)),h.clone().add(V(0,-0.3,0))], shoulder:t=>[h.clone().addScaledVector(f,-0.8).addScaledVector(rt,1.4).add(V(0,0.5,0)),V(88,FY+0.6,121)],
     crops:t=>[V(88+t*0.2,FY+0.5,123.2),h.clone().add(V(0,-0.4,0))], wide:t=>[V(100,FY+11,136-t*0.4),V(84,FY+1,116)], guitar:t=>[h.clone().addScaledVector(f,1.3).addScaledVector(rt,-0.5).add(V(0,-0.5,0)),h.clone().add(V(0,-0.55,0))]};
   const seqs={hay:['aisle','stall','front'],saddle:['stall','aisle'],walk:['back','side','garden'],plant:['side','garden','front'],water:['garden','side','front'],tochair:['garden','back'],chair:['porch','shoulder','crops','guitar','wide']};
   const seq=seqs[P.ph]||['side'], bt=Math.floor(musBeat()); if(C.ph!==P.ph){ C.ph=P.ph; C.cur=null; C.i=-1; } C.st-=dt; C.k+=dt;
