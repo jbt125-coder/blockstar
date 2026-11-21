@@ -358,6 +358,9 @@ seedTile('seed_palm',104,(x,y,r)=>Math.hypot(x,y)<3.8?nz([120,82,46],r,.15):null
 seedTile('seed_cherry',105,(x,y,r)=>{ const a=Math.atan2(y,x), d=Math.hypot(x,y); return d<1.2?[255,220,90]:d<3.6+Math.cos(a*5)*0.9?nz([255,170,210],r,.08):null; });
 makeTile('scorch',107,(x,y,r)=>{ const v=Math.sin(x*0.7+y*0.3)+Math.cos(y*0.5-x*0.2); if(v>1.5)return [70+r()*40,40+r()*50,90+r()*60]; return nz([26,24,24],r,.4); });
 makeTile('leaves_pink',106,(x,y,r)=>{ const q=r(); if(q<.14)return [0,0,0,0]; let c=nz([255,175,212],r,.18); if(q>.86)c=[255,225,240]; return c; });
+makeTile('snow',108,(x,y,r)=>{ let c=nz([240,244,250],r,.05); if(r()<.07)c=[222,230,244]; return c; });
+makeTile('hay_side',109,(x,y,r)=>{ if(y===3||y===12)return nz([150,110,40],r,.1); const v=Math.sin(x*1.7+y*0.3)*0.5+Math.sin(x*0.6)*0.3; return nz(v>0.3?[228,192,98]:[206,166,74],r,.12); });
+makeTile('hay_top',110,(x,y,r)=>{ const v=Math.sin(x*0.9+y*1.3)+Math.sin(x*1.6-y*0.7); return nz(v>0.5?[232,198,104]:[200,160,70],r,.14); });
 const CAT={ Plants:{c:'#8fe07a'}, Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
@@ -433,6 +436,8 @@ addBlock('seed_cherry','Cherry Blossom Seed','Plants','Plant it on grass or soil
 addBlock('sapling','Sapling','Plants','A young tree. Give it a moment to grow!',{t:'leaves'},{hidden:true,solid:false,opaque:false,invisible:true});
 addBlock('gdoor','Garage Door','Building','A roll-up garage door.',{t:'concrete'},{hidden:true,invisible:true,target:false});
 addBlock('scorch','Oil Stain','Building','Burnt, oily ground where a car crashed. Leaked oil and gas are bad for soil and water, so real crashes get cleaned up fast.',{t:'scorch'},{hidden:true});
+addBlock('snow','Snow','Soil','Snow is frozen water vapor that grew into six-sided ice crystals. Fresh snow is about 90% air, which is why it muffles sound. High mountains stay snowy because the air gets colder the higher you go.',{t:'snow'});
+addBlock('hay','Hay Bale','Building','Hay is grass that was cut and dried so horses and cows have food all winter. A big round bale can weigh as much as a horse!',{top:'hay_top',side:'hay_side',bottom:'hay_top'},{flammable:true});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -725,7 +730,7 @@ function rleDecode(r){ const a=new Uint8Array(N); let p=0; for(let i=0;i<r.lengt
 let saveTimer=null;
 const KIT_KEY='blockstar_kit'; // survival coins + weapons carry over between survival worlds
 function snapshot(){ return {v:3,mode,place,cityVer:CITY_VER,intVer:INT_VER,dims:[W,H,D],seed,w:rleEncode(world),m:rleEncode(meta),p:[pl.p[0],pl.p[1],pl.p[2],yaw,pitch],sel,fly,cam:camMode,hp,coins,owned,weapon,mobsOn,arrows,arrowSel,
-  apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])}))}; }
+  apples:appleTrees.map(t=>({x:t.x,ty:t.ty,z:t.z,c:t.cand,g:Math.round(t.grow),s:t.slots.map(sl=>[sl.c,sl.st,Math.round(sl.t)])})),ranch:place==='ranch'&&ranchK?ranchSave():undefined}; }
 function saveNow(){ if(demo)return; try{ localStorage.setItem(PLACES[place].key,JSON.stringify(snapshot())); localStorage.setItem(PLACE_KEY,place); localStorage.setItem(KIT_KEY,JSON.stringify({coins,owned,weapon,arrows})); }catch(e){} }
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1000); }
 function validSave(s){ return !!s&&(!s.mode||s.mode==='survival')&&(s.v===2||s.v===3)&&Array.isArray(s.w)&&Array.isArray(s.m)&&Array.isArray(s.p); }
@@ -744,7 +749,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife();
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); }
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -766,19 +771,21 @@ function faceTex(draw){ const c=document.createElement('canvas'); c.width=c.heig
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
 const LOOK_KEY='blockstar_look', OUTFIT_KEY='blockstar_outfits';
 const LOOK0={skin:'#e0b08a',eyes:'#2a4a8a',hair:'short',hairC:'#3b2a1a',top:'tee',topC:'#1f8a8a',bottom:'pants',bottomC:'#2f3e7a',shoes:'shoes',shoeC:'#3a2a20',
-  helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',capeC:'#c0282e',sym:'star',symC:'#ffd84a',hat:'none',hatC:'#d8202a',glasses:'none',back:'none',backC:'#6b4a2a'};
+  helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',capeC:'#c0282e',sym:'star',symC:'#ffd84a',hat:'none',hatC:'#d8202a',glasses:'none',back:'none',backC:'#6b4a2a',beard:'none',belt:'none',neck:'none',neckC:'#c8202a'};
 const ARMOR_OPTS=[['none','None'],['leather','Leather'],['iron','Iron'],['gold','Gold'],['diamond','Diamond']];
 const LOOK_OPTS={
   hair:[['short','Short'],['long','Long'],['ponytail','Ponytail'],['bun','Bun'],['braids','Braids'],['spiky','Spiky'],['curly','Big curly'],['mohawk','Mohawk'],['buzz','Buzz cut'],['bald','Bald']],
-  top:[['tee','T-shirt'],['long','Long sleeves'],['tank','Tank top'],['hoodie','Hoodie'],['stripes','Stripes'],['jacket','Jacket']],
-  bottom:[['pants','Pants'],['shorts','Shorts'],['skirt','Skirt'],['dress','Dress']],
-  shoes:[['shoes','Shoes'],['sneakers','Sneakers'],['boots','Boots'],['bare','Barefoot']],
+  top:[['tee','T-shirt'],['long','Long sleeves'],['tank','Tank top'],['hoodie','Hoodie'],['stripes','Stripes'],['jacket','Jacket'],['flannel','Flannel shirt']],
+  bottom:[['pants','Pants'],['jeans','Jeans'],['shorts','Shorts'],['skirt','Skirt'],['dress','Dress']],
+  shoes:[['shoes','Shoes'],['sneakers','Sneakers'],['boots','Boots'],['cowboy','Cowboy boots'],['bare','Barefoot']],
   helm:ARMOR_OPTS, chest:ARMOR_OPTS, legs:ARMOR_OPTS, boots:ARMOR_OPTS,
   cape:[['none','No cape'],['plain','Plain cape'],['symbol','Cape with a symbol']],
   sym:[['star','⭐ Star'],['heart','❤️ Heart'],['bolt','⚡ Lightning'],['diamond','💎 Diamond'],['moon','🌙 Moon'],['skull','💀 Skull'],['crown','👑 Crown'],['b','🅱️ Letter B']],
   hat:[['none','None'],['cap','Cap'],['beanie','Beanie'],['tophat','Top hat'],['crown','Crown'],['wizard','Wizard hat'],['cowboy','Cowboy hat'],['headband','Headband']],
   glasses:[['none','None'],['round','Round'],['shades','Sunglasses'],['goggles','Goggles'],['party','Party glasses']],
-  back:[['none','None'],['backpack','Backpack'],['wings','Angel wings'],['dragon','Dragon wings'],['jetpack','Jetpack'],['quiver','Arrow quiver']]};
+  back:[['none','None'],['backpack','Backpack'],['wings','Angel wings'],['dragon','Dragon wings'],['jetpack','Jetpack'],['quiver','Arrow quiver']],
+  beard:[['none','None'],['stubble','Stubble'],['short','Short beard'],['full','Full beard'],['long','Long beard']],
+  belt:[['none','None'],['belt','Belt'],['buckle','Big belt buckle']], neck:[['none','None'],['bandana','Bandana']]};
 const ARMOR={leather:['#8a5a32','#5e3a1e',0],iron:['#c8ccd2','#8a9098',0],gold:['#f2c230','#b8861a','#3a2800'],diamond:['#6fe6ea','#2aa8b8','#06363a']}; // colour, trim, glow
 function cleanLook(o){ const L=Object.assign({},LOOK0); if(!o||typeof o!=='object')return L;
   for(const k in LOOK0){ const v=o[k]; if(typeof v!=='string')continue;
@@ -825,13 +832,17 @@ function symTex(L){ const c=document.createElement('canvas'); c.width=64; c.heig
     else { x.font='900 46px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('B',0,2); }
     x.restore(); }
   const t=new THREE.CanvasTexture(c); const m=new THREE.MeshLambertMaterial({map:t}); m.userData.own=true; return m; }
+function plaidTex(hex){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'), dk=shadeHex(hex,0.5), lt=shadeHex(hex,1.4); // flannel
+  for(let i=0;i<8;i++)for(let j=0;j<8;j++){ const a=i%4<2, b=j%4<2; x.fillStyle=a&&b?dk:a||b?hex:lt; x.fillRect(i,j,1,1); } return ownMat(new THREE.CanvasTexture(c)); }
+function denimTex(hex){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'), r=mulberry32(5); // jeans: a little texture and a seam
+  for(let i=0;i<8;i++)for(let j=0;j<8;j++){ x.fillStyle=shadeHex(hex,0.88+r()*0.22); x.fillRect(i,j,1,1); } x.fillStyle=shadeHex(hex,1.45); x.fillRect(6,0,1,8); return ownMat(new THREE.CanvasTexture(c)); }
 function stripeTex(hex){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); for(let y=0;y<8;y++){ x.fillStyle=(y>>1)%2?shadeHex(hex,1.75):hex; x.fillRect(0,y,8,1); } return ownMat(new THREE.CanvasTexture(c)); }
 function undress(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material){ for(const m of [].concat(o.material)) if(m.userData.own){ if(m.map)m.map.dispose(); m.dispose(); } } }); g.clear(); }
 function dressRig(R,L){
   for(const k of ['legL','legR','armL','armR','torso','head'])undress(R[k].userData.d);
   R.cape=null; R.wings=[]; R.jet=null;
   const put=(par,w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x||0,y||0,z||0); par.userData&&par.userData.d?par.userData.d.add(b):par.add(b); return b; };
-  const sk=cm(L.skin), dress=L.bottom==='dress', topM=dress?cm(L.bottomC):L.top==='stripes'?stripeTex(L.topC):cm(L.topC), topD=cm(shadeHex(dress?L.bottomC:L.topC,0.72));
+  const sk=cm(L.skin), dress=L.bottom==='dress', topM=dress?cm(L.bottomC):L.top==='stripes'?stripeTex(L.topC):L.top==='flannel'?plaidTex(L.topC):cm(L.topC), topD=cm(shadeHex(dress?L.bottomC:L.topC,0.72));
   const T=R.torso, Hd=R.head;
   // head and hair
   const hm=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),headMats(L)); hm.position.y=0.23; Hd.userData.d.add(hm);
@@ -846,7 +857,7 @@ function dressRig(R,L){
   if(hs('mohawk'))put(Hd,0.1,0.16,0.44,hc,0,0.54,0.02);
   const hatY=0.46+(hs('curly')?0.08:hs('bun')||hs('mohawk')?0.03:0);
   // top
-  const sleeve=!dress&&(L.top==='long'||L.top==='hoodie'||L.top==='jacket'), tee=!dress&&(L.top==='tee'||L.top==='stripes');
+  const sleeve=!dress&&(L.top==='long'||L.top==='hoodie'||L.top==='jacket'||L.top==='flannel'), tee=!dress&&(L.top==='tee'||L.top==='stripes');
   put(T,0.5,0.72,0.26,topM,0,1.08,0);
   for(const A of [R.armL,R.armR]){
     if(sleeve){ put(A,0.22,0.56,0.22,topM,0,-0.28); put(A,0.22,0.14,0.22,sk,0,-0.63); }
@@ -855,18 +866,27 @@ function dressRig(R,L){
     else put(A,0.22,0.7,0.22,sk,0,-0.35); }
   if(!dress&&L.top==='tank')put(T,0.2,0.08,0.02,sk,0,1.4,-0.131);
   if(!dress&&L.top==='hoodie'){ put(T,0.42,0.2,0.12,topD,0,1.47,0.17); put(T,0.3,0.14,0.02,topD,0,0.86,-0.135); for(const sx of [-1,1])put(T,0.03,0.14,0.02,cm('#f4f0e6'),sx*0.07,1.3,-0.135); }
+  if(!dress&&L.top==='flannel'){ put(T,0.46,0.06,0.28,topD,0,1.41,0); for(const y of [1.28,1.12,0.96])put(T,0.04,0.04,0.02,cm('#e8e0d0'),0,y,-0.132); } // collar and buttons
   if(!dress&&L.top==='jacket'){ put(T,0.16,0.68,0.02,cm('#f4f0e6'),0,1.08,-0.131); for(const sx of [-1,1])put(T,0.08,0.1,0.03,topD,sx*0.1,1.4,-0.135); }
   // legs and shoes
-  const bm2=cm(L.bottomC), bare=L.bottom==='skirt'||dress;
+  const bm2=L.bottom==='jeans'?denimTex(L.bottomC):cm(L.bottomC), bare=L.bottom==='skirt'||dress;
   for(const G of [R.legL,R.legR]){
-    if(L.bottom==='pants')put(G,0.24,0.58,0.24,bm2,0,-0.29);
+    if(L.bottom==='pants'||L.bottom==='jeans')put(G,0.24,0.58,0.24,bm2,0,-0.29);
     else if(L.bottom==='shorts'){ put(G,0.25,0.26,0.25,bm2,0,-0.13); put(G,0.24,0.32,0.24,sk,0,-0.42); }
     else put(G,0.24,0.58,0.24,sk,0,-0.29);
     const sh=cm(L.shoeC);
     if(L.shoes==='shoes')put(G,0.25,0.14,0.27,sh,0,-0.65,-0.01);
     else if(L.shoes==='sneakers'){ put(G,0.25,0.1,0.28,sh,0,-0.63,-0.01); put(G,0.26,0.05,0.29,cm('#f4f4f0'),0,-0.695,-0.01); }
     else if(L.shoes==='boots'){ put(G,0.26,0.3,0.27,sh,0,-0.57,-0.01); put(G,0.27,0.05,0.28,cm(shadeHex(L.shoeC,0.7)),0,-0.43,-0.01); }
+    else if(L.shoes==='cowboy'){ const dk=cm(shadeHex(L.shoeC,0.65)); put(G,0.27,0.36,0.27,sh,0,-0.53,-0.01); put(G,0.28,0.05,0.28,cm(shadeHex(L.shoeC,1.35)),0,-0.37,-0.01); // tall boots with a pointy toe and a heel
+      put(G,0.18,0.09,0.12,sh,0,-0.66,-0.18); put(G,0.2,0.09,0.08,dk,0,-0.68,0.1); }
     else put(G,0.24,0.14,0.25,sk,0,-0.65,-0.01); }
+  if(L.belt!=='none'){ put(T,0.52,0.08,0.28,cm('#3a2414'),0,0.76,0); if(L.belt==='buckle'){ put(T,0.18,0.14,0.03,cm('#f2c230','#3a2800'),0,0.76,-0.15); put(T,0.1,0.06,0.02,cm('#c0c8d0'),0,0.76,-0.165); } else put(T,0.07,0.07,0.02,cm('#c0c8d0'),0,0.76,-0.145); }
+  if(L.neck==='bandana'){ const nk=cm(L.neckC); put(T,0.46,0.08,0.3,nk,0,1.41,0); put(T,0.24,0.1,0.03,nk,0,1.32,-0.145); put(T,0.12,0.08,0.03,nk,0,1.24,-0.145); }
+  if(L.beard!=='none'){ const bd=cm(L.hairC), D=-0.238; for(const sx of [-1,1])put(Hd,0.02,0.18,0.12,bd,sx*0.235,0.13,-0.15); // sideburns, then the rest of the beard
+    if(L.beard==='stubble')put(Hd,0.46,0.07,0.02,cm(shadeHex(L.hairC,1.15)),0,0.03,D);
+    else { put(Hd,0.12,0.04,0.02,bd,0,0.19,D); put(Hd,0.47,0.09,0.03,bd,0,0.03,D); for(const sx of [-1,1])put(Hd,0.08,0.12,0.03,bd,sx*0.19,0.1,D);
+      if(L.beard!=='short'){ put(Hd,0.4,0.12,0.06,bd,0,-0.04,D-0.01); } if(L.beard==='long')put(Hd,0.28,0.26,0.06,bd,0,-0.2,D-0.01); } }
   if(L.bottom==='skirt'){ put(T,0.56,0.08,0.3,cm(shadeHex(L.bottomC,0.75)),0,0.74,0); put(T,0.6,0.3,0.34,bm2,0,0.57,0); }
   if(dress){ put(T,0.54,0.12,0.3,bm2,0,0.74,0); put(T,0.64,0.4,0.38,bm2,0,0.5,0); put(T,0.66,0.05,0.4,cm(shadeHex(L.bottomC,1.5)),0,0.31,0); }
   // armour: looks only
@@ -1281,7 +1301,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
-  if(drive)return;
+  if(drive)return; if(ranchK&&ranchHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   const w=WP[weapon];
@@ -1403,7 +1423,7 @@ function doBreak(){
   queueSave();
 }
 function placeAction(){
-  if(drive)return;
+  if(drive||riding())return;
   if(aimFruit){ pickFruit(aimFruit); return; }
   if(aimNPC){ openShop(); return; }
   if(!target)return;
@@ -1595,7 +1615,7 @@ let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
-  scene.fog.near=40+f*130; scene.fog.far=90+f*260; camera.far=200+f*220; camera.updateProjectionMatrix(); }
+  const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=200+f*220+(big-1)*60; camera.updateProjectionMatrix(); }
 function cycleWeapon(){ const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
 let lastHP=-1, lastCoins=-1;
 function updateHUD(){
@@ -1725,6 +1745,7 @@ function openNewGame(fromTitle){
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>Survival</b><div class="fx">Build with real rocks, fight monsters for coins and shop at Flint\'s. Your coins and weapons carry over.</div></div><button class="ibtn" data-new="survival">Start</button></div>'+
     '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
     '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
+    '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Pick a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
   $('mbox').innerHTML=h; $('modal').style.display='flex';
   $('mbox').querySelectorAll('[data-new]').forEach(b=>onClick(b,()=>{
@@ -1737,11 +1758,11 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
-  viewF=-1; updateViewRange(0); applyPlaceSky(); }
+  viewF=-1; updateViewRange(0); applyPlaceSky(); if(typeof ranchK!=='undefined')dressHero(); }
 function loadKit(){ try{ const k=JSON.parse(localStorage.getItem(KIT_KEY)||'null'); if(k){ const o=cleanOwned(k.owned); return {coins:k.coins|0,owned:o,weapon:o.includes(k.weapon)?k.weapon:'fists',arrows:cleanArrows(k.arrows)}; } }catch(e){}
   return {coins:0,owned:['fists'],weapon:'fists',arrows:cleanArrows()}; }
 function startSurvival(){
@@ -1835,6 +1856,7 @@ function updateApples(dt){ appleCheckT-=dt; const chk=appleCheckT<=0; if(chk)app
       else sl.mesh.rotation.y+=dt*0.6; } } }
 function pickFruit(f){ const {tr,sl}=f; aimFruit=null;
   if(sl.st!==2){ toast('🌸 That\'s still a blossom. It will turn into an apple soon!'); return; }
+  if(onRanch()){ dropFruit(tr,sl); ranchK.apples++; sfx('coin'); rtoast('🍎 You picked an apple ('+ranchK.apples+'). Give it to a horse and it will love you!'); queueSave(); return; } // apples on the ranch are for the horses
   dropFruit(tr,sl); const before=hp; hp=Math.min(MAXHP,hp+APPLE_HEAL); updateHUD(); sfx('coin'); burst(sl.pos[0]-0.5,sl.pos[1]-0.5,sl.pos[2]-0.5,new THREE.Color(.9,.15,.15),6);
   toast(hp>before?'🍎 Yum! +1 heart':'🍎 Yum! (you were already at full health)'); queueSave(); }
 
@@ -1903,7 +1925,7 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
@@ -1912,7 +1934,7 @@ function showTitle(){ if(document.pointerLockElement)document.exitPointerLock();
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
@@ -1925,15 +1947,15 @@ const SW={
 // each row of the creator: a style picker (opts) or a colour picker (sw); show() hides rows that don't apply
 const CC_ROWS=[
   {tab:'body',k:'skin',l:'Skin',sw:SW.skin},{tab:'body',k:'eyes',l:'Eyes',sw:SW.eyes},
-  {tab:'body',k:'hair',l:'Hair style'},{tab:'body',k:'hairC',l:'Hair color',sw:SW.hair,show:L=>L.hair!=='bald'},
+  {tab:'body',k:'hair',l:'Hair style'},{tab:'body',k:'hairC',l:'Hair color',sw:SW.hair,show:L=>L.hair!=='bald'||L.beard!=='none'},{tab:'body',k:'beard',l:'🧔 Beard (hair color)'},
   {tab:'clothes',k:'top',l:'Shirt',show:L=>L.bottom!=='dress'},{tab:'clothes',k:'topC',l:'Shirt color',sw:SW.cloth,show:L=>L.bottom!=='dress'},
   {tab:'clothes',k:'bottom',l:'Pants, shorts, skirt or dress'},{tab:'clothes',k:'bottomC',l:'Color',sw:SW.cloth},
-  {tab:'clothes',k:'shoes',l:'Shoes'},{tab:'clothes',k:'shoeC',l:'Shoe color',sw:SW.cloth,show:L=>L.shoes!=='bare'},
+  {tab:'clothes',k:'belt',l:'Belt'},{tab:'clothes',k:'shoes',l:'Shoes'},{tab:'clothes',k:'shoeC',l:'Shoe color',sw:SW.cloth,show:L=>L.shoes!=='bare'},
   {tab:'armor',k:'helm',l:'⛑️ Helmet'},{tab:'armor',k:'chest',l:'🛡️ Chestplate'},{tab:'armor',k:'legs',l:'🦵 Leg armor'},{tab:'armor',k:'boots',l:'🥾 Armor boots'},
   {tab:'cape',k:'cape',l:'Cape'},{tab:'cape',k:'capeC',l:'Cape color',sw:SW.cloth,show:L=>L.cape!=='none'},
   {tab:'cape',k:'sym',l:'Symbol',show:L=>L.cape==='symbol'},{tab:'cape',k:'symC',l:'Symbol color',sw:SW.cloth,show:L=>L.cape==='symbol'},
   {tab:'extras',k:'hat',l:'🎩 Hat'},{tab:'extras',k:'hatC',l:'Hat color',sw:SW.cloth,show:L=>L.hat!=='none'},
-  {tab:'extras',k:'glasses',l:'👓 Glasses'},{tab:'extras',k:'back',l:'🎒 On your back'},{tab:'extras',k:'backC',l:'Color',sw:SW.cloth,show:L=>!['none','wings'].includes(L.back)}];
+  {tab:'extras',k:'glasses',l:'👓 Glasses'},{tab:'extras',k:'neck',l:'🧣 Around your neck'},{tab:'extras',k:'neckC',l:'Bandana color',sw:SW.cloth,show:L=>L.neck!=='none'},{tab:'extras',k:'back',l:'🎒 On your back'},{tab:'extras',k:'backC',l:'Color',sw:SW.cloth,show:L=>!['none','wings'].includes(L.back)}];
 const CC_TABS=[['body','🙂 Body'],['clothes','👕 Clothes'],['armor','🛡️ Armor'],['cape','🦸 Cape'],['extras','🎩 Extras'],['outfits','💾 Outfits']];
 let ccOn=false, ccTab='body', ccFrom='', ccSpin=0, ccIdle=0;
 const STUDIO=new THREE.Vector3(48,420,48), studio=new THREE.Group(); studio.position.copy(STUDIO); studio.visible=false; scene.add(studio);
@@ -1952,7 +1974,7 @@ function writeOutfits(a){ try{ localStorage.setItem(OUTFIT_KEY,JSON.stringify(a)
 function randomLook(){ const pick=a=>a[Math.floor(Math.random()*a.length)], opt=k=>pick(LOOK_OPTS[k])[0], maybe=(p,k)=>Math.random()<p?opt(k):'none';
   const L={skin:pick(SW.skin.slice(0,Math.random()<0.85?9:12)),eyes:pick(SW.eyes),hair:opt('hair'),hairC:pick(SW.hair),top:opt('top'),topC:pick(SW.cloth),bottom:opt('bottom'),bottomC:pick(SW.cloth),
     shoes:opt('shoes'),shoeC:pick(SW.cloth),helm:'none',chest:'none',legs:'none',boots:'none',cape:Math.random()<0.4?pick(['plain','symbol']):'none',capeC:pick(SW.cloth),sym:opt('sym'),symC:pick(SW.cloth),
-    hat:maybe(0.45,'hat'),hatC:pick(SW.cloth),glasses:maybe(0.3,'glasses'),back:maybe(0.3,'back'),backC:pick(SW.cloth)};
+    hat:maybe(0.45,'hat'),hatC:pick(SW.cloth),glasses:maybe(0.3,'glasses'),back:maybe(0.3,'back'),backC:pick(SW.cloth),beard:maybe(0.15,'beard'),belt:maybe(0.2,'belt'),neck:maybe(0.12,'neck'),neckC:pick(SW.cloth)};
   if(Math.random()<0.3){ const m=pick(ARMOR_OPTS.slice(1))[0]; for(const k of ['helm','chest','legs','boots'])if(Math.random()<0.6)L[k]=m; }
   for(const k of ['hat','glasses','back','cape'])if(L[k]===undefined)L[k]='none'; return cleanLook(L); }
 function ccOpen(){ if(document.pointerLockElement)document.exitPointerLock(); ccFrom=titleOn?'title':'game'; paused=true; ccOn=true; $('modal').style.display='none';
@@ -2250,7 +2272,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2266,11 +2288,12 @@ const DM_GIANT={cycle:'🎬 Cut between them all',singer:'🎤 The singer (you!)
 const DM_FSTAT={random:'🎲 A random statue',golem:'🗿 Giant Rock Golem',slime:'🟫 Giant Mud Slime',skull:'💀 Giant pixel skull',pick:'⛏️ Giant pickaxe',flint:'🧔 Giant Flint',pit:'🪵 Just a fire pit'};
 const DM_FBAND={cycle:'🔀 Switch members at random',sing:'🎤 Always the singer (you!)',gtr:'🎸 Always guitar',drm:'🥁 Always drums',sx:'🎹 Always the synth scratcher',bass:'🎸 Always bass',off:'🚫 No giant band'};
 const DM_FCROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monsters:'🧟 Monsters',none:'🙋 Just me'};
+const DM_HORSE={random:'🎲 A random horse',bay:'🐴 Bay',black:'🐴 Black',white:'🐴 White',palomino:'🐴 Palomino',chestnut:'🐴 Chestnut',pinto:'🐴 Pinto',appaloosa:'🐴 Appaloosa',grullo:'🐴 Grullo'}; // the breeds in HORSES
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2281,11 +2304,12 @@ const DEMO0={scenes:[
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
+  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Saddle up!',horse:'random'},
   {act:'fire',time:'night',wx:'clear',land:'normal',cam:'cine',secs:45,cap:'',mouth:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2304,9 +2328,10 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      s.act==='ride'?'<label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'||s.act==='fire'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'||s.act==='ride'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2400,7 +2425,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); if(demo.cityWorld&&sc.act!=='city')demoBaseWorld(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2412,6 +2437,7 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); if(demo.cityWorld&&sc.a
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
   if(sc.act==='stadium'){ stadiumSetup(sc,P); return; }
   if(sc.act==='fire'){ fireSetup(sc,P); return; }
+  if(sc.act==='ride'){ demoRanchSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2438,6 +2464,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='ride'){ ridePilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='wonder'){ P.bowPose=false; wonderPilot(dt,P); return {ix:0,iz:0}; }
   pitch+=((sc.act==='side'?-0.12:-0.08)-pitch)*Math.min(1,dt*2);
   if(sc.act==='showcase'){ P.jT-=dt; if(P.jT<=0){ P.jT=3+Math.random()*2; if(pl.onGround)demoUp=true; } yaw+=Math.sin(demo.t*0.6)*dt*0.5; return {ix:0,iz:0}; }
@@ -2455,7 +2482,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2477,7 +2504,7 @@ function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!de
   if(sc.act==='showcase'&&!demo.user){ const b=musBeat(); head.rotation.x=0.05-0.22*(0.5+0.5*Math.cos(b*2*Math.PI)); model.position.y+=Math.abs(Math.sin(b*Math.PI))*0.04; } // bobbing to the music
   if(sc.act==='concert')concertTick(dt);
   if(sc.act==='stadium')stadiumTick(dt);
-  if(sc.act==='fire')fireTick(dt);
+  if(sc.act==='fire')fireConcertTick(dt);
   if(sc.act==='wonder'&&sc.cam==='follow'){ scene.fog.near=60; scene.fog.far=170; }
   if(sc.act==='fight')spawnFoes(P,FIGHT_TYPES,dt,3); if(sc.act==='wonder'&&P.phase==='fight')spawnFoes(P,P.foes,dt,5); if(fallen.length)fallTick(dt);
   if(weapon==='bow'&&(demo.user||P.bowPose)){ armR.rotation.x=1.5; armL.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.1; }
@@ -3098,7 +3125,7 @@ function fireSetup(sc,P){ if(!campK)campK=buildCamp(); const K=campK;
 function firePilot(dt,P){ const A=camp.position, stop=Math.floor(musBeat()/16)%3===2, sp=1.4; if(!stop)P.a+=dt*sp/P.R;
   const t=[A.x+Math.cos(P.a)*P.R,WGY,A.z+Math.sin(P.a)*P.R], o=pl.p.slice(); for(let i=0;i<3;i++)pl.p[i]+=(t[i]-pl.p[i])*Math.min(1,dt*4);
   P.hs=Math.hypot(pl.p[0]-o[0],pl.p[2]-o[2])/Math.max(dt,1e-3); const want=stop?Math.atan2(-Math.cos(P.a),-Math.sin(P.a)):Math.PI-P.a; let d=want-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=d*Math.min(1,dt*4); pitch=0; }
-function fireTick(dt){ const K=campK, sc=demo.sc, P=demo.pil, beat=musBeat(), s=Math.sin, T=demo.st; K.t+=dt;
+function fireConcertTick(dt){ const K=campK, sc=demo.sc, P=demo.pil, beat=musBeat(), s=Math.sin, T=demo.st; K.t+=dt;
   // singing, just like the other concerts
   const btn=Math.max(pad.sing,singKeys.size?1:0); let want=sc.mouth==='auto'?autoSing(beat):0; if(btn>0.05)want=Math.max(0.35,btn);
   P.mo+=(want-P.mo)*Math.min(1,dt*(want>P.mo?30:16)); setMouth(rig,P.mo); if(P.mo>0.2)P.lastSing=demo.t; if(K.ring.sing)for(const M of K.ring.sing)setMouth(M.R,P.mo);
@@ -3242,7 +3269,7 @@ function demoRelease(){ demo.user=false; demo.lookT=0; document.body.classList.r
 function doHit(){ if(demo)demoHit(); else hitAction(); }
 function demoHit(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; }
   const n=shots.length; hitAction(); if(demo.sc.act==='wonder'&&weapon==='bow'&&shots.length>n)shots[shots.length-1].big=demo.pil.phase==='blast'?3.4:2.4; }
-function demoSwap(){ if(!demo||!demo.sc||isConc(demo.sc))return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
+function demoSwap(){ if(!demo||!demo.sc||isConc(demo.sc)||demo.sc.act==='ride')return; demoTake(); weapon=weapon==='bow'?'diamond':'bow'; if(weapon==='bow'){ arrows.explode=999; arrowSel='explode'; } refreshWeapon(); refreshArrowBtn(); }
 function demoInput(dt){ pad=padRead(); const conc=isConc(demo.sc);
   const mv=Math.abs(pad.lx)+Math.abs(pad.ly)>0, lk=Math.abs(pad.rx)+Math.abs(pad.ry)>0;
   if(mv||lk||(!conc&&pad.any))demoTake(lk);
@@ -3603,7 +3630,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()};
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(ranchK){ const r=ranchAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -3823,7 +3850,7 @@ function demoRoute(tx,tz){ const xs=roadLines(CX,W), zs=roadLines(CZ,D), ax=near
 function ringProject(r,x,z){ const w=r[2]-r[0], h=r[3]-r[1], c=[[Math.max(0,Math.min(w,x-r[0])),Math.abs(z-r[1])],[w+Math.max(0,Math.min(h,z-r[1])),Math.abs(x-r[2])],[w+h+Math.max(0,Math.min(w,r[2]-x)),Math.abs(z-r[3])],[2*w+h+Math.max(0,Math.min(h,r[3]-z)),Math.abs(x-r[0])]];
   return c.sort((a,b)=>a[1]-b[1])[0][0]; }
 // --- the scene: a fresh city, or your own saved one (never saved back)
-function demoCitySetup(sc,P){ const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
+function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
   demo.cityPlace=k; demo.vplace=k; demo.cityKey=PLACES[k].city; demo.inKind=null; demo.stack=[]; demo.cityWorld=true;
   clearCityLife(); clearInteriorLife(); setWorldSize(...PLACES[k].dims); let mine=false;
   if(sc.dsrc==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(s&&Array.isArray(s.w)&&s.cityVer===CITY_VER){ world=rleDecode(s.w); meta=rleDecode(s.m); mine=true; } }catch(e){}
@@ -3831,7 +3858,7 @@ function demoCitySetup(sc,P){ const keys=CITY_PLACES, k=sc.dcity==='random'||!PL
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -3931,9 +3958,10 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   city:{name:'Seattle',icon:'☔',key:'blockstar_city',dims:[160,48,160],col:[90,200,190],city:'seattle',blurb:'The Space Needle, Pike Place Market, evergreen trees and plenty of rain.'},
   newyork:{name:'New York',icon:'🗽',key:'blockstar_city_ny',dims:[160,48,160],col:[120,220,160],city:'newyork',blurb:'Skyscrapers, the Empire State Building, Central Park, and the Statue of Liberty out in the harbor.'},
   sanfran:{name:'San Francisco',icon:'🌉',key:'blockstar_city_sf',dims:[160,48,160],col:[255,110,70],city:'sanfran',blurb:'Steep hills, foggy skies, the Painted Ladies, the Transamerica Pyramid and the Golden Gate Bridge.'},
+  ranch:{name:'Mountain Ranch',icon:'🐴',key:'blockstar_ranch',dims:[128,64,128],col:[214,160,90],ranch:true,blurb:'Tall snowy mountains, a stable full of horses, wild herds and a trail to the top.'},
   orlando:{name:'Orlando',icon:'🏰',key:'blockstar_city_orl',dims:[160,48,160],col:[90,150,255],city:'orlando',blurb:'Sunshine, palm trees, a lake and a theme-park castle.'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4099,6 +4127,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
     if(dPl<3&&!p.said&&p.wave>0.9){ p.said=true; } } }
 // each city's weather and sky
 function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
+  if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<260){ camera.far=260; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
 
@@ -4155,12 +4184,12 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest; const inner=PLACES[dest].interior; let sp=null;
-  if(inner)sp=generateInterior(inner); else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
-  if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?3:-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
+  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -4178,11 +4207,362 @@ function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{..
   coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=MAXHP; refreshWeapon(); updateHUD(); saveNow(); hadSave=true;
   if(titleOn)hideTitle(); applyMode(); closeMenu(); toast(PLACES[k].icon+' Welcome to '+PLACES[k].name+'! A portal back to your Survival world is right behind you.'); }
 
+// ================= MOUNTAIN RANCH =================
+// A world of tall snowy mountains with a ranch at the bottom: a stable full of horses, a farmhouse, a corral, chickens and pigs,
+// hay bales, and a wooded trail that winds past a lake and an apple tree up to the top of the highest peak. Wild horses and steers
+// roam the meadows. Get on a horse and ride: it climbs single blocks by itself, jumps when you press jump (or gallops faster on
+// open ground), drinks at the lake, and loves you if you give it an apple. Your lasso catches steers and wild horses; lead them
+// into the corral to keep them. The farmhouse wardrobe has cowboy gear you can wear while you're on the ranch.
+// The layout is fixed (the world is always 128 x 64 x 128); the hills and trees change with the seed. North (-z) is the mountains.
+const FY=12; // the farm's ground level
+const RANCH={stable:{x0:42,x1:56,z0:88,z1:104,door:[94,98]},house:{x0:70,x1:80,z0:108,z1:118},corral:{x0:70,x1:88,z0:82,z1:98,gate:[78,80]},
+  coop:{x0:37,x1:40,z0:114,z1:117},yard:{x0:37,x1:64,z0:106,z1:124},farm:{x0:32,x1:96,z0:80,z1:126},
+  lake:[93,62,7.5],apple:[101,57],spawn:[60.5,107.5],hitch:[59.5,96.5],wardrobe:[78.5,116.5],
+  wild:{x0:10,x1:118,z0:40,z1:78},
+  peaks:[[40,24,54,38],[94,18,56,40],[66,30,40,30]],
+  trail:[[58,84],[62,74],[74,68],[82,66],[82,55],[68,50],[54,48],[60,40],[48,36],[54,29],[44,24]]};
+const STALLS=[[44.9,89.9],[44.9,92.5],[44.9,95.5],[44.9,98.5],[44.9,102]];
+// the trail, as points every half block
+function ranchPath(){ if(ranchPath.c)return ranchPath.c; const P=[], T=RANCH.trail;
+  for(let i=0;i<T.length-1;i++){ const [a,b]=T[i], [c,d]=T[i+1], n=Math.ceil(Math.hypot(c-a,d-b)*2); for(let k=0;k<n;k++)P.push([a+(c-a)*k/n,b+(d-b)*k/n]); }
+  P.push(T[T.length-1]); return ranchPath.c=P; }
+function generateRanch(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
+  const n1=makeNoise(s), n2=makeNoise(s+1), n3=makeNoise(s+2), rnd=mulberry32(s+5), R=RANCH, HM=new Float32Array(W*D), F=R.farm;
+  // the land: gentle meadows, the farm flat, mountains to the north with a high ridge along the back edge
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ let h=FY+0.5+n1(x/22,z/22)*3.2;
+    let m=0; for(const [px,pz,ph,pr] of R.peaks){ const d=Math.hypot(x-px,z-pz)/pr; if(d<1)m=Math.max(m,(ph-FY)*Math.pow(1-d,1.3)*(0.88+0.24*n2(x/9,z/9))); }
+    if(z<22)m=Math.max(m,(34+8*n2(x/14,3))*Math.pow(1-z/22,1.2)); // the ridge along the back
+    h+=m; const fd=Math.max(F.x0-x,x-F.x1,F.z0-z,z-F.z1,0); if(fd<8){ const t=fd/8; h=FY+(h-FY)*t*t; } // the farm is flat
+    HM[x+z*W]=Math.min(H-3,h); }
+  // the trail: follow the land, but never steeper than about one block up every two, then level a ledge for it
+  const P=ranchPath(), ty=P.map(([x,z])=>HM[Math.round(x)+Math.round(z)*W]); ty[0]=FY;
+  for(let i=1;i<P.length;i++)ty[i]=Math.max(ty[i-1]-0.3,Math.min(ty[i-1]+0.3,ty[i])); // 0.3 per half block
+  const near=new Float32Array(W*D).fill(99), nty=new Float32Array(W*D);
+  P.forEach(([px,pz],i)=>{ for(let z=Math.floor(pz-7);z<=pz+7;z++)for(let x=Math.floor(px-7);x<=px+7;x++){ if(x<0||z<0||x>=W||z>=D)continue; const d=Math.hypot(x+0.5-px,z+0.5-pz), k=x+z*W; if(d<near[k]){ near[k]=d; nty[k]=ty[i]; } } });
+  for(let k=0;k<W*D;k++){ const d=near[k]; if(d>6.5)continue; const t=nty[k]; HM[k]=d<=2.2?t:t+(HM[k]-t)*Math.pow((d-2.2)/4.3,1.5); }
+  // the lake: a flat shore and a basin three blocks deep
+  const [lx,lz,lr]=R.lake, LH=FY+1;
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const d=Math.hypot(x+0.5-lx,z+0.5-lz); if(d<lr+4){ const t=Math.max(0,(d-lr-1)/3); HM[x+z*W]=LH+(HM[x+z*W]-LH)*t*t; } }
+  // fill in the blocks
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const k=x+z*W, h=Math.max(3,Math.round(HM[k])), top=h-1, dl=Math.hypot(x+0.5-lx,z+0.5-lz), trail=near[k]<=2.2, lake=dl<lr;
+    let st=0; for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ const xx=x+dx, zz=z+dz; if(xx>=0&&zz>=0&&xx<W&&zz<D)st=Math.max(st,Math.abs(Math.round(HM[xx+zz*W])-h)); }
+    const hb=lake?LH-(dl<lr-1.5?3:2):h;
+    for(let y=0;y<hb;y++){ const dp=hb-1-y; let id;
+      if(y===0)id=ID.basalt; else if(dp===0){ if(lake)id=ID.sand; else if(trail)id=top>=46?ID.snow:ID.dirt; else if(dl<lr+1.6)id=ID.sand; else if(top>=46||(top>=41&&n3(x/6,z/6)>0.45))id=ID.snow; else if(st>=3||top>=37)id=ID.granite; else id=ID.grass; }
+      else if(dp<=2&&!lake&&top<37)id=ID.dirt; else id=y<6?ID.granite:[ID.limestone,ID.shale,ID.sandstone,ID.limestone][(y+Math.floor(n3(x/9,z/9)*3))%4];
+      world[idx(x,y,z)]=id; }
+    if(lake)for(let y=hb;y<LH;y++)world[idx(x,y,z)]=ID.water; HM[k]=lake?LH:h; }
+  const ground=(x,z)=>Math.round(HM[x+z*W]);
+  const put=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, putE=(x,y,z,id)=>{ if(inB(x,y,z)&&!world[idx(x,y,z)])world[idx(x,y,z)]=id; };
+  // woods: pines on the slopes (thickest beside the trail), a few round trees in the meadows, and the apple tree by the lake
+  const trees=[], ok=(x,z,sp)=>!trees.some(t=>Math.abs(t[0]-x)<sp&&Math.abs(t[1]-z)<sp);
+  const pine=(x,z)=>{ const g=ground(x,z), th=6+Math.floor(rnd()*3); for(let i=0;i<th;i++)put(x,g+i,z,ID.log);
+    for(let l=0;l<5;l++){ const r=l<2?2:l<4?1:0, y=g+th-4+l; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){ if(r===2&&Math.abs(dx)===2&&Math.abs(dz)===2)continue; putE(x+dx,y,z+dz,ID.leaves); } } putE(x,g+th+1,z,ID.leaves); };
+  const oak=(x,z,th)=>{ const g=ground(x,z); for(let i=0;i<th;i++)put(x,g+i,z,ID.log); const ty2=g+th-1;
+    for(let dy=-2;dy<=1;dy++){ const r=dy>=0?1:2; for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){ if(Math.abs(dx)===r&&Math.abs(dz)===r&&(dy===1||rnd()<0.5))continue; putE(x+dx,ty2+dy,z+dz,ID.leaves); } } return ty2; };
+  const clear=(x,z)=>{ const k=x+z*W, d=near[k], dl=Math.hypot(x-lx,z-lz), fd=Math.max(F.x0-x,x-F.x1,F.z0-z,z-F.z1,0); return d>3.5&&dl>lr+3&&fd>3&&x>2&&z>2&&x<W-3&&z<D-3; };
+  for(let a=0;a<900&&trees.length<150;a++){ const x=Math.floor(rnd()*W), z=Math.floor(rnd()*D), g=ground(x,z), d=near[x+z*W];
+    if(!clear(x,z)||g<FY+2||g>38||world[idx(x,g-1,z)]!==ID.grass)continue; if(d>10&&rnd()<0.55)continue; if(n2(x/12+40,z/12)<0.3&&rnd()<0.6)continue;
+    if(!ok(x,z,3))continue; trees.push([x,z]); pine(x,z); }
+  for(let a=0;a<200&&trees.length<168;a++){ const x=Math.floor(rnd()*W), z=40+Math.floor(rnd()*40), g=ground(x,z);
+    if(!clear(x,z)||world[idx(x,g-1,z)]!==ID.grass||!ok(x,z,6))continue; trees.push([x,z]); oak(x,z,4+Math.floor(rnd()*2)); }
+  const [ax,az]=R.apple, aty=oak(ax,az,5);
+  // the stable: plank walls, log posts, a big door facing the yard, five stalls with hay, and a roof of clay tiles
+  const S=R.stable, box=(x0,x1,y0,y1,z0,z1,id)=>{ for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)put(x,y,z,typeof id==='function'?id(x,y,z):id); };
+  box(S.x0,S.x1,FY-1,FY-1,S.z0,S.z1,ID.planks); box(S.x0,S.x1,FY,FY+12,S.z0,S.z1,0);
+  for(let y=FY;y<FY+4;y++){ for(let x=S.x0;x<=S.x1;x++){ put(x,y,S.z0,ID.planks); put(x,y,S.z1,ID.planks); } for(let z=S.z0;z<=S.z1;z++){ put(S.x0,y,z,ID.planks); put(S.x1,y,z,ID.planks); } }
+  for(const [x,z] of [[S.x0,S.z0],[S.x1,S.z0],[S.x0,S.z1],[S.x1,S.z1],[S.x1,S.door[0]-1],[S.x1,S.door[1]+1]])box(x,x,FY,FY+3,z,z,ID.log);
+  box(S.x1,S.x1,FY,FY+2,S.door[0],S.door[1],0); for(const z of [S.z0+3,S.z0+7,S.z1-7,S.z1-3])put(S.x0,FY+2,z,ID.glass); // the doorway and windows
+  for(const z of [91,94,97,100])box(S.x0+1,S.x0+4,FY,FY+1,z,z,ID.planks); // stall walls
+  for(const [sx,sz] of STALLS)put(S.x0+1,FY,Math.floor(sz),ID.hay);
+  for(let k=0;k<=8;k++){ const y=FY+4+k; for(let z=S.z0-1;z<=S.z1+1;z++){ put(S.x0-1+k,y,z,ID.roof); put(S.x1+1-k,y,z,ID.roof); }
+    for(let x=S.x0+k;x<=S.x1-k;x++){ put(x,y,S.z0,ID.planks); put(x,y,S.z1,ID.planks); } }
+  // the farmhouse: a log cabin with a door, windows, a table, and the wardrobe of cowboy gear in the back corner
+  const Hs=R.house; box(Hs.x0,Hs.x1,FY-1,FY-1,Hs.z0,Hs.z1,ID.planks); box(Hs.x0,Hs.x1,FY,FY+10,Hs.z0,Hs.z1,0);
+  for(let y=FY;y<FY+3;y++){ for(let x=Hs.x0;x<=Hs.x1;x++){ put(x,y,Hs.z0,ID.log); put(x,y,Hs.z1,ID.log); } for(let z=Hs.z0;z<=Hs.z1;z++){ put(Hs.x0,y,z,ID.log); put(Hs.x1,y,z,ID.log); } }
+  box(Hs.x0,Hs.x0,FY,FY+1,112,113,0); for(const x of [73,77])put(x,FY+1,Hs.z0,ID.glass); for(const z of [110,115])put(Hs.x1,FY+1,z,ID.glass); put(73,FY+1,Hs.z1,ID.glass);
+  for(let k=0;k<=6;k++){ const y=FY+3+k; for(let x=Hs.x0-1;x<=Hs.x1+1;x++){ put(x,y,Hs.z0-1+k,ID.roof); put(x,y,Hs.z1+1-k,ID.roof); }
+    for(let z=Hs.z0+k;z<=Hs.z1-k;z++){ put(Hs.x0,y,z,ID.planks); put(Hs.x1,y,z,ID.planks); } }
+  put(74,FY,114,ID.planks); put(79,FY,117,ID.crate); put(79,FY+1,117,ID.crate); put(77,FY+1,Hs.z1,ID.glass); // a table, the wardrobe and a mirror
+  // the corral: log posts and plank rails, with a gate in the south side
+  const C=R.corral; for(let x=C.x0;x<=C.x1;x++)for(const z of [C.z0,C.z1]){ if(z===C.z1&&x>=C.gate[0]&&x<=C.gate[1])continue; const post=(x-C.x0)%3===0; put(x,FY,z,post?ID.log:0); put(x,FY+1,z,post?ID.log:ID.planks); }
+  for(let z=C.z0;z<=C.z1;z++)for(const x of [C.x0,C.x1]){ const post=(z-C.z0)%3===0; put(x,FY,z,post?ID.log:0); put(x,FY+1,z,post?ID.log:ID.planks); }
+  for(const x of [C.gate[0]-1,C.gate[1]+1])box(x,x,FY,FY+1,C.z1,C.z1,ID.log);
+  box(C.x0+2,C.x0+4,FY,FY,C.z0+2,C.z0+2,ID.planks); // a feed trough
+  // hay bales, a chicken coop and a muddy patch for the pigs
+  for(const [x,z,n] of [[57,89,2],[58,89,1],[57,90,1],[66,90,1],[66,91,2],[85,99,1],[86,100,2],[69,106,1],[50,106,1],[51,106,2],[34,100,1]])for(let i=0;i<n;i++)put(x,FY+i,z,ID.hay);
+  const K2=R.coop; box(K2.x0,K2.x1,FY,FY+1,K2.z0,K2.z1,ID.planks); box(K2.x0+1,K2.x1-1,FY,FY+1,K2.z0+1,K2.z1-1,0); box(K2.x1,K2.x1,FY,FY,K2.z0+1,K2.z0+2,0); box(K2.x0,K2.x1,FY+2,FY+2,K2.z0,K2.z1,ID.roof);
+  for(let z=110;z<=118;z++)for(let x=44;x<=50;x++)if(Math.hypot(x-47,z-114)<3.6)put(x,FY-1,z,ID.dirt);
+  // apples on the tree by the lake (after the land is finished)
+  makeAppleTree(ax,aty,az);
+  return HM; }
+
+// --- the animals
+const HORSES={bay:{n:'Bay',c:0x7a4a26,m:0x1a1410,l:0x1a1410},black:{n:'Black',c:0x222020,m:0x0e0c0c,l:0x0e0c0c},white:{n:'White',c:0xe6e2da,m:0xcfcac0,l:0xbdb8ae},
+  palomino:{n:'Palomino',c:0xd9a84c,m:0xf4ecd8,l:0xd9a84c},chestnut:{n:'Chestnut',c:0xa0522d,m:0x7a3a1a,l:0xa0522d},pinto:{n:'Pinto',c:0xf0ece4,m:0x3a2412,l:0xf0ece4,patch:0x6b3a1e},
+  appaloosa:{n:'Appaloosa',c:0x8a6a4a,m:0x2a2018,l:0x8a6a4a,rump:0xeee8dc,spot:0x2a2018},grullo:{n:'Grullo',c:0x8a8478,m:0x2a2622,l:0x2a2622}};
+const STEERS={hereford:{n:'Hereford',c:0x8a3a1e,face:0xf2eee6,horn:0xe8dcc0,hl:0.32},angus:{n:'Black Angus',c:0x1e1c1c,face:0x1e1c1c,horn:0,hl:0},
+  longhorn:{n:'Texas Longhorn',c:0xc89a62,face:0xc89a62,horn:0xe8dcc0,hl:0.78,patch:0xf2eee6},highland:{n:'Highland',c:0xc8642a,face:0xc8642a,horn:0xe8dcc0,hl:0.42,shag:true}};
+const HORSE_NAMES=['Dusty','Comet','Maverick','Rosie','Pepper','Blaze','Scout','Willow','Jasper','Stormy','Ranger','Clover','Buttercup','Bandit','Apache','Daisy'];
+const RANCH0=[['bay','Biscuit'],['palomino','Sunny'],['black','Midnight'],['white','Ghost'],['pinto','Patches']]; // the horses in the stable to start with
+const COWBOY={hat:'cowboy',hatC:'#8a5a32',top:'flannel',topC:'#b8282e',bottom:'jeans',bottomC:'#3a5a9a',shoes:'cowboy',shoeC:'#7a4a26',belt:'buckle',neck:'bandana',neckC:'#c8202a'};
+const GEAR=[['hat','🤠 Cowboy hat'],['top','🟥 Flannel shirt'],['bottom','👖 Jeans'],['shoes','👢 Cowboy boots'],['belt','🥇 Big belt buckle'],['neck','🧣 Red bandana']];
+let ranchK=null;
+function rtoast(m){ if(!demo)toast(m); } // no pop-up messages in a demo (it's being recorded)
+function om(c){ const m=lm(c); m.userData.own=true; return m; }
+// models face -z with their feet at the origin. Legs swing from the hip; the head (and neck) can dip down to graze or drink
+function animalModel(kind,breed){ const g=new THREE.Group(), M={g,legs:[],kind}, add=(par,w,h,d,mat,x,y,z)=>{ const b=box(w,h,d,mat); b.position.set(x,y,z); par.add(b); return b; };
+  const leg=(x,y,z,w,h,mat,hoof)=>{ const p=new THREE.Group(); p.position.set(x,y,z); g.add(p); add(p,w,h,w,mat,0,-h/2,0); if(hoof)add(p,w+0.02,0.12,w+0.04,hoof,0,-h+0.06,-0.01); M.legs.push(p); return p; };
+  if(kind==='horse'){ const H=HORSES[breed]||HORSES.bay, body=om(H.c), mane=om(H.m), lg=om(H.l), hoof=om(0x2a2420);
+    add(g,0.62,0.62,1.5,body,0,1.24,0); if(H.patch){ const pm=om(H.patch); add(g,0.64,0.4,0.55,pm,0,1.3,-0.25); add(g,0.64,0.32,0.4,pm,0,1.14,0.45); }
+    if(H.rump){ const rm=om(H.rump), sm=om(H.spot); add(g,0.64,0.5,0.6,rm,0,1.3,0.48); for(const [x,y,z] of [[0.33,1.38,0.3],[-0.33,1.22,0.6],[0.33,1.18,0.62],[-0.33,1.42,0.4],[0.1,1.56,0.55],[-0.15,1.56,0.35]])add(g,x?0.02:0.1,0.08,0.08,sm,x,y,z); }
+    for(const [x,z] of [[-0.2,-0.58],[0.2,-0.58],[-0.2,0.6],[0.2,0.6]])leg(x,0.92,z,0.16,0.92,lg,hoof);
+    const N=new THREE.Group(); N.position.set(0,1.42,-0.66); N.rotation.x=-0.55; g.add(N); add(N,0.3,0.8,0.38,body,0,0.38,0); add(N,0.08,0.82,0.14,mane,0,0.42,0.2);
+    const Hd=new THREE.Group(); Hd.position.set(0,0.78,0); Hd.rotation.x=0.15; N.add(Hd); add(Hd,0.3,0.3,0.58,body,0,0,-0.2); add(Hd,0.26,0.24,0.16,om(0x3a2a24),0,-0.03,-0.53);
+    for(const sx of [-1,1]){ add(Hd,0.07,0.16,0.06,body,sx*0.09,0.22,0.02); add(Hd,0.02,0.06,0.06,om(0x0a0a0a),sx*0.155,0.05,-0.18); }
+    add(Hd,0.1,0.06,0.1,mane,0,0.17,-0.07); M.neck=N; M.head=Hd; M.n0=-0.55;
+    const tl=new THREE.Group(); tl.position.set(0,1.45,0.74); tl.rotation.x=0.4; g.add(tl); add(tl,0.13,0.75,0.13,mane,0,-0.37,0); M.tail=tl; }
+  else if(kind==='steer'){ const S=STEERS[breed]||STEERS.hereford, body=om(S.c), hoof=om(0x2a2420);
+    add(g,S.shag?0.82:0.72,S.shag?0.8:0.72,1.4,body,0,1.0,0); if(S.patch){ const pm=om(S.patch); add(g,0.74,0.4,0.5,pm,0,1.05,0.2); add(g,0.74,0.3,0.3,pm,0,1.2,-0.4); }
+    for(const [x,z] of [[-0.22,-0.52],[0.22,-0.52],[-0.22,0.52],[0.22,0.52]])leg(x,0.66,z,0.18,0.66,body,hoof);
+    const N=new THREE.Group(); N.position.set(0,1.12,-0.7); g.add(N); add(N,0.42,0.42,0.46,om(S.face),0,0.02,-0.22); add(N,0.36,0.22,0.12,om(0xc89a8a),0,-0.08,-0.5);
+    for(const sx of [-1,1]){ add(N,0.02,0.06,0.06,om(0x0a0a0a),sx*0.215,0.08,-0.33); add(N,0.14,0.07,0.08,body,sx*0.26,0.12,-0.12); }
+    if(S.shag)add(N,0.44,0.12,0.12,body,0,0.2,-0.42); // a shaggy fringe over the eyes
+    if(S.hl){ const hm=om(S.horn); for(const sx of [-1,1]){ const h=add(N,S.hl,0.07,0.07,hm,sx*(0.2+S.hl/2),0.2,-0.18); h.rotation.z=sx*0.18; add(N,0.06,0.12,0.06,hm,sx*(0.2+S.hl),0.27,-0.18); } }
+    M.neck=N; M.n0=0; const tl=new THREE.Group(); tl.position.set(0,1.28,0.7); tl.rotation.x=0.2; g.add(tl); add(tl,0.08,0.7,0.08,body,0,-0.35,0); add(tl,0.14,0.14,0.14,om(0x2a2018),0,-0.72,0); M.tail=tl; }
+  else if(kind==='pig'){ const pk=om(0xf2a8a8), dk=om(0xd88888); add(g,0.5,0.44,0.82,pk,0,0.46,0);
+    for(const [x,z] of [[-0.15,-0.28],[0.15,-0.28],[-0.15,0.28],[0.15,0.28]])leg(x,0.26,z,0.13,0.26,pk,dk);
+    const N=new THREE.Group(); N.position.set(0,0.5,-0.4); g.add(N); add(N,0.38,0.36,0.3,pk,0,0.02,-0.12); add(N,0.2,0.14,0.06,dk,0,-0.04,-0.3);
+    for(const sx of [-1,1]){ add(N,0.03,0.05,0.02,om(0x1a1010),sx*0.1,0.08,-0.28); add(N,0.12,0.04,0.1,dk,sx*0.13,0.2,-0.06); } M.neck=N; M.n0=0;
+    const tl=new THREE.Group(); tl.position.set(0,0.6,0.42); g.add(tl); add(tl,0.05,0.12,0.05,pk,0,0.03,0.03); M.tail=tl; }
+  else { const wh=breed==='brown'?om(0x9a6a3a):om(0xf4f2ea), yl=om(0xf2b830), rd=om(0xd8202a); add(g,0.28,0.26,0.36,wh,0,0.33,0); add(g,0.2,0.2,0.08,wh,0,0.44,0.2); // a chicken
+    for(const x of [-0.07,0.07])leg(x,0.2,0,0.04,0.2,yl);
+    const N=new THREE.Group(); N.position.set(0,0.46,-0.13); g.add(N); add(N,0.16,0.18,0.16,wh,0,0.06,-0.04); add(N,0.04,0.08,0.12,rd,0,0.18,-0.04); add(N,0.06,0.04,0.08,yl,0,0.05,-0.15); add(N,0.04,0.06,0.03,rd,0,-0.01,-0.13);
+    for(const sx of [-1,1])add(N,0.02,0.03,0.03,om(0x0a0a0a),sx*0.08,0.09,-0.08); M.neck=N; M.n0=0; }
+  if(kind==='horse')g.scale.setScalar(1.2); // horses are a bit bigger than life next to our blocky hero
+  return M; }
+function saddleOn(M){ const sd=om(0x5a3418), bl=om(0x2a4a8a), g=M.g, add=(w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
+  M.saddle=[add(0.7,0.04,0.64,bl,0,1.56,-0.05),add(0.6,0.12,0.5,sd,0,1.62,-0.05),add(0.08,0.14,0.08,sd,0,1.74,-0.28),add(0.5,0.08,0.06,sd,0,1.68,0.2),
+    add(0.04,0.42,0.04,sd,0.36,1.36,-0.05),add(0.04,0.42,0.04,sd,-0.36,1.36,-0.05),add(0.1,0.04,0.14,om(0x8a8a90),0.36,1.13,-0.05),add(0.1,0.04,0.14,om(0x8a8a90),-0.36,1.13,-0.05)];
+  if(M.head){ const br=om(0x3a2010); for(const sx of [-1,1]){ const b=box(0.02,0.28,0.04,br); b.position.set(sx*0.155,0,-0.4); M.head.add(b); } const nb=box(0.32,0.04,0.04,br); nb.position.set(0,0.08,-0.42); M.head.add(nb); } }
+const HEART_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'); x.fillStyle='#ff3a6a'; x.beginPath(); x.moveTo(16,28); x.bezierCurveTo(-6,12,8,-4,16,9); x.bezierCurveTo(24,-4,38,12,16,28); x.fill(); return new THREE.CanvasTexture(c); })();
+function standY(x,z){ for(let y=H-1;y>=0;y--){ const id=world[idx(x,y,z)]; if(id&&B[id].solid&&id!==ID.leaves&&id!==ID.log&&id!==ID.roof)return y+1; } return FY; } // the ground, not the treetops or a roof
+function makeAnimal(kind,breed,x,z,o){ const M=animalModel(kind,breed);
+  const hw=kind==='horse'?0.5:kind==='steer'?0.45:kind==='pig'?0.3:0.16, h=kind==='horse'?1.9:kind==='steer'?1.4:kind==='pig'?0.7:0.55;
+  const a=Object.assign({kind,breed,M,p:[x,o&&o.y!==undefined?o.y:standY(Math.floor(x),Math.floor(z)),z],v:[0,0,0],kb:[0,0,0],hw,h,onGround:false,wall:false,hd:Math.random()*6.28,spd:0,st:'wander',t:Math.random()*3,tgt:null,ph:Math.random()*6,yo:0,love:0,own:-1,graze:0,zone:RANCH.wild},o||{});
+  scene.add(M.g); ranchK.animals.push(a); return a; }
+function removeAnimal(a){ scene.remove(a.M.g); disposeG(a.M.g); if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); } ranchK.animals.splice(ranchK.animals.indexOf(a),1); }
+// the rope (from your hand to whatever you've caught), the lasso loop, and the coil on your hip
+const ropeMat=new THREE.LineBasicMaterial({color:0xc8a060});
+const ropeLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),ropeMat); ropeLine.frustumCulled=false; ropeLine.visible=false; scene.add(ropeLine);
+const lassoLoop=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.035,6,18),lm(0xc8a060)); lassoLoop.visible=false; scene.add(lassoLoop);
+const hipCoil=new THREE.Mesh(new THREE.TorusGeometry(0.13,0.03,6,14),lm(0xc8a060)); hipCoil.position.set(0.3,0.86,0.02); hipCoil.rotation.y=Math.PI/2; hipCoil.visible=false; rig.torso.add(hipCoil);
+function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
+function riding(){ return !!(ranchK&&ranchK.ride); }
+function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
+  if(curPlace()==='ranch'&&ranchK){ const L=Object.assign({},look); for(const [k] of GEAR)if(ranchK.gear[k])L[k]=COWBOY[k]; if(ranchK.gear.neck)L.neckC=COWBOY.neckC;
+    if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
+  return look; }
+function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); }
+function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; dressRig(rig,look); }
+function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples}; }
+// the ranch comes alive: the stable horses, wild herds, the farm animals. saved is what ranchSave() kept, or nothing for a new ranch
+function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==='object'?saved:{};
+  ranchK={animals:[],own:[],ride:null,rope:null,lasso:null,gear:{},apples:Math.max(0,sv.apples|0),t:0,spawnT:5,drinkT:0,boost:0,jumpWas:false,yo:0,bob:0,said:{}};
+  const K=ranchK; for(const [k] of GEAR)K.gear[k]=!!(sv.gear&&sv.gear[k]); K.gear.beard=sv.gear&&LOOK_OPTS.beard.some(o=>o[0]===sv.gear.beard)?sv.gear.beard:'';
+  const own=Array.isArray(sv.own)&&sv.own.length?sv.own:RANCH0; for(const o of own.slice(0,16))if(Array.isArray(o)&&HORSES[o[0]])K.own.push({breed:o[0],name:String(o[1]||'Horse').slice(0,16)});
+  K.own.forEach((o,i)=>placeOwned(o,i));
+  const R=RANCH, rnd=Math.random, wildSpot=()=>{ for(let k=0;k<40;k++){ const x=R.wild.x0+rnd()*(R.wild.x1-R.wild.x0), z=R.wild.z0+rnd()*(R.wild.z1-R.wild.z0), s=surfaceAt(Math.floor(x),Math.floor(z));
+    if(s.id===ID.water||s.y>34||Math.hypot(x-R.lake[0],z-R.lake[1])<R.lake[2]+3)continue; return [x,z]; } return [60,70]; };
+  const wildBreeds=['chestnut','appaloosa','grullo','bay','black','palomino','pinto'];
+  for(let i=0;i<6;i++){ const [x,z]=wildSpot(); makeAnimal('horse',wildBreeds[i%wildBreeds.length],x,z,{wild:true}); }
+  const herds=['hereford','angus','longhorn','highland']; for(let hI=0;hI<3;hI++){ const [x,z]=wildSpot(), b=herds[hI%4]; for(let i=0;i<3;i++)makeAnimal('steer',i===2?herds[(hI+1)%4]:b,x+(rnd()-0.5)*5,z+(rnd()-0.5)*5,{wild:true}); }
+  const C=R.corral, pen=Array.isArray(sv.pen)?sv.pen:['hereford','angus'];
+  for(const b of pen.slice(0,12))if(STEERS[b])makeAnimal('steer',b,C.x0+3+rnd()*(C.x1-C.x0-6),C.z0+3+rnd()*(C.z1-C.z0-6),{st:'pen',zone:penZone(),y:FY});
+  const Y=R.yard; for(let i=0;i<7;i++)makeAnimal('chicken',i%3?'white':'brown',Y.x0+2+rnd()*12,Y.z0+2+rnd()*(Y.z1-Y.z0-4),{zone:Y,y:FY});
+  for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
+  dressHero(); }
+function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
+function placeOwned(o,i){ const s=STALLS[i]; let a;
+  if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:Math.PI/2,zone:null,y:FY}); // facing their hay
+  else a=makeAnimal('horse',o.breed,RANCH.corral.x0+4+Math.random()*10,RANCH.corral.z0+4+Math.random()*8,{own:i,st:'pen',zone:penZone(),y:FY});
+  saddleOn(a.M); o.a=a; return a; }
+// --- riding
+function mount(a,quiet){ const K=ranchK; if(!a||K.ride)return; if(K.rope&&K.rope.a===a)K.rope=null; K.ride=a; a.st='ridden'; a.spd=0; yaw=a.hd; pitch=-0.12; if(fly)setFly(false,false);
+  if(camMode===1)camMode=3; tpWeapon.visible=false; document.body.classList.add('ride');
+  if(!quiet){ rtoast('🐴 '+(a.own>=0?K.own[a.own].name:'Your horse')+'! '+(IS_TOUCH?'Drag the joystick to ride. ⬆ Jump leaps over things, or gallops faster. ⛏ throws your lasso.':'W to go, A/D or the mouse to steer, Space to jump (or gallop faster), click to throw your lasso, E to get off.')); sfx('catch'); } }
+function dismount(quiet){ const K=ranchK, a=K&&K.ride; if(!a)return; K.ride=null; a.st='idle'; a.t=20; a.spd=0; document.body.classList.remove('ride'); refreshHeld();
+  const r=[Math.cos(a.hd),-Math.sin(a.hd)]; let spot=[a.p[0]+r[0]*1.2,a.p[1],a.p[2]+r[1]*1.2];
+  for(const sx of [1,-1,1.6,-1.6]){ const x=a.p[0]+r[0]*sx, z=a.p[2]+r[1]*sx; if(!boxHits(x,a.p[1]+0.02,z,pl.hw,pl.h)){ spot=[x,a.p[1]+0.02,z]; break; } }
+  pl.p=spot; pl.v=[0,0,0]; unstick(pl); legL.rotation.z=legR.rotation.z=0; if(!quiet)rtoast('🐴 You hop down.'); }
+// what's ahead of the horse: a step it can just walk up, or something taller it has to jump
+function aheadBlock(a,dist,dy){ const f=[-Math.sin(a.hd),-Math.cos(a.hd)], x=Math.floor(a.p[0]+f[0]*dist), z=Math.floor(a.p[2]+f[1]*dist), y=Math.floor(a.p[1]+0.05)+dy, b=get(x,y,z); return b&&B[b].solid; }
+function stepUp(a){ const fy=Math.floor(a.p[1]+0.05), f=[-Math.sin(a.hd),-Math.cos(a.hd)], y0=a.p[1];
+  if(boxHits(a.p[0],fy+1.01,a.p[2],a.hw,a.h))return false; // no headroom
+  for(const off of [0.3,0.55]){ const x=a.p[0]+f[0]*off, z=a.p[2]+f[1]*off; // blocked here, but free one block up: step up (the model catches up smoothly)
+    if(boxHits(x,y0+0.02,z,a.hw,a.h)&&!boxHits(x,fy+1.01,z,a.hw,a.h)){ a.p[1]=fy+1.01; a.p[0]=x; a.p[2]=z; a.yo-=a.p[1]-y0; return true; } }
+  return false; }
+function moveAnimal(a,dt,spd,water){ const f=[-Math.sin(a.hd),-Math.cos(a.hd)]; a.v[0]=f[0]*spd; a.v[2]=f[1]*spd;
+  const wet=get(Math.floor(a.p[0]),Math.floor(a.p[1]+0.6),Math.floor(a.p[2]))===ID.water;
+  if(wet){ a.v[1]=Math.min(2.5,a.v[1]+12*dt); a.v[0]*=0.5; a.v[2]*=0.5; } else { a.v[1]-=28*dt; if(a.v[1]<-30)a.v[1]=-30; }
+  physStep(a,dt); if(a.wall&&Math.abs(spd)>0.2&&(a.onGround||wet))stepUp(a);
+  a.p[0]=Math.max(1,Math.min(W-1,a.p[0])); a.p[2]=Math.max(1,Math.min(D-1,a.p[2])); if(a.p[1]<-5){ const s=surfaceAt(Math.floor(a.p[0]),Math.floor(a.p[2])); a.p[1]=s.y+1; a.v[1]=0; }
+  a.yo+=(0-a.yo)*Math.min(1,dt*7); }
+let rideIn={thr:0,turn:0,jump:false};
+function rideUpdate(dt){ const K=ranchK, a=K.ride; let thr=0, turn=0, jump=false;
+  if(demo&&!demo.user){ demoInput(dt); if(!demo.user){ demoPilot(dt); thr=rideIn.thr; turn=rideIn.turn; jump=rideIn.jump; } }
+  if(!demo||demo.user){ const gp=demo?pad:{}; thr=-joy.y-(gp.ly||0); turn=joy.x+(gp.lx||0); if(keys.KeyW||keys.ArrowUp)thr+=1; if(keys.KeyS||keys.ArrowDown)thr-=1; if(keys.KeyA||keys.ArrowLeft)turn-=1; if(keys.KeyD||keys.ArrowRight)turn+=1;
+    jump=upHeld||keys.Space||!!gp.a; thr=Math.max(-1,Math.min(1,thr)); turn=Math.max(-1,Math.min(1,turn)); }
+  yaw-=turn*2.1*dt*(0.5+0.5*Math.min(1,Math.abs(a.spd)/4)); a.hd=yaw;
+  K.boost=Math.max(0,K.boost-dt); K.jumpCD=Math.max(0,(K.jumpCD||0)-dt);
+  if(jump&&!K.jumpWas&&a.onGround&&K.jumpCD<=0){ K.jumpCD=0.6; // jump over what's in front, or gallop faster on open ground
+    if([0.25,0.7,1.2,1.8].some(d=>aheadBlock(a,a.hw+d,0)||aheadBlock(a,a.hw+d,1))){ a.v[1]=11.6; a.spd=Math.max(a.spd,5); sfx('whoosh'); } // high enough to clear a fence
+    else { K.boost=2.4; if(!K.said.boost){ K.said.boost=1; rtoast('💨 Giddy up! Your horse gallops faster for a bit.'); } sfx('whoosh'); } }
+  K.jumpWas=jump;
+  const top=K.boost>0?14:9.5, want=thr>0?thr*top:thr*3; a.spd+=(want-a.spd)*Math.min(1,dt*(want>a.spd?2.2:3.5));
+  moveAnimal(a,dt,a.spd); if(a.wall&&a.onGround&&a.spd>3)a.spd*=0.7; // bumped into something too tall: slow down
+  // a drink at the lake: stand still with your nose by the water
+  if(Math.abs(a.spd)<0.4&&(aheadBlock(a,a.hw+0.9,-1)===false)&&get(Math.floor(a.p[0]-Math.sin(a.hd)*1.3),Math.floor(a.p[1]-0.5),Math.floor(a.p[2]-Math.cos(a.hd)*1.3))===ID.water){ K.drinkT+=dt; if(K.drinkT>1&&!K.said.drink){ K.said.drink=1; rtoast('💧 Your horse takes a long drink from the lake.'); } } else K.drinkT=0;
+  a.ph+=dt*Math.abs(a.spd)*1.6; K.bob=Math.abs(a.spd)>0.3?Math.abs(Math.sin(a.ph))*Math.min(0.12,Math.abs(a.spd)*0.012):0;
+  pl.p=[a.p[0]-Math.sin(a.hd)*0.05,a.p[1]+a.yo+1.99-0.72+K.bob,a.p[2]-Math.cos(a.hd)*0.05]; pl.v=[0,0,0]; pl.onGround=true;
+  animalPose(a,dt,K.drinkT>0.6?'drink':'');
+  return {hs:0}; }
+// the camera behind the horse, and the hero sitting in the saddle
+function rideCam(dt){ const a=ranchK.ride; if(camMode===1)return; const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)), tgt=new THREE.Vector3(a.p[0],a.p[1]+a.yo+2.2,a.p[2]);
+  const want=tgt.clone().addScaledVector(f,-6.2).add(new THREE.Vector3(0,1.4-pitch*4,0)); let tt=1;
+  for(let t=0.1;t<=1.0001;t+=0.05){ tmp.lerpVectors(tgt,want,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0.15,t-0.1); break; } }
+  want.lerpVectors(tgt,want,tt); camera.position.copy(want); camera.lookAt(tgt.clone().addScaledVector(f,3)); }
+function seatRider(){ legL.rotation.set(0.45,0,-0.5); legR.rotation.set(0.45,0,0.5); if(swingT<=0){ armL.rotation.x=0.75; armR.rotation.x=0.75; armL.rotation.z=0.15; armR.rotation.z=-0.15; } fpHolder.visible=false; }
+// the animals' legs, head and tail
+function animalPose(a,dt,mode){ const M=a.M, sp=Math.abs(a.spd), sw=Math.min(0.75,sp*0.12), s=Math.sin(a.ph*1.0);
+  M.legs.forEach((l,i)=>{ l.rotation.x=(M.legs.length===2?(i?-1:1):(i===0||i===3?1:-1))*s*sw; });
+  M.g.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'&&sp>5?Math.abs(s)*0.08:0),a.p[2]); M.g.rotation.y=a.hd;
+  if(M.neck){ const down=mode==='drink'||mode==='graze'?(a.kind==='horse'?1.25:a.kind==='chicken'?0.9:0.55):0, want=M.n0-down+(sp>0.3?Math.sin(a.ph*2)*0.06:0); // nose down to graze or drink
+    M.neck.rotation.x+=(want-M.neck.rotation.x)*Math.min(1,dt*5); }
+  if(M.tail)M.tail.rotation.z=Math.sin(ranchK.t*2+a.ph)*0.25; }
+// --- feeding, roping and taming
+function horseName(a){ return a.own>=0?ranchK.own[a.own].name:HORSES[a.breed].n+' horse'; }
+function giveApple(a){ const K=ranchK; K.apples--; a.love=120; a.st='follow'; burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(1,0.3,0.45),12); sfx('coin');
+  if(!a.heart){ a.heart=new THREE.Sprite(new THREE.SpriteMaterial({map:HEART_TEX,depthWrite:false})); a.heart.scale.setScalar(0.5); scene.add(a.heart); }
+  rtoast('❤️ The '+horseName(a)+' loves you! It will follow you for a while.'+(a.wild?' Lead it into the corral to keep it.':'')+(K.apples?' ('+K.apples+' 🍎 left)':'')); queueSave(); }
+function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false;
+  if(K.lasso)return true; if(K.rope){ const a=K.rope.a; K.rope=null; ropeLine.visible=false; a.st='wander'; rtoast('🪢 You let the '+(a.kind==='horse'?horseName(a):STEERS[a.breed].n+' steer')+' go.'); return true; }
+  const o=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]), d=lookDir(); let best=null, bd=15;
+  for(const a of K.animals){ if(!a.wild||a===K.ride||(a.kind!=='horse'&&a.kind!=='steer'))continue; const dx=a.p[0]-o.x, dz=a.p[2]-o.z, dist=Math.hypot(dx,dz); if(dist>14||dist<1)continue;
+    const cos=(dx*d.x+dz*d.z)/(dist*Math.hypot(d.x,d.z)||1); if(cos<0.88)continue; if(dist<bd){ bd=dist; best=a; } }
+  if(!best&&!riding())return false; // nothing to rope: a normal hit
+  K.lasso={t:0,a:best,dur:best?0.25+bd*0.03:0.5,miss:best?null:o.clone().addScaledVector(new THREE.Vector3(d.x,0,d.z).normalize(),9)}; hipCoil.visible=false; swingT=0.25; sfx('swing'); return true; }
+function handPos(){ return rig.armR.localToWorld(new THREE.Vector3(0,-0.68,0)); }
+function ranchTick(dt){ const K=ranchK; K.t+=dt; const hero=riding()?K.ride.p:pl.p;
+  // the lasso flies out and catches (or misses), then the rope stays tied on
+  if(K.lasso){ const L=K.lasso; L.t+=dt; const f=Math.min(1,L.t/L.dur), h=handPos(), tg=L.a?new THREE.Vector3(L.a.p[0],L.a.p[1]+L.a.h*0.85,L.a.p[2]):L.miss, ret=!L.a&&L.t>L.dur;
+    const p=ret?tg.clone().lerp(h,Math.min(1,(L.t-L.dur)/0.35)):h.clone().lerp(tg,f); p.y+=Math.sin(f*Math.PI)*1.2; lassoLoop.visible=true; lassoLoop.position.copy(p); lassoLoop.rotation.set(Math.PI/2,0,K.t*12);
+    ropeLine.visible=true; ropeLine.geometry.setFromPoints([h,p]); armR.rotation.x=2.6;
+    if(L.a&&f>=1){ K.rope={a:L.a}; L.a.st='roped'; L.a.spd=0; K.lasso=null; lassoLoop.visible=false; hipCoil.visible=true; sfx('catch');
+      rtoast('🪢 Caught a '+(L.a.kind==='horse'?'wild '+HORSES[L.a.breed].n+' horse':STEERS[L.a.breed].n+' steer')+'! Lead it into the corral to keep it. Hit again to let go.'); }
+    else if(ret&&L.t>L.dur+0.35){ K.lasso=null; lassoLoop.visible=false; ropeLine.visible=false; hipCoil.visible=true; } }
+  else if(K.rope){ const a=K.rope.a, h=handPos(); ropeLine.visible=true; ropeLine.geometry.setFromPoints([h,new THREE.Vector3(a.p[0]-Math.sin(a.hd)*0.7,a.p[1]+a.yo+a.h*0.9,a.p[2]-Math.cos(a.hd)*0.7)]); }
+  else ropeLine.visible=false;
+  // each animal
+  const C=RANCH.corral;
+  for(const a of K.animals.slice()){ if(a===K.ride)continue; a.t-=dt; let spd=0, mode='';
+    if(a.love>0){ a.love-=dt; if(a.heart){ a.heart.visible=true; a.heart.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'?3.1:2.0)+Math.sin(K.t*3)*0.1,a.p[2]); }
+      if(a.love<=0){ if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } if(a.st==='follow')a.st=a.wild?'wander':'idle'; } }
+    if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
+      spd=d>3.6?Math.min(12,(d-3)*2.2):0; if(a.st==='roped'&&d>9){ a.p[0]+=dx/d*(d-9); a.p[2]+=dz/d*(d-9); } // the rope pulls it along
+      if(a.wild&&a.p[0]>C.x0+1&&a.p[0]<C.x1-1&&a.p[2]>C.z0+1&&a.p[2]<C.z1-1)tame(a); }
+    else if(a.st==='stall'){ mode=Math.sin(K.t*0.3+a.ph)>0.4?'graze':''; }
+    else { const Z=a.zone; if(!a.tgt||a.t<=0||Math.hypot(a.tgt[0]-a.p[0],a.tgt[1]-a.p[2])<1){ a.t=3+Math.random()*7; a.graze=Math.random()<0.45?a.t:0;
+        a.tgt=Z?[Z.x0+Math.random()*(Z.x1-Z.x0),Z.z0+Math.random()*(Z.z1-Z.z0)]:null; if(a.tgt&&a.kind!=='chicken'&&a.kind!=='pig'&&a.st!=='pen'){ const s=surfaceAt(Math.floor(a.tgt[0]),Math.floor(a.tgt[1])); if(s.id===ID.water||s.y>34)a.tgt=null; } }
+      if(a.graze>0&&a.t<a.graze-1.5){ mode='graze'; } else if(a.tgt){ turnAnimal(a,Math.atan2(-(a.tgt[0]-a.p[0]),-(a.tgt[1]-a.p[2])),dt,2.5); spd=a.kind==='chicken'?1.6:a.kind==='pig'?1.3:a.st==='pen'?1:1.6; }
+      // keep out of the lake (but drink at the edge now and then)
+      const f=[-Math.sin(a.hd),-Math.cos(a.hd)], ah=surfaceAt(Math.floor(a.p[0]+f[0]*1.4),Math.floor(a.p[2]+f[1]*1.4)); if(ah.id===ID.water&&spd>0){ spd=0; if(a.kind!=='chicken'&&a.kind!=='pig'){ mode='drink'; if(a.t<1)a.tgt=null; } else a.tgt=null; } }
+    a.spd+=(spd-a.spd)*Math.min(1,dt*4); const far=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>70;
+    if(!far||a.st==='roped')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
+  // new wild animals wander in from the hills to keep the herds going
+  K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const wild=K.animals.filter(a=>a.wild); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
+    const kind=wild.filter(a=>a.kind==='horse').length<5?'horse':'steer', x=12+Math.random()*104, z=40+Math.random()*6; makeAnimal(kind,kind==='horse'?['chestnut','appaloosa','grullo','bay','black'][Math.floor(Math.random()*5)]:Object.keys(STEERS)[Math.floor(Math.random()*4)],x,z,{wild:true}); } } }
+function turnAnimal(a,want,dt,rate){ let d=want-a.hd; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; a.hd+=Math.max(-rate*dt,Math.min(rate*dt,d)); }
+function tame(a){ const K=ranchK; if(K.rope&&K.rope.a===a){ K.rope=null; ropeLine.visible=false; } a.wild=false; a.love=0; if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } burst(a.p[0]-0.5,a.p[1]+1.5,a.p[2]-0.5,new THREE.Color(1,0.85,0.2),14); sfx('coin');
+  if(a.kind==='steer'){ a.st='pen'; a.zone=penZone(); rtoast('🐄 The '+STEERS[a.breed].n+' steer is yours! It lives in the corral now.'); }
+  else { const name=HORSE_NAMES.filter(n=>!K.own.some(o=>o.name===n))[0]||'Lucky', o={breed:a.breed,name}; K.own.push(o); const i=K.own.length-1; removeAnimal(a); placeOwned(o,i);
+    rtoast('🐴 You tamed a wild '+HORSES[a.breed].n+' horse and named it '+name+'! Pick it in the stable to ride it.'); }
+  queueSave(); }
+// the stable: pick a horse and it's saddled and ready outside the door
+function openStable(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK;
+  let h='<h2>🐴 The Stable</h2><div class="say">Pick a horse to ride. It\'ll be saddled and waiting outside the stable door.</div>';
+  K.own.forEach((o,i)=>{ const H=HORSES[o.breed]; h+='<div class="item"><div class="ic" style="background:#'+H.c.toString(16).padStart(6,'0')+';border:3px solid #'+H.m.toString(16).padStart(6,'0')+'">🐴</div><div class="tx"><b>'+esc(o.name)+'</b><div class="fx">'+H.n+'</div></div><button class="ibtn" data-horse="'+i+'">Ride</button></div>'; });
+  h+='<div class="fx" style="margin-top:8px">Catch more horses with your lasso (or win one over with an apple) and lead them into the corral to keep them.</div><div class="row"><button class="mbtn gray" id="stBack">Back</button></div>';
+  $('mbox').innerHTML=h; $('modal').style.display='flex';
+  $('mbox').querySelectorAll('[data-horse]').forEach(b=>onClick(b,()=>{ const o=K.own[+b.dataset.horse], a=o.a; closeMenu(); if(!a)return; const [hx,hz]=RANCH.hitch; a.p=[hx,FY+0.01,hz]; a.v=[0,0,0]; a.hd=-Math.PI/2; a.st='idle'; a.zone=null; a.spd=0; mount(a); }));
+  tap($('stBack'),closeMenu); }
+// the wardrobe in the farmhouse: cowboy gear just for the ranch
+function openWardrobe(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK, G=K.gear;
+  let h='<h2>🤠 Cowboy Gear</h2><div class="say">Dress up for the ranch. This only changes how you look here; leave the ranch and you\'re back in your own clothes.</div>';
+  for(const [k,l] of GEAR)h+='<div class="item"><div class="tx"><b>'+l+'</b></div><button class="ibtn'+(G[k]?'':' gray')+'" data-gear="'+k+'">'+(G[k]?'ON':'OFF')+'</button></div>';
+  h+='<div class="item"><div class="tx"><b>🧔 Beard</b></div><select id="wdBeard">'+[['','My own']].concat(LOOK_OPTS.beard).map(([a,b])=>'<option value="'+a+'"'+(a===G.beard?' selected':'')+'>'+b+'</option>').join('')+'</select></div>';
+  h+='<div class="row"><button class="mbtn gold" id="wdAll">🤠 Wear it all</button><button class="mbtn gray" id="wdNone">👕 My own clothes</button></div><div class="row"><button class="mbtn gray" id="wdBack">Done</button></div>';
+  $('mbox').innerHTML=h; $('modal').style.display='flex'; const redo=()=>{ dressHero(); queueSave(); openWardrobe(); };
+  $('mbox').querySelectorAll('[data-gear]').forEach(b=>onClick(b,()=>{ G[b.dataset.gear]=!G[b.dataset.gear]; redo(); }));
+  $('wdBeard').addEventListener('change',()=>{ G.beard=$('wdBeard').value; redo(); });
+  onClick($('wdAll'),()=>{ for(const [k] of GEAR)G[k]=true; redo(); }); onClick($('wdNone'),()=>{ for(const [k] of GEAR)G[k]=false; G.beard=''; redo(); }); tap($('wdBack'),closeMenu); }
+// the E key (or the touch button) on the ranch
+function ranchAction(){ const K=ranchK; if(!onRanch())return null; if(K.ride)return {label:'🐴 Get off',fn:()=>dismount()};
+  const S=RANCH.stable, [wx,wz]=RANCH.wardrobe, near=(x,z,r)=>Math.hypot(pl.p[0]-x,pl.p[2]-z)<r;
+  let best=null, bd=2.6; for(const a of K.animals){ if(a.kind!=='horse')continue; const d=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2]); if(d<bd&&Math.abs(a.p[1]-pl.p[1])<2){ bd=d; best=a; } }
+  if(best&&K.apples>0&&(best.wild||best.love<=0))return {label:'🍎 Give apple',fn:()=>giveApple(best)};
+  if(best&&!best.wild)return {label:'🐴 Get on '+horseName(best),fn:()=>mount(best)};
+  if(near(wx,wz,2.2))return {label:'🤠 Cowboy gear',fn:openWardrobe};
+  if(pl.p[0]>S.x0&&pl.p[0]<S.x1+4&&pl.p[2]>S.z0&&pl.p[2]<S.z1)return {label:'🐴 Pick a horse',fn:openStable};
+  return null; }
+
+// --- the horse ride in Demo Mode: up the trail past the lake (with a drink), a gallop across the meadow, a steer roped
+// along the way, the view from the top, then back down
+function demoRanchSetup(sc,P){ demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
+  generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
+  const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
+  const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
+  a.p=[path[0][0],FY+0.01,path[0][1]]; a.v=[0,0,0]; a.zone=null; a.hd=Math.atan2(-(path[6][0]-path[0][0]),-(path[6][1]-path[0][1])); mount(a,true); dressHero();
+  Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5}); rideIn={thr:0,turn:0,jump:false}; }
+function ridePilot(dt,P){ const K=ranchK, a=K&&K.ride; if(!a)return; const path=ranchPath(), [lx,lz]=RANCH.lake;
+  const steer=(tx,tz)=>{ let d=Math.atan2(-(tx-a.p[0]),-(tz-a.p[2]))-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; rideIn.turn=Math.max(-1,Math.min(1,-d*2.2)); return Math.abs(d); };
+  rideIn.jump=false;
+  if(P.stop>0){ P.stop-=dt; rideIn.thr=0; rideIn.turn=0; if(P.stop<=0&&P.mode==='drink'){ P.mode='trail'; let bi=0, bd=1e9; path.forEach((q,j)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=j; } }); P.i=bi; } return; }
+  if(P.mode==='tolake'){ steer(lx,lz); rideIn.thr=0.35; const wet=get(Math.floor(a.p[0]-Math.sin(a.hd)*1.3),Math.floor(a.p[1]-0.5),Math.floor(a.p[2]-Math.cos(a.hd)*1.3))===ID.water;
+    if(wet||Math.hypot(a.p[0]-lx,a.p[2]-lz)<RANCH.lake[2]+1){ P.mode='drink'; P.stop=4.5; } return; }
+  let i=P.i; for(let k=0;k<40;k++){ const j=i+P.dir; if(j<0||j>=path.length)break; if(Math.hypot(path[j][0]-a.p[0],path[j][1]-a.p[2])<=Math.hypot(path[i][0]-a.p[0],path[i][1]-a.p[2])+0.05)i=j; else break; } P.i=i;
+  if((P.dir>0&&i>=path.length-3)||(P.dir<0&&i<=2)){ P.dir*=-1; P.stop=3; return; } // the end of the trail: take in the view, then turn round
+  if(!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
+  const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*7))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:1;
+  P.jT-=dt; if(P.jT<=0&&off<0.25&&a.p[1]<FY+5&&a.onGround){ rideIn.jump=true; P.jT=9; } // a gallop on the flat
+  P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.i=Math.max(0,Math.min(path.length-1,P.i+P.dir*3)); } // stuck on something: hop over it
+  if(P.lassoT<0&&demo.st>5&&!K.rope&&!K.lasso){ const d=lookDir(); for(const s of K.animals){ if(!s.wild||s.kind!=='steer')continue; const dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], dist=Math.hypot(dx,dz);
+      if(dist<11&&dist>2&&(dx*d.x+dz*d.z)/(dist*Math.hypot(d.x,d.z))>0.9){ ranchHit(); P.lassoT=0; break; } } }
+  if(P.lassoT>=0&&K.rope){ P.lassoT+=dt; if(P.lassoT>12){ ranchHit(); P.lassoT=99; } } } // lead it for a bit, then let it go
+// cuts on the beat between shots that follow the horse: behind, beside, in front, down by the hooves, far off, and the rider's eye view
+function rideDemoCam(dt){ const K=ranchK, a=K&&K.ride; if(!a)return; const C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:-1}), V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const f=V(-Math.sin(a.hd),0,-Math.cos(a.hd)), r0=V(Math.cos(a.hd),0,-Math.sin(a.hd)), h=V(a.p[0],a.p[1]+a.yo+2.0,a.p[2]);
+  const gyAt=v=>standY(Math.max(0,Math.min(W-1,Math.floor(v.x))),Math.max(0,Math.min(D-1,Math.floor(v.z))));
+  if(C.side===undefined||C.k<0.05)C.side=gyAt(h.clone().addScaledVector(r0,8))<=gyAt(h.clone().addScaledVector(r0,-8))?1:-1; // film from the downhill side
+  const r=r0.clone().multiplyScalar(C.side);
+  const SH={chase:t=>[h.clone().addScaledVector(f,-6.5).add(V(0,1.5,0)),h.clone().addScaledVector(f,4)],
+    side:t=>[h.clone().addScaledVector(r,5.5).addScaledVector(f,1.2-t*0.25).add(V(0,0.1,0)),h],
+    front:t=>[h.clone().addScaledVector(f,7-t*0.3).addScaledVector(r,1.2).add(V(0,0.3,0)),h.clone().add(V(0,0.2,0))],
+    wide:t=>[h.clone().addScaledVector(r,24).addScaledVector(f,-12+t*1.5).add(V(0,13,0)),h],
+    pov:t=>[h.clone().add(V(0,1.05,0)).addScaledVector(f,0.25),h.clone().addScaledVector(f,10).add(V(0,0.3,0))]};
+  const seq=['chase','side','wide','front','chase','pov','side','wide','front'], bt=Math.floor(musBeat()); C.st-=dt; C.k+=dt;
+  if(!C.cur||!SH[C.cur]||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.4+Math.random()*1.6; C.k=0; } C.lb=bt;
+  const tryShot=name=>{ const pr=SH[name](C.k), to=pr[0]; let tt=1; // from the rider's head out to the camera: stop short of hills and trees
+    for(let t=0.04;t<=1.0001;t+=0.03){ tmp.lerpVectors(h,to,t); const b=get(Math.floor(tmp.x),Math.floor(tmp.y),Math.floor(tmp.z)); if(b&&B[b].solid){ tt=Math.max(0,t-0.08); break; } }
+    const cam=h.clone().lerp(to,tt), g=gyAt(cam)+0.9; return {cam,look:pr[1],ok:tt>0.55&&cam.y>g-0.4,g}; };
+  let sh=tryShot(C.cur); if(!sh.ok&&C.cur!=='chase')sh=tryShot('chase'); // blocked: the view from behind, along the trail we just rode
+  camera.position.copy(sh.cam); camera.position.y=Math.max(sh.cam.y,sh.g); camera.lookAt(sh.look); if(C.cur==='pov'&&sh.ok)model.visible=false; } // the rider's eye view: just the horse's head and the trail
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
 let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return driveUpdate(dt); }
+  if(riding())return rideUpdate(dt);
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
   if(enterCD>0)enterCD-=dt; else if((!demo||demo.user)&&(Math.abs(ix)+Math.abs(iz)>0.1||Math.abs(pad.lx)+Math.abs(pad.ly)>0.1)&&bumpEnter())return {hs:0};
@@ -4396,6 +4776,7 @@ function update(dt){
     camera.position.lerpVectors(eye,want,tt); camDist=camera.position.distanceTo(eye); }
   armL.rotation.z=0;
   if(drive){ chaseCam(dt); seatHero(); fpHolder.visible=false; }
+  if(riding()){ rideCam(dt); seatRider(); }
   if(demo&&demo.sc){ if(!demo.user){ if(demo.sc.cam!=='first')demoCamera(dt); } else if(demo.sc.act==='concert'&&!(demo.lookT>0))concertCam(dt); } // you're driving: the normal camera behind you
   camera.updateMatrixWorld();
 
@@ -4403,10 +4784,10 @@ function update(dt){
   const mdx=pl.p[0]-merchant.p[0], mdz=pl.p[2]-merchant.p[2]; if(Math.hypot(mdx,mdz)<12) merchant.g.rotation.y=Math.atan2(-mdx,-mdz);
   const act=demo?null:nearAction(), bt=$('bTalk'); bt.style.display=act&&IS_TOUCH?'flex':'none'; if(act&&bt.textContent!==act.label)bt.textContent=act.label;
   const pr=$('prompt'); if(act&&!IS_TOUCH){ const t='Press E: '+act.label.replace(/^\S+ /,''); if(pr.textContent!==t)pr.textContent=t; pr.style.display='block'; } else pr.style.display='none';
-  if(cityK&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
+  if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -4444,7 +4825,7 @@ $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.tog
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
 window.__bs={get cityK(){return cityK;},makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
-  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
+  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openStable, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
 </script>
