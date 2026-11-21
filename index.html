@@ -396,6 +396,7 @@ makeTile('leaves_orange',133,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(
 makeTile('leaves_red',134,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[170,40,30]:[200,60,40],r,.2); });
 makeTile('leaves_gold',135,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[220,180,40]:[245,210,70],r,.2); });
 makeTile('portal_odyssey',136,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz((x+y)%3?[40,110,200]:[230,240,255],r,.1); if(x>=4&&x<=11&&y>=8&&y<11)return [130,80,40]; if(x===7&&y>=2&&y<8)return [110,70,40]; if(x>=8&&x<=10&&y>=3&&y<=6&&x-8<=6-y)return [245,240,230]; return nz([255,200,120],r,.1); });
+makeTile('portal_petshop',137,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; const pad=Math.hypot(x-7.5,y-9.5)<3.2, toe=[[4.5,5.5],[7.5,4],[10.5,5.5]].some(([a,b])=>Math.hypot(x-a,y-b)<1.5); if(pad||toe)return [120,70,40]; return nz([255,170,90],r,.12); });
 const seedTile=(name,sd,fn)=>makeTile(name,sd,(x,y,r)=>{ if(x<2||x>13||y<1||y>14)return [0,0,0,0]; if(y<4)return nz([200,170,110],r,.1); const c=fn(x-8,y-9,r); return c||nz([236,214,160],r,.06); }); // a little seed packet
 seedTile('seed_apple',101,(x,y,r)=>Math.hypot(x,y)<3.6?nz([215,40,45],r,.1):(x===0&&y<-3&&y>-6)?[90,60,30]:null);
 seedTile('seed_oak',102,(x,y,r)=>y<-1&&Math.abs(x)<4&&y>-4?nz([120,84,40],r,.1):Math.hypot(x,(y-0.5)*1.2)<3.2?nz([170,120,60],r,.1):null);
@@ -493,6 +494,7 @@ addBlock('farmland_rich','Rich Farmland','Soil','Soil mixed with compost: rotted
 addBlock('farmland_rich_wet','Rich Watered Farmland','Soil','Rich, damp soil: the best place to grow crops.',{top:'farm_rich_wet',side:'dirt',bottom:'dirt'},{hidden:true});
 addBlock('portal_mansion','Thanksgiving Mansion Portal','Portal','Place it and a doorway to a big mansion opens, where the whole family is sitting down to Thanksgiving dinner. The first Thanksgiving feast was in 1621 and lasted three days!',{t:'portal_mansion'},{portal:'mansion'});
 addBlock('portal_odyssey','Odyssey Sea Portal','Portal','Place it and a doorway to the sea of the Odyssey opens: Troy, the Cyclops, Circe, the Sirens and Ithaca. Homer\'s Odyssey is almost 3,000 years old and is one of the oldest stories still read today.',{t:'portal_odyssey'},{portal:'odyssey'});
+addBlock('portal_petshop','Pet Shop Portal','Portal','Place it and a doorway to the Pet Shop opens, where you can make your own cat or dog. Dogs have lived with people for at least 15,000 years, and cats for about 9,000.',{t:'portal_petshop'},{portal:'petshop'});
 addBlock('bookshelf','Bookshelf','Building','Shelves full of books. The Library of Congress in Washington, D.C. is the biggest library in the world, with more than 170 million items.',{top:'planks',side:'bookshelf',bottom:'planks'},{flammable:true});
 addBlock('leaves_orange','Orange Fall Leaves','Plants','In fall, trees stop making green chlorophyll, so the yellow and orange colors that were hiding in the leaves show through.',{t:'leaves_orange'},{opaque:false,flammable:true});
 addBlock('leaves_red','Red Fall Leaves','Plants','Red fall leaves, like a maple\'s, get their color from a pigment the tree makes in autumn, when days are sunny and nights are cool.',{t:'leaves_red'},{opaque:false,flammable:true});
@@ -808,7 +810,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife();
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter();
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1360,7 +1362,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
-  if(drive)return; if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
+  if(drive)return; if(petTapAim())return; if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   const w=WP[weapon];
@@ -1676,7 +1678,7 @@ const OUT_MAX=70;
 function outsideDist(){ const ox=Math.max(0,-pl.p[0],pl.p[0]-W), oz=Math.max(0,-pl.p[2],pl.p[2]-D); return Math.hypot(ox,oz); }
 let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
-  if(curPlace()==='drag'||curPlace()==='mansion'||curPlace()==='odyssey'){ viewF=0; return; }
+  if(curPlace()==='drag'||curPlace()==='mansion'||curPlace()==='odyssey'||curPlace()==='petshop'){ viewF=0; return; }
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
   const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
@@ -1810,6 +1812,7 @@ function openNewGame(fromTitle){
     '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
     '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
     '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Saddle up a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
+    '<div class="item"><div class="ic">🐾</div><div class="tx"><b>Pet Shop</b><div class="fx">'+PLACES.petshop.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="petshop">Start</button></div>'+
     '<div class="item"><div class="ic">🏛️</div><div class="tx"><b>Odyssey Sea</b><div class="fx">'+PLACES.odyssey.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="odyssey">Start</button></div>'+
     '<div class="item"><div class="ic">🦃</div><div class="tx"><b>Thanksgiving Mansion</b><div class="fx">'+PLACES.mansion.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="mansion">Start</button></div>'+
     '<div class="item"><div class="ic">🏁</div><div class="tx"><b>Car World</b><div class="fx">'+PLACES.drag.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="drag">Start</button></div>'+
@@ -1825,11 +1828,11 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; clearPetShopLife(); petsClear(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
-  viewF=-1; updateViewRange(0); applyPlaceSky(); if(typeof ranchK!=='undefined')dressHero(); }
+  viewF=-1; updateViewRange(0); applyPlaceSky(); if(typeof ranchK!=='undefined')dressHero(); if(typeof petsWorldEnter==='function'&&!demo)petsWorldEnter(); }
 function loadKit(){ try{ const k=JSON.parse(localStorage.getItem(KIT_KEY)||'null'); if(k){ const o=cleanOwned(k.owned); return {coins:k.coins|0,owned:o,weapon:o.includes(k.weapon)?k.weapon:'fists',arrows:cleanArrows(k.arrows)}; } }catch(e){}
   return {coins:0,owned:['fists'],weapon:'fists',arrows:cleanArrows()}; }
 function startSurvival(){
@@ -1992,7 +1995,7 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button><button id="tOdyssey">🏛️ Odyssey</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button><button id="tOdyssey">🏛️ Odyssey</button><button id="tPets">🐾 Pet Shop</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
@@ -2001,7 +2004,7 @@ function showTitle(){ if(document.pointerLockElement)document.exitPointerLock();
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tOdyssey'),()=>{ audioInit(); goCity('odyssey',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tOdyssey'),()=>{ audioInit(); goCity('odyssey',false); }); tap($('tPets'),()=>{ audioInit(); goCity('petshop',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
@@ -2339,7 +2342,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2405,7 +2408,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       s.act==='ride'?'<label>Story'+sel(DM_RSTORY,'rstory',i,s.rstory)+'</label><label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isOdy(s)?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isOdy(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2427,7 +2430,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:isOdy(sc2)?OD_CH[sc2.act].secs:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:isOdy(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
     saveDemo(); if(el.dataset.k==='act'||el.dataset.k==='mstory'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
@@ -2501,7 +2504,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc)))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2516,6 +2519,7 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding
   if(sc.act==='ride'){ demoRanchSetup(sc,P); return; }
   if(sc.act==='drag'){ demoDragSetup(sc,P); return; }
   if(isOdy(sc)){ demoOdySetup(sc,P); return; }
+  if(sc.act==='petshop'||sc.act==='petranch'){ demoPetSetup(sc,P); return; }
   if(sc.act==='thanks'){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
@@ -2543,6 +2547,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='drag'){ dragPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='thanks')return mansionPilot(dt,P);
   if(isOdy(sc)){ odyPilot(dt,P); return {ix:0,iz:0}; }
+  if(sc.act==='petshop'||sc.act==='petranch')return petPilot(dt,P);
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
@@ -2564,7 +2569,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(isOdy(demo.sc)){ odyCam(dt); return; } if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(isOdy(demo.sc)){ odyCam(dt); return; } if(demo.sc.act==='petshop'||demo.sc.act==='petranch'){ petDemoCam(dt); return; } if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -3738,6 +3743,7 @@ function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle(
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
   if(best)return {label:best.V.icon+' Get in',fn:()=>enterVehicle(best)};
+  { const pa=petAction(); if(pa)return pa; }
   if(!cityK)return null; const G=garageBox(); if(pl.p[0]>CX+1.5&&pl.p[0]<G.x0+0.6&&pl.p[2]>G.dz0-2&&pl.p[2]<G.dz1+3)return {label:garageDoorOpen()?'🚪 Close garage':'🚗 Open garage',fn:toggleGarage};
   return null; }
 
@@ -3961,7 +3967,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4064,10 +4070,11 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   ranch:{name:'Mountain Ranch',icon:'🐴',key:'blockstar_ranch',dims:[128,64,128],col:[214,160,90],ranch:true,blurb:'Tall snowy mountains, a stable full of horses, wild herds and a trail to the top.'},
   orlando:{name:'Orlando',icon:'🏰',key:'blockstar_city_orl',dims:[160,48,160],col:[90,150,255],city:'orlando',blurb:'Sunshine, palm trees, a lake and a theme-park castle.'},
   mansion:{name:'Thanksgiving Mansion',icon:'🦃',key:'blockstar_mansion',dims:[112,40,112],col:[240,140,60],mansion:true,blurb:'A big mansion on an autumn evening. The whole family is sitting down to Thanksgiving dinner, and there\'s a seat saved for you.'},
+  petshop:{name:'Pet Shop',icon:'🐾',key:'blockstar_petshop',dims:[40,14,40],col:[255,150,80],petshop:true,blurb:'Make your own cat or dog. It follows you everywhere, sits and stays, and guards you from monsters.'},
   odyssey:{name:'Odyssey Sea',icon:'🏛️',key:'blockstar_odyssey',dims:[256,48,256],col:[60,150,255],odyssey:true,blurb:'The sea of Homer\'s Odyssey: Troy and its wooden horse, the Cyclops\'s cave, Circe\'s magic island, the Sirens, Scylla and the whirlpool, and Ithaca, home.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4236,6 +4243,7 @@ function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACE
   if(cp==='drag'){ applyDragSky(); return; }
   if(cp==='mansion'){ applyMansionSky(); return; }
   if(cp==='odyssey'){ odSky('day'); return; }
+  if(cp==='petshop'){ scene.background.setHex(0xfff2e0); scene.fog.color.setHex(0xfff2e0); scene.fog.near=60; scene.fog.far=200; for(const c of clouds)c.visible=false; setWeather('clear'); return; }
   if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
@@ -4285,7 +4293,7 @@ function portalCheck(){ if(demo||traveling||dead||drive)return; const x=Math.flo
   const id=resolveDest(DESTS[g>>1]); if(portalArmed&&id)travel(id); }
 function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpEl.classList.add('on');
   setTimeout(()=>{ try{ const from=place, kit={coins,owned:owned.slice(),weapon,arrows:{...arrows},hp}, carry=drive?{type:drive.type,dmg:drive.dmg||0}:null; if(drive){ const dv=drive; exitVehicle(true,true); removeVehicle(dv); } // your vehicle comes too
-    if(portalSafe)pl.p=portalSafe.slice(); yaw+=Math.PI; saveNow(); // step back out of the doorway and turn round, so you come back facing away from it
+    petsLeaving(); if(portalSafe)pl.p=portalSafe.slice(); yaw+=Math.PI; saveNow(); // step back out of the doorway and turn round, so you come back facing away from it
     place=dest; if(!loadPlace(dest))newPlace(dest,from);
     if(carry){ const f=vFwd(yaw), V=VEH[carry.type], v=makeVehicle(carry.type,pl.p[0]+f[0]*(V.len/2-0.8),pl.p[1],pl.p[2]+f[1]*(V.len/2-0.8),yaw); v.dmg=carry.dmg; vehList().push(v); enterVehicle(v,true); }
     coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=kit.hp; refreshWeapon(); updateHUD(); refreshArrowBtn(); // your coins and weapons come with you
@@ -4293,12 +4301,12 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest; const inner=PLACES[dest].interior; let sp=null;
-  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].odyssey){ generateOdyssey((Math.random()*1e9)|0); pl.p=[64.5,15,176.5]; } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion||!!PLACES[dest].odyssey; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].odyssey){ generateOdyssey((Math.random()*1e9)|0); pl.p=[64.5,15,176.5]; } else if(PLACES[dest].petshop){ generatePetShop((Math.random()*1e9)|0); pl.p=PS.spawn.slice(); } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion||!!PLACES[dest].odyssey||!!PLACES[dest].petshop; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
   if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -4311,7 +4319,7 @@ function openCities(){ if(document.pointerLockElement)document.exitPointerLock()
   $('mbox').querySelectorAll('[data-city]').forEach(b=>onClick(b,()=>goCity(b.dataset.city,false)));
   $('mbox').querySelectorAll('[data-cnew]').forEach(b=>onClick(b,()=>{ if(confirm('Build a brand new '+PLACES[b.dataset.cnew].name+'? Everything you built in this one will be gone.'))goCity(b.dataset.cnew,true); }));
   tap($('cBack'),()=>{ if(titleOn)$('modal').style.display='none'; else closeMenu(); }); }
-function goCity(k,fresh){ const kit={coins,owned:owned.slice(),weapon,arrows:{...arrows}}; if(place!==k)saveNow(); if(fresh)try{ localStorage.removeItem(PLACES[k].key); }catch(e){}
+function goCity(k,fresh){ if(place!==k)petsLeaving(); const kit={coins,owned:owned.slice(),weapon,arrows:{...arrows}}; if(place!==k)saveNow(); if(fresh)try{ localStorage.removeItem(PLACES[k].key); }catch(e){}
   if(place!==k||fresh){ place=k; if(!loadPlace(k))newPlace(k,'survival'); }
   coins=kit.coins; owned=kit.owned; weapon=kit.weapon; arrows=cleanArrows(kit.arrows); hp=MAXHP; refreshWeapon(); updateHUD(); saveNow(); hadSave=true;
   if(titleOn)hideTitle(); applyMode(); closeMenu(); toast(PLACES[k].icon+' Welcome to '+PLACES[k].name+'! A portal back to your Survival world is right behind you.'); }
@@ -5280,7 +5288,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); petsTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -6812,17 +6820,222 @@ OD_CH.od10={secs:40,sky:'sunset',mood:'calm',init(S){ const K=odyK, [cx,cz]=OD.i
 const OD_NAMES=['The Fall of Troy','The Great Voyage','The Land of the Cyclops','Circe and the Pigs','The Sirens','The Underworld','Scylla and Charybdis','The Island of the Sun God',"Calypso's Island",'The Return to Ithaca'];
 function loadOdyssey(){ dmCfg.scenes=OD_NAMES.map((n,i)=>cleanScene({act:'od'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['od'+(i+1)].secs,cap:''})); saveDemo(); }
 
+// ================= PETS =================
+// Make a cat or a dog at the Pet Shop and it follows you everywhere, through portals too (one at a time). Tap it to say Sit,
+// again for Stay, again to call it back. It guards you from monsters (dogs bite harder than cats) and can get hurt: out of
+// hearts, it rests at the Pet Shop for a minute. Walk far away from a pet that's staying and it goes home to the ranch porch
+// (five fit there; the rest go back to the shop, where the clerk keeps a list of all your pets).
+const PET_KEY='blockstar_pets';
+const CAT_COLS=[['Black','#1a1a1e'],['White','#f4f2ee'],['Orange','#e8902a'],['Grey','#8a8c94'],['Cream','#f0dcb0'],['Brown','#6a4428'],['Silver','#c8ccd4'],['Dark grey','#4a4c54']];
+const DOG_COLS=[['Black','#1c1c1e'],['White','#f4f2ee'],['Brown','#6a4428'],['Chocolate','#4a2e1a'],['Golden','#d8a040'],['Yellow','#ecd29a'],['Grey','#8a8a90'],['Red','#b0502a'],['Apricot','#f0c890']];
+const CAT_PATS=[['solid','Solid'],['tabby','Tabby stripes'],['tuxedo','Tuxedo'],['spots2','Spotted (2 colors)'],['spots3','Calico (3 colors)']];
+const DOG_PATS=[['solid','Solid'],['belly','Light belly'],['spots2','Spotted (2 colors)'],['spots3','Spotted (3 colors)']];
+const DOG_BREEDS={mixed:{n:'🐕 Mixed breed'},lab:{n:'🦮 Labrador',coat:'short',ears:'flop',size:1,col:['#ecd29a','#f4f2ee','#1c1c1e'],pat:'solid'},golden:{n:'🐕 Golden Retriever',coat:'long',ears:'flop',size:1,col:['#d8a040','#f0d090','#6a4428'],pat:'solid'},
+  poodle:{n:'🐩 Poodle',coat:'curly',ears:'flop',size:0.9,col:['#f4f2ee','#f0c890','#1c1c1e'],pat:'solid'},jack:{n:'🐶 Jack Russell',coat:'short',ears:'fold',size:0.72,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3'},
+  wolf:{n:'🐺 Wolf',coat:'shaggy',ears:'up',size:1.2,col:['#8a8a90','#e0e0d8','#4a4a50'],pat:'belly'}};
+const PET_NAMES=['Max','Bella','Luna','Charlie','Cooper','Daisy','Milo','Lucy','Rocky','Coco','Oreo','Pepper','Shadow','Biscuit','Ziggy','Nala','Bear','Penny','Scout','Mochi','Tigger','Sunny','Pickles','Waffles'];
+let pets={list:[],next:1}, petEnts=[];
+function petsLoad(){ try{ const s=JSON.parse(localStorage.getItem(PET_KEY)||'null'); if(s&&Array.isArray(s.list)){ pets={list:s.list.filter(p=>p&&(p.kind==='cat'||p.kind==='dog')).slice(0,60).map(petClean),next:Math.max(1,s.next|0)}; } }catch(e){} }
+function petsSave(){ if(demo)return; try{ localStorage.setItem(PET_KEY,JSON.stringify(pets)); }catch(e){} }
+function petClean(p){ const cat=p.kind==='cat', hex=/^#[0-9a-f]{6}$/i; const o={id:p.id|0,name:String(p.name||'Pet').slice(0,16),kind:cat?'cat':'dog',coat:(cat?['short','long']:['short','shaggy','long','curly']).includes(p.coat)?p.coat:'short',breed:!cat&&DOG_BREEDS[p.breed]?p.breed:'mixed',
+    col:[0,1,2].map(i=>Array.isArray(p.col)&&hex.test(p.col[i])?p.col[i]:['#e8902a','#f4f2ee','#1a1a1e'][i]),pat:(cat?CAT_PATS:DOG_PATS).some(q=>q[0]===p.pat)?p.pat:'solid',seed:p.seed|0,ears:['flop','up','fold'].includes(p.ears)?p.ears:cat?'up':'flop',size:Math.max(0.6,Math.min(1.3,+p.size||1)),
+    hp:Number.isFinite(p.hp)?p.hp:10,st:['follow','sit','stay','porch','shop','rest'].includes(p.st)?p.st:'shop',w:typeof p.w==='string'?p.w:null,at:Array.isArray(p.at)?p.at.slice(0,3).map(Number):null,rest:+p.rest||0,t:+p.t||0};
+  o.max=o.kind==='cat'?6:o.breed==='wolf'?14:10; o.hp=Math.max(0,Math.min(o.max,o.hp)); return o; }
+// --- the look: a blocky cat or dog, its coat colored and patterned with a little texture
+function petTex(p){ const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'), r=mulberry32(p.seed||1); x.fillStyle=p.col[0]; x.fillRect(0,0,16,16);
+  if(p.pat==='tabby'){ x.fillStyle=p.col[1]; for(let y=1;y<16;y+=4)x.fillRect(0,y,16,2); }
+  if(p.pat==='spots2'||p.pat==='spots3'){ for(let i=0;i<(p.pat==='spots3'?7:5);i++){ x.fillStyle=p.col[p.pat==='spots3'?1+(i%2):1]; const w=2+Math.floor(r()*5), h=2+Math.floor(r()*4); x.fillRect(Math.floor(r()*16)-1,Math.floor(r()*16)-1,w,h); } }
+  const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
+function petMesh(p){ const g=new THREE.Group(), cat=p.kind==='cat', s=(cat?0.72:1)*p.size, tex=petTex(p), M=new THREE.MeshLambertMaterial({map:tex}), C2=new THREE.MeshLambertMaterial({color:p.col[1]}), dk=new THREE.MeshLambertMaterial({color:0x1a1210}),
+    fluffy=p.coat==='long'||p.coat==='shaggy', curly=p.coat==='curly', add=(par,w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); par.add(b); return b; };
+  const legH=(cat?0.24:0.34)*s, bw=(cat?0.3:0.42)*s, bh=(cat?0.28:0.38)*s, bl=(cat?0.62:0.88)*s, by=legH+bh/2;
+  const body=new THREE.Group(); body.position.y=by; g.add(body); add(body,bw,bh,bl,M,0,0,0);
+  if(p.pat==='belly'||p.pat==='tuxedo')add(body,bw*0.9,bh*0.3,bl*0.8,C2,0,-bh*0.38,-0.02);
+  if(fluffy){ for(const sx of[-1,1])add(body,0.06*s,bh*0.5,bl*0.9,M,sx*(bw/2+0.02),-bh*0.3,0); add(body,bw*1.08,bh*0.35,bl*0.95,M,0,-bh*0.5,0); if(p.coat==='shaggy')add(body,bw*1.15,bh*0.4,bl*0.4,M,0,bh*0.1,-bl*0.32); }
+  if(curly){ add(body,bw*1.25,bh*1.15,bl*0.45,M,0,0.02,-bl*0.25); }
+  const legs=[]; for(const [lx,lz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const L=new THREE.Group(); L.position.set(lx*bw*0.32,legH,lz*bl*0.36); g.add(L); add(L,0.12*s,legH,0.12*s,p.pat==='tuxedo'?C2:M,0,-legH/2,0); if(curly){ const pf=msph(L,0.09*s,M,0,-legH*0.8,0); } legs.push(L); }
+  const head=new THREE.Group(); head.position.set(0,by+bh*0.45,-bl/2-0.02*s); g.add(head); const hs=(cat?0.3:0.36)*s; add(head,hs,hs*0.92,hs*0.95,M,0,0,-hs*0.35);
+  if(!cat){ add(head,hs*0.55,hs*0.45,hs*0.55,p.pat==='belly'?C2:M,0,-hs*0.18,-hs*0.95); add(head,0.09*s,0.07*s,0.05*s,dk,0,-hs*0.05,-hs*1.24); } else { add(head,hs*0.45,hs*0.3,0.06*s,p.pat==='tuxedo'?C2:M,0,-hs*0.22,-hs*0.84); add(head,0.05*s,0.04*s,0.03*s,new THREE.MeshLambertMaterial({color:0xff8aa0}),0,-hs*0.12,-hs*0.87); }
+  for(const sx of[-1,1]){ add(head,0.05*s,0.06*s,0.03*s,dk,sx*hs*0.22,hs*0.12,-hs*0.83); }
+  if(cat){ for(const sx of[-1,1]){ const e=new THREE.Mesh(new THREE.ConeGeometry(0.07*s,0.13*s,4),M); e.position.set(sx*hs*0.3,hs*0.5,-hs*0.3); e.rotation.y=Math.PI/4; head.add(e); } for(const sx of[-1,1])for(const dy of [-0.02,0.02])add(head,0.22*s,0.01,0.01,new THREE.MeshBasicMaterial({color:0xf2f2f2}),sx*hs*0.42,-hs*0.2+dy,-hs*0.82);
+    if(p.coat==='long')add(head,hs*1.2,hs*0.5,hs*0.5,M,0,-hs*0.35,-hs*0.05); }
+  else { const ears=p.ears||DOG_BREEDS[p.breed].ears||'flop'; for(const sx of[-1,1]){ if(ears==='up'){ const e=new THREE.Mesh(new THREE.ConeGeometry(0.08*s,0.18*s,4),M); e.position.set(sx*hs*0.3,hs*0.58,-hs*0.25); e.rotation.y=Math.PI/4; head.add(e); }
+      else { const e=add(head,0.07*s,(ears==='fold'?0.12:fluffy||curly?0.3:0.22)*s,0.14*s,curly?M:M,sx*hs*0.52,ears==='fold'?hs*0.35:hs*0.02,-hs*0.3); e.rotation.z=sx*(ears==='fold'?-0.6:0.12); } }
+    if(curly)msph(head,hs*0.42,M,0,hs*0.55,-hs*0.3); if(p.coat==='shaggy')add(head,hs*1.1,hs*0.3,hs*0.6,M,0,hs*0.45,-hs*0.3); }
+  const tail=new THREE.Group(); tail.position.set(0,by+bh*0.3,bl/2); g.add(tail); const tl=(cat?0.45:0.32)*s, tw=(fluffy?0.14:cat?0.06:0.08)*s; const tb=add(tail,tw,tw,tl,M,0,0,tl/2); tail.rotation.x=cat?-1.1:-0.6; if(curly)msph(tail,0.11*s,M,0,0,tl);
+  if(cat){ const t2=new THREE.Group(); t2.position.set(0,0,tl); tail.add(t2); add(t2,tw,tw,tl*0.6,M,0,0,tl*0.3); t2.rotation.x=0.8; }
+  return {g,body,head,legs,tail,legH,s,h:by+bh/2+hs*0.6,mat:M}; }
+// --- pets in the world
+function petSpawn(p,x,y,z,mode){ const m=petMesh(p); scene.add(m.g); const e={pet:p,M:m,p:[x,y,z],v:[0,0,0],kb:[0,0,0],hw:0.25,h:0.6,onGround:false,wall:false,hd:Math.random()*6,yo:0,mode:mode||p.st,wag:0,ph:Math.random()*6,bite:0,hurtT:0,t:Math.random()*5,regen:0};
+  unstick(e); m.g.position.set(e.p[0],e.p[1],e.p[2]); petEnts.push(e); return e; }
+function petDespawn(e){ scene.remove(e.M.g); e.M.g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); if(e.M.mat.map)e.M.mat.map.dispose(); const i=petEnts.indexOf(e); if(i>=0)petEnts.splice(i,1); }
+function petsClear(){ for(const e of petEnts.slice())if(!e.pet.sample)petDespawn(e); } // (the shop's own pets stay)
+const PORCH=[[81.5,111.8],[81.5,113.4],[81.5,115],[82.9,112.6],[82.9,114.2]]; // beside the farmhouse, by the rocking chair
+function petFollower(){ return pets.list.find(p=>p.st==='follow'||(p.st==='sit'&&p.w===place)||(p.st==='stay'&&p.w===place)); }
+// when a world loads: your pet (following, or sitting/staying here), and the porch pets on the ranch, and the shop's pets
+function petsWorldEnter(){ petsClear(); if(demo)return; petsPorchCheck(); const here=curPlace();
+  for(const p of pets.list){ if(p.st==='follow'){ const f=vFwd(yaw); const x=pl.p[0]-f[0]*1.6+0.5, z=pl.p[2]-f[1]*1.6; petSpawn(p,x,pl.p[1]+0.2,z,'follow'); }
+    else if((p.st==='sit'||p.st==='stay')&&p.w===here&&p.at)petSpawn(p,p.at[0],p.at[1],p.at[2],p.st); }
+  if(here==='ranch'&&ranchK)pets.list.filter(p=>p.st==='porch').forEach((p,i)=>{ const s=PORCH[i%5]; petSpawn(p,s[0],FY,s[1],'porch'); });
+  if(here==='petshop'){ pets.list.filter(p=>p.st==='shop'||p.st==='rest').forEach((p,i)=>{ const sp=p.st==='rest'?PS.beds[i%PS.beds.length]:[PS.pen.x0+2+Math.random()*(PS.pen.x1-PS.pen.x0-4),PS.pen.z0+2+Math.random()*(PS.pen.z1-PS.pen.z0-4)]; petSpawn(p,sp[0],1,sp[1],p.st); }); } }
+// leaving a world: a sitting pet comes too; a staying pet goes home to the porch
+function petsLeaving(){ if(demo)return; for(const p of pets.list){ if(p.st==='sit'&&p.w===place){ p.st='follow'; p.w=null; } else if(p.st==='stay'&&p.w===place){ p.st='porch'; p.w=null; p.at=null; } } petsPorchCheck(); petsSave(); }
+function petsPorchCheck(){ const porch=pets.list.filter(p=>p.st==='porch').sort((a,b)=>a.t-b.t); while(porch.length>5){ const p=porch.shift(); p.st='shop'; toast('🏠 '+p.name+' went back to the Pet Shop to play (the porch only fits five).'); } }
+function petSetFollower(p){ for(const q of pets.list)if(q!==p&&(q.st==='follow'||((q.st==='sit'||q.st==='stay')&&q.w))){ const e=petEnts.find(x=>x.pet===q); q.st='porch'; q.w=null; q.at=null; q.t=Date.now(); if(e)petGoHome(e,true); }
+  p.st='follow'; p.w=null; p.at=null; petsPorchCheck(); petsSave(); }
+function petGoHome(e,quiet){ const p=e.pet; if(curPlace()==='ranch'&&ranchK){ const i=pets.list.filter(q=>q.st==='porch').indexOf(p), s=PORCH[Math.max(0,i)%5]; e.mode='home'; e.home=[s[0],s[1]]; }
+  else { odPoofPet(e); petDespawn(e); } if(!quiet)toast('🏠 '+p.name+' heads home to the ranch porch.'); }
+function odPoofPet(e){ for(let k=0;k<2;k++)burst(e.p[0]-0.5,e.p[1]+0.3,e.p[2]-0.5,new THREE.Color(0xffffff),8); }
+// sounds
+function petSnd(p,k){ if(!AC||!sfxOn)return; try{ const cat=p.kind==='cat', big=p.size>1.05;
+  if(k==='talk'){ if(cat){ tone('sine',620,880,0.18,0.07); tone('sine',880,560,0.22,0.06,0.18); } else { const f=big?260:p.size<0.8?620:420; tone('square',f,f*0.7,0.09,0.08); tone('square',f*1.05,f*0.72,0.09,0.08,0.14); } }
+  if(k==='fight'){ if(cat)noise(3200,0.35,0.15,'highpass'); else { tone('sawtooth',big?150:230,big?90:140,0.25,0.1); noise(500,0.2,0.1,'lowpass'); } }
+  if(k==='hurt')tone('sine',1100,1500,0.15,0.08); }catch(er){} }
+// tap a pet: Sit, then Stay, then Come (porch and shop pets come with you)
+function petTap(e){ const p=e.pet; if(p.sample){ toast('🐾 That pet lives at the shop. Talk to the clerk to make your very own!'); petSnd(p,'talk'); e.wag=1.5; return; } if(p.st==='rest'){ toast('😴 '+p.name+' is resting. Ready in '+Math.max(1,Math.ceil((p.rest-Date.now())/1000))+' seconds.'); return; }
+  if(p.st==='porch'||p.st==='shop'){ petSetFollower(p); e.mode='follow'; toast((p.kind==='cat'?'🐱 ':'🐶 ')+p.name+' is coming with you!'); petSnd(p,'talk'); return; }
+  if(p.st==='follow'){ p.st='sit'; p.w=curPlace(); heroSay('Sit!'); } else if(p.st==='sit'){ p.st='stay'; heroSay('Stay!'); } else { p.st='follow'; p.w=null; p.at=null; heroSay('Come!'); }
+  e.mode=p.st; p.at=[e.p[0],e.p[1],e.p[2]]; e.wag=1.2; petSnd(p,'talk'); petsSave(); }
+let heroBub=null; function heroSay(t){ const o=heroBub||(heroBub={g:model}); npcSay(o,t); }
+function petAim(){ const rc=new THREE.Raycaster(); rc.setFromCamera({x:0,y:0},camera); rc.far=6+(camMode===3?camDist:0); let best=null, bd=1e9; for(const e of petEnts){ const h=rc.intersectObject(e.M.g,true)[0]; if(h&&h.distance<bd){ bd=h.distance; best=e; } } return best; }
+function petTapAim(){ if(demo&&!demo.user)return false; const e=petAim(); if(!e)return false; petTap(e); return true; }
+function petAction(){ if(demo&&!demo.user)return null; if(curPlace()==='petshop'&&Math.hypot(pl.p[0]-PS.clerk[0],pl.p[2]-(PS.clerk[1]+2.2))<2.6)return {label:'💬 Talk to the clerk',fn:()=>openPetShop('make')};
+  let best=null, bd=1.8; for(const e of petEnts){ const d=Math.hypot(pl.p[0]-e.p[0],pl.p[2]-e.p[2]); if(d<bd){ bd=d; best=e; } } if(!best||best.pet.sample)return null; const p=best.pet, ic=p.kind==='cat'?'🐱':'🐶';
+  const lab=p.st==='follow'?'Sit':p.st==='sit'?'Stay':p.st==='stay'?'Come':p.st==='rest'?'Resting…':'Come with me'; return {label:ic+' '+p.name+': '+lab,fn:()=>petTap(best)}; }
+// --- every frame: following, sitting, staying, guarding, the porch and the shop
+function petsTick(dt){ if(heroBub&&heroBub.bubT>0){ heroBub.bubT-=dt; if(heroBub.bubT<=0&&heroBub.bub){ model.remove(heroBub.bub); heroBub.bub=null; } }
+  for(const p of pets.list)if(p.st==='rest'&&Date.now()>=p.rest){ p.st='shop'; p.hp=p.max; petsSave(); const e=petEnts.find(x=>x.pet===p); if(e)e.mode='shop'; if(!demo)toast('💚 '+p.name+' is all rested! Pick them up at the Pet Shop.'); }
+  for(const e of petEnts.slice())petTick(e,dt); }
+function petTick(e,dt){ const p=e.pet, M=e.M; e.t+=dt; if(e.bubT>0){ e.bubT-=dt; if(e.bubT<=0&&e.bub){ M.g.remove(e.bub); e.bub=null; } }
+  const hero=e.demoHero||pl.p, dx=hero[0]-e.p[0], dz=hero[2]-e.p[2], d=Math.hypot(dx,dz); let spd=0, want=e.hd, pose='stand';
+  // guard: a monster near you (or the pet) gets chased and bitten
+  if(e.mode==='follow'||e.mode==='fight'){ let tg=null, td=12; for(const m of mobs){ const a=Math.hypot(m.p[0]-hero[0],m.p[2]-hero[2]), b=Math.hypot(m.p[0]-e.p[0],m.p[2]-e.p[2]); if(Math.min(a,b)<td&&m.hp>0){ td=Math.min(a,b); tg=m; } }
+    if(tg){ e.mode='fight'; e.tg=tg; } else if(e.mode==='fight')e.mode='follow'; }
+  if(e.mode==='fight'){ const m=e.tg, mx=m.p[0]-e.p[0], mz=m.p[2]-e.p[2], md=Math.hypot(mx,mz); want=Math.atan2(-mx,-mz); e.wag=0;
+    if(md>1.1){ spd=Math.min(7,3+md); } else { e.bite-=dt; if(e.bite<=0){ e.bite=0.85; const dmg=p.kind==='cat'?1:p.breed==='wolf'?3:p.size<0.8?1.5:2; damageMob(m,dmg,mx,mz,4); petSnd(p,'fight'); e.lunge=0.25; }
+      e.hurtCD=(e.hurtCD||0)-dt; if(e.hurtCD<=0){ e.hurtCD=1.1; if(Math.random()<0.35){ p.hp-=m.t.dmg; e.hurtT=0.4; e.kb[0]=-mx/md*5; e.kb[2]=-mz/md*5; petSnd(p,'hurt'); if(p.hp<=0){ petFaint(e); return; } } } } }
+  else if(e.mode==='follow'){ if(d>28&&!e.demoHero){ const f=vFwd(yaw); e.p=[hero[0]-f[0]*1.6,hero[1]+0.3,hero[2]-f[1]*1.6]; e.v=[0,0,0]; } if(d>2.4){ spd=Math.min(7.5,1.8+d*0.9); want=Math.atan2(-dx,-dz); }
+    else if(d<1.2){ spd=-0.8; want=Math.atan2(-dx,-dz); } e.wag=spd>0.5?1:Math.max(0,e.wag-dt*0.6); e.regen+=dt; if(e.regen>8){ e.regen=0; p.hp=Math.min(p.max,p.hp+1); } }
+  else if(e.mode==='sit'||e.mode==='stay'){ pose='sit'; if(d<10)want=Math.atan2(-dx,-dz); if(!e.demoHero&&d>40){ if(e.mode==='stay'){ p.st='porch'; p.w=null; p.at=null; p.t=Date.now(); petsPorchCheck(); petsSave(); petGoHome(e); return; } else { e.mode='follow'; p.st='follow'; p.w=null; petsSave(); } } }
+  else if(e.mode==='home'){ const hx=e.home[0]-e.p[0], hz=e.home[1]-e.p[2], hd=Math.hypot(hx,hz); if(hd>0.6){ spd=Math.min(5,1+hd); want=Math.atan2(-hx,-hz); } else { e.mode='porch'; } }
+  else if(e.mode==='porch'){ pose=Math.sin(e.t*0.2+e.ph)>0.3?'lie':'sit'; want=Math.PI/2+Math.sin(e.t*0.3+e.ph)*0.6; if(Math.random()<dt*0.12)e.wag=1.4; }
+  else if(e.mode==='rest'){ pose='lie'; }
+  else if(e.mode==='shop'){ e.wT=(e.wT||0)-dt; if(e.wT<=0){ e.wT=2+Math.random()*4; e.wto=Math.random()<0.6?[PS.pen.x0+1.5+Math.random()*(PS.pen.x1-PS.pen.x0-3),PS.pen.z0+1.5+Math.random()*(PS.pen.z1-PS.pen.z0-3)]:null; }
+    if(e.wto){ const wx=e.wto[0]-e.p[0], wz=e.wto[1]-e.p[2], wd=Math.hypot(wx,wz); if(wd>0.5){ spd=2.2; want=Math.atan2(-wx,-wz); e.wag=1; } else e.wto=null; } else pose=Math.sin(e.t*0.4+e.ph)>0.5?'sit':'stand'; }
+  const px=e.p[0], pz=e.p[2]; turnAnimal(e,want,dt,spd>0?7:3); moveAnimal(e,dt,spd); e.wag=Math.max(0,e.wag-dt*0.15);
+  e.stuck=spd>1&&Math.hypot(e.p[0]-px,e.p[2]-pz)<spd*dt*0.25?(e.stuck||0)+dt:0; // stuck behind a wall: hop over to you (or to the porch)
+  if(e.stuck>1.6){ e.stuck=0; odPoofPet(e); if(e.mode==='home'){ e.p=[e.home[0],FY,e.home[1]]; e.mode='porch'; } else if(e.mode==='follow'&&!e.demoHero){ const f=vFwd(yaw); e.p=[pl.p[0]-f[0]*1.5,pl.p[1]+0.3,pl.p[2]-f[1]*1.5]; unstick(e); } e.v=[0,0,0]; }
+  // the model: walking legs, the wagging tail, sitting and lying down
+  const g=M.g; g.position.set(e.p[0],e.p[1]+e.yo,e.p[2]); g.rotation.y=e.hd+(e.lunge>0?0:0); if(e.lunge>0){ e.lunge-=dt; g.position.x+=-Math.sin(e.hd)*e.lunge*0.8; g.position.z+=-Math.cos(e.hd)*e.lunge*0.8; }
+  e.ph+=dt*Math.abs(spd)*3.2; const sw=Math.abs(spd)>0.3?Math.sin(e.ph)*0.6:0; M.legs[0].rotation.x=M.legs[3].rotation.x=sw; M.legs[1].rotation.x=M.legs[2].rotation.x=-sw;
+  M.tail.rotation.y=e.wag>0.05?Math.sin(e.t*(p.kind==='cat'?5:16))*0.6*Math.min(1,e.wag):Math.sin(e.t*1.5)*0.08;
+  const sit=pose==='sit', lie=pose==='lie'; M.body.rotation.x=sit?-0.45:0; M.body.position.y=(lie?M.legH*0.35:sit?M.legH*0.8:M.legH)+(M.body.children[0].geometry.parameters.height/2);
+  M.legs[2].rotation.x=M.legs[3].rotation.x=sit?-1.3:lie?-1.4:M.legs[2].rotation.x; if(lie){ M.legs[0].rotation.x=M.legs[1].rotation.x=-1.4; } M.legs.forEach((L,i)=>L.position.y=lie?M.legH*0.3:sit&&i>1?M.legH*0.5:M.legH);
+  M.head.position.y=M.body.position.y+(M.body.children[0].geometry.parameters.height)*0.45+(sit?0.06:0); M.tail.position.y=M.body.position.y-(sit?0.1:0)+0.02;
+  if(e.hurtT>0){ e.hurtT-=dt; M.g.visible=Math.floor(e.hurtT*20)%2===0; } else M.g.visible=true; }
+function petFaint(e){ const p=e.pet; p.hp=0; odPoofPet(e); if(e.demo){ petDespawn(e); return; } p.st='rest'; p.w=null; p.at=null; p.rest=Date.now()+60000; petsSave(); petDespawn(e); toast('🤕 '+p.name+' is hurt and goes to rest at the Pet Shop. Ready in 1 minute.'); }
+
+// --- the Pet Shop: a bright store with the clerk at the counter, a play pen, and a pet hotel where hurt pets rest
+const PS={clerk:[20,7.6],pen:{x0:3,x1:14,z0:14,z1:30},beds:[[30,15.5],[33,15.5],[36,15.5],[30,19],[33,19],[36,19]],spawn:[20.5,1,33.5]};
+function generatePetShop(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
+  const P=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, F=(x0,y0,z0,x1,y1,z1,id)=>{ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)P(x,y,z,id); };
+  F(0,0,0,39,0,39,ID.quartz); for(let x=0;x<40;x++)for(let z=0;z<40;z++)if((x+z)%2)P(x,0,z,ID.paint_white);
+  F(0,1,0,39,6,0,ID.paint_white); F(0,1,39,39,6,39,ID.paint_white); F(0,1,0,0,6,39,ID.paint_white); F(39,1,0,39,6,39,ID.paint_white); F(0,7,0,39,7,39,ID.paint_white);
+  for(const z of [0,39])for(let x=3;x<37;x+=5)F(x,3,z,x+2,4,z,ID.glass); for(const x of [0,39])for(let z=3;z<37;z+=5)F(x,3,z,x,4,z+2,ID.glass);
+  F(14,1,9,26,1,10,ID.quartz); F(14,2,9,26,2,10,ID.planks); // the counter
+  const pn=PS.pen; F(pn.x0,0,pn.z0,pn.x1,0,pn.z1,ID.grass); for(let x=pn.x0;x<=pn.x1;x++){ P(x,1,pn.z0,ID.glass); P(x,1,pn.z1,ID.glass); } for(let z=pn.z0;z<=pn.z1;z++){ P(pn.x0,1,z,ID.glass); if(z<21||z>23)P(pn.x1,1,z,ID.glass); } // the play pen (with a gate)
+  F(28,0,13,37,0,21,ID.paint_blue); }
+let psK=null;
+function buildPetShopLife(){ clearPetShopLife(); const root=new THREE.Group(); scene.add(root); psK={root,samples:[],t:0};
+  const clerk=odPerson(root,PS.clerk[0],1,PS.clerk[1],Math.PI,odLook({top:'tee',topC:'#3ab04a'}),null); const apron=box(0.62,0.8,0.06,mm(0x2a8a3a)); apron.position.set(0,0.75,-0.17); clerk.R.torso.add(apron); psK.clerk=clerk;
+  const sg=canvasTex(512,128); sg.x.fillStyle='#ff8a3a'; sg.x.fillRect(0,0,512,128); sg.x.fillStyle='#fff'; sg.x.font='bold 70px sans-serif'; sg.x.textAlign='center'; sg.x.fillText('🐾 PET SHOP 🐾',256,90); sg.t.needsUpdate=true;
+  const s=new THREE.Mesh(new THREE.PlaneGeometry(10,2.5),new THREE.MeshBasicMaterial({map:sg.t})); s.position.set(20,5,0.55); root.add(s);
+  const hs=labelSprite('🏨 Pet Hotel'); hs.position.set(33,3.5,13); root.add(hs); const pens=labelSprite('🐾 Play Pen'); pens.position.set(8.5,3.2,22); root.add(pens);
+  // the hotel's beds, the pen's cat tree, toys, and shelves of food and treats
+  for(const [x,z] of PS.beds){ const b=grp(root,x,1,z); mcyl(b,0.75,0.7,0.25,mm(0x8a3ac8),0,0.12,0,14); mcyl(b,0.6,0.6,0.27,mm(0xf2e6ff),0,0.14,0,14); }
+  { const ct=grp(root,5,1,16); mcyl(ct,0.18,0.18,2.6,mm(0xd8b078),0,1.3,0,8); for(const [y,r2] of [[0.7,0.7],[1.5,0.55],[2.6,0.6]])mcyl(ct,r2,r2,0.12,mm(0x8a6a4a),0,y,0,12); mb(ct,0.7,0.45,0.7,mm(0x8a6a4a),0.6,0.22,0.5); }
+  for(let i=0;i<6;i++)msph(root,0.18,mm([0xd82a2a,0x2a6ad8,0xf2c21a,0x3ad84a,0xff5ab0,0xff8a1a][i]),5+i*1.6,1.18,26+(i%2)*1.4);
+  for(let k=0;k<3;k++){ const sh=grp(root,38.4,1,6+k*8,-Math.PI/2); mb(sh,4,3,0.6,mm(0xf2eedc),0,1.5,0); for(let j=0;j<3;j++)for(let i=0;i<5;i++)mb(sh,0.5,0.6,0.35,mm([0xd82a2a,0x2a6ad8,0xf2c21a,0x3ad84a,0x8a3ac8][(i+j+k)%5]),-1.6+i*0.8,0.5+j*0.95,-0.15); }
+  // sample pets playing in the pen (not yours: make your own with the clerk)
+  for(let i=0;i<5;i++){ const p=petRandom(); p.sample=true; p.st='shop'; const e=petSpawn(p,PS.pen.x0+2+Math.random()*8,1,PS.pen.z0+2+Math.random()*12,'shop'); psK.samples.push(e); } }
+function clearPetShopLife(){ if(!psK)return; for(const e of psK.samples)petDespawn(e); scene.remove(psK.root); psK.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); psK=null; }
+function petRandom(kind){ const cat=kind?kind==='cat':Math.random()<0.5, pick=a=>a[Math.floor(Math.random()*a.length)], cols=cat?CAT_COLS:DOG_COLS;
+  if(!cat&&Math.random()<0.5){ const b=pick(['lab','golden','poodle','jack','wolf']), B=DOG_BREEDS[b]; return petClean({kind:'dog',breed:b,coat:B.coat,ears:B.ears,size:B.size,col:B.col.map((c,i)=>i===0&&b==='lab'?pick(['#ecd29a','#1c1c1e','#4a2e1a']):c),pat:B.pat,seed:Math.random()*1e9|0,name:pick(PET_NAMES)}); }
+  return petClean({kind:cat?'cat':'dog',breed:'mixed',coat:pick(cat?['short','long']:['short','shaggy','long']),ears:cat?'up':pick(['flop','up','fold']),size:cat?1:0.8+Math.random()*0.3,col:[0,1,2].map(()=>pick(cols)[1]),pat:pick(cat?CAT_PATS:DOG_PATS)[0],seed:Math.random()*1e9|0,name:pick(PET_NAMES)}); }
+// --- the pet maker: a live, spinning 3D preview while you pick everything
+let pmR=null, pmScene=null, pmCam=null, pmMesh=null, pmDraft=null, pmLoop=false;
+function pmPreview(){ const cv=$('pmCv'); if(!cv)return; if(!pmR){ pmScene=new THREE.Scene(); pmCam=new THREE.PerspectiveCamera(35,cv.width/cv.height,0.1,50); pmCam.position.set(0,0.9,2.6); pmCam.lookAt(0,0.35,0);
+    pmScene.add(new THREE.HemisphereLight(0xffffff,0x8a7a6a,1.0)); const dl=new THREE.DirectionalLight(0xffffff,0.6); dl.position.set(2,3,2); pmScene.add(dl); const fl=new THREE.Mesh(new THREE.CircleGeometry(1.1,28),new THREE.MeshLambertMaterial({color:0xf2e6c4})); fl.rotation.x=-Math.PI/2; pmScene.add(fl); }
+  if(!pmR||pmR.domElement!==cv){ if(pmR)pmR.dispose(); pmR=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); pmR.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); pmR.setSize(cv.width,cv.height,false); }
+  if(pmMesh){ pmScene.remove(pmMesh.g); pmMesh.g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); } pmMesh=petMesh(pmDraft); pmMesh.tail.rotation.y=0; pmScene.add(pmMesh.g); const k=0.75/Math.max(0.5,pmMesh.h); pmMesh.g.scale.setScalar(Math.min(1.6,k*1.2));
+  if(!pmLoop){ pmLoop=true; const tick=()=>{ if(!$('pmCv')||$('modal').style.display==='none'){ pmLoop=false; return; } if(pmMesh){ pmMesh.g.rotation.y+=0.015; pmMesh.tail.rotation.y=Math.sin(performance.now()/90)*0.5; } pmR.render(pmScene,pmCam); requestAnimationFrame(tick); }; tick(); } }
+function openPetShop(tab){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; if(!pmDraft)pmDraft=petRandom('dog'); const d=pmDraft, cat=d.kind==='cat';
+  const chip=(k,v,l,on,bg)=>'<button class="ibtn'+(on?'':' gray')+'" data-'+k+'="'+v+'"'+(bg?' style="background:'+bg+';color:'+(/^#(f|e|d)/i.test(bg)?'#222':'#fff')+';'+(on?'outline:3px solid #ffcf4a;':'')+'"':'')+'>'+l+'</button>';
+  let h='<h2>🐾 Pet Shop</h2><div class="chips" style="margin-bottom:8px">'+chip('tab','make','🎨 Make a pet',tab==='make')+chip('tab','mine','🏠 Your pets ('+pets.list.length+')',tab==='mine')+'</div>';
+  if(tab==='make'){ const cols=cat?CAT_COLS:DOG_COLS, pats=cat?CAT_PATS:DOG_PATS, need2=d.pat!=='solid', need3=d.pat==='spots3';
+    h+='<div class="say">"Hi! Let\'s make your new best friend. They\'re free, and they\'ll follow you everywhere."</div><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start"><canvas id="pmCv" width="260" height="200" style="background:linear-gradient(#fff8ec,#f2e6c4);border-radius:12px;flex:0 0 auto;max-width:100%"></canvas><div style="flex:1;min-width:220px">';
+    h+='<b>Pet</b><div class="chips">'+chip('kind','cat','🐱 Cat',cat)+chip('kind','dog','🐶 Dog',!cat)+'</div>';
+    if(!cat)h+='<b>Breed</b><div class="chips">'+Object.entries(DOG_BREEDS).map(([k,b])=>chip('breed',k,b.n,d.breed===k)).join('')+'</div>';
+    h+='<b>Coat</b><div class="chips">'+(cat?[['short','Short hair'],['long','Long hair']]:[['short','Short hair'],['shaggy','Shaggy'],['long','Long hair']].concat(d.breed==='poodle'?[['curly','Poodle curls']]:[])).map(([k,l])=>chip('coat',k,l,d.coat===k)).join('')+'</div>';
+    if(!cat)h+='<b>Ears</b><div class="chips">'+[['flop','Floppy'],['up','Pointy'],['fold','Folded']].map(([k,l])=>chip('ears',k,l,d.ears===k)).join('')+'</div>';
+    h+='<b>Main color</b><div class="chips">'+cols.map(([n,c])=>chip('c0',c,n,d.col[0]===c,c)).join('')+'</div><b>Pattern</b><div class="chips">'+pats.map(([k,l])=>chip('pat',k,l,d.pat===k)).join('')+'</div>';
+    if(need2)h+='<b>'+(d.pat==='tuxedo'||d.pat==='belly'?'Chest and paws':'Second color')+'</b><div class="chips">'+cols.map(([n,c])=>chip('c1',c,n,d.col[1]===c,c)).join('')+'</div>';
+    if(need3)h+='<b>Third color</b><div class="chips">'+cols.map(([n,c])=>chip('c2',c,n,d.col[2]===c,c)).join('')+'</div>';
+    h+='<div class="chips" style="margin:8px 0">'+(d.pat.slice(0,5)==='spots'?'<button class="ibtn" id="pmRoll">🎲 Roll new spots</button>':'')+'<button class="ibtn" id="pmSurprise">🎲 Surprise me</button></div>';
+    h+='<div class="fld">Name<input id="pmName" maxlength="16" value="'+esc(d.name)+'"></div></div></div><div class="row"><button class="mbtn gold" id="pmAdopt">🐾 Take '+esc(d.name)+' home!</button><button class="mbtn gray" id="pmBack">Close</button></div>'; }
+  else { h+='<div class="say">Your pets. Pick one to come to you (one follows you at a time). Hurt pets rest in the Pet Hotel for a minute.</div>';
+    if(!pets.list.length)h+='<div class="say">No pets yet. Make one in 🎨 Make a pet!</div>';
+    for(const p of pets.list){ const where={follow:'Following you',sit:'Sitting',stay:'Staying put',porch:'On the ranch porch',shop:'Playing at the shop',rest:'Resting ('+Math.max(0,Math.ceil((p.rest-Date.now())/1000))+'s)'}[p.st];
+      h+='<div class="item"><div class="ic">'+(p.kind==='cat'?'🐱':'🐶')+'</div><div class="tx"><b>'+esc(p.name)+'</b><div class="fx">'+(p.kind==='cat'?'Cat':DOG_BREEDS[p.breed].n.replace(/^\S+ /,''))+' · '+where+' · ❤️ '+Math.ceil(p.hp)+'/'+p.max+'</div></div>'+
+        (p.st==='rest'?'':'<button class="ibtn" data-come="'+p.id+'">📣 Come here</button>')+'<button class="ibtn gray" data-ren="'+p.id+'">✏️</button><button class="ibtn gray" data-bye="'+p.id+'">👋</button></div>'; }
+    h+='<div class="row"><button class="mbtn gray" id="pmBack">Close</button></div>'; }
+  $('mbox').innerHTML=h; $('modal').style.display='flex'; const redo=()=>openPetShop(tab);
+  $('mbox').querySelectorAll('[data-tab]').forEach(b=>onClick(b,()=>openPetShop(b.dataset.tab))); tap($('pmBack'),()=>{ closeMenu(); });
+  if(tab==='make'){ pmPreview(); const nm=$('pmName'); nm.addEventListener('input',()=>{ d.name=nm.value.slice(0,16)||'Pet'; });
+    const set=(k,f)=>$('mbox').querySelectorAll('[data-'+k+']').forEach(b=>onClick(b,()=>{ f(b.dataset[k]); pmDraft=petClean(pmDraft); pmDraft.name=d.name; redo(); }));
+    set('kind',v=>{ if(v!==d.kind){ pmDraft=petRandom(v); pmDraft.name=d.name; } }); set('breed',v=>{ const B=DOG_BREEDS[v]; d.breed=v; if(B.coat){ d.coat=B.coat; d.ears=B.ears; d.size=B.size; d.col=B.col.slice(); d.pat=B.pat; } else d.size=1; });
+    set('coat',v=>d.coat=v); set('ears',v=>d.ears=v); set('pat',v=>d.pat=v); set('c0',v=>d.col[0]=v); set('c1',v=>d.col[1]=v); set('c2',v=>d.col[2]=v);
+    if($('pmRoll'))onClick($('pmRoll'),()=>{ d.seed=Math.random()*1e9|0; redo(); }); onClick($('pmSurprise'),()=>{ pmDraft=petRandom(d.kind); redo(); });
+    onClick($('pmAdopt'),()=>{ const p=petClean(Object.assign({},pmDraft,{id:pets.next++,st:'follow',t:Date.now()})); p.hp=p.max; pets.list.push(p); petSetFollower(p); const ex=petEnts.find(e=>e.pet.st==='follow'&&e.pet!==p); if(ex)petDespawn(ex);
+      petSpawn(p,pl.p[0]+1.2,pl.p[1]+0.2,pl.p[2]+0.8,'follow'); petsSave(); pmDraft=null; closeMenu(); sfx('buy'); toast((p.kind==='cat'?'🐱 ':'🐶 ')+p.name+' is yours! Tap them to say Sit, again for Stay, again to call them.'); petSnd(p,'talk'); }); }
+  else { $('mbox').querySelectorAll('[data-come]').forEach(b=>onClick(b,()=>{ const p=pets.list.find(q=>q.id==b.dataset.come); if(!p)return; petSetFollower(p); const ex=petEnts.find(e=>e.pet===p); if(ex)ex.mode='follow'; else petSpawn(p,pl.p[0]+1,pl.p[1]+0.3,pl.p[2]+1,'follow'); for(const e of petEnts.slice())if(e.pet!==p&&e.pet.st==='porch'&&curPlace()!=='ranch')petDespawn(e); redo(); }));
+    $('mbox').querySelectorAll('[data-ren]').forEach(b=>onClick(b,()=>{ const p=pets.list.find(q=>q.id==b.dataset.ren); const n=p&&prompt('New name for '+p.name+'?',p.name); if(n){ p.name=n.slice(0,16); petsSave(); redo(); } }));
+    $('mbox').querySelectorAll('[data-bye]').forEach(b=>onClick(b,()=>{ const p=pets.list.find(q=>q.id==b.dataset.bye); if(!p||!confirm('Say goodbye to '+p.name+'? They\'ll go live with a nice family.'))return; const e=petEnts.find(x=>x.pet===p); if(e)petDespawn(e); pets.list.splice(pets.list.indexOf(p),1); petsSave(); redo(); })); } }
+// --- Demo Mode: making a pet at the shop, and a day with your dog at the ranch
+function demoPetSetup(sc,P){ petsClear(); if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } clearCityLife(); clearInteriorLife();
+  Object.assign(P,{t:0,done:{},pet:null}); demo.puppet=false; camMode=3;
+  if(sc.act==='petshop'){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demo.vplace='petshop'; demo.petWorld=true; setWorldSize(...PLACES.petshop.dims); generatePetShop(7); rebuildAll(); refreshPortals(); buildPetShopLife(); applyPlaceSky(); pl.p=[20.5,1,31]; yaw=0; }
+  else { demo.petWorld=false; clearPetShopLife(); demo.vplace='ranch'; demo.ranchWorld=true; clearApples(); setWorldSize(...PLACES.ranch.dims); generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); pl.p=[60.5,FY,104.5]; yaw=Math.PI*0.75;
+    const dog=petClean({kind:'dog',breed:'golden',coat:'long',ears:'flop',size:1,col:['#d8a040','#f0d090','#6a4428'],pat:'solid',name:'Sunny',seed:5}); dog.hp=dog.max; P.pet=petSpawn(dog,61.5,FY+0.3,106,'follow'); P.pet.demo=true;
+    [petRandom('cat'),petRandom('dog'),petRandom('dog')].forEach((p,i)=>{ const s=PORCH[i]; const e=petSpawn(p,s[0],FY,s[1],'porch'); e.demo=true; }); } demo.cam=null; }
+function petPilot(dt,P){ P.t+=dt; const t=P.t, walk=(tx,tz,sp)=>{ const dx=tx-pl.p[0], dz=tz-pl.p[2]; if(Math.hypot(dx,dz)<0.4)return {ix:0,iz:0}; yaw=Math.atan2(-dx,-dz); return {ix:0,iz:-(sp||0.6)}; }, at=(tt,k,fn)=>{ if(t>=tt&&!P.done[k]){ P.done[k]=1; fn(); } };
+  if(demo.sc.act==='petshop'){ at(2,'hi',()=>npcSay(psK.clerk,"Let's make your pet!"));
+    if(t>=3&&t<11){ const i=Math.floor((t-3)/1.3); if(i!==P.vi){ P.vi=i; if(P.pet)petDespawn(P.pet); const p=t>9.4?petClean({kind:'dog',breed:'jack',coat:'short',ears:'fold',size:0.72,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3',seed:Math.random()*1e9|0,name:'Ziggy'}):petRandom(); P.pet=petSpawn(p,20.5,3.05,9.5,'sit'); P.pet.demo=true; P.pet.demoHero=[20.5,1,12]; odPoofPet(P.pet); sfx('zap'); } }
+    at(6,'s1',()=>heroSay('Ooh, spots!')); at(10,'s2',()=>heroSay('That one!')); at(11,'adopt',()=>{ P.pet.mode='follow'; P.pet.demoHero=null; P.pet.p=[20.5,1.2,11.5]; sfx('buy'); npcSay(psK.clerk,'Enjoy, Ziggy!'); });
+    at(15.5,'s3',()=>heroSay('Good dog!')); at(19,'sit',()=>{ heroSay('Sit!'); P.pet.mode='sit'; P.pet.wag=1.2; petSnd(P.pet.pet,'talk'); }); at(21.5,'come',()=>{ heroSay('Come!'); P.pet.mode='follow'; });
+    if(t<3)return walk(20.5,12); if(t<11)return {ix:0,iz:0}; if(t<15)return walk(14.5,22); if(t<19)return walk(9,24,0.45); if(t<21.5)return {ix:0,iz:0}; return walk(20,30,0.5); }
+  const e=P.pet; at(6,'sit',()=>{ heroSay('Sit!'); e.mode='sit'; e.wag=1.2; petSnd(e.pet,'talk'); }); at(7.6,'stay',()=>{ heroSay('Stay!'); e.mode='stay'; }); at(11.2,'come',()=>{ heroSay('Come!'); e.mode='follow'; petSnd(e.pet,'talk'); });
+  at(13.5,'mob',()=>{ const x=pl.p[0]+5, z=pl.p[2]-4; P.mob=spawnMob('slime',x,standY(Math.floor(x),Math.floor(z))+0.2,z); }); at(14,'s1',()=>heroSay('Get it!'));
+  at(21,'s2',()=>heroSay('Good dog!')); at(27,'stay2',()=>{ heroSay('Stay on the porch!'); e.mode='porch'; e.p=[PORCH[3][0],e.p[1],PORCH[3][1]]; });
+  if(t<6)return walk(66,98); if(t<8)return {ix:0,iz:0}; if(t<11)return walk(71,93,0.6); if(t<13.5)return {ix:0,iz:0}; if(t<21){ if(P.mob&&P.mob.hp>0)yaw=Math.atan2(-(P.mob.p[0]-pl.p[0]),-(P.mob.p[2]-pl.p[2])); return {ix:0,iz:0}; } if(t<27)return walk(81.6,112.2,0.6); return {ix:0,iz:0}; }
+function petDemoCam(dt){ const P=demo.pil, t=P.t; let want, look;
+  if(demo.sc.act==='petshop'){ if(t<3){ want=new THREE.Vector3(25,4.2,25); look=new THREE.Vector3(pl.p[0],2,pl.p[2]); } else if(t<11.5){ want=new THREE.Vector3(21.9,4.7,12.9); look=new THREE.Vector3(20.5,3.3,9.6); } else { want=new THREE.Vector3(pl.p[0]+3,3.6,pl.p[2]+4.5); look=new THREE.Vector3(pl.p[0],1.4,pl.p[2]); } }
+  else { const e=P.pet; if(t<13.5){ want=new THREE.Vector3(pl.p[0]+4,pl.p[1]+3,pl.p[2]+5); look=new THREE.Vector3((pl.p[0]+e.p[0])/2,pl.p[1]+1,(pl.p[2]+e.p[2])/2); } else if(t<21){ const m=P.mob&&P.mob.hp>0?P.mob.p:e.p; want=new THREE.Vector3(pl.p[0]-3,pl.p[1]+3.4,pl.p[2]+4); look=new THREE.Vector3(m[0],pl.p[1]+0.8,m[2]); }
+    else { want=new THREE.Vector3(87.5,FY+3.5,112.5); look=new THREE.Vector3(83.4,FY+0.8,112.2); } }
+  if(!demo.cam||demo.cam.k!=='pet')demo.cam={k:'pet',p:want.clone(),l:look.clone()}; if(demo.cam.p.distanceTo(want)>10){ demo.cam.p.copy(want); demo.cam.l.copy(look); } else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
+  camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); model.visible=true; }
+
 // ================= START =================
 graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
 { const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'); const r=mulberry32(7);
   for(let yy=0;yy<16;yy++)for(let xx=0;xx<16;xx++){ const v=0.8+r()*0.35; x.fillStyle='rgb('+cl(120*v)+','+cl(88*v)+','+cl(55*v)+')'; x.fillRect(xx,yy,1,1); }
   mudTex=new THREE.CanvasTexture(c); mudTex.magFilter=mudTex.minFilter=THREE.NearestFilter; mudTex.generateMipmaps=false; }
 applyLook();
-hadSave=loadCurrent(); if(!hadSave) startSurvival();
+petsLoad(); hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},OD,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},OD,get pets(){return pets;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
