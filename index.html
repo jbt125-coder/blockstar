@@ -2356,7 +2356,7 @@ const DM_HORSE={random:'🎲 A random horse',bay:'🐴 Bay',black:'🐴 Black',w
 const DM_RSTORY={day:'🌄 A day on the ranch (hay, ride, farm, guitar)',ride:'🐴 Just the ride'};
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
 const DM_DCAR={random:'🎲 A random car'}; // filled in once the Car World vehicles exist
-const DM_MSTORY={party:'🎉 Football, family, cars, pool party, then dinner',tour:'🗝️ Dinner tour (secret room, toast, disco)'};
+const DM_MSTORY={party:'🎉 Football, family, cars, pool party, then dinner',bowl:'🎳 Bowling mode (a turkey, black lights, then dinner)',tour:'🗝️ Dinner tour (secret room, toast, disco)'};
 const DM_DEND={stop:'🪂 Stop on the lines, dance, then fly off the ramp',jet:'✈️ Straight off the ramp into a jet'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
@@ -2423,7 +2423,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:90):sc2.act==='drag'?75:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
     saveDemo(); if(el.dataset.k==='act'||el.dataset.k==='mstory'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
@@ -5043,6 +5043,7 @@ let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
 function updatePlayer(dt){
   if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return drive?driveUpdate(dt):{hs:0}; } // (the demo can get out of the car)
   if(riding())return rideUpdate(dt);
+  if(mansionK&&mansionK.danceT>0){ $('tint').style.opacity=0; mansionK.danceT-=dt; if(mansionK.danceT<=0&&mansionK.camWas){ camMode=mansionK.camWas; mansionK.camWas=0; } if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // dancing in the pool after the slide
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
   if(mansionK&&mansionK.seated){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // sitting at the dinner table
@@ -5833,7 +5834,7 @@ function generateMansion(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Arra
   // the ground
   for(let x=0;x<W;x++)for(let z=0;z<D;z++){ for(let y=0;y<11;y++)P(x,y,z,y<6?ID.granite:ID.dirt); P(x,11,z,ID.grass); }
   // the basement: dug out, with concrete walls and floor
-  F(X0,5,Z0,X1,10,Z1,ID.concrete); F(X0+1,6,Z0+1,X1-1,10,Z1-1,0);
+  F(X0,5,Z0,X1,10,Z1,ID.concrete); F(X0+1,6,Z0+1,X1-1,10,Z1-1,0); buildBowlVoxels(P,F); // and the bowling alley under it
   // the outside walls (two stories), the floors and the ceiling
   F(X0,11,Z0,X1,11,Z1,ID.planks); F(X0,12,Z0,X1,24,Z1,ID.limestone); F(X0+1,12,Z0+1,X1-1,24,Z1-1,0); F(X0+1,18,Z0+1,X1-1,18,Z1-1,ID.planks); F(X0,25,Z0,X1,25,Z1,ID.quartz);
   for(const y of [18,25])for(let x=X0;x<=X1;x++){ P(x,y,Z0,ID.quartz); P(x,y,Z1,ID.quartz); } for(const y of [18,25])for(let z=Z0;z<=Z1;z++){ P(X0,y,z,ID.quartz); P(X1,y,z,ID.quartz); }
@@ -5886,6 +5887,78 @@ function generateMansion(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Arra
 // floors you can see are drawn, so the house stays fast
 let mansionK=null;
 
+// --- the bowling alley, a second basement under the first (keep going down the basement stairs). Four lanes, the family
+// bowling. Three strikes in a row is a "turkey": the black lights come on, everything glows and everyone dances
+const BW={F:1,lanes:[46.5,50.5,54.5,58.5],foul:63.5,head:44.2,pitZ:41.6};
+function buildBowlVoxels(P,F){ F(28,0,30,84,0,70,ID.concrete); F(28,1,30,84,4,70,ID.concrete); F(29,1,31,83,4,69,0); F(44,0,40,61,0,69,ID.planks); F(29,0,31,43,0,69,ID.paint_blue); F(62,0,31,83,0,69,ID.paint_blue);
+  F(44,1,31,61,4,39,ID.concrete); F(62,5,64,64,5,68,0); for(let k=1;k<=5;k++){ F(62,1,63+k,64,4,63+k,0); if(k<5)F(62,1,63+k,64,5-k,63+k,ID.concrete); } F(61,6,64,61,6,68,ID.glass); } // the back wall behind the pins; the stairs keep going down
+function pinMesh(){ const g=new THREE.Group(), w=new THREE.MeshLambertMaterial({color:0xf8f6f0}), r=new THREE.MeshLambertMaterial({color:0xd8202a});
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.13,0.42,10),w); b.position.y=0.21; g.add(b); const n=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.09,0.2,10),w); n.position.y=0.52; g.add(n);
+  const hd=new THREE.Mesh(new THREE.SphereGeometry(0.085,10,8),w); hd.position.y=0.66; g.add(hd); for(const y of [0.47,0.53]){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.08,0.025,10),r); s.position.y=y; g.add(s); } g.userData.mats=[w,r]; return g; }
+const PIN_SPOTS=[[0,0],[-0.3,-0.52],[0.3,-0.52],[-0.6,-1.04],[0,-1.04],[0.6,-1.04],[-0.9,-1.56],[-0.3,-1.56],[0.3,-1.56],[0.9,-1.56]];
+const BOWL_COLS=[0x2a6ad8,0xd8202a,0x7a2ad8,0x18a06a,0xff8a1a,0x111111];
+function buildBowling(K,gb){ const F=BW.F, B={lanes:[],t:0,blk:0,people:[],neon:[],beams:[]}; K.bowl=B;
+  const laneMat=new THREE.MeshLambertMaterial({color:0xd8a868}), gutMat=new THREE.MeshLambertMaterial({color:0x3a3a42});
+  BW.lanes.forEach((x,i)=>{ const L={i,x,pins:[],ball:null,streak:0,frames:[],cd:2+i*1.7,ph:'wait',t:0};
+    const lane=mb(gb,2.3,0.04,BW.foul-BW.pitZ,laneMat,x,F+0.02,(BW.foul+BW.pitZ)/2); for(const s of[-1,1])mb(gb,0.4,0.03,BW.foul-BW.pitZ,gutMat,x+s*1.35,F+0.01,(BW.foul+BW.pitZ)/2);
+    for(let k=0;k<7;k++){ const ar=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.25,3),new THREE.MeshLambertMaterial({color:0x5a3a1a})); ar.rotation.x=-Math.PI/2; ar.position.set(x+(k-3)*0.28,F+0.05,58-Math.abs(k-3)*0.4); gb.add(ar); }
+    mb(gb,2.4,0.03,0.08,new THREE.MeshBasicMaterial({color:0xd82a2a}),x,F+0.05,BW.foul); L.laneM=lane; L.lineMat=lane.material;
+    for(const [a,b] of PIN_SPOTS){ const p=pinMesh(); p.position.set(x+a,F,BW.head+b); gb.add(p); L.pins.push({m:p,x:x+a,z:BW.head+b,down:false,v:null}); }
+    const mask=mb(gb,2.8,1.0,0.3,new THREE.MeshLambertMaterial({color:0x1a2a4a}),x,F+2.6,BW.pitZ+0.6); L.mask=mask;
+    const scr=canvasTex(256,96); L.scr=scr; const mon=new THREE.Mesh(new THREE.PlaneGeometry(2.4,0.9),new THREE.MeshBasicMaterial({map:scr.t})); mon.position.set(x,F+3.2,BW.foul+0.45); mon.rotation.x=-0.15; gb.add(mon); mb(gb,2.5,1.0,0.08,mm(0x111114),x,F+3.2,BW.foul+0.38);
+    const ret=grp(gb,x+2,F,BW.foul+1.6); mb(ret,0.6,0.7,1.2,mm(0x3a4a6a),0,0.35,0); for(let k=0;k<3;k++)msph(ret,0.2,mm(BOWL_COLS[(i+k)%6]),0,0.85,-0.35+k*0.35);
+    const bench=grp(gb,x,F,67.6); mb(bench,2.6,0.45,0.9,mm(0xd82a6a),0,0.22,0); mb(bench,2.6,0.8,0.25,mm(0xd82a6a),0,0.6,0.4);
+    const g=grp(gb,x-0.5,F+0.45-0.72,67.5,Math.PI), R=makeRig(g); dressRig(R,familyLook(i%2?'kid':'')); if(i%2)g.scale.setScalar(0.85); L.bowler={g,R,home:[x-0.5,67.5],ph:Math.random()*6};
+    B.lanes.push(L); drawLaneScore(L); });
+  for(let k=0;k<2;k++){ const g=grp(gb,36+k*3,F,60), R=makeRig(g); dressRig(R,familyLook('')); B.people.push({g,R,ph:k*2}); } // two cheering by the snack bar
+  { const sb=grp(gb,34,F,66); mb(sb,6,1.1,1.0,mm(0x2a2a3a),0,0.55,0); mb(sb,6.2,0.08,1.2,mm(0xd8a868),0,1.12,0); for(let i=0;i<4;i++)mcyl(sb,0.18,0.15,0.4,mm([0xd82a2a,0xf2c21a,0x2a8ad8,0x3ad84a][i]),-2+i*1.3,1.36,0,10);
+    const sg=canvasTex(512,128); sg.x.fillStyle='#0a0a18'; sg.x.fillRect(0,0,512,128); sg.x.font='bold 72px sans-serif'; sg.x.textAlign='center'; sg.x.fillStyle='#ff3ad0'; sg.x.shadowColor='#ff3ad0'; sg.x.shadowBlur=20; sg.x.fillText('🎳 BOWL-O-RAMA',256,88); sg.t.needsUpdate=true;
+    const s=new THREE.Mesh(new THREE.PlaneGeometry(8,2),new THREE.MeshBasicMaterial({map:sg.t})); s.position.set(52.5,F+2.9,BW.pitZ-0.08+1.5); s.position.z=40.05; gb.add(s); }
+  // the black lights: glowing stripes and stars, beams of light, and a dark purple room (hidden until someone bowls a turkey)
+  B.glow=new THREE.Group(); gb.add(B.glow); B.glow.visible=false;
+  BW.lanes.forEach((x,i)=>{ for(const s of[-1,1]){ const m=new THREE.MeshBasicMaterial({color:[0xff2bd6,0x18e0ff,0x3dff5a,0xffe02a][i]}); mb(B.glow,0.08,0.03,BW.foul-BW.pitZ,m,x+s*1.12,F+0.06,(BW.foul+BW.pitZ)/2); B.neon.push(m); } });
+  for(let i=0;i<140;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(0.05,4,3),new THREE.MeshBasicMaterial({color:[0xff2bd6,0x18e0ff,0x3dff5a,0xffffff][i%4]})); st.position.set(30+Math.random()*53,F+3.9,32+Math.random()*37); B.glow.add(st); }
+  for(let i=0;i<6;i++){ const b=new THREE.Mesh(new THREE.ConeGeometry(1.4,3.6,12,1,true),new THREE.MeshBasicMaterial({color:[0xff2bd6,0x18e0ff,0x3dff5a,0xffe02a,0x8a2aff,0xff5a1a][i],transparent:true,opacity:0.2,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+    const h=grp(B.glow,46+i*2.8,F+3.8,48+(i%3)*7); b.position.y=-1.8; h.add(b); B.beams.push(h); }
+  B.gb=gb; }
+function drawLaneScore(L,turkey){ const x=L.scr.x; x.fillStyle=turkey?'#2a0a3a':'#0a1430'; x.fillRect(0,0,256,96); x.fillStyle='#ffd23a'; x.font='bold 18px sans-serif'; x.textAlign='center'; x.fillText('LANE '+(L.i+1)+(L.hero?' · YOU':''),128,22);
+  x.font='bold 38px monospace'; x.fillStyle=turkey?'#3dff5a':'#fff'; x.fillText(turkey?'XXX':(L.frames.slice(-6).join(' ')||'-'),128,64); if(turkey){ x.font='bold 20px sans-serif'; x.fillStyle='#ff3ad0'; x.fillText('= TURKEY!!! 🦃',128,88); } L.scr.t.needsUpdate=true; }
+// one throw: walk up, swing, roll. A strike knocks all ten pins flying; otherwise some of them
+function bowlThrow(L,strike){ const B=mansionK.bowl; L.ball={m:msph(B.gb,0.24,mm(BOWL_COLS[Math.floor(Math.random()*6)]),L.x+0.5,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,x0:L.x+0.5,spd:9+Math.random()*2,hook:(Math.random()-0.5)*0.6,strike:strike===undefined?Math.random()<0.42:strike,hit:false};
+  snd(()=>noise(300,1.6,0.08,'lowpass')); }
+function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; const F=BW.F;
+  for(const L of B.lanes){ const bw=L.bowler, R=bw.R;
+    if(!L.hero){ L.t+=dt; if(L.ph==='wait'){ bw.g.position.set(bw.home[0],F+0.45-0.72*(bw.g.scale.x),bw.home[1]); bw.g.rotation.y=Math.PI; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.6; if(B.blk<=0&&L.t>L.cd&&!L.ball&&L.pins.every(p=>!p.down)){ L.ph='walk'; L.t=0; } }
+      else if(L.ph==='walk'){ const k=Math.min(1,L.t/1.2); bw.g.position.set(L.x+0.4,F,bw.home[1]+(BW.foul+0.9-bw.home[1])*k); bw.g.rotation.y=0; R.legL.rotation.x=Math.sin(L.t*9)*0.6; R.legR.rotation.x=-R.legL.rotation.x; R.armR.rotation.x=0.3; if(k>=1){ L.ph='swing'; L.t=0; } }
+      else if(L.ph==='swing'){ R.legL.rotation.x=-0.5; R.legR.rotation.x=0.4; R.armR.rotation.x=L.t<0.5?-1.4*L.t/0.5:-1.4+3.0*(L.t-0.5)/0.3; if(L.t>0.8){ L.ph='watch'; L.t=0; bowlThrow(L); } }
+      else if(L.ph==='watch'){ R.armR.rotation.x=1.6; R.legL.rotation.x=R.legR.rotation.x=0; if(L.t>4.5){ L.ph='wait'; L.t=0; L.cd=3+Math.random()*5; } } animRig(R,dt,0); }
+    const b=L.ball; if(b){ b.z-=b.spd*dt; const prog=(BW.foul-b.z)/(BW.foul-BW.head); b.m.position.set(b.x0+Math.sin(prog*2.4)*b.hook-(b.strike?(b.x0-L.x)*prog:0),F+0.24,b.z); b.m.rotation.x-=b.spd*dt/0.24;
+      if(!b.hit&&b.z<=BW.head+0.15){ b.hit=true; const n=b.strike?10:3+Math.floor(Math.random()*6), order=L.pins.slice().sort(()=>Math.random()-0.5);
+        for(const p of (b.strike?L.pins:order.slice(0,n))){ p.down=true; p.v=[(p.x-b.m.position.x)*3+(Math.random()-0.5)*2,2+Math.random()*2.5,-3-Math.random()*3,Math.random()*8,Math.random()*8]; }
+        snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); L.frames.push(b.strike?'X':String(n)); if(L.frames.length>9)L.frames.shift(); L.streak=b.strike?L.streak+1:0;
+        if(b.strike&&near)rtoast(L.hero?'🎳 STRIKE!':'🎳 Strike on lane '+(L.i+1)+'!'); if(L.streak>=3){ L.streak=0; turkeyTime(L); } else drawLaneScore(L); }
+      if(b.z<BW.pitZ){ B.gb.remove(b.m); b.m.geometry.dispose(); L.ball=null; L.resetT=2.2; } }
+    for(const p of L.pins)if(p.down&&p.v){ p.v[1]-=14*dt; const m=p.m; m.position.x+=p.v[0]*dt; m.position.z+=p.v[2]*dt; m.position.y=Math.max(F,m.position.y+p.v[1]*dt); m.rotation.x+=p.v[3]*dt; m.rotation.z+=p.v[4]*dt; if(m.position.y<=F){ p.v[0]*=0.9; p.v[2]*=0.9; p.v[3]*=0.9; p.v[4]*=0.9; } if(m.position.z<BW.pitZ)m.visible=false; }
+    if(L.resetT>0){ L.resetT-=dt; if(L.resetT<=0)for(const p of L.pins){ p.down=false; p.v=null; p.m.visible=true; p.m.position.set(p.x,F,p.z); p.m.rotation.set(0,0,0); } } }
+  // the black-light party after a turkey
+  if(B.blk>0){ B.blk-=dt; const s=Math.sin(B.t*9); for(const m of B.neon)m.color.setHSL((B.t*0.3+m.id*0.13)%1,1,0.55); B.beams.forEach((h,i)=>{ h.rotation.z=Math.sin(B.t*1.6+i)*0.7; h.rotation.x=Math.cos(B.t*1.2+i*2)*0.6; });
+    if(near)blockMat.color.setRGB(0.22+0.08*Math.max(0,s),0.1,0.38); else blockMat.color.setRGB(1,0.9,0.8); for(const L of B.lanes)for(const p of L.pins)p.m.userData.mats[0].color.setHex(0x9affb0);
+    for(const d of B.lanes.map(L=>L.bowler).concat(B.people)){ d.ph+=dt*4.4; const R=d.R, q=Math.sin(d.ph); R.armL.rotation.z=-1.5-0.6*q; R.armR.rotation.z=1.5-0.6*q; R.armL.rotation.x=R.armR.rotation.x=0; R.legL.rotation.x=0.35*q; R.legR.rotation.x=-0.35*q; d.g.rotation.y+=dt*1.2; animRig(R,dt,0); }
+    if(near)discoBeat(dt,1); if(B.blk<=0)blackLights(false); }
+  else for(const d of B.people){ d.ph+=dt; d.R.armR.rotation.z=Math.max(0,Math.sin(d.ph*0.7))*2.4; animRig(d.R,dt,0); } }
+function turkeyTime(L){ const B=mansionK.bowl; drawLaneScore(L,true); B.blk=16; B.glow.visible=true; for(const L2 of B.lanes)L2.laneM.material.color.setHex(0x2a1a4a); bigText('XXX = TURKEY!!! 🦃'); snd(()=>{ sfx('buy'); noise(900,1.4,0.25,'bandpass'); });
+  for(const L2 of B.lanes)if(L2.ph!=='wait'){ L2.ph='wait'; L2.t=0; } }
+function blackLights(on){ const B=mansionK&&mansionK.bowl; if(!B)return; if(on)return; B.blk=0; B.glow.visible=false; for(const L of B.lanes){ L.laneM.material.color.setHex(0xd8a868); for(const p of L.pins)p.m.userData.mats[0].color.setHex(0xf8f6f0); drawLaneScore(L); L.bowler.R.armL.rotation.z=L.bowler.R.armR.rotation.z=0; }
+  for(const d of B.people)d.R.armL.rotation.z=d.R.armR.rotation.z=0; blockMat.color.setRGB(1,0.9,0.8); }
+let bigEl=null; function bigText(t){ if(!bigEl){ bigEl=document.createElement('div'); bigEl.className='ui'; bigEl.style.cssText='left:50%;top:30%;transform:translate(-50%,-50%);font:900 clamp(30px,7vw,72px) sans-serif;color:#ffe02a;text-shadow:0 0 18px #ff3ad0,0 4px 0 #7a1aa0;white-space:nowrap;pointer-events:none;display:none;z-index:9'; document.body.appendChild(bigEl); }
+  bigEl.textContent=t; bigEl.style.display='block'; bigEl.animate([{transform:'translate(-50%,-50%) scale(0.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:0.3},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:700}); clearTimeout(bigEl._t); bigEl._t=setTimeout(()=>bigEl.style.display='none',3600); }
+// --- the open water slide: a U-shaped chute along the curve, with white rims
+function chuteGeo(curve,R,n){ const pos=[],idx=[],up=new THREE.Vector3(0,1,0), A=9, a0=-0.35, a1=Math.PI+0.35, rims=[[],[]];
+  for(let i=0;i<=n;i++){ const t=i/n, p=curve.getPointAt(t), T=curve.getTangentAt(t), side=new THREE.Vector3().crossVectors(T,up).normalize(), u=new THREE.Vector3().crossVectors(side,T).normalize();
+    for(let j=0;j<=A;j++){ const a=a0+(a1-a0)*j/A, q=p.clone().addScaledVector(side,R*Math.cos(a)).addScaledVector(u,-R*Math.sin(a)); pos.push(q.x,q.y,q.z); if(j===0)rims[0].push(q); if(j===A)rims[1].push(q); } }
+  for(let i=0;i<n;i++)for(let j=0;j<A;j++){ const a=i*(A+1)+j, b=a+A+1; idx.push(a,b,a+1,b,b+1,a+1); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return {g,rims}; }
+
 // --- the resort pool out back: a curvy lagoon with a shallow end, a waterfall over the rocks, a water slide, palm trees,
 // a hot tub and the Float Shack, where you can get more pool floats
 const LAGOON=[[54,16,15,8],[68,12.5,7,6],[41,19,6.5,5]]; // ellipses: x, z, half-width, half-depth
@@ -5911,7 +5984,7 @@ function buildResortLife(K,go){ const F1=MN.F1;
   fall.position.set(54.5,F1+2.5,7.6); fall.rotation.x=-0.18; go.add(fall); K.splash=[]; for(let i=0;i<14;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(0.25,6,5),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.7})); go.add(s); K.splash.push({m:s,t:Math.random()}); }
   // the slide: a twisting blue tube on posts
   const curve=new THREE.CatmullRomCurve3(SLIDE_PTS.map(p=>new THREE.Vector3(...p))); K.slideCurve=curve;
-  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,80,0.6,12,false),new THREE.MeshLambertMaterial({color:0x2a9ae8,transparent:true,opacity:0.72,side:THREE.DoubleSide})); go.add(tube);
+  const ch=chuteGeo(curve,0.75,90); go.add(new THREE.Mesh(ch.g,new THREE.MeshLambertMaterial({color:0x2a9ae8,side:THREE.DoubleSide}))); for(const r of ch.rims)go.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(r),90,0.07,6,false),mm(0xffffff))); // an open chute, not a tube
   for(let i=1;i<SLIDE_PTS.length-1;i++){ const p=SLIDE_PTS[i]; mcyl(go,0.12,0.12,p[1]-F1-0.5,mm(0xf2f2ee),p[0],F1+(p[1]-F1-0.5)/2,p[2],8); }
   const sg=labelSprite('🛝 Water Slide'); sg.position.set(32,F1+9.2,7); go.add(sg);
   // lounge chairs and umbrellas
@@ -5951,7 +6024,7 @@ function floatMesh(k){ const g=new THREE.Group(), sh=(c)=>new THREE.MeshLambertM
   else if(k==='avocado'){ msph(g,0.95,sh(0x3a7a2a),0,0.25,0,1,0.35,1.3); msph(g,0.78,sh(0xd8e070),0,0.36,0,1,0.3,1.25); msph(g,0.35,sh(0x7a4a2a),0,0.5,0.15); }
   g.userData.float=k; return g; }
 function addFloat(k,x,z){ const K=mansionK, m=floatMesh(k); K.G.out.add(m); const f={k,m,x,z,vx:(Math.random()-0.5)*0.6,vz:(Math.random()-0.5)*0.6,h:Math.random()*6,ph:Math.random()*6}; K.floats.push(f); return f; }
-function floatTick(K,dt){ for(const f of K.floats){ f.ph+=dt; if(K.ride!==f){ f.vx+=(Math.random()-0.5)*dt*0.3; f.vz+=(Math.random()-0.5)*dt*0.3; const sp=Math.hypot(f.vx,f.vz); if(sp>0.5){ f.vx*=0.5/sp; f.vz*=0.5/sp; } f.h+=dt*0.08; }
+function floatTick(K,dt){ for(const f of K.floats){ f.ph+=dt; if(K.ride!==f&&f.home){ f.vx+=(f.home[0]-f.x)*0.5*dt; f.vz+=(f.home[1]-f.z)*0.5*dt; } if(K.ride!==f){ f.vx+=(Math.random()-0.5)*dt*0.3; f.vz+=(Math.random()-0.5)*dt*0.3; const sp=Math.hypot(f.vx,f.vz); if(sp>0.5){ f.vx*=0.5/sp; f.vz*=0.5/sp; } f.h+=dt*0.08; }
     const nx=f.x+f.vx*dt, nz=f.z+f.vz*dt; if(inLagoon(nx,nz,1.3)){ f.x=nx; f.z=nz; } else { f.vx*=-1; f.vz*=-1; } // bump off the edge
     for(const o of K.floats){ if(o===f)continue; const dx=f.x-o.x, dz=f.z-o.z, d=Math.hypot(dx,dz); if(d<2&&d>0.01){ const p=(2-d)*0.5*dt*3; if(inLagoon(f.x+dx/d*p,f.z+dz/d*p,1.3)){ f.x+=dx/d*p; f.z+=dz/d*p; } } }
     f.m.position.set(f.x,MN.F1-0.15+Math.sin(f.ph*1.6)*0.06,f.z); f.m.rotation.set(Math.sin(f.ph*1.1)*0.04,f.h,Math.cos(f.ph*1.3)*0.04); } }
@@ -5970,7 +6043,7 @@ function rideUpdate2(dt){ const K=mansionK, f=K.ride; let ix=joy.x, iz=joy.y; if
 // riding the slide
 function slideGo(){ const K=mansionK; K.slide={t:0}; snd(()=>{ sfx('whoosh'); tone('sine',600,200,1.2,0.05); }); rtoast('🛝 Wheeee!'); }
 function slideUpdate(dt){ const K=mansionK, S=K.slide; S.t+=dt/2.6; const t=Math.min(1,S.t*S.t*0.6+S.t*0.4), p=K.slideCurve.getPointAt(t), q=K.slideCurve.getPointAt(Math.min(1,t+0.02));
-  pl.p=[p.x,p.y-0.5,p.z]; pl.v=[0,0,0]; yaw=Math.atan2(-(q.x-p.x),-(q.z-p.z)); if(S.t>=1){ K.slide=null; pl.v=[(q.x-p.x)*20,-2,(q.z-p.z)*20];
+  pl.p=[p.x,p.y-0.7,p.z]; pl.v=[0,0,0]; yaw=Math.atan2(-(q.x-p.x),-(q.z-p.z)); if(S.t>=1){ K.slide=null; pl.v=[0,0,0]; pl.p=[p.x,MN.F1-1,p.z]; K.danceT=3; if(!demo&&camMode===1){ K.camWas=1; camMode=3; } for(const d of K.party)npcSay(d,['Woo-hoo!','Dance party!','Nice splash!'][Math.floor(Math.random()*3)]); // then dance with everyone
     for(let k=0;k<4;k++)burst(p.x-0.5+(Math.random()-0.5)*2,MN.F1-0.5,p.z-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd0f0ff),10); snd(()=>{ noise(900,0.6,0.35,'lowpass'); }); rtoast('💦 SPLASH!'); } return {hs:0}; }
 function resortTick(K,dt){ for(const d of K.party){ d.ph+=dt*4.4; const R=d.R, s=Math.sin(d.ph); R.armL.rotation.z=-1.6-0.6*s; R.armR.rotation.z=1.6-0.6*s; R.armL.rotation.x=R.armR.rotation.x=0; R.legL.rotation.x=0.3*s; R.legR.rotation.x=-0.3*s; d.g.position.y=MN.F1-1+Math.abs(s)*0.2; d.g.rotation.y+=dt*0.5; animRig(R,dt,0); if(d.bubT>0){ d.bubT-=dt; if(d.bubT<=0&&d.bub){ d.g.remove(d.bub); d.bub=null; } } }
   K.ppT=(K.ppT||4)-dt; if(K.ppT<=0){ K.ppT=4+Math.random()*4; if(Math.hypot(pl.p[0]-41,pl.p[2]-19)<20)npcSay(K.party[Math.floor(Math.random()*K.party.length)],['Pool party!','Cannonball!!','Come in, the water\'s warm!','Woo-hoo!','Try the slide!'][Math.floor(Math.random()*5)]); }
@@ -6087,7 +6160,9 @@ function movieDraw(K){ const M=K.movie, x=M.x, t=K.t; const g=x.createLinearGrad
 
 function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof saved==='object'?saved:{};
   mansionK={t:0,G:{},seated:false,carved:false,phase:null,people:[],couch:[],dancers:[],dishes:[],fires:[],chest:!!sv.chest,score:[14,10],tdT:0,tdNext:14,chatT:3,leaves:null,bites:0};
-  const K=mansionK, G=K.G; for(const k of ['base','ground','upper','out']){ G[k]=new THREE.Group(); scene.add(G[k]); }
+  const K=mansionK, G=K.G; for(const k of ['base','ground','upper','out','bowl']){ G[k]=new THREE.Group(); scene.add(G[k]); }
+  if(saved&&!sv.bowl){ const P2=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }; buildBowlVoxels(P2,(a,b,c,d,e,f,id)=>{ for(let x=a;x<=d;x++)for(let y=b;y<=e;y++)for(let z=c;z<=f;z++)P2(x,y,z,id); }); rebuildAll(); } // a mansion saved before the bowling alley
+  buildBowling(K,G.bowl);
   const g1=G.ground, F1=MN.F1, F2=MN.F2, FB=MN.FB, T=MN.table, wood=mm(0x6a4428), dk=mm(0x2a2a2e), white=mm(0xf4f2ee);
   // === the dining room: the table, the chairs, the family, the feast
   mb(g1,T.x1-T.x0,0.12,T.z1-T.z0,wood,(T.x0+T.x1)/2,T.y-0.06,(T.z0+T.z1)/2); mb(g1,T.x1-T.x0+0.3,0.04,T.z1-T.z0+0.3,mm(0xf6f0e2),(T.x0+T.x1)/2,T.y+0.02,(T.z0+T.z1)/2);
@@ -6173,19 +6248,19 @@ function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof sav
     const pop=grp(gb,82,FB,52); mb(pop,1.0,1.0,0.8,mm(0xd82a2a),0,0.5,0); mb(pop,0.9,1.0,0.7,mm(0xfff4d0,{transparent:true,opacity:0.6}),0,1.5,0); for(let i=0;i<14;i++)msph(pop,0.08,mm(0xfff4c0),(Math.random()-0.5)*0.7,1.1+Math.random()*0.4,(Math.random()-0.5)*0.5);
     for(let i=0;i<40;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(0.05,4,4),glowM(0xfff8d0)); st.position.set(66.5+Math.random()*17,FB+4.9,32+Math.random()*37); gb.add(st); } }
   // === the garage: four cars you can drive out and around the lawn
-  { const Gr=MN.garage; ['sports','muscle','lowrider','pickup'].forEach((t,i)=>{ if(!VEH[t])return; const v=makeVehicle(t,Gr.x0+3.5+i*4.6,F1,Gr.z0+12,Math.PI); freeVehicles.push(v); }); mb(g1,6,1.0,0.8,mm(0x8a2a1a),94.5,F1+0.5,Gr.z0+1.5); }
+  { const Gr=MN.garage; ['sports','muscle','lowrider','pickup'].forEach((t,i)=>{ if(!VEH[t])return; const v=makeVehicle(t,Gr.x0+3.5+i*4.6,F1,Gr.z0+12,Math.PI); freeVehicles.push(v); (K.gcars||(K.gcars=[])).push(v); }); mb(g1,6,1.0,0.8,mm(0x8a2a1a),94.5,F1+0.5,Gr.z0+1.5); }
   // === outside: the porch, the patio and pool, the fire pit, string lights, pumpkins, hay bales and falling leaves
   const go=G.out;
   for(const [x,z,s] of [[51,73,1],[52.2,72.6,0.7],[60.8,73,1],[61.8,72.4,0.6],[49.5,76.5,0.8],[63,76.6,0.9]]){ const p=grp(go,x,F1,z); msph(p,0.4*s,mm(0xe07020),0,0.32*s,0,1.2,0.85,1.2); mcyl(p,0.04,0.05,0.18*s,mm(0x3a5a1a),0,0.72*s,0,6); }
   for(const [x,z] of [[47.5,73],[64.5,73]]){ mb(go,1.4,0.9,0.9,mm(0xd8b04a),x,F1+0.45,z); }
-  buildResortLife(K,go); const fl=Array.isArray(sv.floats)&&sv.floats.length?sv.floats.slice(0,12):['turkey']; fl.forEach((k,n)=>{ if(FLOATS[k])addFloat(k,n?62+(n%4)*3:54,n?13+(n%3)*2:16); });
+  buildResortLife(K,go); const fl=Array.isArray(sv.floats)&&sv.floats.length?sv.floats.slice(0,12):['turkey']; fl.forEach((k,n)=>{ if(!FLOATS[k])return; const f=addFloat(k,n?62+(n%4)*3:47.5,n?13+(n%3)*2:17.8); if(!n)f.home=[47.5,17.8]; }); // the turkey stays close to the party
   K.bulbs=[]; for(let i=0;i<34;i++){ const x=38+i, z=29.4-1.2*Math.sin(Math.PI*((i%8)/8)); const m=glowM([0xffe08a,0xff8a3a,0xffd04a][i%3]); const b=new THREE.Mesh(new THREE.SphereGeometry(0.09,6,5),m); b.position.set(x,F1+5.2-0.6*Math.sin(Math.PI*((i%8)/8)),z-0.3); go.add(b); K.bulbs.push(m); }
   { const n=300, pos=new Float32Array(n*3); for(let i=0;i<n;i++){ pos[i*3]=Math.random()*W; pos[i*3+1]=F1+Math.random()*18; pos[i*3+2]=Math.random()*D; } const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
     K.leaves=new THREE.Points(g,new THREE.PointsMaterial({color:0xe07a2a,size:0.22})); go.add(K.leaves); }
   if(!mansionSkyK)mansionSkyK=buildMansionSky(); mansionSky.visible=true; }
-function clearMansionLife(){ const K=mansionK; if(!K)return; if(K.seated)standUp(true); K.ride=null; K.slide=null; for(const k of Object.keys(K.G)){ scene.remove(K.G[k]); K.G[k].traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.isPointLight)o.dispose&&o.dispose(); }); }
+function clearMansionLife(){ const K=mansionK; if(!K)return; if(K.seated)standUp(true); if(K.bowl&&K.bowl.blk>0)blackLights(false); if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } if(K.camWas){ camMode=K.camWas; K.camWas=0; } K.danceT=0; K.ride=null; K.slide=null; for(const k of Object.keys(K.G)){ scene.remove(K.G[k]); K.G[k].traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.isPointLight)o.dispose&&o.dispose(); }); }
   document.body.classList.remove('dinner'); mansionK=null; mansionSky.visible=false; mansionMusic(false); }
-function mansionSave(){ return {chest:!!mansionK.chest,floats:mansionK.floats.map(f=>f.k)}; }
+function mansionSave(){ return {chest:!!mansionK.chest,floats:mansionK.floats.map(f=>f.k),bowl:1}; }
 // --- the sky: an autumn sunset, with hills in fall colors all around
 const mansionSky=new THREE.Group(); mansionSky.visible=false; scene.add(mansionSky); let mansionSkyK=null;
 function buildMansionSky(){ const G=mansionSky; const far=mountainRing(300,120,40,90,0x8a4a3a,0xb86a3a,0xd89a4a,17), near=mountainRing(200,100,18,45,0x6a3a1a,0xc8601a,0xe0a030,23); far.position.set(W/2,MN.F1-1,D/2); near.position.set(W/2,MN.F1-1,D/2); G.add(far,near);
@@ -6198,7 +6273,7 @@ function applyMansionSky(){ scene.background.setHex(0xf0a070); scene.fog.color.s
 // --- life in the mansion: the family eats and chats, the fires flicker, football on TV, the disco, the movie, falling leaves
 function inHouse(p){ return p[0]>MN.X0&&p[0]<MN.X1&&p[2]>MN.Z0&&p[2]<MN.Z1; }
 function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!demo.user&&demo.cam&&demo.cam.k==='man'?[camera.position.x,camera.position.y-1.6,camera.position.z]:pl.p, inH=inHouse(eye)||(eye[0]>MN.garage.x0&&eye[0]<MN.garage.x1&&eye[2]>MN.garage.z0&&eye[2]<MN.garage.z1);
-  const lvl=!inH?1:eye[1]<11.5?0:eye[1]<18.5?1:2; G.base.visible=lvl===0; G.ground.visible=lvl>=1; G.upper.visible=lvl>=1&&(lvl===2||!inH||Math.abs(eye[0]-56)<9&&eye[2]>55); G.out.visible=lvl>=1;
+  const lvl=!inH?1:eye[1]<5.5?-1:eye[1]<11.5?0:eye[1]<18.5?1:2; G.base.visible=lvl===0; G.bowl.visible=lvl===-1; bowlTick(K,dt,lvl===-1); G.ground.visible=lvl>=1; G.upper.visible=lvl>=1&&(lvl===2||!inH||Math.abs(eye[0]-56)<9&&eye[2]>55); G.out.visible=lvl>=1;
   for(const f of K.fires){ for(const c of f.fl){ c.scale.y=0.75+Math.random()*0.5; c.scale.x=0.85+Math.random()*0.3; } if(f.pl)f.pl.intensity=1.0+Math.random()*0.4; }
   const P2=K.phase; if(P2){ P2.t+=dt; phaseTick(P2,dt); }
   // the family at the table
@@ -6218,6 +6293,10 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
     for(const d of K.dancers){ d.ph+=dt*4.4; const R=d.R, s=Math.sin(d.ph); R.armL.rotation.z=-1.2-0.6*s; R.armR.rotation.z=1.2-0.6*s; R.legL.rotation.x=0.4*s; R.legR.rotation.x=-0.4*s; d.g.position.y=MN.FB+Math.abs(s)*0.15; d.g.rotation.y+=dt*0.8; animRig(R,dt,0); }
     K.mvT=(K.mvT||0)-dt; if(K.mvT<=0){ K.mvT=0.08; movieDraw(K); } }
   if(G.out.visible)resortTick(K,dt);
+  { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
+    let any=false; (K.gcars||[]).forEach((v,i)=>{ if(v.driver||v.jet){ return; } v.gb=(v.gb||0)+((K.gB?1:0)-(v.gb||0))*Math.min(1,dt*3); if(v.gb<0.01){ if(v.gbOn){ v.gbOn=false; vehPlace(v); } return; } any=true; v.gbOn=true;
+      const ph=K.t*6.5+i*1.3, y=v.gb*0.35*Math.abs(Math.sin(ph)); v.m.position.y=v.p[1]+y; v.m.rotation.set(v.gb*0.08*Math.sin(ph*0.5),v.h,v.gb*0.06*Math.sin(ph*0.25+i),'YXZ'); });
+    if(any&&inG)discoBeat(dt,0.6); }
   const disco=lvl===0&&eye[0]<47.5; mansionMusic(disco); if(disco)discoBeat(dt); else if(!inH){ const pd=Math.hypot(eye[0]-41,eye[2]-19); if(pd<28)discoBeat(dt,0.55*(1-pd/28)); } // the pool party's music
   // outside: falling leaves; the pots on the stove steam
   if(G.out.visible){ const a=K.leaves.geometry.attributes.position, A=a.array; for(let i=0;i<A.length;i+=3){ A[i+1]-=dt*(0.8+(i%7)*0.1); A[i]+=Math.sin(K.t+i)*dt*0.6; if(A[i+1]<MN.F1){ A[i+1]=MN.F1+16; A[i]=Math.random()*W; A[i+2]=Math.random()*D; } } a.needsUpdate=true;
@@ -6225,6 +6304,7 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
   K.stT=(K.stT||0)-dt; if(K.stT<=0&&lvl===1&&Math.hypot(eye[0]-80,eye[2]-34)<18){ K.stT=0.6; puff(79.5+Math.random(),MN.F1+1.5,31.6,false); }
   // you, sitting at the table
   if(K.ride){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.4; }
+  if(K.danceT>0)heroDance(K.t);
   if(K.seated){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=0.9; armR.rotation.x=0.9+(K.myBite>0?Math.sin(K.myBite*Math.PI)*1.3:0); if(K.myBite>0){ K.myBite+=dt*1.6; if(K.myBite>=1)K.myBite=0; } if(P2&&P2.k==='toast'&&P2.t<8)armR.rotation.x=2.6; } }
 // --- the dinner: sit down, grandpa carves the turkey, eat, a toast, the wishbone
 function sitDown(){ const K=mansionK, s=K.mySeat; if(K.seated)return; K.seated=true; if(!K.leg){ const mp=myPlate(); if(mp){ K.leg=dishMesh('leg'); K.leg.position.copy(mp.position); K.leg.position.y+=0.05; K.leg.rotation.y=0.5; K.G.ground.add(K.leg); K.dishes.push(K.leg); } } pl.p=[s[0],MN.F1+0.6-0.72+0.22,s[1]-0.15]; pl.v=[0,0,0]; yaw=0; pitch=-0.12; document.body.classList.add('dinner'); sfx('place');
@@ -6275,37 +6355,47 @@ function discoBeat(dt,vol){ const K=mansionK, v=vol===undefined?1:vol; if(!AC||!
 // --- Demo Mode: Thanksgiving dinner. Up the front walk, a quick tour (the foyer, the football game, the library's secret room),
 // dinner with the family (carving, eating, a toast, the wishbone), then dancing in the disco
 const MAN_SHOTS=[[0,'walk'],[7,'foyer'],[12,'tv'],[17,'library'],[23,'sit'],[46,'wish'],[51,'disco']];
-const MAN_PARTY=[[0,'walk'],[6,'tv'],[15,'family'],[22,'garage'],[30,'food'],[36,'pool'],[43,'slide'],[51,'sit'],[74,'wish']];
+const MAN_PARTY=[[0,'walk'],[6,'tv'],[15,'family'],[22,'garage'],[33,'food'],[39,'pool'],[46,'slide'],[56,'sit'],[79,'wish']];
+const MAN_BOWL=[[0,'bstairs'],[5,'alley'],[10,'bthrow'],[18,'bturkey'],[29,'sit'],[52,'wish']];
 const HI_LINES=['Hi sweetie!','Happy Thanksgiving!','Look who\'s here!','Come sit with us!','You made it!','Hi! Grab a plate!'];
 function demoMansionSetup(sc,P){ demo.vplace='mansion'; demo.mansionWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.mansion.dims); generateMansion(dmCfg.seed+31); rebuildAll(); refreshPortals(); buildMansionLife(null); applyPlaceSky();
-  pl.p=[56.5,MN.F1,92]; yaw=0; pitch=-0.05; Object.assign(P,{t:0,shot:-1,hs:0,list:sc.mstory==='tour'?MAN_SHOTS:MAN_PARTY}); demo.cam={k:'man',p:new THREE.Vector3(48,15,84),l:new THREE.Vector3(56,15,70)}; }
+  pl.p=[56.5,MN.F1,92]; yaw=0; pitch=-0.05; Object.assign(P,{t:0,shot:-1,hs:0,list:sc.mstory==='tour'?MAN_SHOTS:sc.mstory==='bowl'?MAN_BOWL:MAN_PARTY}); demo.cam={k:'man',p:new THREE.Vector3(48,15,84),l:new THREE.Vector3(56,15,70)}; }
 function manShot(P){ const L=P.list||MAN_SHOTS; let i=0; for(let k=0;k<L.length;k++)if(P.t>=L[k][0])i=k; return {i,sh:L[i][1],st:P.t-L[i][0]}; }
 function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt; const {i,sh,st}=manShot(P), party=P.list===MAN_PARTY;
   if(i!==P.shot){ P.shot=i; P.done={}; P.wave=0; if(K.seated&&sh!=='wish')standUp(true);
-    if(sh==='foyer'){ pl.p=[56.5,MN.F1,69]; yaw=0; } if(sh==='tv'){ pl.p=party?[56.5,MN.F1,68]:[40.5,MN.F1,66]; yaw=0; K.tdNext=party?5:1.5; } if(sh==='library'){ pl.p=[74,MN.F1,62]; yaw=Math.PI/2; } if(sh==='sit'){ pl.p=[58,MN.F1,47]; sitDown(); } if(sh==='disco'){ pl.p=[38,MN.FB,47]; yaw=0; }
+    if(sh==='foyer'){ pl.p=[56.5,MN.F1,69]; yaw=0; } if(sh==='tv'){ pl.p=party?[56.5,MN.F1,68]:[40.5,MN.F1,66]; yaw=0; K.tdNext=party?5:1.5; } if(sh==='library'){ pl.p=[74,MN.F1,62]; yaw=Math.PI/2; } if(sh==='sit'){ blackLights(false); pl.p=[58,MN.F1,47]; sitDown(); } if(sh==='bstairs'){ pl.p=[63.5,MN.FB,63.4]; yaw=Math.PI; const L=K.bowl.lanes[1]; L.hero=true; L.frames=['X','X']; L.streak=2; drawLaneScore(L); L.ph='wait'; } if(sh==='bthrow'){ pl.p=[50.9,BW.F,64.4]; yaw=0; } if(sh==='disco'){ pl.p=[38,MN.FB,47]; yaw=0; }
     if(sh==='family'){ pl.p=[46,MN.F1,47.3]; yaw=-Math.PI/2; } if(sh==='garage'){ pl.p=[86.5,MN.F1,49]; yaw=-Math.PI/2; } if(sh==='food'){ pl.p=[68.5,MN.F1,38.1]; yaw=Math.PI/2; } if(sh==='pool'){ pl.p=[44.5,MN.F1,29.4]; yaw=Math.PI; }
     if(sh==='slide'){ pl.p=[32.6,MN.F1+6,7.5]; yaw=-Math.PI/2; } }
   const walk=(tx,tz,sp)=>{ const dx=tx-pl.p[0], dz=tz-pl.p[2]; if(Math.hypot(dx,dz)<0.4)return {ix:0,iz:0}; yaw=Math.atan2(-dx,-dz); return {ix:0,iz:-(sp||0.7)}; };
   if(sh==='walk')return walk(56.5,74);
+  if(sh==='bstairs')return st<3.4?walk(63.5,68.6,0.6):walk(58,66.5,0.6);
+  if(sh==='alley')return walk(50.9,65.2,0.5);
+  if(sh==='bthrow'){ const L=K.bowl.lanes[1]; if(st>1.1&&!P.done.throw){ P.done.throw=1; if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } bowlThrow(L,true); L.ball.x0=50.9; } yaw=0; return st<1.0?{ix:0,iz:-0.35}:{ix:0,iz:0}; }
+  if(sh==='bturkey'){ return {ix:0,iz:0}; }
   if(sh==='foyer')return walk(56.5,65.5);
   if(sh==='tv'){ if(!party)return walk(40.5,62.5); // through the foyer into the living room: say hi to the cousins, then watch the game
     if(st<2.6)return walk(44,62); if(!P.done.hi){ P.done.hi=1; for(const p of K.couch)npcSay(p,p===K.couch[0]?'Hey! Come watch the game!':'Hi! The Turkeys are winning!'); } P.wave=st<4.5?1:0; if(st<4.5){ yaw=Math.atan2(-(38-pl.p[0]),-(63.8-pl.p[2])); return {ix:0,iz:0}; } return walk(40,61.5,0.5); }
   if(sh==='family'){ P.wave=1; const tgt=walk(67,47.3,0.55); const near=K.people.filter(p=>p.seat&&p.seat[2]===0).sort((a,b)=>Math.abs(a.g.position.x-pl.p[0])-Math.abs(b.g.position.x-pl.p[0]))[0];
     P.hiT=(P.hiT||0)-dt; if(near&&P.hiT<=0&&!near.bub){ P.hiT=1.1; npcSay(near,HI_LINES[Math.floor(Math.random()*HI_LINES.length)]); } yaw=-Math.PI/2; return tgt; }
-  if(sh==='garage'){ if(st<1.5)return walk(87.5,62); return walk(102,62,0.45); }
+  if(sh==='garage'){ if(!P.done.front&&pl.p[2]<63.8)return walk(86.6,64.4,1); P.done.front=1; return walk(102,64.4,0.6); } // down the side wall to the open floor in front of the cars, then along it
   if(sh==='food'){ const r=walk(45.5,38.1,0.5); return r; }
   if(sh==='pool'){ return st<3?walk(42,25.6):walk(41.5,25.2,0.3); }
-  if(sh==='slide'){ if(st>0.6&&!P.done.slide){ P.done.slide=1; slideGo(); } if(st>3.4&&!K.slide){ return walk(40.5,26); } return {ix:0,iz:0}; }
+  if(sh==='slide'){ if(st>0.6&&!P.done.slide){ P.done.slide=1; slideGo(); } if(st>3.4&&!K.slide&&!(K.danceT>0)){ return walk(40.5,26); } return {ix:0,iz:0}; }
   if(sh==='library'){ if(st>2.5&&!P.done.book){ P.done.book=1; secretDoor(true); } return st<2.5?walk(77,59.6):walk(80.5,60.5); }
   if(sh==='sit'){ if(!K.seated)sitDown(); yaw=Math.sin(P.t*0.4)*0.25; pitch=-0.3; if(st>9&&!P.done.e1){ P.done.e1=1; eatDish(K.leg||K.turkey); } if(st>11.5&&!P.done.e2){ P.done.e2=1; eatDish(K.dishes[1]); } if(st>13.5&&!P.done.toast){ P.done.toast=1; startPhase('toast'); } return {ix:0,iz:0}; }
   if(sh==='wish'){ if(!P.done.w){ P.done.w=1; if(!K.seated)sitDown(); startPhase('wish'); } return {ix:0,iz:0}; }
   if(sh==='disco'){ P.hs=0; return {ix:0,iz:0}; } return {ix:0,iz:0}; }
 function mansionDemoCam(dt){ const P=demo.pil, K=mansionK; if(!K)return; const {sh,st}=manShot(P), party=P.list===MAN_PARTY; let want, look, snap=false;
   if(sh==='walk'){ want=new THREE.Vector3(50.5-st*0.2,14.2+st*0.2,85-st*0.7); look=new THREE.Vector3(56,17,68); } // down the front walk, clear of the yard's trees
+  else if(sh==='bstairs'){ want=new THREE.Vector3(58.2,3.7,61.5); look=new THREE.Vector3(63,Math.min(pl.p[1]+1,4),Math.max(pl.p[2],65)); } // from the alley, up at the stairs
+  else if(sh==='alley'){ want=new THREE.Vector3(53,4.2,69); look=new THREE.Vector3(52.5,1,46); }
+  else if(sh==='bthrow'){ const L=K.bowl.lanes[1], b=L.ball; if(!K.heldBall&&!P.done.throw){ K.heldBall=msph(armR,0.24,mm(0x7a2ad8),0,-0.75,-0.1); } if(!P.done.throw){ armR.rotation.x=st<0.6?-1.6*st/0.6:-1.6+3.2*Math.min(1,(st-0.6)/0.5); }
+    if(b){ want=new THREE.Vector3(b.m.position.x,BW.F+1.6,b.m.position.z+3.4); look=new THREE.Vector3(b.m.position.x,BW.F+0.4,b.m.position.z-4); snap=true; } else if(P.done.throw){ want=new THREE.Vector3(L.x,BW.F+2.2,48.5); look=new THREE.Vector3(L.x,BW.F+0.5,43); } else { want=new THREE.Vector3(pl.p[0]+1.4,BW.F+2.4,pl.p[2]+3.2); look=new THREE.Vector3(L.x,BW.F+0.6,52); } }
+  else if(sh==='bturkey'){ const a=st*0.35; want=new THREE.Vector3(pl.p[0]+Math.sin(a)*5,BW.F+2.4,pl.p[2]+Math.cos(a)*5-1); look=new THREE.Vector3(pl.p[0],BW.F+1,pl.p[2]-1); heroDance(K.t); }
   else if(sh==='foyer'){ want=new THREE.Vector3(49.2,15.6,57.6); look=new THREE.Vector3(56,13.8,66); }
   else if(sh==='tv'){ if(party&&st<2.6){ want=new THREE.Vector3(50,15.5,58); look=new THREE.Vector3(pl.p[0],13.5,pl.p[2]); } else { want=new THREE.Vector3(43,15.5,67.5); look=new THREE.Vector3(38.5,13.5,58); } }
   else if(sh==='family'){ want=new THREE.Vector3(pl.p[0]-2,15.4,52); look=new THREE.Vector3(pl.p[0]+1,13,44); }
-  else if(sh==='garage'){ want=new THREE.Vector3(Math.max(88,pl.p[0]-1.5),14.2,66.5); look=new THREE.Vector3(pl.p[0]+2,12.6,58); }
+  else if(sh==='garage'){ want=new THREE.Vector3(Math.max(88,pl.p[0]-2.5),14.6,68.6); look=new THREE.Vector3(pl.p[0]+2.5,12.6,58); }
   else if(sh==='food'){ want=new THREE.Vector3(pl.p[0]-1,15.2,45.5); look=new THREE.Vector3(pl.p[0]-1,13,40); }
   else if(sh==='pool'){ want=new THREE.Vector3(51,16.5,25); look=new THREE.Vector3(42,12,18); }
   else if(sh==='slide'){ if(K.slide||st<0.6){ const f=vFwd(yaw); want=new THREE.Vector3(pl.p[0]-f[0]*4.5,pl.p[1]+3,pl.p[2]-f[1]*4.5); look=new THREE.Vector3(pl.p[0]+f[0]*2,pl.p[1]+0.8,pl.p[2]+f[1]*2); snap=true; } else { want=new THREE.Vector3(46,15.5,28); look=new THREE.Vector3(41,12,20); } }
