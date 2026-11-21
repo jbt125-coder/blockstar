@@ -6501,7 +6501,7 @@ function circeMesh(par,x,y,z){ const a=odPerson(par,x,y,z,0,odLook({skin:'#f0d0b
 // --- the world's life: what you see when you visit (and what the story uses)
 let odyK=null;
 function onOdyssey(){ return curPlace()==='odyssey'&&!!odyK; }
-function gy(x,z){ return surfaceAt(Math.floor(x),Math.floor(z)).y+1; } // the ground (or treetop) at x,z
+function gy(x,z){ return standY(Math.floor(x),Math.floor(z)); } // the ground at x,z (not the treetops)
 function buildOdyLife(){ clearOdyLife(); const root=new THREE.Group(); scene.add(root); const K=odyK={root,t:0,fires:[],speak:[],sheep:[],cows:[],sirens:[],heads:[],tent:[],notes:[]};
   // Troy: the wooden horse at the gate, burning houses, ships pulled up by the beach
   const H=horseMesh(); H.g.position.set(OD.horse[0],15,OD.horse[2]); root.add(H.g); K.horse=H;
@@ -6556,7 +6556,7 @@ function buildOdyLife(){ clearOdyLife(); const root=new THREE.Group(); scene.add
     K.tir=odPerson(U,2,0,-6,0,odLook({skin:'#e8d8c8',hair:'bald',top:'tee',topC:'#e8e4dc',bottom:'dress',bottomC:'#d8d4cc'}),{helm:false,shield:false,weapon:false}); mb(K.tir.R.head,0.5,0.5,0.1,mm(0xffffff),0,0.0,-0.28); const staff=mb(K.tir.R.armR,0.07,2,0.07,mm(0x8a6a3a),0,-0.4,-0.2);
     const tl=new THREE.PointLight(0x9ad0ff,1.5,12); tl.position.set(2,3,-6); U.add(tl); K.tirLight=tl; }
   if(curPlace()==='odyssey')odHeroGear(true); }
-function clearOdyLife(){ const K=odyK; if(!K)return; scene.remove(K.root); K.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odyK=null; odHeroGear(false); odHeroCloak(false); }
+function clearOdyLife(){ odStageClear(); const K=odyK; if(!K)return; scene.remove(K.root); K.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odyK=null; odHeroGear(false); odHeroCloak(false); }
 // --- your hero in Odysseus's gear: a bronze helmet, a blue cape, a round shield and a sword
 let odGear=null, odCloak=null;
 function odHeroGear(on){ if(on&&!odGear)odGear=gearUp(rig,{crest:0x2a6ad8,cape:0x2a5ad8}); if(!on&&odGear){ for(const m of odGear)m.parent&&m.parent.remove(m); odGear=null; } }
