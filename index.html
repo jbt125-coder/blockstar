@@ -1615,7 +1615,7 @@ let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
-  const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=200+f*220+(big-1)*60; camera.updateProjectionMatrix(); }
+  const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
 function cycleWeapon(){ const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
 let lastHP=-1, lastCoins=-1;
 function updateHUD(){
@@ -4127,7 +4127,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
     if(dPl<3&&!p.said&&p.wave>0.9){ p.said=true; } } }
 // each city's weather and sky
 function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
-  if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<260){ camera.far=260; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
+  if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
 
@@ -4357,6 +4357,29 @@ const ropeMat=new THREE.LineBasicMaterial({color:0xc8a060});
 const ropeLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),ropeMat); ropeLine.frustumCulled=false; ropeLine.visible=false; scene.add(ropeLine);
 const lassoLoop=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.035,6,18),lm(0xc8a060)); lassoLoop.visible=false; scene.add(lassoLoop);
 const hipCoil=new THREE.Mesh(new THREE.TorusGeometry(0.13,0.03,6,14),lm(0xc8a060)); hipCoil.position.set(0.3,0.86,0.02); hipCoil.rotation.y=Math.PI/2; hipCoil.visible=false; rig.torso.add(hipCoil);
+// --- beyond the edge of the ranch: grassland running out to the horizon, two rings of hazy snow-capped mountains, and low clouds.
+// None of it is fogged (it would vanish), so the colours are already hazy; they follow the time of day with the world's tint.
+const ranchSky=new THREE.Group(); ranchSky.visible=false; scene.add(ranchSky); let ranchSkyK=null;
+function mountainRing(R,n,h0,h1,base,top,snow,sd){ const r=mulberry32(sd), p1=r()*6, p2=r()*6, p3=r()*6, pos=[], col=[], c=new THREE.Color(), hs=[];
+  for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2; hs.push(i===n?hs[0]:h0+(h1-h0)*(0.5+0.28*Math.sin(a*3+p1)+0.14*Math.sin(a*7+p2)+0.08*Math.sin(a*17+p3))+(r()-0.5)*5); }
+  const v=(a,y,hex)=>{ pos.push(Math.cos(a)*R,y,Math.sin(a)*R); c.setHex(hex); col.push(c.r,c.g,c.b); };
+  for(let i=0;i<n;i++){ const a0=i/n*Math.PI*2, a1=(i+1)/n*Math.PI*2, h=[hs[i],hs[i+1]], m=h.map(q=>q*0.72), t=h.map(q=>q>h1*0.78?snow:top);
+    // two bands per slice: the base up to the shoulder, then the shoulder up to the (maybe snowy) peak
+    v(a0,-20,base); v(a1,-20,base); v(a1,m[1],top); v(a0,-20,base); v(a1,m[1],top); v(a0,m[0],top);
+    v(a0,m[0],top); v(a1,m[1],top); v(a1,h[1],t[1]); v(a0,m[0],top); v(a1,h[1],t[1]); v(a0,h[0],t[0]); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  return new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,fog:false,side:THREE.DoubleSide})); }
+function buildRanchSky(){ const G=ranchSky, K={mats:[]}, cx=64, cz=64;
+  const grass=new THREE.MeshLambertMaterial({color:0x4f7f33}); // the plains around the ranch (fogged, so they fade into the haze)
+  for(const [x0,x1,z0,z1] of [[-700,0,-700,830],[128,830,-700,830],[0,128,-700,0],[0,128,128,830]]){ const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),grass); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,FY-0.4,(z0+z1)/2); G.add(m); }
+  const far=mountainRing(330,140,70,150,0xa9bfd2,0xb8cad9,0xf2f6fa,7), near=mountainRing(230,110,40,95,0x4a6e48,0x8a9ea6,0xe8eff6,3); // forested slopes, grey rock, snow
+  far.position.set(cx,FY,cz); near.position.set(cx,FY,cz); G.add(far,near); K.mats.push(far.material,near.material);
+  const cm2=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.88,fog:false}); K.cloudMat=cm2; K.clouds=new THREE.Group(); K.clouds.position.set(cx,0,cz); G.add(K.clouds);
+  const r=mulberry32(11); for(let i=0;i<34;i++){ const a=r()*Math.PI*2, R=150+r()*120, y=FY+30+r()*34, puff=new THREE.Group(); puff.position.set(Math.cos(a)*R,y,Math.sin(a)*R); puff.rotation.y=-a;
+    for(let k=0;k<3;k++){ const b=box(10+r()*16,3+r()*3,8+r()*10,cm2); b.position.set((k-1)*9+(r()-0.5)*4,(r()-0.5)*2,(r()-0.5)*6); puff.add(b); } K.clouds.add(puff); }
+  return K; }
+function ranchSkyTick(dt){ const K=ranchSkyK; if(!K)return; const t=blockMat.color; for(const m of K.mats)m.color.setRGB(Math.min(1,t.r*1.05),Math.min(1,t.g*1.05),Math.min(1,t.b*1.05)); K.cloudMat.color.copy(cMat.color); K.clouds.rotation.y+=dt*0.004; }
+
 function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
 function riding(){ return !!(ranchK&&ranchK.ride); }
 function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
@@ -4364,7 +4387,7 @@ function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
   return look; }
 function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); }
-function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; dressRig(rig,look); }
+function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; ranchSky.visible=false; dressRig(rig,look); }
 function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples}; }
 // the ranch comes alive: the stable horses, wild herds, the farm animals. saved is what ranchSave() kept, or nothing for a new ranch
 function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==='object'?saved:{};
@@ -4381,7 +4404,7 @@ function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==
   for(const b of pen.slice(0,12))if(STEERS[b])makeAnimal('steer',b,C.x0+3+rnd()*(C.x1-C.x0-6),C.z0+3+rnd()*(C.z1-C.z0-6),{st:'pen',zone:penZone(),y:FY});
   const Y=R.yard; for(let i=0;i<7;i++)makeAnimal('chicken',i%3?'white':'brown',Y.x0+2+rnd()*12,Y.z0+2+rnd()*(Y.z1-Y.z0-4),{zone:Y,y:FY});
   for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
-  dressHero(); }
+  if(!ranchSkyK)ranchSkyK=buildRanchSky(); ranchSky.visible=true; dressHero(); }
 function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
 function placeOwned(o,i){ const s=STALLS[i]; let a;
   if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:Math.PI/2,zone:null,y:FY}); // facing their hay
@@ -4413,7 +4436,13 @@ function rideUpdate(dt){ const K=ranchK, a=K.ride; let thr=0, turn=0, jump=false
   if(demo&&!demo.user){ demoInput(dt); if(!demo.user){ demoPilot(dt); thr=rideIn.thr; turn=rideIn.turn; jump=rideIn.jump; } }
   if(!demo||demo.user){ const gp=demo?pad:{}; thr=-joy.y-(gp.ly||0); turn=joy.x+(gp.lx||0); if(keys.KeyW||keys.ArrowUp)thr+=1; if(keys.KeyS||keys.ArrowDown)thr-=1; if(keys.KeyA||keys.ArrowLeft)turn-=1; if(keys.KeyD||keys.ArrowRight)turn+=1;
     jump=upHeld||keys.Space||!!gp.a; thr=Math.max(-1,Math.min(1,thr)); turn=Math.max(-1,Math.min(1,turn)); }
-  yaw-=turn*2.1*dt*(0.5+0.5*Math.min(1,Math.abs(a.spd)/4)); a.hd=yaw;
+  yaw-=turn*2.1*dt*(0.5+0.5*Math.min(1,Math.abs(a.spd)/4));
+  { const m=10, ex=a.p[0]<m?-1:a.p[0]>W-m?1:0, ez=a.p[2]<m?-1:a.p[2]>D-m?1:0; // near the edge of the world: the horse leans into a turn, runs along the edge and heads back in
+    if(ex||ez){ const l=Math.hypot(ex,ez), nx=ex/l, nz=ez/l, fx=-Math.sin(yaw), fz=-Math.cos(yaw), de=Math.min(a.p[0],W-a.p[0],a.p[2],D-a.p[2]), close=1-Math.max(0,de)/m;
+      if(fx*nx+fz*nz>-0.45){ const tx=-nz, tz=nx, sg=fx*tx+fz*tz>=0?1:-1, dx=sg*tx-(0.35+close)*nx, dz=sg*tz-(0.35+close)*nz; let d=Math.atan2(-dx,-dz)-yaw;
+        while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=Math.max(-1,Math.min(1,d))*dt*(1.5+4*close);
+        if(!K.said.edge){ K.said.edge=1; rtoast('🐴 Whoa there! That\'s the edge of the ranch, so your horse turns back.'); } } } }
+  a.hd=yaw;
   K.boost=Math.max(0,K.boost-dt); K.jumpCD=Math.max(0,(K.jumpCD||0)-dt);
   if(jump&&!K.jumpWas&&a.onGround&&K.jumpCD<=0){ K.jumpCD=0.6; // jump over what's in front, or gallop faster on open ground
     if([0.25,0.7,1.2,1.8].some(d=>aheadBlock(a,a.hw+d,0)||aheadBlock(a,a.hw+d,1))){ a.v[1]=11.6; a.spd=Math.max(a.spd,5); sfx('whoosh'); } // high enough to clear a fence
@@ -4453,7 +4482,7 @@ function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false;
   if(!best&&!riding())return false; // nothing to rope: a normal hit
   K.lasso={t:0,a:best,dur:best?0.25+bd*0.03:0.5,miss:best?null:o.clone().addScaledVector(new THREE.Vector3(d.x,0,d.z).normalize(),9)}; hipCoil.visible=false; swingT=0.25; sfx('swing'); return true; }
 function handPos(){ return rig.armR.localToWorld(new THREE.Vector3(0,-0.68,0)); }
-function ranchTick(dt){ const K=ranchK; K.t+=dt; const hero=riding()?K.ride.p:pl.p;
+function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); const hero=riding()?K.ride.p:pl.p;
   // the lasso flies out and catches (or misses), then the rope stays tied on
   if(K.lasso){ const L=K.lasso; L.t+=dt; const f=Math.min(1,L.t/L.dur), h=handPos(), tg=L.a?new THREE.Vector3(L.a.p[0],L.a.p[1]+L.a.h*0.85,L.a.p[2]):L.miss, ret=!L.a&&L.t>L.dur;
     const p=ret?tg.clone().lerp(h,Math.min(1,(L.t-L.dur)/0.35)):h.clone().lerp(tg,f); p.y+=Math.sin(f*Math.PI)*1.2; lassoLoop.visible=true; lassoLoop.position.copy(p); lassoLoop.rotation.set(Math.PI/2,0,K.t*12);
