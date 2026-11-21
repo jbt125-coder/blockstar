@@ -2313,7 +2313,7 @@ const DEMO0={scenes:[
   {act:'fight',time:'night',wx:'clear',land:'normal',cam:'follow',secs:18,cap:'Monsters come out at night!'},
   {act:'concert',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'Live tonight!',singers:2,crowd:'mixed',pyro:'on',mouth:'auto'},
   {act:'stadium',time:'night',wx:'clear',land:'normal',cam:'cine',secs:40,cap:'',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',giant:'cycle'},
-  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:100,cap:'',horse:'random',rstory:'day'},
+  {act:'ride',time:'day',wx:'clear',land:'normal',cam:'cine',secs:120,cap:'',horse:'random',rstory:'day'},
   {act:'fire',time:'night',wx:'clear',land:'normal',cam:'cine',secs:45,cap:'',mouth:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed'},
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
@@ -4299,10 +4299,10 @@ function generateRanch(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(
   for(let k=0;k<=6;k++){ const y=FY+3+k; for(let x=Hs.x0-1;x<=Hs.x1+1;x++){ put(x,y,Hs.z0-1+k,ID.roof); put(x,y,Hs.z1+1-k,ID.roof); }
     for(let z=Hs.z0+k;z<=Hs.z1-k;z++){ put(Hs.x0,y,z,ID.planks); put(Hs.x1,y,z,ID.planks); } }
   put(74,FY,114,ID.planks); put(79,FY,117,ID.crate); put(79,FY+1,117,ID.crate); put(77,FY+1,Hs.z1,ID.glass); // a table, the wardrobe and a mirror
-  // the corral: log posts and plank rails, with a gate in the south side
-  const C=R.corral; for(let x=C.x0;x<=C.x1;x++)for(const z of [C.z0,C.z1]){ if(z===C.z1&&x>=C.gate[0]&&x<=C.gate[1])continue; const post=(x-C.x0)%3===0; put(x,FY,z,post?ID.log:0); put(x,FY+1,z,post?ID.log:ID.planks); }
+  // the corral: log posts and plank rails, with gates on the farm side and the meadow side
+  const C=R.corral; for(let x=C.x0;x<=C.x1;x++)for(const z of [C.z0,C.z1]){ if(x>=C.gate[0]&&x<=C.gate[1])continue; const post=(x-C.x0)%3===0; put(x,FY,z,post?ID.log:0); put(x,FY+1,z,post?ID.log:ID.planks); }
   for(let z=C.z0;z<=C.z1;z++)for(const x of [C.x0,C.x1]){ const post=(z-C.z0)%3===0; put(x,FY,z,post?ID.log:0); put(x,FY+1,z,post?ID.log:ID.planks); }
-  for(const x of [C.gate[0]-1,C.gate[1]+1])box(x,x,FY,FY+1,C.z1,C.z1,ID.log);
+  for(const x of [C.gate[0]-1,C.gate[1]+1])for(const z of [C.z0,C.z1])box(x,x,FY,FY+1,z,z,ID.log);
   box(C.x0+2,C.x0+4,FY,FY,C.z0+2,C.z0+2,ID.planks); // a feed trough
   // hay bales, a chicken coop and a muddy patch for the pigs
   for(const [x,z,n] of [[57,89,2],[58,89,1],[57,90,1],[66,90,1],[66,91,2],[85,99,1],[86,100,2],[69,106,1],[50,106,1],[51,106,2],[34,100,1]])for(let i=0;i<n;i++)put(x,FY+i,z,ID.hay);
@@ -4650,25 +4650,37 @@ function demoRanchSetup(sc,P){ demo.vplace='ranch'; demo.ranchWorld=true; demo.c
   if(sc.rstory!=='ride'){ storyStart(sc,P,o); dressHero(); return; } // a whole day on the ranch
   a.p=[path[0][0],FY+0.01,path[0][1]]; a.v=[0,0,0]; a.zone=null; a.hd=Math.atan2(-(path[6][0]-path[0][0]),-(path[6][1]-path[0][1])); mount(a,true); dressHero();
   Object.assign(P,{i:0,dir:1,stop:0,mode:'trail',drank:false,lassoT:-1,jT:5}); rideIn={thr:0,turn:0,jump:false}; }
+// before the ride up the mountain: rope the steer in the meadow, lead it round to the corral gate and in, then head for the trail
+function catchPilot(dt,P,a,steer){ const K=ranchK, late=demo.st>P.tCatch, s=P.steer;
+  const go=(q,sp)=>{ const off=steer(q[0],q[1]); rideIn.thr=off>0.8?0.3:sp; return Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); };
+  if(P.cmode==='seek'){ if(!s||!K.animals.includes(s)||late){ P.cmode='done'; return; }
+    const d=go([s.p[0],s.p[2]],0.8), dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], f=[-Math.sin(yaw),-Math.cos(yaw)];
+    if(d<7)rideIn.thr=0; if(d<12&&(dx*f[0]+dz*f[1])/d>0.93&&!K.lasso&&!K.rope)ranchHit();
+    if(K.rope){ P.cmode='lead'; P.lw=[[79,77],[79,89]]; } return; }
+  if(P.cmode==='lead'){ if(s&&s.st==='pen'){ P.cmode='out'; P.lw=[[79,77],[64,78]]; return; }
+    if(late&&K.rope&&demo.st>P.tCatch+6){ ranchHit(); P.cmode='done'; return; }
+    const q=P.lw[0]; if(!q){ rideIn.thr=0; rideIn.turn=0; return; } if(go(q,0.6)<1.6)P.lw.shift(); return; }
+  if(P.cmode==='out'){ const q=P.lw[0]; if(!q){ P.cmode='done'; P.i=0; return; } if(go(q,0.8)<1.8)P.lw.shift(); } }
 function ridePilot(dt,P){ const K=ranchK, a=K&&K.ride; if(!a)return; const path=ranchPath(), [lx,lz]=RANCH.lake;
   const steer=(tx,tz)=>{ let d=Math.atan2(-(tx-a.p[0]),-(tz-a.p[2]))-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; rideIn.turn=Math.max(-1,Math.min(1,-d*2.2)); return Math.abs(d); };
   rideIn.jump=false;
-  if(P.view>0){ P.view-=dt; P.viewK+=dt; rideIn.thr=0; steer(FALL_TOP[0],FALL_TOP[2]); if(P.view<=0){ P.view=0; P.dir=-1; P.viewed=true; } return; } // stop and look at the waterfall
+  if(P.view>0){ P.view-=dt; P.viewK+=dt; rideIn.thr=0; if(P.viewK<P.viewLen*0.5)steer(FALL_TOP[0],FALL_TOP[2]); else steer(70,100); if(P.view<=0){ P.view=0; P.dir=-1; P.viewed=true; } return; } // stop and look at the waterfall
   if(P.pre&&P.pre.length){ const q=P.pre[0], off=steer(q[0],q[1]); rideIn.thr=off>0.8?0.3:0.7; if(Math.hypot(q[0]-a.p[0],q[1]-a.p[2])<1.5)P.pre.shift();
     if(!P.pre.length&&P.homeBound){ P.homeBound=false; dismount(true); P.ph='walk'; P.wi=0; } return; }
+  if(P.story&&P.cmode&&P.cmode!=='done'){ catchPilot(dt,P,a,steer); return; }
   if(P.story&&P.viewed&&demo.st>P.tHome&&!P.homeBound){ a.p=[path[2][0],FY+0.01,path[2][1]]; P.i=2; P.dir=-1; } // running late: skip ahead to the bottom of the trail
   if(P.stop>0){ P.stop-=dt; rideIn.thr=0; rideIn.turn=0; if(P.stop<=0&&P.mode==='drink'){ P.mode='trail'; let bi=0, bd=1e9; path.forEach((q,j)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=j; } }); P.i=bi; } return; }
   if(P.mode==='tolake'){ steer(lx,lz); rideIn.thr=0.35; const wet=get(Math.floor(a.p[0]-Math.sin(a.hd)*1.3),Math.floor(a.p[1]-0.5),Math.floor(a.p[2]-Math.cos(a.hd)*1.3))===ID.water;
     if(wet||Math.hypot(a.p[0]-lx,a.p[2]-lz)<RANCH.lake[2]+1){ P.mode='drink'; P.stop=4.5; } return; }
   let i=P.i; for(let k=0;k<40;k++){ const j=i+P.dir; if(j<0||j>=path.length)break; if(Math.hypot(path[j][0]-a.p[0],path[j][1]-a.p[2])<=Math.hypot(path[i][0]-a.p[0],path[i][1]-a.p[2])+0.05)i=j; else break; } P.i=i;
-  if(P.story&&P.dir>0&&demo.st>P.tTurn&&!P.view){ P.view=P.viewLen=Math.max(3,Math.min(7,demo.sc.secs*0.06)); P.viewK=0; return; } // out of time: take in the view from here
-  if(P.dir>0&&i>=path.length-3){ P.view=P.viewLen=P.story?Math.max(3,Math.min(7,demo.sc.secs*0.06)):4.5; P.viewK=0; return; } // the top: the view of the waterfall
+  if(P.story&&P.dir>0&&demo.st>P.tTurn&&i<path.length-10){ const q=path[path.length-8]; a.p=[q[0],standY(Math.floor(q[0]),Math.floor(q[1]))+0.01,q[1]]; P.i=path.length-8; if(demo.cam){ demo.cam.cur=null; demo.cam.st=0; } return; } // running late: jump ahead (on a camera cut) to near the top
+  if(P.dir>0&&i>=path.length-3){ P.view=P.viewLen=P.story?Math.max(4,Math.min(9,demo.sc.secs*0.09)):6; P.viewK=0; return; } // the top: the view of the waterfall
   if(P.dir<0&&i<=2){ if(P.story){ P.pre=[[60,90],[59.5,96.5]]; P.homeBound=true; return; } P.dir=1; P.stop=3; return; }
-  if(!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
+  if(!P.story&&!P.drank&&Math.hypot(a.p[0]-82,a.p[2]-62)<3){ P.drank=true; P.mode='tolake'; return; } // the lake is right there: go and have a drink
   const tg=path[Math.max(0,Math.min(path.length-1,i+P.dir*7))], off=steer(tg[0],tg[1]); rideIn.thr=off>0.9?0.45:1;
   P.jT-=dt; if(P.jT<=0&&off<0.25&&a.p[1]<FY+5&&a.onGround){ rideIn.jump=true; P.jT=9; } // a gallop on the flat
   P.stuck=Math.abs(a.spd)<1.2?(P.stuck||0)+dt:0; if(P.stuck>1.5&&a.onGround){ rideIn.jump=true; P.stuck=0; P.i=Math.max(0,Math.min(path.length-1,P.i+P.dir*3)); } // stuck on something: hop over it
-  if(P.lassoT<0&&demo.st>5&&!K.rope&&!K.lasso){ const d=lookDir(); for(const s of K.animals){ if(!s.wild||s.kind!=='steer')continue; const dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], dist=Math.hypot(dx,dz);
+  if(!P.story&&P.lassoT<0&&demo.st>5&&!K.rope&&!K.lasso){ const d=lookDir(); for(const s of K.animals){ if(!s.wild||s.kind!=='steer')continue; const dx=s.p[0]-a.p[0], dz=s.p[2]-a.p[2], dist=Math.hypot(dx,dz);
       if(dist<11&&dist>2&&(dx*d.x+dz*d.z)/(dist*Math.hypot(d.x,d.z))>0.9){ ranchHit(); P.lassoT=0; break; } } }
   if(P.lassoT>=0&&K.rope){ P.lassoT+=dt; if(P.lassoT>12){ ranchHit(); P.lassoT=99; } } } // lead it for a bit, then let it go
 // cuts on the beat between shots that follow the horse: behind, beside, in front, down by the hooves, far off, and the rider's eye view
@@ -4699,8 +4711,10 @@ function walkTo2(P,x,z,dt,sp){ const dx=x-pl.p[0], dz=z-pl.p[2], d=Math.hypot(dx
   pl.p[0]+=dx/d*st; pl.p[2]+=dz/d*st; pl.p[1]=FY; P.hs=st/Math.max(dt,1e-3); let w=Math.atan2(-dx,-dz)-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*8); return false; }
 function faceTo(yw,dt){ let w=yw-yaw; while(w>Math.PI)w-=2*Math.PI; while(w<-Math.PI)w+=2*Math.PI; yaw+=w*Math.min(1,dt*6); }
 function storyStart(sc,P,o){ const S=sc.secs, stalls=[0,1,2].filter(i=>STALLS[i]);
-  Object.assign(P,{story:true,ph:'hay',o,hay:stalls.map(i=>STALLS[i]),hi:0,drop:0,hays:[],pre:null,tHay:S*0.11,tTurn:S*0.42,tHome:S*0.64,tFarm:S*0.84,planted:[],pi:0,wi:0,act:0});
-  pl.p=[54.5,FY,96.5]; yaw=Math.PI/2; pitch=-0.05; demo.puppet=true; hayCarry.visible=true; }
+  Object.assign(P,{story:true,ph:'hay',o,hay:stalls.map(i=>STALLS[i]),hi:0,drop:0,hays:[],pre:null,tHay:S*0.09,tCatch:S*0.25,tTurn:S*0.55,tHome:S*0.72,tFarm:S*0.88,planted:[],pi:0,wi:0,act:0});
+  pl.p=[54.5,FY,96.5]; yaw=Math.PI/2; pitch=-0.05; demo.puppet=true; hayCarry.visible=true;
+  const st=ranchK.animals.find(a=>a.wild&&a.kind==='steer'); // a steer grazing in the meadow, to rope and bring in
+  if(st){ st.p=[70.5,standY(70,74),74.5]; st.v=[0,0,0]; st.zone={x0:66,x1:76,z0:70,z1:78}; st.tgt=null; P.steer=st; } }
 // the parts of the day that happen on foot (the ride itself is ridePilot)
 function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
   if(P.ph==='hay'){ // carrying a bale of hay down the aisle to each stall
@@ -4709,15 +4723,15 @@ function storyPilot(dt,P){ const K=ranchK, T=demo.st; P.hs=0;
     if(walkTo2(P,s[0]+2.6,s[1],dt)){ faceTo(Math.PI/2,dt); if(Math.abs(yaw-Math.PI/2)<0.2){ hayCarry.visible=false; P.drop=1.0; sfx('place');
       const h=box(0.6,0.4,0.42,hayMat); h.position.set(s[0]+1.95,FY+0.2,s[1]); scene.add(h); K.decor.push(h); const a=K.own.find(q=>q.a&&Math.abs(q.a.p[2]-s[1])<0.6&&Math.abs(q.a.p[0]-s[0])<0.6); if(a)a.a.hayT=99; } } return; }
   if(P.ph==='saddle'){ const a=P.o.a; if(walkTo2(P,a.p[0]+2.2,a.p[2],dt)){ faceTo(Math.PI/2,dt); P.act+=dt; if(P.act>0.8){ P.act=0; saddleUp(a,true); burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(0.55,0.35,0.15),6);
-      a.hayT=0; mount(a,true); P.ph='ride'; P.i=0; P.dir=1; P.pre=[[52,a.p[2]],[56.6,96.5],[60,96.5],[60,88]]; } } return; }
+      a.hayT=0; mount(a,true); P.ph='ride'; P.i=0; P.dir=1; P.pre=[[52,a.p[2]],[56.6,96.5],[61,97]]; P.cmode='seek'; } } return; }
   if(P.ph==='walk'){ const W=[[62,104],[81.6,104],[81.6,113],[84.5,121.5]], q=W[P.wi]; if(!q){ P.ph='plant'; P.pi=0; equipTool('seeds',true); return; } if(walkTo2(P,q[0],q[1],dt,3.2))P.wi++; return; }
   if(P.ph==='plant'||P.ph==='water'){ const x=P.ph==='plant'?84+P.pi:91-P.pi; if(x<84||x>91||T>P.tFarm&&P.ph==='water'){ if(P.ph==='plant'){ P.ph='water'; P.pi=0; equipTool('water',true); } else { P.ph='tochair'; toolHand.clear(); } return; }
     if(!walkTo2(P,x+0.5,121.5,dt,2.4))return; faceTo(Math.PI,dt); P.act+=dt; swingT=Math.max(swingT,0.2);
     if(P.act>(P.ph==='plant'?0.45:0.35)){ P.act=0; P.pi++;
       if(P.ph==='plant'){ if(!get(x,FY,122)&&!cropAt(x,FY-1,122)){ P.planted.push(plantCrop(x,FY-1,122,['corn','wheat','carrot','tomato'][x%4],0)); sfx('place'); } }
       else { const b=get(x,FY-1,122); if(isFarm(b)){ setBlock(x,FY-1,122,soil(isRich(b),true)); K.wet.set(x+','+(FY-1)+','+122,WET_TIME); } for(let n=0;n<5;n++)burst(x,FY+0.3,122,new THREE.Color(0.45,0.7,1),1); sfx('whoosh'); } } return; }
-  if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.1,CHAIR.z,dt,3)){ P.ph='chair'; heldGuitar.visible=true; } return; }
-  if(P.ph==='chair'){ pl.p=[CHAIR.x,FY-0.17,CHAIR.z]; yaw=-Math.PI/2; pitch=0.05; P.hs=0;
+  if(P.ph==='tochair'){ if(walkTo2(P,CHAIR.x+0.3,CHAIR.z-1.2,dt,3)){ P.ph='chair'; heldGuitar.visible=true; } return; }
+  if(P.ph==='chair'){ pl.p=[CHAIR.x+0.3,FY,CHAIR.z-1.2]; faceTo(-Math.PI/2,dt); pitch=0.05; P.hs=0;
     return; } }
 // the crops grow fast (a time-lapse), ripe just before the scene ends
 function storyGrow(dt,P){ if(!P.planted.length)return; const left=Math.max(2,demo.sc.secs-1.5-demo.st); for(const c of P.planted){ if(!ranchK.crops.includes(c)||c.g>=1)continue; c.g=Math.min(1,c.g+dt*(1-c.g)/left); cropLook(c); } }
@@ -4726,21 +4740,22 @@ function storyCam(dt,P){ const C=demo.cam||(demo.cam={st:0,i:-1,k:0,cur:null,lb:
   const s0=P.hay[Math.min(P.hi,P.hay.length-1)]||STALLS[0];
   const SH={aisle:t=>[V(55.2,FY+2.6,96.5+Math.sin(t*0.3)),h], stall:t=>[V(s0[0]+3.4,FY+1.7,s0[1]+2.2),V(s0[0]+1,FY+1,s0[1])], front:t=>[h.clone().addScaledVector(f,2.8).add(V(0,0.1,0)),h],
     side:t=>[h.clone().addScaledVector(rt,4).add(V(0,0.8,0)),h], garden:t=>[V(97,FY+4.5,127-t*0.3),V(87,FY+0.5,121)], back:t=>[h.clone().addScaledVector(f,-3.6).add(V(0,1.2,0)),h.clone().addScaledVector(f,3)],
-    porch:t=>[V(CHAIR.x+2.8,FY+1.4,CHAIR.z-0.6+t*0.1),V(CHAIR.x,FY+1.1,CHAIR.z)], shoulder:t=>[V(CHAIR.x-1.1,FY+2.0,CHAIR.z+0.8),V(88,FY+0.6,121)],
-    crops:t=>[V(88+t*0.2,FY+0.5,123.2),V(CHAIR.x,FY+1.1,CHAIR.z)], wide:t=>[V(100,FY+11,136-t*0.4),V(84,FY+1,117)], guitar:t=>[V(CHAIR.x+1.2,FY+1.0,CHAIR.z-0.5),V(CHAIR.x,FY+0.9,CHAIR.z)]};
+    porch:t=>[h.clone().addScaledVector(f,3.2).addScaledVector(rt,0.8-t*0.1).add(V(0,-0.1,0)),h.clone().add(V(0,-0.3,0))], shoulder:t=>[h.clone().addScaledVector(f,-0.8).addScaledVector(rt,1.4).add(V(0,0.5,0)),V(88,FY+0.6,121)],
+    crops:t=>[V(88+t*0.2,FY+0.5,123.2),h.clone().add(V(0,-0.4,0))], wide:t=>[V(100,FY+11,136-t*0.4),V(84,FY+1,116)], guitar:t=>[h.clone().addScaledVector(f,1.3).addScaledVector(rt,-0.5).add(V(0,-0.5,0)),h.clone().add(V(0,-0.55,0))]};
   const seqs={hay:['aisle','stall','front'],saddle:['stall','aisle'],walk:['back','side','garden'],plant:['side','garden','front'],water:['garden','side','front'],tochair:['garden','back'],chair:['porch','shoulder','crops','guitar','wide']};
   const seq=seqs[P.ph]||['side'], bt=Math.floor(musBeat()); if(C.ph!==P.ph){ C.ph=P.ph; C.cur=null; C.i=-1; } C.st-=dt; C.k+=dt;
   if(!C.cur||(C.st<=0&&bt!==C.lb)){ C.i=(C.i+1)%seq.length; C.cur=seq[C.i]; C.st=3.4+Math.random()*1.6; C.k=0; } C.lb=bt;
   const pr=SH[C.cur](C.k); camera.position.copy(pr[0]); camera.lookAt(pr[1]); }
 function vistaCam(dt,P){ const a=ranchK.ride, V=(x,y,z)=>new THREE.Vector3(x,y,z), h=V(a.p[0],a.p[1]+a.yo+2.4,a.p[2]), m=V(...FALL_TOP), d=m.clone().sub(h).setY(0).normalize(), r=V(d.z,0,-d.x), k=P.viewK||0;
-  const first=k<P.viewLen*0.5, cam=first?h.clone().addScaledVector(d,-4.5).addScaledVector(r,1.2).add(V(0,0.8,0)):h.clone().addScaledVector(d,-7-k*0.4).addScaledVector(r,-3).add(V(0,6.5,0)); // over the shoulder, then pulling back wide
-  camera.position.copy(cam); camera.lookAt(m.clone().add(V(0,first?-20:-10,0))); model.visible=true; }
+  const first=k<P.viewLen*0.5, farm=V(70,FY+2,100), df=farm.clone().sub(h).setY(0).normalize(), rf=V(df.z,0,-df.x); // the waterfall first, then the farm far below
+  const cam=first?h.clone().addScaledVector(d,-4.5).addScaledVector(r,1.2).add(V(0,0.8,0)):h.clone().addScaledVector(df,-5).addScaledVector(rf,1.6).add(V(0,1.6,0));
+  camera.position.copy(cam); camera.lookAt(first?m.clone().add(V(0,-20,0)):farm); model.visible=true; }
 function storyPose(dt,P){ const K=ranchK, t=demo.t, beat=musBeat(), s=Math.sin;
   if(P.ph==='hay'&&hayCarry.visible){ armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=0.12; armR.rotation.z=-0.12; }
   else if(P.ph==='hay'||P.ph==='saddle'){ if(P.drop>0||P.act>0){ armR.rotation.x=1.3; armL.rotation.x=0.9; } }
-  else if(P.ph==='chair'){ const rock=0.1*s(t*1.8); model.rotation.x=rock; K.chair.rotation.x=rock; // rocking, strumming and singing
-    legL.rotation.set(1.35,0,-0.1); legR.rotation.set(1.35,0,0.1); armR.rotation.x=0.5+0.22*s(beat*Math.PI*4); armR.rotation.z=-0.38; armL.rotation.x=0.75; armL.rotation.z=-0.35;
-    head.rotation.x=0.06-0.2*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
+  else if(P.ph==='chair'){ const solo=(beat%32)>=24, hop=Math.abs(s(beat*Math.PI)); K.chair.rotation.x=0.06*s(t*1.6); // standing by the chair: strumming, singing, the empty chair rocking
+    model.position.y+=hop*0.04; legL.rotation.set(0,0,-0.12); legR.rotation.set(0,0,0.12); armR.rotation.x=0.5+0.22*s(beat*Math.PI*2*(solo?4:2)); armR.rotation.z=-0.38;
+    armL.rotation.x=0.75; armL.rotation.z=-0.35+0.05*s(beat*Math.PI*2); head.rotation.x=0.06-0.22*(0.5+0.5*Math.cos(beat*Math.PI*2)); setMouth(rig,autoSing(beat)); } }
 // ================= RANCH FARMING AND WILDLIFE =================
 // The tool shed hands out tools: a hoe tills grass into farmland, the seed bag plants corn, wheat, carrots or tomatoes, the watering
 // can makes them grow faster (refill it at the lake or the trough), compost makes rich soil (faster again, and a bigger harvest),
