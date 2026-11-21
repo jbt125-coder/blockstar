@@ -2321,7 +2321,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2340,10 +2340,12 @@ const DM_FCROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monst
 const DM_HORSE={random:'🎲 A random horse',bay:'🐴 Bay',black:'🐴 Black',white:'🐴 White',palomino:'🐴 Palomino',chestnut:'🐴 Chestnut',pinto:'🐴 Pinto',appaloosa:'🐴 Appaloosa',grullo:'🐴 Grullo'}; // the breeds in HORSES
 const DM_RSTORY={day:'🌄 A day on the ranch (hay, ride, farm, guitar)',ride:'🐴 Just the ride'};
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
+const DM_DCAR={random:'🎲 A random car'}; // filled in once the Car World vehicles exist
+const DM_DEND={stop:'🪂 Pull the chute and stop',jet:'✈️ Off the ramp and turn into a jet'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day'};
+const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2359,7 +2361,7 @@ const DEMO0={scenes:[
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2378,10 +2380,11 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
       s.act==='ride'?'<label>Story'+sel(DM_RSTORY,'rstory',i,s.rstory)+'</label><label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'||s.act==='fire'||s.act==='ride'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
   h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
@@ -2475,7 +2478,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2488,6 +2491,7 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding
   if(sc.act==='stadium'){ stadiumSetup(sc,P); return; }
   if(sc.act==='fire'){ fireSetup(sc,P); return; }
   if(sc.act==='ride'){ demoRanchSetup(sc,P); return; }
+  if(sc.act==='drag'){ demoDragSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2511,6 +2515,7 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
   return {ix:0,iz:dist<0.6?0:Math.abs(d)<1.0?-1:-0.2}; }
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
   if(sc.act==='city')return demoCityPilot(dt,P);
+  if(sc.act==='drag'){ dragPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
@@ -2532,7 +2537,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -3584,6 +3589,7 @@ function driveUpdate(dt){ const v=drive, V=v.V, top=V.spd*(1-0.55*(v.dmg||0)); l
   if(!P.rt&&!P.lt){ gas+=Math.max(0,-P.ly); brk+=Math.max(0,P.ly); } str+=dash.wheel+P.lx+((keys.KeyA||keys.ArrowLeft)?-1:0)+((keys.KeyD||keys.ArrowRight)?1:0);
   gas=Math.min(1,gas); brk=Math.min(1,brk); thr=gas-brk; str=Math.max(-1,Math.min(1,str)); const brake=keys.Space;
   if(v.wrecked){ thr=0; gas=0; if((keys.KeyW||dash.gas)&&!v.told){ v.told=true; toast('💨 It won\'t start. Get out (E) and the tow truck will take it away.'); } }
+  if(demo&&!demo.user&&demo.sc&&demo.sc.act==='drag'){ gas=dragAuto.gas; brk=dragAuto.brk; str=dragAuto.str; thr=gas-brk; }
   v.ui={gas,brk,str};
   if(!(dragK&&!v.wrecked&&dragDrive(v,dt,gas,brk,str,brake))){
   if(brake)v.spd*=Math.max(0,1-dt*4);
@@ -3920,7 +3926,7 @@ function demoRoute(tx,tz){ const xs=roadLines(CX,W), zs=roadLines(CZ,D), ax=near
 function ringProject(r,x,z){ const w=r[2]-r[0], h=r[3]-r[1], c=[[Math.max(0,Math.min(w,x-r[0])),Math.abs(z-r[1])],[w+Math.max(0,Math.min(h,z-r[1])),Math.abs(x-r[2])],[w+h+Math.max(0,Math.min(w,r[2]-x)),Math.abs(z-r[3])],[2*w+h+Math.max(0,Math.min(h,r[3]-z)),Math.abs(x-r[0])]];
   return c.sort((a,b)=>a[1]-b[1])[0][0]; }
 // --- the scene: a fresh city, or your own saved one (never saved back)
-function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
+function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
   demo.cityPlace=k; demo.vplace=k; demo.cityKey=PLACES[k].city; demo.inKind=null; demo.stack=[]; demo.cityWorld=true;
   clearCityLife(); clearInteriorLife(); setWorldSize(...PLACES[k].dims); let mine=false;
   if(sc.dsrc==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(s&&Array.isArray(s.w)&&s.cityVer===CITY_VER){ world=rleDecode(s.w); meta=rleDecode(s.m); mine=true; } }catch(e){}
@@ -3928,7 +3934,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4704,7 +4710,7 @@ function ranchAction(){ const K=ranchK; if(!onRanch())return null; if(K.ride)ret
 
 // --- the horse ride in Demo Mode: up the trail past the lake (with a drink), a gallop across the meadow, a steer roped
 // along the way, the view from the top, then back down
-function demoRanchSetup(sc,P){ demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
+function demoRanchSetup(sc,P){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
   generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
   const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
   const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
@@ -5440,7 +5446,7 @@ const dsFront=v=>dsOf(v.p[2])+v.V.len/2;
 // --- the city all around, far below the mesa, at night
 const dragSky=new THREE.Group(); dragSky.visible=false; scene.add(dragSky); let dragSkyK=null;
 function cityWinTex(){ const c=document.createElement('canvas'); c.width=64; c.height=64; const x=c.getContext('2d'), r=mulberry32(77); x.fillStyle='#10131c'; x.fillRect(0,0,64,64);
-  for(let j=0;j<8;j++)for(let i=0;i<8;i++){ const on=r()<0.42; x.fillStyle=on?['#ffe7a0','#fff4d0','#a8d8ff','#ffc870'][Math.floor(r()*4)]:'#1c2230'; x.fillRect(i*8+2,j*8+2,4,5); }
+  for(let j=0;j<8;j++)for(let i=0;i<8;i++){ const on=r()<0.55; x.fillStyle=on?['#ffe08a','#fff0c0','#9fd0ff','#ffc060'][Math.floor(r()*4)]:'#18202e'; x.fillRect(i*8+1,j*8+1,6,6); }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.magFilter=THREE.NearestFilter; return t; }
 function buildDragSky(){ const G=dragSky, K={boxes:[]}, base=-120, r=mulberry32(91);
   const mesa=new THREE.Mesh(new THREE.BoxGeometry(W,DR.GY-base,D-DR.EDGE),lm(0x3a3430)); mesa.position.set(W/2,(base+0.02)/2,(D+DR.EDGE)/2); G.add(mesa);
@@ -5584,7 +5590,7 @@ function dragTick(dt){ const K=dragK; K.t+=dt; dragSkyTick(dt); const R=K.race, 
     v.lone=(v.lone||0)+dt; if(v.lone>20&&Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])>30&&Math.hypot(pl.p[0]-v.home.x,pl.p[2]-v.home.z)>12){ v.lone=0; dragHome(v); v.fuel=1; } }
   if(me&&!me.jet&&!me.air&&dragK.cars.includes(me)&&dragInLane(me)){ me.fuel=Math.max(0,(me.fuel===undefined?1:me.fuel)-Math.abs(me.spd)*dt/6000); if(me.fuel<=0&&!me.fumes){ me.fumes=true; rtoast('⛽ Running on fumes! Fill up at the gas station by the pits.'); } }
   // a challenger shows up when you roll up behind the line in a car
-  if(!R&&me&&!me.jet&&!me.air&&!demoRacing()){ const s=dsFront(me); if(s>-30&&s<-2){ for(let L=0;L<2;L++)if(Math.abs(me.p[0]-DR.LANE[L])<3)dragCall(L); } }
+  if(!R&&me&&!me.jet&&!me.air&&!demo){ const s=dsFront(me); if(s>-30&&s<-2){ for(let L=0;L<2;L++)if(Math.abs(me.p[0]-DR.LANE[L])<3)dragCall(L); } }
   if(R)raceTick(R,dt); crowdTick(K,dt); if(R&&R.cheer>0)R.cheer-=dt;
   for(const v of K.cars)if(v.chuteM&&v.chute){ const sp=Math.min(1,Math.abs(v.spd)/40); v.chuteM.scale.setScalar(0.6+sp*0.6); v.chuteM.rotation.z=Math.sin(K.t*7)*0.08; }
   dragHudTick(); }
@@ -5673,10 +5679,10 @@ function dragAirUpdate(v,dt){ const J=v.jet; if(J)return jetUpdate(v,dt); const 
     if(k>=1){ scene.remove(v.m); v.jet={m:A.jm,spd:Math.max(55,Math.hypot(A.vx,A.vz)),yaw:v.h,pitch:0.3,roll:0,t:0}; v.p[1]+=0.8; v.air=null; jetSound(true);
       rtoast(IS_TOUCH?'✈️ You\'re a jet! Steer with the wheel, ⬆⬇ to climb and dive, gas to boost. Land on the strip, or Get out to go back to the garage.':'✈️ You\'re a jet! A/D steer, W/S climb and dive, Space boosts, Shift slows. Land on the strip, or E to go back to the garage.'); } }
   return {hs:0}; }
-function jetUpdate(v,dt){ const J=v.jet, P=padRead(); J.t+=dt;
+function jetUpdate(v,dt){ const J=v.jet, P=padRead(); J.t+=dt; const auto=demo&&!demo.user&&demo.sc&&demo.sc.act==='drag';
   let str=dash.wheel+P.lx+((keys.KeyA||keys.ArrowLeft)?-1:0)+((keys.KeyD||keys.ArrowRight)?1:0)+joy.x, pin=dash.up-dash.dn+((keys.KeyW||keys.ArrowUp)?1:0)-((keys.KeyS||keys.ArrowDown)?1:0)-P.ly-joy.y;
-  const boost=Math.min(1,dash.gas+(keys.Space?1:0)+P.rt), slow=Math.min(1,dash.brake+(keys.ShiftLeft||keys.ShiftRight?1:0)+P.lt); str=Math.max(-1,Math.min(1,str)); pin=Math.max(-1,Math.min(1,pin));
-  v.ui={str,gas:boost,brk:slow}; const want=60+boost*70-slow*28; J.spd+=(want-J.spd)*Math.min(1,dt*0.9);
+  const boost=Math.min(1,dash.gas+(keys.Space?1:0)+P.rt), slow=Math.min(1,dash.brake+(keys.ShiftLeft||keys.ShiftRight?1:0)+P.lt); str=Math.max(-1,Math.min(1,str)); pin=Math.max(-1,Math.min(1,pin)); let bst=boost; if(auto){ str=dragAuto.str; pin=dragAuto.pin; bst=dragAuto.gas; }
+  v.ui={str,gas:bst,brk:slow}; const want=60+bst*70-slow*28; J.spd+=(want-J.spd)*Math.min(1,dt*0.9);
   J.yaw-=str*1.15*dt; J.roll+=(-str*0.95-J.roll)*Math.min(1,dt*4); J.pitch+=pin*1.1*dt; if(Math.abs(pin)<0.05&&J.t>2.5)J.pitch*=1-dt*0.4; J.pitch=Math.max(-1.1,Math.min(1.1,J.pitch));
   const cp=Math.cos(J.pitch); let nx=v.p[0]-Math.sin(J.yaw)*cp*J.spd*dt, ny=v.p[1]+Math.sin(J.pitch)*J.spd*dt, nz=v.p[2]-Math.cos(J.yaw)*cp*J.spd*dt;
   const far=Math.hypot(nx-W/2,nz-D/2); if(far>1900){ const back=Math.atan2(-(W/2-nx),-(D/2-nz)); let d=back-J.yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; J.yaw+=d*Math.min(1,dt*1.2); }
@@ -5735,6 +5741,34 @@ function dragHudTick(){ const R=dragK.race, el=$('dragHud'); if(!R||!drive){ if(
   const me=R.me; let txt=''; if(R.ph==='call')txt=R.ai.ai.ph==='stage'?(st&&st.staged?'Staged!':'Roll up to the line ('+(L?'right':'left')+' lane)'):'Your challenger is coming… roll up to the line ('+(L?'right':'left')+' lane)';
   else if(R.ph==='tree')txt=me.foul?'RED LIGHT':'Wait for GREEN…'; else if(me.leave!==null)txt=((me.fin!==null?me.fin:R.t)-me.leave).toFixed(3)+' s'+(me.fin!==null?(me.stopped?'':' · 🪂 CHUTE!'):''); else if(run)txt='GO! GO! GO!';
   const tx=$('dhTxt'); if(tx.textContent!==txt)tx.textContent=txt; }
+
+// --- Demo Mode: a drag race. The hero takes a car from the pits, does a burnout, stages, launches on green, and then either
+// pulls the chute and stops on the yellow lines, or keeps going off the ramp and flies the jet over the city
+const dragAuto={gas:0,brk:0,str:0,pin:0};
+for(const k of DR.LEFT.concat(DR.RIGHT))DM_DCAR[k]=VEH[k].icon+' '+VEH[k].name+(k.startsWith('lift')?' ('+['white','black','red'][+k[4]-1]+')':'');
+function demoDragSetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demo.vplace='drag'; demo.dragWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples();
+  setWorldSize(...PLACES.drag.dims); generateDrag(dmCfg.seed+23); rebuildAll(); refreshPortals(); buildDragLife(null); applyPlaceSky();
+  const K=dragK, t=VEH[sc.dcar]&&K.cars.some(c=>c.type===sc.dcar)?sc.dcar:K.cars[Math.floor(Math.random()*K.cars.length)].type, v=K.cars.find(c=>c.type===t), L=v.home.side<0?0:1;
+  v.p=[DR.LANE[L],DR.GY,DR.Z0+30]; v.h=0; vehPlace(v); pl.p=v.p.slice(); enterVehicle(v,true); camMode=3; chase.p=null;
+  Object.assign(dragAuto,{gas:0,brk:0,str:0,pin:0}); Object.assign(P,{ph:'roll',t:0,L,end:sc.dend==='jet'?'jet':'stop',rt:0.08+Math.random()*0.18,burn:0,ft:0}); dragCall(L,true); }
+function dragPilot(dt,P){ const v=drive, K=dragK; if(!v||!K){ return; } P.t+=dt; const R=K.race, A=dragAuto; A.str=0; A.pin=0;
+  if(v.jet){ // a long, climbing turn around the city
+    P.ft+=dt; const J=v.jet; A.gas=P.ft<5?1:0.4; A.brk=0; A.pin=Math.max(-1,Math.min(1,(240-v.p[1])/40-J.pitch*1.5)); A.str=P.ft<2?0:Math.min(0.45,(P.ft-2)*0.3); return; }
+  if(P.ft>0){ A.gas=0; A.brk=v.spd>0.15?1:0; return; } // back from a flight: park
+  if(v.air){ A.gas=1; A.brk=0; return; }
+  const s=dsFront(v), lx=DR.LANE[P.L]; A.str=Math.max(-1,Math.min(1,(v.p[0]-lx)*-0.6+v.h*2.5)); // keep in the middle of the lane
+  const hold=v.spd>0.15?1:0; // brake only while rolling forward (holding it when stopped backs up)
+  if(P.ph==='roll'){ if(s<-15){ A.gas=v.spd<5?0.3:0; A.brk=0; } else { A.gas=0; A.brk=hold; if(Math.abs(v.spd)<0.3){ P.ph='burn'; P.burn=0; } } }
+  else if(P.ph==='burn'){ A.gas=1; A.brk=1; P.burn+=dt; if(P.burn>2.2){ P.ph='stage'; } }
+  else if(P.ph==='stage'){ if(s<-0.9){ A.gas=v.spd<1.5?0.12:0; A.brk=v.spd>2.5?0.5:0; } else { A.gas=0; A.brk=hold; } if(R&&(R.ph==='tree'||R.ph==='run')&&Math.abs(v.spd)<0.3){ P.ph='wait'; } }
+  else if(P.ph==='wait'){ A.gas=0; A.brk=hold; if(R&&R.ph==='run'&&R.t-R.green>=P.rt){ P.ph='run'; } }
+  else if(P.ph==='run'){ A.brk=0; A.gas=1; if(P.end==='stop'&&R&&R.me.fin!==null){ P.ph='coast'; } }
+  else if(P.ph==='coast'){ A.gas=0; A.brk=0; const c=2.9, k=0.01125, sd=Math.log(1+k*v.spd*v.spd/c)/(2*k); if(!v.chute&&s+sd>=DR.STOP-2)dragChute(v); if(v.chute||v.spd<8){ const rem=DR.STOP-s, need=v.spd*v.spd/(2*Math.max(1,rem)); A.brk=rem<1?1:Math.min(1,Math.max(0,(need-(v.chute?c+k*v.spd*v.spd:0.5))/9)); }
+    if(Math.abs(v.spd)<0.3&&s>DR.FIN)P.ph='done'; }
+  else { A.gas=0; A.brk=hold; } }
+function dragDemoCam(dt){ const P=demo.pil, v=drive; if(!v||v.jet||v.air||!(P.ph==='stage'||P.ph==='wait')){ demo.cam=null; return; } // a low shot from beside the lights while the cars stage
+  const want=new THREE.Vector3(DR.CXL+0.5+(P.L?-6:6),DR.GY+2.2,DR.Z0-9), look=new THREE.Vector3(DR.CXL+0.5,DR.GY+1.6,DR.Z0+3);
+  if(!demo.cam||demo.cam.k!=='drag'){ demo.cam={k:'drag',p:want.clone(),l:look.clone()}; } demo.cam.p.lerp(want,Math.min(1,dt*2)); demo.cam.l.lerp(look,Math.min(1,dt*3)); camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
 
 // ================= START =================
 graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
