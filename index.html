@@ -4423,6 +4423,14 @@ function animalModel(kind,breed){ const g=new THREE.Group(), M={g,legs:[],kind},
     for(const [x,z] of [[-0.1,-0.14],[0.1,-0.14],[-0.11,0.14],[0.11,0.14]])leg(x,0.1,z,0.08,0.1,c);
     const N=new THREE.Group(); N.position.set(0,0.3,-0.18); g.add(N); add(N,0.22,0.2,0.22,c,0,0.06,-0.06); for(const sx of [-1,1]){ add(N,0.06,0.24,0.04,c,sx*0.06,0.26,0); add(N,0.02,0.14,0.02,pk,sx*0.06,0.26,-0.022); add(N,0.02,0.04,0.04,om(0x101010),sx*0.11,0.1,-0.12); }
     add(N,0.05,0.04,0.02,pk,0,0.03,-0.175); M.neck=N; M.n0=0; }
+  else if(kind==='turkey'){ const br=om(0x5a3a22), bz=om(0x7a5030), wh=om(0xe8dcc8), yl=om(0xd8a030), rd=om(0xd02a2a), hd=om(0x8aa0c0), tom=breed==='tom';
+    add(g,0.46,0.44,0.6,br,0,0.62,0); add(g,0.4,0.3,0.3,bz,0,0.72,-0.25); for(const sx of [-1,1]){ const w=add(g,0.06,0.3,0.46,bz,sx*0.25,0.62,0.02); M['w'+(sx<0?'L':'R')]=w; }
+    for(const x of [-0.1,0.1])leg(x,0.4,0.05,0.06,0.4,yl);
+    const N=new THREE.Group(); N.position.set(0,0.82,-0.3); g.add(N); add(N,0.12,0.34,0.12,hd,0,0.14,0); add(N,0.16,0.16,0.18,hd,0,0.32,-0.04); add(N,0.06,0.05,0.1,yl,0,0.32,-0.16);
+    add(N,0.05,0.14,0.04,rd,0.02,0.22,-0.12); add(N,0.04,0.12,0.04,rd,0,0.42,-0.1); for(const sx of [-1,1])add(N,0.02,0.04,0.04,om(0x0a0a0a),sx*0.085,0.35,-0.06);
+    const T=new THREE.Group(); T.position.set(0,0.7,0.3); g.add(T); const n=tom?9:5, R=tom?0.75:0.45; // the tail fan
+    for(let k=0;k<n;k++){ const a=(k/(n-1)-0.5)*(tom?2.6:1.6), f=new THREE.Group(); f.rotation.z=a; f.rotation.x=tom?-0.15:-1.1; T.add(f); add(f,0.16,R,0.04,k%2?br:bz,0,R/2,0); add(f,0.16,0.08,0.05,wh,0,R-0.02,0); add(f,0.16,0.06,0.05,om(0x2a1a10),0,R-0.12,0); }
+    M.tail=T; M.neck=N; M.n0=0; }
   else if(kind==='pig'){ const pk=om(0xf2a8a8), dk=om(0xd88888); add(g,0.5,0.44,0.82,pk,0,0.46,0);
     for(const [x,z] of [[-0.15,-0.28],[0.15,-0.28],[-0.15,0.28],[0.15,0.28]])leg(x,0.26,z,0.13,0.26,pk,dk);
     const N=new THREE.Group(); N.position.set(0,0.5,-0.4); g.add(N); add(N,0.38,0.36,0.3,pk,0,0.02,-0.12); add(N,0.2,0.14,0.06,dk,0,-0.04,-0.3);
@@ -4445,7 +4453,7 @@ function saddleUp(a,quiet){ const K=ranchK; if(a.M.saddle)return; for(const o of
 const HEART_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'); x.fillStyle='#ff3a6a'; x.beginPath(); x.moveTo(16,28); x.bezierCurveTo(-6,12,8,-4,16,9); x.bezierCurveTo(24,-4,38,12,16,28); x.fill(); return new THREE.CanvasTexture(c); })();
 function standY(x,z){ for(let y=H-1;y>=0;y--){ const id=world[idx(x,y,z)]; if(id&&B[id].solid&&id!==ID.leaves&&id!==ID.log&&id!==ID.roof)return y+1; } return FY; } // the ground, not the treetops or a roof
 function makeAnimal(kind,breed,x,z,o){ const M=animalModel(kind,breed);
-  const hw=kind==='horse'?0.5:kind==='steer'?0.45:kind==='deer'?0.36:kind==='pig'?0.3:kind==='bunny'?0.18:0.16, h=kind==='horse'?1.9:kind==='steer'?1.4:kind==='deer'?1.5:kind==='pig'?0.7:kind==='bunny'?0.45:0.55;
+  const hw=kind==='horse'?0.5:kind==='steer'?0.45:kind==='deer'?0.36:kind==='turkey'?0.3:kind==='pig'?0.3:kind==='bunny'?0.18:0.16, h=kind==='horse'?1.9:kind==='steer'?1.4:kind==='deer'?1.5:kind==='turkey'?1.0:kind==='pig'?0.7:kind==='bunny'?0.45:0.55;
   const a=Object.assign({kind,breed,M,p:[x,o&&o.y!==undefined?o.y:standY(Math.floor(x),Math.floor(z)),z],v:[0,0,0],kb:[0,0,0],hw,h,onGround:false,wall:false,hd:Math.random()*6.28,spd:0,st:'wander',t:Math.random()*3,tgt:null,ph:Math.random()*6,yo:0,love:0,own:-1,graze:0,zone:RANCH.wild},o||{});
   scene.add(M.g); ranchK.animals.push(a); return a; }
 function removeAnimal(a){ scene.remove(a.M.g); disposeG(a.M.g); if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); } ranchK.animals.splice(ranchK.animals.indexOf(a),1); }
@@ -4552,7 +4560,7 @@ function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==
   for(const b of pen.slice(0,12))if(STEERS[b])makeAnimal('steer',b,C.x0+3+rnd()*(C.x1-C.x0-6),C.z0+3+rnd()*(C.z1-C.z0-6),{st:'pen',zone:penZone(),y:FY});
   const Y=R.yard; for(let i=0;i<7;i++)makeAnimal('chicken',i%3?'white':'brown',Y.x0+2+rnd()*12,Y.z0+2+rnd()*(Y.z1-Y.z0-4),{zone:Y,y:FY});
   for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
-  for(let i=0;i<4;i++)spawnGame('deer'); for(let i=0;i<6;i++)spawnGame('bunny');
+  for(let i=0;i<4;i++)spawnGame('deer'); for(let i=0;i<6;i++)spawnGame('bunny'); for(let i=0;i<5;i++)spawnGame('turkey');
   if(!ranchSkyK){ ranchSkyK=buildRanchSky(); buildVista(ranchSkyK); } ranchSky.visible=true;
   K.decor=[]; K.chair=chairMesh(); K.chair.position.set(CHAIR.x,FY,CHAIR.z); K.chair.rotation.y=-Math.PI/2; scene.add(K.chair); K.decor.push(K.chair); K.table=tableMesh(); K.table.position.set(TABLE.x,FY,TABLE.z); K.table.rotation.y=-Math.PI/2; scene.add(K.table); K.decor.push(K.table); equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
 function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
@@ -4671,7 +4679,7 @@ function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt);
     a.spd+=(spd-a.spd)*Math.min(1,dt*4); const far=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>70;
     if(!far||a.st==='roped'||a.st==='home')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
   // new wild animals wander in from the hills to keep the herds going
-  K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const game=K.animals.filter(a=>a.game); if(game.filter(a=>a.kind==='deer').length<3)spawnGame('deer'); if(game.filter(a=>a.kind==='bunny').length<5)spawnGame('bunny'); const wild=K.animals.filter(a=>a.wild&&!a.game); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
+  K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const game=K.animals.filter(a=>a.game); if(game.filter(a=>a.kind==='deer').length<3)spawnGame('deer'); if(game.filter(a=>a.kind==='bunny').length<5)spawnGame('bunny'); if(game.filter(a=>a.kind==='turkey').length<4)spawnGame('turkey'); const wild=K.animals.filter(a=>a.wild&&!a.game); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
     const kind=wild.filter(a=>a.kind==='horse').length<5?'horse':'steer', x=12+Math.random()*104, z=40+Math.random()*6; makeAnimal(kind,kind==='horse'?['chestnut','appaloosa','grullo','bay','black'][Math.floor(Math.random()*5)]:Object.keys(STEERS)[Math.floor(Math.random()*4)],x,z,{wild:true}); } } }
 // the way home: back down the trail if it's up the mountain, then in through the stable door to its own stall (or into the corral)
 function homeRoute(a){ const R=[], path=ranchPath(); let bi=0, bd=1e9; path.forEach((q,i)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=i; } });
@@ -4986,14 +4994,19 @@ function farmBuild(){ const put=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id
 function wildSpot2(near){ const R=RANCH; for(let k=0;k<40;k++){ const x=R.wild.x0+Math.random()*(R.wild.x1-R.wild.x0), z=R.wild.z0+Math.random()*(R.wild.z1-R.wild.z0);
     if(Math.hypot(x-R.lake[0],z-R.lake[1])<R.lake[2]+3||Math.hypot(x-pl.p[0],z-pl.p[2])<(near?0:30))continue; const s=surfaceAt(Math.floor(x),Math.floor(z)); if(s.id===ID.water||s.y>32)continue; return [x,z]; } return [30,60]; }
 function spawnGame(kind){ const [x,z]=kind==='bunny'&&Math.random()<0.4?[PLOT.x0-4+Math.random()*16,PLOT.z0-8+Math.random()*4]:wildSpot2(true);
-  return makeAnimal(kind,kind==='deer'?(Math.random()<0.35?'buck':'doe'):['grey','brown','white'][Math.floor(Math.random()*3)],x,z,{wild:true,game:true,zone:RANCH.wild}); }
-function huntHit(a){ const n=a.kind==='deer'?4+Math.floor(Math.random()*4):1+Math.floor(Math.random()*3); burst(a.p[0]-0.5,a.p[1]+a.h*0.5-0.5,a.p[2]-0.5,new THREE.Color(a.kind==='deer'?0x9a6a3a:0xd8d0c8),16); sfx('hit');
+  return makeAnimal(kind,kind==='deer'?(Math.random()<0.35?'buck':'doe'):kind==='turkey'?(Math.random()<0.5?'tom':'hen'):['grey','brown','white'][Math.floor(Math.random()*3)],x,z,{wild:true,game:true,zone:RANCH.wild}); }
+function huntHit(a){ const n=a.kind==='deer'?4+Math.floor(Math.random()*4):a.kind==='turkey'?3+Math.floor(Math.random()*3):1+Math.floor(Math.random()*3); burst(a.p[0]-0.5,a.p[1]+a.h*0.5-0.5,a.p[2]-0.5,new THREE.Color(a.kind==='deer'?0x9a6a3a:a.kind==='turkey'?0x6a4428:0xd8d0c8),16); sfx('hit');
+  if(a.kind==='turkey'){ for(let k=0;k<3;k++)burst(a.p[0]-0.5+(Math.random()-0.5),a.p[1]+0.6,a.p[2]-0.5+(Math.random()-0.5),new THREE.Color(0xe8dcc8),6); if(!ranchK.said.turkey){ ranchK.said.turkey=1; rtoast('🦃 You got a wild turkey! Turkeys can run about 25 mph and fly short distances.'); } }
   dropCoins(a.p[0],a.p[1]+0.5,a.p[2],n); if(!ranchK.said.hunt){ ranchK.said.hunt=1; rtoast('🏹 Got one! Walk over the coins to pick them up.'); } removeAnimal(a); }
+// a turkey's gobble: quick warbling notes, quieter far away
+function gobble(v){ if(!AC||!sfxOn||v<=0.02)return; try{ for(let k=0;k<5;k++)tone('square',520-k*25+(k%2)*90,380-k*20,0.06,0.05*v,k*0.07); }catch(e){} }
 // how deer and bunnies behave: they run when you get close, and bunnies sneak off to nibble crops that no scarecrow is guarding
-function gameAI(a,dt,hero,riding2){ const K=ranchK, dx=a.p[0]-hero[0], dz=a.p[2]-hero[2], d=Math.hypot(dx,dz), scare=riding2?15:a.kind==='deer'?11:7;
+function gameAI(a,dt,hero,riding2){ const K=ranchK, dx=a.p[0]-hero[0], dz=a.p[2]-hero[2], d=Math.hypot(dx,dz), scare=riding2?15:a.kind==='deer'?11:a.kind==='turkey'?9:7;
+  if(a.kind==='turkey'){ a.gobT=(a.gobT===undefined?3+Math.random()*8:a.gobT)-dt; if(a.gobT<=0){ a.gobT=6+Math.random()*10; if(d<30)gobble(Math.max(0,1-d/30)); }
+    const fl=a.flee>0?Math.sin(K.t*30)*0.6:0; if(a.M.wL){ a.M.wL.rotation.z=-Math.abs(fl); a.M.wR.rotation.z=Math.abs(fl); } }
   if(d<scare){ a.flee=2.5; } if(a.flee>0&&d<scare*1.8)a.fleeH=Math.atan2(-dx,-dz); // straight away from you, until they're well clear
   if(a.flee>0){ a.flee-=dt; if(a.wall&&!(a.slideT>0)){ a.slideT=0.9; a.slideH=a.fleeH+(Math.random()<0.5?1:-1)*Math.PI/2; } // run into a fence or a wall: slip along it
-    if(a.slideT>0){ a.slideT-=dt; turnAnimal(a,a.slideH,dt,10); } else turnAnimal(a,a.fleeH,dt,8); return a.kind==='deer'?9:6.5; }
+    if(a.slideT>0){ a.slideT-=dt; turnAnimal(a,a.slideH,dt,10); } else turnAnimal(a,a.fleeH,dt,8); return a.kind==='deer'?9:a.kind==='turkey'?8:6.5; }
   if(a.kind==='bunny'){ a.nibT=(a.nibT===undefined?8+Math.random()*10:a.nibT)-dt;
     if(a.nibT<=0&&!a.crop){ const open=K.crops.filter(c=>c.g>0.2&&!guarded(c.x,c.z)); a.nibT=12+Math.random()*12; if(open.length)a.crop=open[Math.floor(Math.random()*open.length)]; }
     const c=a.crop; if(c){ if(!K.crops.includes(c)||guarded(c.x,c.z)){ a.crop=null; return 0; } const cx=c.x+0.5-a.p[0], cz=c.z+0.5-a.p[2], cd=Math.hypot(cx,cz);
