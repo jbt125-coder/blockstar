@@ -112,6 +112,7 @@
   #dragHud{left:50%;top:calc(56px + env(safe-area-inset-top));transform:translateX(-50%);display:none;align-items:center;gap:6px;background:rgba(10,12,20,.8);padding:6px 12px;border-radius:14px;font-weight:900;font-size:15px;white-space:nowrap;pointer-events:none}
   #dragHud i{display:inline-block;width:15px;height:15px;border-radius:50%;background:rgba(60,60,60,.7);border:1px solid rgba(255,255,255,.3)} #dragHud b{margin-left:6px;min-width:60px}
   #dragSlip{left:50%;top:50%;transform:translate(-50%,-50%);background:#fffbe8;color:#222;font-family:ui-monospace,Menlo,monospace;padding:12px 16px;border-radius:8px;max-width:92vw;max-height:78vh;overflow:auto;display:none;box-shadow:0 6px 24px rgba(0,0,0,.6);border-top:8px solid #ffc83a;cursor:pointer;font-size:13px}
+  #slipBtn{display:none;position:fixed;z-index:6;animation:slipPulse 1s ease-in-out 4} @keyframes slipPulse{50%{transform:scale(1.18)}}
   #dragSlip .dsT{font:900 20px sans-serif;text-align:center;margin-bottom:6px} #dragSlip table{border-collapse:collapse;width:100%} #dragSlip td{padding:2px 8px;border-bottom:1px dashed #ccc;white-space:nowrap} #dragSlip td+td{text-align:right}
   #dinBar{left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));display:none;gap:8px} body.dinner #dinBar{display:flex} body.dinner #hotwrap{display:none!important}
   #dinBar .dbtn{background:rgba(120,50,15,.88);color:#ffe9c0;border:2px solid #ffc870;border-radius:18px;padding:8px 12px;font-weight:900;font-size:14px;cursor:pointer;white-space:nowrap}
@@ -265,7 +266,7 @@
   <div id="dUp" class="ui ped">⬆</div><div id="dDn" class="ui ped">⬇</div><div id="dAct" class="ui"></div>
 </div>
 <div id="dragHud" class="ui"><i id="dh0"></i><i id="dh1"></i><i id="dha0"></i><i id="dha1"></i><i id="dha2"></i><i id="dhg"></i><i id="dhr"></i><b id="dhTxt"></b></div>
-<div id="dragSlip" class="ui"></div>
+<div id="dragSlip" class="ui"></div><div id="slipBtn" class="ui tbtn" title="Your time slip">🧾</div>
 <div id="dinBar" class="ui"><div class="dbtn" id="dnEat">🍽️ Eat</div><div class="dbtn" id="dnToast">🥂 Toast</div><div class="dbtn" id="dnWish">🦴 Wishbone</div><div class="dbtn" id="dnUp">🚪 Stand up</div></div>
 <div id="bTalk" class="ui">💬 Talk</div>
 <div id="prompt" class="ui"></div>
@@ -5324,7 +5325,7 @@ function frame(now){
 // still work, and the wheel and pedals move along with them. The speedometer reads in miles per hour (1 block is 1 meter).
 const dash={wheel:0,ang:0,gas:0,brake:0,up:0,dn:0,wid:null,a0:0,w0:0,spdShown:-1,maxShown:0};
 tap($('dnEat'),()=>{ if(mansionK&&mansionK.seated)eatDish(mansionAim()); }); tap($('dnToast'),()=>{ if(mansionK)startPhase('toast'); }); tap($('dnWish'),()=>{ if(mansionK)startPhase('wish'); }); tap($('dnUp'),()=>{ if(mansionK)standUp(); });
-{ const wh=$('dWheel'), WMAX=2.4; tap($('dragSlip'),()=>{ $('dragSlip').style.display='none'; });
+{ const wh=$('dWheel'), WMAX=2.4; tap($('dragSlip'),()=>{ $('dragSlip').style.display='none'; }); tap($('slipBtn'),()=>{ const el=$('dragSlip'); el.style.display=el.style.display==='block'?'none':'block'; }); window.addEventListener('resize',()=>{ if($('slipBtn').style.display==='flex')slipBtnShow(true); });
   const ang=e=>{ const r=wh.getBoundingClientRect(); return Math.atan2(e.clientX-(r.left+r.width/2),-(e.clientY-(r.top+r.height/2))); };
   wh.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); audioInit(); if(demo){ demoPoke(); demoTake(); } dash.wid=e.pointerId; try{ wh.setPointerCapture(e.pointerId); }catch(er){} dash.a0=ang(e); dash.w0=dash.ang; });
   wh.addEventListener('pointermove',e=>{ if(e.pointerId!==dash.wid)return; e.preventDefault(); let d=ang(e)-dash.a0; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI;
@@ -5615,7 +5616,7 @@ function buildDragLife(saved){ clearDragLife(); const sv=saved&&typeof saved==='
   buildDragDecor(K); dragBoard(); }
 function clearDragLife(){ const K=dragK; if(!K)return; if(drive&&(drive.jet||drive.air))dragUnjet(drive,true); dragRaceEnd(true);
   for(const n of K.npcs){ scene.remove(n.g); } if(K.root){ scene.remove(K.root); K.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); }
-  for(const id of ['dragHud','dragSlip'])$(id).style.display='none'; dragK=null; dragSky.visible=false; for(const c of clouds)c.visible=true; }
+  for(const id of ['dragHud','dragSlip','slipBtn'])$(id).style.display='none'; dragK=null; dragSky.visible=false; for(const c of clouds)c.visible=true; }
 function dragSave(){ const K=dragK; return {best:K.best,paint:K.paint}; }
 function dragPaintApply(v){ const p=dragK&&dragK.paint[v.type]; if(p&&p.col!==null&&v.vm.bodyMat)v.vm.bodyMat.color.setHex(p.col); const gl=p&&p.glow!==null&&p.glow!==undefined?p.glow:v.V.glow; setGlow(v,gl||null); }
 
@@ -5693,7 +5694,8 @@ function dragSlip(R,mine,theirs){ const me=R.me, el=$('dragSlip'); let h='<div c
   row('Trap speed',mine.mph?mine.mph.toFixed(1)+' mph':'-',theirs.mph?theirs.mph.toFixed(1)+' mph':'-'); row('Top speed',me.top.toFixed(1)+' mph','');
   row('Stopping',me.stop?me.stop.t+' ('+(me.stop.d>=0?'+':'')+me.stop.d.toFixed(1)+' m)':me.air?'🚀 You never stopped…':'-','');
   h+='</table>'+(mine.pb?'<div class="dsB">⭐ New personal best!</div>':dragK.best?'<div class="dsB">Your best: '+dragK.best.et.toFixed(3)+' s</div>':'')+'<div class="dsH">'+(IS_TOUCH?'Tap here to close.':'Click to close.')+' '+(me.air?'':'Drive back, or use 🔁 Race again.')+'</div>';
-  el.innerHTML=h; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',15000); if(mine.win)snd(()=>sfx('buy')); }
+  el.innerHTML=h; el.style.display='none'; if(!demo){ slipBtnShow(true); toast((mine.win?'🏆 You win! ':'🏁 ')+'Tap 🧾 for your time slip.'); } if(mine.win)snd(()=>sfx('buy')); }
+function slipBtnShow(on){ const b=$('slipBtn'); if(!on){ b.style.display='none'; return; } const g=$('bGear').getBoundingClientRect(); b.style.left=g.left+'px'; b.style.top=(g.bottom+6)+'px'; b.style.width=g.width+'px'; b.style.display='flex'; b.style.animation='none'; void b.offsetWidth; b.style.animation=''; } // just under the gear
 function dragRaceAgain(){ const K=dragK, v=drive; if(!K||!v)return; const L=K.race?K.race.lane:(v.p[0]<DR.CXL?0:1); dragRaceEnd(true); $('dragSlip').style.display='none';
   v.p=[DR.LANE[L],DR.GY,DR.Z0+16]; v.h=0; v.spd=0; v.pitch=0; v.chute=false; chuteShow(v,false); vehPlace(v); chase.p=null; dragCall(L); }
 // --- the parachute
