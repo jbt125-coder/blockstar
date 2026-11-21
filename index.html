@@ -509,6 +509,10 @@ B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS
 // ================= THREE SETUP =================
 const canvas=$('game');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
+canvas.addEventListener('webglcontextlost',e=>{ e.preventDefault(); try{ if(!demo)saveNow(); }catch(er){} if(document.getElementById('glLost'))return;
+  const d=document.createElement('button'); d.id='glLost'; d.textContent='The graphics stopped (the device ran low on memory). Tap to restart.';
+  d.style.cssText='position:fixed;inset:0;z-index:99999;border:0;background:#000;color:#fff;font:800 22px sans-serif;padding:24px;cursor:pointer';
+  d.addEventListener('click',()=>location.reload()); document.body.appendChild(d); },false);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 const scene=new THREE.Scene();
 const SKY=0x8fc8f0; scene.background=new THREE.Color(SKY); scene.fog=new THREE.Fog(SKY,40,90);
@@ -5314,10 +5318,13 @@ function animate(dt){
 let last=performance.now();
 function frame(now){
   const dt=Math.min(0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
-  update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
-  let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
-  renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); requestAnimationFrame(frame);
+  requestAnimationFrame(frame); // asked for first, so an error below can't stop the game from drawing
+  try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
+    let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
+    renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); frameErrs=0; }
+  catch(e){ console.error(e); if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
 }
+let frameErrs=0;
 
 
 // ================= THE DASHBOARD: A STEERING WHEEL, PEDALS AND A SPEEDOMETER =================
@@ -6582,9 +6589,9 @@ function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t;
   for(const h of K.heads){ const lunge=h.lunge>0?Math.sin((1-h.lunge)*Math.PI):0; if(h.lunge>0)h.lunge-=dt*1.4; h.ch.forEach((s,k)=>{ s.rotation.z=(k<3?0.25:-0.12)+Math.sin(t*1.3+h.ph+k*0.6)*0.12-lunge*(k<3?0.25:0.05); s.rotation.y=Math.sin(t*0.8+h.ph+k*0.3)*0.12; }); h.jaw.rotation.z=Math.max(0,Math.sin(t*4+h.ph))*0.35+lunge*0.5; }
   for(const s of K.sirens){ s.R.armL.rotation.z=-0.6-Math.sin(t*2+s.ph)*0.3; s.R.armR.rotation.z=0.6+Math.sin(t*2+s.ph)*0.3; animRig(s.R,dt,0); }
   K.noteT=(K.noteT||0)-dt; if(K.noteT<=0){ K.noteT=0.5; const s=K.sirens[Math.floor(Math.random()*K.sirens.length)], n=labelSprite(Math.random()<0.5?'♪':'♫'); n.scale.set(1.6,0.4,1); n.position.copy(s.g.position).add(new THREE.Vector3(0,2.4,0)); K.root.add(n); K.notes.push({n,t:0}); }
-  for(const q of K.notes.slice()){ q.t+=dt; q.n.position.x-=dt*1.6; q.n.position.y+=dt*0.6; q.n.material.opacity=Math.max(0,1-q.t/4); if(q.t>4){ K.root.remove(q.n); q.n.material.map.dispose(); K.notes.splice(K.notes.indexOf(q),1); } }
+  for(const q of K.notes.slice()){ q.t+=dt; q.n.position.x-=dt*1.6; q.n.position.y+=dt*0.6; q.n.material.opacity=Math.max(0,1-q.t/4); if(q.t>4){ K.root.remove(q.n); q.n.material.map.dispose(); q.n.material.dispose(); K.notes.splice(K.notes.indexOf(q),1); } }
   K.fallTex.offset.y-=dt*1.3; K.sparks.rotation.y+=dt*0.05; for(const s of K.sheep)s.position.y+=Math.sin(t*3+s.id)*0.002;
-  for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } }
+  for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(K.under.visible){ K.riverTex.offset.y-=dt*0.4; K.crys.forEach((c,i)=>{ c.rotation.y+=dt; c.position.y+=Math.sin(t*2+i)*0.005; }); for(const g of K.ghosts){ g.g.position.x+=g.drift[0]*dt; g.g.position.z+=g.drift[1]*dt; g.g.position.y=0.3+Math.sin(t*1.5+g.ph)*0.3; if(Math.hypot(g.g.position.x,g.g.position.z)>26){ g.drift[0]*=-1; g.drift[1]*=-1; } animRig(g.R,dt,0); } }
   if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&demo.sc.act.slice(0,2)==='od')odMusicTick(dt); }
 // --- sound: everything here goes through odS, which plays quieter when you've picked your own song for the demo
@@ -6644,11 +6651,13 @@ function demoOdySetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.man
   demo.vplace='odyssey'; demo.cityKey=null; if(!demo.odyWorld){ demo.odyWorld=true; clearApples(); setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); }
   odHeroGear(true); odHeroCloak(false); odStageClear(); odDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model}}; odyK.root.add(S.grp); odStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; odMood=ch.mood||'hero'; odSky(ch.sky); ch.init(S); demo.cam=null; }
-function odStageClear(){ if(!odStage)return; const S=odStage; if(S.hero.bub){ model.remove(S.hero.bub); S.hero.bub=null; } if(odyK)odyK.root.remove(S.grp); S.grp.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odStage=null; if(odyK)odyK.whirlFast=false; model.rotation.x=model.rotation.z=0; }
+function odStageClear(){ if(!odStage)return; const S=odStage; odBubOff(model,S.hero); if(odyK)odyK.root.remove(S.grp); odFree(S.grp); odStage=null; if(odyK)odyK.whirlFast=false; model.rotation.x=model.rotation.z=0; }
 function odDefaults(){ const K=odyK; K.under.visible=false; K.cyc.g.visible=K.circe.g.visible=K.calypso.g.visible=true; K.cows.forEach(c=>c.g.visible=true); K.ships.forEach(s=>s.g.visible=true);
   K.boulder.position.set(79,OD.cave.floor+3.1,57.5); K.horse.hatch.rotation.y=0; K.gate.forEach(g=>g.rotation.y=0); const [ix,iz]=OD.ithaca; K.pen.g.position.set(ix,23,iz+5); K.pen.g.rotation.y=Math.PI; K.tel.g.position.set(ix+3,23,iz+2); K.tel.g.rotation.y=Math.PI; K.pen.g.visible=K.tel.g.visible=true; odRest(K.pen); odRest(K.tel); }
-function odyPilot(dt,P){ const S=P.S; if(!S||!odyK)return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } }
-  if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0&&S.hero.bub){ model.remove(S.hero.bub); S.hero.bub=null; } } }
+function odFree(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(!o.material)return; for(const m of [].concat(o.material))if(m.userData.own||o.isSprite){ if(m.map)m.map.dispose(); m.dispose(); } }); } // a chapter's own faces, clothes and bubbles (the shared block textures stay)
+function odBubOff(par,who){ if(!who.bub)return; par.remove(who.bub); if(who.bub.material.map)who.bub.material.map.dispose(); who.bub.material.dispose(); who.bub=null; }
+function odyPilot(dt,P){ const S=P.S; if(!S||!odyK)return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
+  if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0)odBubOff(model,S.hero); } }
 function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!odyK)return; if(S.ch.pose)S.ch.pose(S); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
   if(!demo.cam||demo.cam.k!=='od'||demo.cam.shot!==c[2])demo.cam={k:'od',p:want.clone(),l:look.clone(),shot:c[2]}; else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
   camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
