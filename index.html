@@ -361,6 +361,9 @@ makeTile('leaves_pink',106,(x,y,r)=>{ const q=r(); if(q<.14)return [0,0,0,0]; le
 makeTile('snow',108,(x,y,r)=>{ let c=nz([240,244,250],r,.05); if(r()<.07)c=[222,230,244]; return c; });
 makeTile('hay_side',109,(x,y,r)=>{ if(y===3||y===12)return nz([150,110,40],r,.1); const v=Math.sin(x*1.7+y*0.3)*0.5+Math.sin(x*0.6)*0.3; return nz(v>0.3?[228,192,98]:[206,166,74],r,.12); });
 makeTile('hay_top',110,(x,y,r)=>{ const v=Math.sin(x*0.9+y*1.3)+Math.sin(x*1.6-y*0.7); return nz(v>0.5?[232,198,104]:[200,160,70],r,.14); });
+{ const furrow=(base,dk,r,x,y)=>{ let c=y%4<2?nz(base,r,.1):nz(dk,r,.1); if(r()<.05)c=mul(c,0.8); return c; };
+  makeTile('farm_dry',111,(x,y,r)=>furrow([128,90,58],[100,68,44],r,x,y)); makeTile('farm_wet',112,(x,y,r)=>furrow([84,56,36],[64,42,28],r,x,y));
+  makeTile('farm_rich',113,(x,y,r)=>{ const c=furrow([92,66,44],[70,50,34],r,x,y); return r()<.12?[40,30,22]:c; }); makeTile('farm_rich_wet',114,(x,y,r)=>{ const c=furrow([62,44,30],[46,32,22],r,x,y); return r()<.12?[28,20,14]:c; }); }
 const CAT={ Plants:{c:'#8fe07a'}, Portal:{c:'#ff7ae8'}, Soil:{c:'#9be07a'}, Igneous:{c:'#ff9d6e'}, Sedimentary:{c:'#f2cf8a'}, Metamorphic:{c:'#c9a5ff'},
   Mineral:{c:'#8fe4ff'}, Building:{c:'#d0d4dc'}, Fluid:{c:'#7fb6ff'} };
 const B=[null]; const ID={};
@@ -438,6 +441,10 @@ addBlock('gdoor','Garage Door','Building','A roll-up garage door.',{t:'concrete'
 addBlock('scorch','Oil Stain','Building','Burnt, oily ground where a car crashed. Leaked oil and gas are bad for soil and water, so real crashes get cleaned up fast.',{t:'scorch'},{hidden:true});
 addBlock('snow','Snow','Soil','Snow is frozen water vapor that grew into six-sided ice crystals. Fresh snow is about 90% air, which is why it muffles sound. High mountains stay snowy because the air gets colder the higher you go.',{t:'snow'});
 addBlock('hay','Hay Bale','Building','Hay is grass that was cut and dried so horses and cows have food all winter. A big round bale can weigh as much as a horse!',{top:'hay_top',side:'hay_side',bottom:'hay_top'},{flammable:true});
+addBlock('farmland','Farmland','Soil','Soil loosened with a hoe so roots can push through and water can soak in. Plant seeds in it.',{top:'farm_dry',side:'dirt',bottom:'dirt'},{hidden:true});
+addBlock('farmland_wet','Watered Farmland','Soil','Damp soil. Plants pull water up through their roots, so watered crops grow faster.',{top:'farm_wet',side:'dirt',bottom:'dirt'},{hidden:true});
+addBlock('farmland_rich','Rich Farmland','Soil','Soil mixed with compost: rotted plants and manure full of nutrients like nitrogen. Crops grow faster and bigger.',{top:'farm_rich',side:'dirt',bottom:'dirt'},{hidden:true});
+addBlock('farmland_rich_wet','Rich Watered Farmland','Soil','Rich, damp soil: the best place to grow crops.',{top:'farm_rich_wet',side:'dirt',bottom:'dirt'},{hidden:true});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -1389,6 +1396,7 @@ function updateShots2(dt){
       if(s.fromMob){ if(!dead&&boxHit(pl,x,y,z,0.15)){ hit=true;
         if(s.kind==='web') addWeb(); else { const l=Math.hypot(s.v[0],s.v[2])||1; hurtPlayer(s.dmg,s.v[0]/l*0.6,s.v[2]/l*0.6,s.kind==='spear'?'An Orc\'s spear':s.kind==='rock'?'A Troll\'s rock':'A Skeleton\'s arrow'); } } }
       else for(const m of mobs){ if(boxHit(m,x,y,z,0.12)){ hit=true; damageMob(m,s.dmg,s.v[0],s.v[2],4); if(s.sp)specialImpact(s,m,x,y,z,px0,py0,pz0); break; } }
+      if(!hit&&!s.fromMob&&ranchK)for(const a of ranchK.animals){ if(a.game&&boxHit(a,x,y,z,0.15)){ hit=true; huntHit(a); break; } } // a deer or bunny on the ranch
     }
     if(hit){ freeShot(s); continue; }
     s.mesh.position.set(s.p[0],s.p[1],s.p[2]);
@@ -1615,8 +1623,8 @@ let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
-  const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=200+f*220+(big-1)*60; camera.updateProjectionMatrix(); }
-function cycleWeapon(){ const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
+  const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
+function cycleWeapon(){ if(ranchK&&onRanch()&&!demo){ cycleTool(); return; } const i=owned.indexOf(weapon); weapon=owned[(i+1)%owned.length]; refreshWeapon(); toast(WP[weapon].icon+' '+WP[weapon].name+' equipped'); queueSave(); }
 let lastHP=-1, lastCoins=-1;
 function updateHUD(){
   if(hp!==lastHP){ let s=''; for(let i=0;i<MAXHP;i++)s+='<span class="'+(i<hp?'h':'e')+'">♥</span>'; $('hearts').innerHTML=s; lastHP=hp; }
@@ -1745,7 +1753,7 @@ function openNewGame(fromTitle){
     '<div class="item"><div class="ic">🌍</div><div class="tx"><b>Survival</b><div class="fx">Build with real rocks, fight monsters for coins and shop at Flint\'s. Your coins and weapons carry over.</div></div><button class="ibtn" data-new="survival">Start</button></div>'+
     '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
     '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
-    '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Pick a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
+    '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Saddle up a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
   $('mbox').innerHTML=h; $('modal').style.display='flex';
   $('mbox').querySelectorAll('[data-new]').forEach(b=>onClick(b,()=>{
@@ -4127,7 +4135,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
     if(dPl<3&&!p.said&&p.wave>0.9){ p.said=true; } } }
 // each city's weather and sky
 function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
-  if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<260){ camera.far=260; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
+  if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
 
@@ -4294,7 +4302,7 @@ function generateRanch(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(
   const K2=R.coop; box(K2.x0,K2.x1,FY,FY+1,K2.z0,K2.z1,ID.planks); box(K2.x0+1,K2.x1-1,FY,FY+1,K2.z0+1,K2.z1-1,0); box(K2.x1,K2.x1,FY,FY,K2.z0+1,K2.z0+2,0); box(K2.x0,K2.x1,FY+2,FY+2,K2.z0,K2.z1,ID.roof);
   for(let z=110;z<=118;z++)for(let x=44;x<=50;x++)if(Math.hypot(x-47,z-114)<3.6)put(x,FY-1,z,ID.dirt);
   // apples on the tree by the lake (after the land is finished)
-  makeAppleTree(ax,aty,az);
+  farmBuild(); makeAppleTree(ax,aty,az);
   return HM; }
 
 // --- the animals
@@ -4330,6 +4338,16 @@ function animalModel(kind,breed){ const g=new THREE.Group(), M={g,legs:[],kind},
     if(S.shag)add(N,0.44,0.12,0.12,body,0,0.2,-0.42); // a shaggy fringe over the eyes
     if(S.hl){ const hm=om(S.horn); for(const sx of [-1,1]){ const h=add(N,S.hl,0.07,0.07,hm,sx*(0.2+S.hl/2),0.2,-0.18); h.rotation.z=sx*0.18; add(N,0.06,0.12,0.06,hm,sx*(0.2+S.hl),0.27,-0.18); } }
     M.neck=N; M.n0=0; const tl=new THREE.Group(); tl.position.set(0,1.28,0.7); tl.rotation.x=0.2; g.add(tl); add(tl,0.08,0.7,0.08,body,0,-0.35,0); add(tl,0.14,0.14,0.14,om(0x2a2018),0,-0.72,0); M.tail=tl; }
+  else if(kind==='deer'){ const br=om(0x9a6a3a), wh=om(0xeee6d8), dk=om(0x2a2018); add(g,0.46,0.5,1.2,br,0,1.05,0); add(g,0.4,0.12,0.9,wh,0,0.82,0); add(g,0.14,0.18,0.08,wh,0,1.22,0.62);
+    for(const [x,z] of [[-0.15,-0.46],[0.15,-0.46],[-0.15,0.46],[0.15,0.46]])leg(x,0.82,z,0.1,0.82,br,dk);
+    const N=new THREE.Group(); N.position.set(0,1.22,-0.5); N.rotation.x=-0.45; g.add(N); add(N,0.22,0.6,0.26,br,0,0.28,0); const Hd=new THREE.Group(); Hd.position.set(0,0.58,0); Hd.rotation.x=0.3; N.add(Hd);
+    add(Hd,0.24,0.24,0.44,br,0,0,-0.14); add(Hd,0.12,0.1,0.06,dk,0,-0.03,-0.38); for(const sx of [-1,1]){ add(Hd,0.16,0.12,0.04,br,sx*0.18,0.14,0.04); add(Hd,0.02,0.05,0.05,dk,sx*0.125,0.05,-0.18); }
+    if(breed==='buck'){ const an=om(0xe8dcc0); for(const sx of [-1,1]){ add(Hd,0.04,0.3,0.04,an,sx*0.08,0.28,0); add(Hd,0.04,0.04,0.2,an,sx*0.08,0.36,-0.08); add(Hd,0.04,0.16,0.04,an,sx*0.08,0.44,-0.16); } }
+    M.neck=N; M.n0=-0.45; }
+  else if(kind==='bunny'){ const c=om(breed==='white'?0xf0eee8:breed==='brown'?0x8a6a4a:0x9a9a94), wh=om(0xf4f2ee), pk=om(0xe8a0a8); add(g,0.3,0.26,0.42,c,0,0.2,0); add(g,0.12,0.12,0.1,wh,0,0.26,0.24);
+    for(const [x,z] of [[-0.1,-0.14],[0.1,-0.14],[-0.11,0.14],[0.11,0.14]])leg(x,0.1,z,0.08,0.1,c);
+    const N=new THREE.Group(); N.position.set(0,0.3,-0.18); g.add(N); add(N,0.22,0.2,0.22,c,0,0.06,-0.06); for(const sx of [-1,1]){ add(N,0.06,0.24,0.04,c,sx*0.06,0.26,0); add(N,0.02,0.14,0.02,pk,sx*0.06,0.26,-0.022); add(N,0.02,0.04,0.04,om(0x101010),sx*0.11,0.1,-0.12); }
+    add(N,0.05,0.04,0.02,pk,0,0.03,-0.175); M.neck=N; M.n0=0; }
   else if(kind==='pig'){ const pk=om(0xf2a8a8), dk=om(0xd88888); add(g,0.5,0.44,0.82,pk,0,0.46,0);
     for(const [x,z] of [[-0.15,-0.28],[0.15,-0.28],[-0.15,0.28],[0.15,0.28]])leg(x,0.26,z,0.13,0.26,pk,dk);
     const N=new THREE.Group(); N.position.set(0,0.5,-0.4); g.add(N); add(N,0.38,0.36,0.3,pk,0,0.02,-0.12); add(N,0.2,0.14,0.06,dk,0,-0.04,-0.3);
@@ -4344,11 +4362,15 @@ function animalModel(kind,breed){ const g=new THREE.Group(), M={g,legs:[],kind},
 function saddleOn(M){ const sd=om(0x5a3418), bl=om(0x2a4a8a), g=M.g, add=(w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
   M.saddle=[add(0.7,0.04,0.64,bl,0,1.56,-0.05),add(0.6,0.12,0.5,sd,0,1.62,-0.05),add(0.08,0.14,0.08,sd,0,1.74,-0.28),add(0.5,0.08,0.06,sd,0,1.68,0.2),
     add(0.04,0.42,0.04,sd,0.36,1.36,-0.05),add(0.04,0.42,0.04,sd,-0.36,1.36,-0.05),add(0.1,0.04,0.14,om(0x8a8a90),0.36,1.13,-0.05),add(0.1,0.04,0.14,om(0x8a8a90),-0.36,1.13,-0.05)];
-  if(M.head){ const br=om(0x3a2010); for(const sx of [-1,1]){ const b=box(0.02,0.28,0.04,br); b.position.set(sx*0.155,0,-0.4); M.head.add(b); } const nb=box(0.32,0.04,0.04,br); nb.position.set(0,0.08,-0.42); M.head.add(nb); } }
+  if(M.head){ const br=om(0x3a2010); for(const sx of [-1,1]){ const b=box(0.02,0.28,0.04,br); b.position.set(sx*0.155,0,-0.4); M.head.add(b); M.saddle.push(b); } const nb=box(0.32,0.04,0.04,br); nb.position.set(0,0.08,-0.42); M.head.add(nb); M.saddle.push(nb); } }
+function saddleOff(M){ if(!M.saddle)return; for(const b of M.saddle){ b.parent.remove(b); b.geometry.dispose(); } M.saddle=null; }
+// you have one saddle: put it on the horse you want to ride (it comes off whichever horse had it)
+function saddleUp(a,quiet){ const K=ranchK; if(a.M.saddle)return; for(const o of K.own)if(o.a&&o.a!==a)saddleOff(o.a.M); saddleOn(a.M); K.saddled=a.own; sfx('place');
+  if(!quiet){ burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(0.55,0.35,0.15),6); rtoast('🐎 You saddle up '+horseName(a)+'. Now get on and ride!'); queueSave(); } }
 const HEART_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'); x.fillStyle='#ff3a6a'; x.beginPath(); x.moveTo(16,28); x.bezierCurveTo(-6,12,8,-4,16,9); x.bezierCurveTo(24,-4,38,12,16,28); x.fill(); return new THREE.CanvasTexture(c); })();
 function standY(x,z){ for(let y=H-1;y>=0;y--){ const id=world[idx(x,y,z)]; if(id&&B[id].solid&&id!==ID.leaves&&id!==ID.log&&id!==ID.roof)return y+1; } return FY; } // the ground, not the treetops or a roof
 function makeAnimal(kind,breed,x,z,o){ const M=animalModel(kind,breed);
-  const hw=kind==='horse'?0.5:kind==='steer'?0.45:kind==='pig'?0.3:0.16, h=kind==='horse'?1.9:kind==='steer'?1.4:kind==='pig'?0.7:0.55;
+  const hw=kind==='horse'?0.5:kind==='steer'?0.45:kind==='deer'?0.36:kind==='pig'?0.3:kind==='bunny'?0.18:0.16, h=kind==='horse'?1.9:kind==='steer'?1.4:kind==='deer'?1.5:kind==='pig'?0.7:kind==='bunny'?0.45:0.55;
   const a=Object.assign({kind,breed,M,p:[x,o&&o.y!==undefined?o.y:standY(Math.floor(x),Math.floor(z)),z],v:[0,0,0],kb:[0,0,0],hw,h,onGround:false,wall:false,hd:Math.random()*6.28,spd:0,st:'wander',t:Math.random()*3,tgt:null,ph:Math.random()*6,yo:0,love:0,own:-1,graze:0,zone:RANCH.wild},o||{});
   scene.add(M.g); ranchK.animals.push(a); return a; }
 function removeAnimal(a){ scene.remove(a.M.g); disposeG(a.M.g); if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); } ranchK.animals.splice(ranchK.animals.indexOf(a),1); }
@@ -4357,6 +4379,29 @@ const ropeMat=new THREE.LineBasicMaterial({color:0xc8a060});
 const ropeLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),ropeMat); ropeLine.frustumCulled=false; ropeLine.visible=false; scene.add(ropeLine);
 const lassoLoop=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.035,6,18),lm(0xc8a060)); lassoLoop.visible=false; scene.add(lassoLoop);
 const hipCoil=new THREE.Mesh(new THREE.TorusGeometry(0.13,0.03,6,14),lm(0xc8a060)); hipCoil.position.set(0.3,0.86,0.02); hipCoil.rotation.y=Math.PI/2; hipCoil.visible=false; rig.torso.add(hipCoil);
+// --- beyond the edge of the ranch: grassland running out to the horizon, two rings of hazy snow-capped mountains, and low clouds.
+// None of it is fogged (it would vanish), so the colours are already hazy; they follow the time of day with the world's tint.
+const ranchSky=new THREE.Group(); ranchSky.visible=false; scene.add(ranchSky); let ranchSkyK=null;
+function mountainRing(R,n,h0,h1,base,top,snow,sd){ const r=mulberry32(sd), p1=r()*6, p2=r()*6, p3=r()*6, pos=[], col=[], c=new THREE.Color(), hs=[];
+  for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2; hs.push(i===n?hs[0]:h0+(h1-h0)*(0.5+0.28*Math.sin(a*3+p1)+0.14*Math.sin(a*7+p2)+0.08*Math.sin(a*17+p3))+(r()-0.5)*5); }
+  const v=(a,y,hex)=>{ pos.push(Math.cos(a)*R,y,Math.sin(a)*R); c.setHex(hex); col.push(c.r,c.g,c.b); };
+  for(let i=0;i<n;i++){ const a0=i/n*Math.PI*2, a1=(i+1)/n*Math.PI*2, h=[hs[i],hs[i+1]], m=h.map(q=>q*0.72), t=h.map(q=>q>h1*0.78?snow:top);
+    // two bands per slice: the base up to the shoulder, then the shoulder up to the (maybe snowy) peak
+    v(a0,-20,base); v(a1,-20,base); v(a1,m[1],top); v(a0,-20,base); v(a1,m[1],top); v(a0,m[0],top);
+    v(a0,m[0],top); v(a1,m[1],top); v(a1,h[1],t[1]); v(a0,m[0],top); v(a1,h[1],t[1]); v(a0,h[0],t[0]); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  return new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,fog:false,side:THREE.DoubleSide})); }
+function buildRanchSky(){ const G=ranchSky, K={mats:[]}, cx=64, cz=64;
+  const grass=new THREE.MeshLambertMaterial({color:0x4f7f33}); // the plains around the ranch (fogged, so they fade into the haze)
+  for(const [x0,x1,z0,z1] of [[-700,0,-700,830],[128,830,-700,830],[0,128,-700,0],[0,128,128,830]]){ const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),grass); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,FY-0.4,(z0+z1)/2); G.add(m); }
+  const far=mountainRing(330,140,70,150,0xa9bfd2,0xb8cad9,0xf2f6fa,7), near=mountainRing(230,110,40,95,0x4a6e48,0x8a9ea6,0xe8eff6,3); // forested slopes, grey rock, snow
+  far.position.set(cx,FY,cz); near.position.set(cx,FY,cz); G.add(far,near); K.mats.push(far.material,near.material);
+  const cm2=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.88,fog:false}); K.cloudMat=cm2; K.clouds=new THREE.Group(); K.clouds.position.set(cx,0,cz); G.add(K.clouds);
+  const r=mulberry32(11); for(let i=0;i<34;i++){ const a=r()*Math.PI*2, R=150+r()*120, y=FY+30+r()*34, puff=new THREE.Group(); puff.position.set(Math.cos(a)*R,y,Math.sin(a)*R); puff.rotation.y=-a;
+    for(let k=0;k<3;k++){ const b=box(10+r()*16,3+r()*3,8+r()*10,cm2); b.position.set((k-1)*9+(r()-0.5)*4,(r()-0.5)*2,(r()-0.5)*6); puff.add(b); } K.clouds.add(puff); }
+  return K; }
+function ranchSkyTick(dt){ const K=ranchSkyK; if(!K)return; const t=blockMat.color; for(const m of K.mats)m.color.setRGB(Math.min(1,t.r*1.05),Math.min(1,t.g*1.05),Math.min(1,t.b*1.05)); K.cloudMat.color.copy(cMat.color); K.clouds.rotation.y+=dt*0.004; }
+
 function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
 function riding(){ return !!(ranchK&&ranchK.ride); }
 function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
@@ -4364,14 +4409,26 @@ function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
   return look; }
 function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); }
-function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; dressRig(rig,look); }
-function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples}; }
+function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const c of ranchK.crops.slice())removeCrop(c); for(const q of ranchK.scare)scene.remove(q.m);
+  if(weapon==='bow'&&ranchK.tool==='bow')weapon=ranchK.prevWeapon||'fists'; toolHand.clear(); toolChip.style.display='none'; refreshWeapon(); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; ranchSky.visible=false; dressRig(rig,look); }
+function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples,
+  saddle:K.saddled,farm:1,tools:K.tools,tool:K.tool,seed:K.seed,can:K.can,bag:K.bag,crops:K.crops.map(c=>[c.x,c.y,c.z,c.type,Math.round(c.g*1000)/1000]),scare:K.scare.map(q=>[q.x,q.y,q.z])}; }
 // the ranch comes alive: the stable horses, wild herds, the farm animals. saved is what ranchSave() kept, or nothing for a new ranch
 function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==='object'?saved:{};
   ranchK={animals:[],own:[],ride:null,rope:null,lasso:null,gear:{},apples:Math.max(0,sv.apples|0),t:0,spawnT:5,drinkT:0,boost:0,jumpWas:false,yo:0,bob:0,said:{}};
-  const K=ranchK; for(const [k] of GEAR)K.gear[k]=!!(sv.gear&&sv.gear[k]); K.gear.beard=sv.gear&&LOOK_OPTS.beard.some(o=>o[0]===sv.gear.beard)?sv.gear.beard:'';
+  const K=ranchK; for(const [k] of GEAR)K.gear[k]=!!(sv.gear&&sv.gear[k]);
+  // the farm: tools, the bag, crops and scarecrows (a ranch saved before the farm existed gets the shed, stand and garden now)
+  if(saved&&!sv.farm){ farmBuild(); rebuildAll(); }
+  Object.assign(K,{crops:[],scare:[],wet:new Map(),prevWeapon:weapon,tools:['lasso'],tool:'lasso',seed:CROPS[sv.seed]?sv.seed:'corn',can:Number.isFinite(sv.can)?Math.max(0,Math.min(10,sv.can|0)):10,bag:{}});
+  for(const k of Object.keys(BAG_PRICE))K.bag[k]=Math.max(0,(sv.bag&&sv.bag[k])|0);
+  if(Array.isArray(sv.tools))for(const t of sv.tools)if(RTOOLS[t]&&!K.tools.includes(t))K.tools.push(t);
+  const cr=Array.isArray(sv.crops)?sv.crops:saved?[]:[[0,'wheat',0.75,6],[2,'carrot',0.35,5],[4,'corn',0.2,4],[6,'tomato',0.55,4]].flatMap(([dz,t,g,n])=>Array.from({length:n},(_,i)=>[PLOT.x0+i,FY-1,PLOT.z0+dz,t,g]));
+  for(const c of cr.slice(0,400))if(Array.isArray(c)&&CROPS[c[3]]&&isFarm(get(c[0],c[1],c[2]))&&!get(c[0],c[1]+1,c[2]))plantCrop(c[0]|0,c[1]|0,c[2]|0,c[3],Math.max(0,Math.min(1,+c[4]||0)));
+  if(Array.isArray(sv.scare))for(const q of sv.scare.slice(0,6))if(Array.isArray(q)){ const m=scarecrowMesh(); m.position.set((q[0]|0)+0.5,q[1]|0,(q[2]|0)+0.5); scene.add(m); K.scare.push({x:q[0]|0,y:q[1]|0,z:q[2]|0,m}); }
+  for(let i=0;i<N;i++){ const id=world[i]; if(id===ID.farmland_wet||id===ID.farmland_rich_wet)K.wet.set(ix_(i)+','+iy_(i)+','+iz_(i),WET_TIME); } // damp soil dries out again
+  K.gear.beard=sv.gear&&LOOK_OPTS.beard.some(o=>o[0]===sv.gear.beard)?sv.gear.beard:'';
   const own=Array.isArray(sv.own)&&sv.own.length?sv.own:RANCH0; for(const o of own.slice(0,16))if(Array.isArray(o)&&HORSES[o[0]])K.own.push({breed:o[0],name:String(o[1]||'Horse').slice(0,16)});
-  K.own.forEach((o,i)=>placeOwned(o,i));
+  K.own.forEach((o,i)=>placeOwned(o,i)); K.saddled=-1; if(Number.isInteger(sv.saddle)&&K.own[sv.saddle])saddleUp(K.own[sv.saddle].a,true);
   const R=RANCH, rnd=Math.random, wildSpot=()=>{ for(let k=0;k<40;k++){ const x=R.wild.x0+rnd()*(R.wild.x1-R.wild.x0), z=R.wild.z0+rnd()*(R.wild.z1-R.wild.z0), s=surfaceAt(Math.floor(x),Math.floor(z));
     if(s.id===ID.water||s.y>34||Math.hypot(x-R.lake[0],z-R.lake[1])<R.lake[2]+3)continue; return [x,z]; } return [60,70]; };
   const wildBreeds=['chestnut','appaloosa','grullo','bay','black','palomino','pinto'];
@@ -4381,17 +4438,18 @@ function buildRanchLife(saved){ clearRanchLife(); const sv=saved&&typeof saved==
   for(const b of pen.slice(0,12))if(STEERS[b])makeAnimal('steer',b,C.x0+3+rnd()*(C.x1-C.x0-6),C.z0+3+rnd()*(C.z1-C.z0-6),{st:'pen',zone:penZone(),y:FY});
   const Y=R.yard; for(let i=0;i<7;i++)makeAnimal('chicken',i%3?'white':'brown',Y.x0+2+rnd()*12,Y.z0+2+rnd()*(Y.z1-Y.z0-4),{zone:Y,y:FY});
   for(let i=0;i<4;i++)makeAnimal('pig','pink',44+rnd()*6,111+rnd()*6,{zone:Y,y:FY});
-  dressHero(); }
+  for(let i=0;i<4;i++)spawnGame('deer'); for(let i=0;i<6;i++)spawnGame('bunny');
+  if(!ranchSkyK)ranchSkyK=buildRanchSky(); ranchSky.visible=true; equipTool(RTOOLS[sv.tool]&&K.tools.includes(sv.tool)?sv.tool:'lasso',true); dressHero(); }
 function penZone(){ const C=RANCH.corral; return {x0:C.x0+1.5,x1:C.x1-1.5,z0:C.z0+1.5,z1:C.z1-1.5}; }
 function placeOwned(o,i){ const s=STALLS[i]; let a;
-  if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:Math.PI/2,zone:null,y:FY}); // facing their hay
+  if(s)a=makeAnimal('horse',o.breed,s[0],s[1],{own:i,st:'stall',hd:-Math.PI/2,zone:null,y:FY}); // facing out to the aisle
   else a=makeAnimal('horse',o.breed,RANCH.corral.x0+4+Math.random()*10,RANCH.corral.z0+4+Math.random()*8,{own:i,st:'pen',zone:penZone(),y:FY});
-  saddleOn(a.M); o.a=a; return a; }
+  o.a=a; return a; }
 // --- riding
-function mount(a,quiet){ const K=ranchK; if(!a||K.ride)return; if(K.rope&&K.rope.a===a)K.rope=null; K.ride=a; a.st='ridden'; a.spd=0; yaw=a.hd; pitch=-0.12; if(fly)setFly(false,false);
+function mount(a,quiet){ const K=ranchK; if(!a||K.ride)return; saddleUp(a,true); if(K.rope&&K.rope.a===a)K.rope=null; K.ride=a; a.st='ridden'; a.spd=0; yaw=a.hd; pitch=-0.12; if(fly)setFly(false,false);
   if(camMode===1)camMode=3; tpWeapon.visible=false; document.body.classList.add('ride');
   if(!quiet){ rtoast('🐴 '+(a.own>=0?K.own[a.own].name:'Your horse')+'! '+(IS_TOUCH?'Drag the joystick to ride. ⬆ Jump leaps over things, or gallops faster. ⛏ throws your lasso.':'W to go, A/D or the mouse to steer, Space to jump (or gallop faster), click to throw your lasso, E to get off.')); sfx('catch'); } }
-function dismount(quiet){ const K=ranchK, a=K&&K.ride; if(!a)return; K.ride=null; a.st='idle'; a.t=20; a.spd=0; document.body.classList.remove('ride'); refreshHeld();
+function dismount(quiet){ const K=ranchK, a=K&&K.ride; if(!a)return; K.ride=null; a.st='idle'; a.t=20; a.wait=120; // it waits two minutes for you, then heads home a.spd=0; document.body.classList.remove('ride'); refreshHeld();
   const r=[Math.cos(a.hd),-Math.sin(a.hd)]; let spot=[a.p[0]+r[0]*1.2,a.p[1],a.p[2]+r[1]*1.2];
   for(const sx of [1,-1,1.6,-1.6]){ const x=a.p[0]+r[0]*sx, z=a.p[2]+r[1]*sx; if(!boxHits(x,a.p[1]+0.02,z,pl.hw,pl.h)){ spot=[x,a.p[1]+0.02,z]; break; } }
   pl.p=spot; pl.v=[0,0,0]; unstick(pl); legL.rotation.z=legR.rotation.z=0; if(!quiet)rtoast('🐴 You hop down.'); }
@@ -4413,7 +4471,13 @@ function rideUpdate(dt){ const K=ranchK, a=K.ride; let thr=0, turn=0, jump=false
   if(demo&&!demo.user){ demoInput(dt); if(!demo.user){ demoPilot(dt); thr=rideIn.thr; turn=rideIn.turn; jump=rideIn.jump; } }
   if(!demo||demo.user){ const gp=demo?pad:{}; thr=-joy.y-(gp.ly||0); turn=joy.x+(gp.lx||0); if(keys.KeyW||keys.ArrowUp)thr+=1; if(keys.KeyS||keys.ArrowDown)thr-=1; if(keys.KeyA||keys.ArrowLeft)turn-=1; if(keys.KeyD||keys.ArrowRight)turn+=1;
     jump=upHeld||keys.Space||!!gp.a; thr=Math.max(-1,Math.min(1,thr)); turn=Math.max(-1,Math.min(1,turn)); }
-  yaw-=turn*2.1*dt*(0.5+0.5*Math.min(1,Math.abs(a.spd)/4)); a.hd=yaw;
+  yaw-=turn*2.1*dt*(0.5+0.5*Math.min(1,Math.abs(a.spd)/4));
+  { const m=10, ex=a.p[0]<m?-1:a.p[0]>W-m?1:0, ez=a.p[2]<m?-1:a.p[2]>D-m?1:0; // near the edge of the world: the horse leans into a turn, runs along the edge and heads back in
+    if(ex||ez){ const l=Math.hypot(ex,ez), nx=ex/l, nz=ez/l, fx=-Math.sin(yaw), fz=-Math.cos(yaw), de=Math.min(a.p[0],W-a.p[0],a.p[2],D-a.p[2]), close=1-Math.max(0,de)/m;
+      if(fx*nx+fz*nz>-0.45){ const tx=-nz, tz=nx, sg=fx*tx+fz*tz>=0?1:-1, dx=sg*tx-(0.35+close)*nx, dz=sg*tz-(0.35+close)*nz; let d=Math.atan2(-dx,-dz)-yaw;
+        while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=Math.max(-1,Math.min(1,d))*dt*(1.5+4*close);
+        if(!K.said.edge){ K.said.edge=1; rtoast('🐴 Whoa there! That\'s the edge of the ranch, so your horse turns back.'); } } } }
+  a.hd=yaw;
   K.boost=Math.max(0,K.boost-dt); K.jumpCD=Math.max(0,(K.jumpCD||0)-dt);
   if(jump&&!K.jumpWas&&a.onGround&&K.jumpCD<=0){ K.jumpCD=0.6; // jump over what's in front, or gallop faster on open ground
     if([0.25,0.7,1.2,1.8].some(d=>aheadBlock(a,a.hw+d,0)||aheadBlock(a,a.hw+d,1))){ a.v[1]=11.6; a.spd=Math.max(a.spd,5); sfx('whoosh'); } // high enough to clear a fence
@@ -4436,16 +4500,19 @@ function seatRider(){ legL.rotation.set(0.45,0,-0.5); legR.rotation.set(0.45,0,0
 // the animals' legs, head and tail
 function animalPose(a,dt,mode){ const M=a.M, sp=Math.abs(a.spd), sw=Math.min(0.75,sp*0.12), s=Math.sin(a.ph*1.0);
   M.legs.forEach((l,i)=>{ l.rotation.x=(M.legs.length===2?(i?-1:1):(i===0||i===3?1:-1))*s*sw; });
-  M.g.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'&&sp>5?Math.abs(s)*0.08:0),a.p[2]); M.g.rotation.y=a.hd;
-  if(M.neck){ const down=mode==='drink'||mode==='graze'?(a.kind==='horse'?1.25:a.kind==='chicken'?0.9:0.55):0, want=M.n0-down+(sp>0.3?Math.sin(a.ph*2)*0.06:0); // nose down to graze or drink
+  M.g.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'&&sp>5?Math.abs(s)*0.08:a.kind==='bunny'&&sp>0.3?Math.abs(Math.sin(a.ph*0.7))*0.25:0),a.p[2]); M.g.rotation.y=a.hd; // bunnies hop
+  if(M.neck){ const down=mode==='drink'||mode==='graze'?(a.kind==='horse'?1.25:a.kind==='deer'?1.0:a.kind==='chicken'?0.9:0.55):0, want=M.n0-down+(sp>0.3?Math.sin(a.ph*2)*0.06:0); // nose down to graze or drink
     M.neck.rotation.x+=(want-M.neck.rotation.x)*Math.min(1,dt*5); }
   if(M.tail)M.tail.rotation.z=Math.sin(ranchK.t*2+a.ph)*0.25; }
 // --- feeding, roping and taming
 function horseName(a){ return a.own>=0?ranchK.own[a.own].name:HORSES[a.breed].n+' horse'; }
-function giveApple(a){ const K=ranchK; K.apples--; a.love=120; a.st='follow'; burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(1,0.3,0.45),12); sfx('coin');
+function giveApple(a,food){ const K=ranchK; if(food==='carrot')K.bag.carrot--; else K.apples--; refreshToolChip(); a.love=120; a.st='follow'; burst(a.p[0]-0.5,a.p[1]+1.6,a.p[2]-0.5,new THREE.Color(1,0.3,0.45),12); sfx('coin');
   if(!a.heart){ a.heart=new THREE.Sprite(new THREE.SpriteMaterial({map:HEART_TEX,depthWrite:false})); a.heart.scale.setScalar(0.5); scene.add(a.heart); }
   rtoast('❤️ The '+horseName(a)+' loves you! It will follow you for a while.'+(a.wild?' Lead it into the corral to keep it.':'')+(K.apples?' ('+K.apples+' 🍎 left)':'')); queueSave(); }
-function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false;
+function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false; if(aimFruit)return false; // picking an apple comes first
+  if(!K.ride&&target&&isFarm(target.b)&&K.tool!=='bow'){ const c=cropAt(target.x,target.y,target.z); if(c&&c.g>=1){ harvest(c); return true; } if(c&&K.tool==='lasso'){ rtoast(CROPS[c.type].i+' Still growing ('+Math.round(c.g*100)+'%).'); return true; } }
+  if(K.tool==='bow'){ if(weapon!=='bow'){ weapon='bow'; refreshWeapon(); } swingT=0.25; if(atkCd<=0)shoot(WP.bow); return true; } // the hunting bow always shoots (even from the saddle)
+  if(K.tool!=='lasso'&&!K.ride)return farmHit();
   if(K.lasso)return true; if(K.rope){ const a=K.rope.a; K.rope=null; ropeLine.visible=false; a.st='wander'; rtoast('🪢 You let the '+(a.kind==='horse'?horseName(a):STEERS[a.breed].n+' steer')+' go.'); return true; }
   const o=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]), d=lookDir(); let best=null, bd=15;
   for(const a of K.animals){ if(!a.wild||a===K.ride||(a.kind!=='horse'&&a.kind!=='steer'))continue; const dx=a.p[0]-o.x, dz=a.p[2]-o.z, dist=Math.hypot(dx,dz); if(dist>14||dist<1)continue;
@@ -4453,7 +4520,7 @@ function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false;
   if(!best&&!riding())return false; // nothing to rope: a normal hit
   K.lasso={t:0,a:best,dur:best?0.25+bd*0.03:0.5,miss:best?null:o.clone().addScaledVector(new THREE.Vector3(d.x,0,d.z).normalize(),9)}; hipCoil.visible=false; swingT=0.25; sfx('swing'); return true; }
 function handPos(){ return rig.armR.localToWorld(new THREE.Vector3(0,-0.68,0)); }
-function ranchTick(dt){ const K=ranchK; K.t+=dt; const hero=riding()?K.ride.p:pl.p;
+function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt); K.chipT=(K.chipT||0)-dt; if(K.chipT<=0){ K.chipT=0.5; refreshToolChip(); } const hero=riding()?K.ride.p:pl.p;
   // the lasso flies out and catches (or misses), then the rope stays tied on
   if(K.lasso){ const L=K.lasso; L.t+=dt; const f=Math.min(1,L.t/L.dur), h=handPos(), tg=L.a?new THREE.Vector3(L.a.p[0],L.a.p[1]+L.a.h*0.85,L.a.p[2]):L.miss, ret=!L.a&&L.t>L.dur;
     const p=ret?tg.clone().lerp(h,Math.min(1,(L.t-L.dur)/0.35)):h.clone().lerp(tg,f); p.y+=Math.sin(f*Math.PI)*1.2; lassoLoop.visible=true; lassoLoop.position.copy(p); lassoLoop.rotation.set(Math.PI/2,0,K.t*12);
@@ -4467,35 +4534,41 @@ function ranchTick(dt){ const K=ranchK; K.t+=dt; const hero=riding()?K.ride.p:pl
   const C=RANCH.corral;
   for(const a of K.animals.slice()){ if(a===K.ride)continue; a.t-=dt; let spd=0, mode='';
     if(a.love>0){ a.love-=dt; if(a.heart){ a.heart.visible=true; a.heart.position.set(a.p[0],a.p[1]+a.yo+(a.kind==='horse'?3.1:2.0)+Math.sin(K.t*3)*0.1,a.p[2]); }
-      if(a.love<=0){ if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } if(a.st==='follow')a.st=a.wild?'wander':'idle'; } }
-    if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
+      if(a.love<=0){ if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } if(a.st==='follow'){ a.st=a.wild?'wander':'idle'; a.wait=120; } } }
+    if(a.st==='idle'&&a.own>=0&&a.kind==='horse'){ a.wait=(a.wait===undefined?120:a.wait)-dt; if(a.wait<=0){ a.st='home'; a.route=homeRoute(a); a.ri=0; a.stuckT=0;
+        rtoast('🐴 '+horseName(a)+' got tired of waiting and is walking back to the stable.'); } }
+    if(a.st==='home'){ const q=a.route[a.ri], last=a.ri===a.route.length-1, dx=q[0]-a.p[0], dz=q[1]-a.p[2], d=Math.hypot(dx,dz);
+      if(d<(last?0.35:1.1)){ if(last){ homeArrive(a); } else a.ri++; }
+      else { turnAnimal(a,Math.atan2(-dx,-dz),dt,3.5); spd=last?1:2.4;
+        a.chk=(a.chk||0)+dt; if(a.chk>1){ const mv=a.lastP?Math.hypot(a.p[0]-a.lastP[0],a.p[2]-a.lastP[1]):9; a.lastP=[a.p[0],a.p[2]]; a.chk=0; a.stuckT=mv<0.4?a.stuckT+1:0; }
+        if(a.stuckT>=2&&a.onGround)a.v[1]=8.5; // stuck on something: hop
+        if(a.stuckT>=8&&Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>25){ a.p=[q[0],standY(Math.floor(q[0]),Math.floor(q[1])),q[1]]; a.stuckT=0; } } } // still stuck and nobody's looking: on to the next spot
+    else if(a.st==='roped'||a.st==='follow'){ const dx=hero[0]-a.p[0], dz=hero[2]-a.p[2], d=Math.hypot(dx,dz); turnAnimal(a,Math.atan2(-dx,-dz),dt,5);
       spd=d>3.6?Math.min(12,(d-3)*2.2):0; if(a.st==='roped'&&d>9){ a.p[0]+=dx/d*(d-9); a.p[2]+=dz/d*(d-9); } // the rope pulls it along
       if(a.wild&&a.p[0]>C.x0+1&&a.p[0]<C.x1-1&&a.p[2]>C.z0+1&&a.p[2]<C.z1-1)tame(a); }
     else if(a.st==='stall'){ mode=Math.sin(K.t*0.3+a.ph)>0.4?'graze':''; }
+    else if(a.game&&(()=>{ const gs=gameAI(a,dt,hero,riding()); if(gs<0)return false; spd=gs; if(gs===0&&a.crop)mode='graze'; return true; })()){} // deer and bunnies run off, or sneak to the crops
     else { const Z=a.zone; if(!a.tgt||a.t<=0||Math.hypot(a.tgt[0]-a.p[0],a.tgt[1]-a.p[2])<1){ a.t=3+Math.random()*7; a.graze=Math.random()<0.45?a.t:0;
         a.tgt=Z?[Z.x0+Math.random()*(Z.x1-Z.x0),Z.z0+Math.random()*(Z.z1-Z.z0)]:null; if(a.tgt&&a.kind!=='chicken'&&a.kind!=='pig'&&a.st!=='pen'){ const s=surfaceAt(Math.floor(a.tgt[0]),Math.floor(a.tgt[1])); if(s.id===ID.water||s.y>34)a.tgt=null; } }
       if(a.graze>0&&a.t<a.graze-1.5){ mode='graze'; } else if(a.tgt){ turnAnimal(a,Math.atan2(-(a.tgt[0]-a.p[0]),-(a.tgt[1]-a.p[2])),dt,2.5); spd=a.kind==='chicken'?1.6:a.kind==='pig'?1.3:a.st==='pen'?1:1.6; }
       // keep out of the lake (but drink at the edge now and then)
       const f=[-Math.sin(a.hd),-Math.cos(a.hd)], ah=surfaceAt(Math.floor(a.p[0]+f[0]*1.4),Math.floor(a.p[2]+f[1]*1.4)); if(ah.id===ID.water&&spd>0){ spd=0; if(a.kind!=='chicken'&&a.kind!=='pig'){ mode='drink'; if(a.t<1)a.tgt=null; } else a.tgt=null; } }
     a.spd+=(spd-a.spd)*Math.min(1,dt*4); const far=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2])>70;
-    if(!far||a.st==='roped')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
+    if(!far||a.st==='roped'||a.st==='home')moveAnimal(a,dt,a.spd); a.ph+=dt*Math.abs(a.spd)*(a.kind==='chicken'?6:2.2); animalPose(a,dt,mode); }
   // new wild animals wander in from the hills to keep the herds going
-  K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const wild=K.animals.filter(a=>a.wild); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
+  K.spawnT-=dt; if(K.spawnT<=0){ K.spawnT=20; const game=K.animals.filter(a=>a.game); if(game.filter(a=>a.kind==='deer').length<3)spawnGame('deer'); if(game.filter(a=>a.kind==='bunny').length<5)spawnGame('bunny'); const wild=K.animals.filter(a=>a.wild&&!a.game); if(wild.filter(a=>a.kind==='horse').length<5||wild.filter(a=>a.kind==='steer').length<7){
     const kind=wild.filter(a=>a.kind==='horse').length<5?'horse':'steer', x=12+Math.random()*104, z=40+Math.random()*6; makeAnimal(kind,kind==='horse'?['chestnut','appaloosa','grullo','bay','black'][Math.floor(Math.random()*5)]:Object.keys(STEERS)[Math.floor(Math.random()*4)],x,z,{wild:true}); } } }
+// the way home: back down the trail if it's up the mountain, then in through the stable door to its own stall (or into the corral)
+function homeRoute(a){ const R=[], path=ranchPath(); let bi=0, bd=1e9; path.forEach((q,i)=>{ const d=Math.hypot(q[0]-a.p[0],q[1]-a.p[2]); if(d<bd){ bd=d; bi=i; } });
+  if(bd<9&&bi>3)for(let i=bi;i>=0;i-=3)R.push(path[i]);
+  const s=STALLS[a.own], C=RANCH.corral; if(s)R.push(RANCH.hitch,[53,96.5],[s[0]+1.8,s[1]],[s[0],s[1]]); else R.push([79,102],[79,96],[79,90]); return R; }
+function homeArrive(a){ const s=STALLS[a.own]; a.route=null; a.spd=0; if(s){ a.st='stall'; a.p[0]=s[0]; a.p[2]=s[1]; a.hd=-Math.PI/2; a.zone=null; } else { a.st='pen'; a.zone=penZone(); } }
 function turnAnimal(a,want,dt,rate){ let d=want-a.hd; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; a.hd+=Math.max(-rate*dt,Math.min(rate*dt,d)); }
 function tame(a){ const K=ranchK; if(K.rope&&K.rope.a===a){ K.rope=null; ropeLine.visible=false; } a.wild=false; a.love=0; if(a.heart){ scene.remove(a.heart); a.heart.material.dispose(); a.heart=null; } burst(a.p[0]-0.5,a.p[1]+1.5,a.p[2]-0.5,new THREE.Color(1,0.85,0.2),14); sfx('coin');
   if(a.kind==='steer'){ a.st='pen'; a.zone=penZone(); rtoast('🐄 The '+STEERS[a.breed].n+' steer is yours! It lives in the corral now.'); }
   else { const name=HORSE_NAMES.filter(n=>!K.own.some(o=>o.name===n))[0]||'Lucky', o={breed:a.breed,name}; K.own.push(o); const i=K.own.length-1; removeAnimal(a); placeOwned(o,i);
-    rtoast('🐴 You tamed a wild '+HORSES[a.breed].n+' horse and named it '+name+'! Pick it in the stable to ride it.'); }
+    rtoast('🐴 You tamed a wild '+HORSES[a.breed].n+' horse and named it '+name+'! Put the saddle on it to ride it.'); }
   queueSave(); }
-// the stable: pick a horse and it's saddled and ready outside the door
-function openStable(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK;
-  let h='<h2>🐴 The Stable</h2><div class="say">Pick a horse to ride. It\'ll be saddled and waiting outside the stable door.</div>';
-  K.own.forEach((o,i)=>{ const H=HORSES[o.breed]; h+='<div class="item"><div class="ic" style="background:#'+H.c.toString(16).padStart(6,'0')+';border:3px solid #'+H.m.toString(16).padStart(6,'0')+'">🐴</div><div class="tx"><b>'+esc(o.name)+'</b><div class="fx">'+H.n+'</div></div><button class="ibtn" data-horse="'+i+'">Ride</button></div>'; });
-  h+='<div class="fx" style="margin-top:8px">Catch more horses with your lasso (or win one over with an apple) and lead them into the corral to keep them.</div><div class="row"><button class="mbtn gray" id="stBack">Back</button></div>';
-  $('mbox').innerHTML=h; $('modal').style.display='flex';
-  $('mbox').querySelectorAll('[data-horse]').forEach(b=>onClick(b,()=>{ const o=K.own[+b.dataset.horse], a=o.a; closeMenu(); if(!a)return; const [hx,hz]=RANCH.hitch; a.p=[hx,FY+0.01,hz]; a.v=[0,0,0]; a.hd=-Math.PI/2; a.st='idle'; a.zone=null; a.spd=0; mount(a); }));
-  tap($('stBack'),closeMenu); }
 // the wardrobe in the farmhouse: cowboy gear just for the ranch
 function openWardrobe(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK, G=K.gear;
   let h='<h2>🤠 Cowboy Gear</h2><div class="say">Dress up for the ranch. This only changes how you look here; leave the ranch and you\'re back in your own clothes.</div>';
@@ -4508,12 +4581,16 @@ function openWardrobe(){ if(document.pointerLockElement)document.exitPointerLock
   onClick($('wdAll'),()=>{ for(const [k] of GEAR)G[k]=true; redo(); }); onClick($('wdNone'),()=>{ for(const [k] of GEAR)G[k]=false; G.beard=''; redo(); }); tap($('wdBack'),closeMenu); }
 // the E key (or the touch button) on the ranch
 function ranchAction(){ const K=ranchK; if(!onRanch())return null; if(K.ride)return {label:'🐴 Get off',fn:()=>dismount()};
-  const S=RANCH.stable, [wx,wz]=RANCH.wardrobe, near=(x,z,r)=>Math.hypot(pl.p[0]-x,pl.p[2]-z)<r;
+  const [wx,wz]=RANCH.wardrobe, near=(x,z,r)=>Math.hypot(pl.p[0]-x,pl.p[2]-z)<r;
   let best=null, bd=2.6; for(const a of K.animals){ if(a.kind!=='horse')continue; const d=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2]); if(d<bd&&Math.abs(a.p[1]-pl.p[1])<2){ bd=d; best=a; } }
-  if(best&&K.apples>0&&(best.wild||best.love<=0))return {label:'🍎 Give apple',fn:()=>giveApple(best)};
-  if(best&&!best.wild)return {label:'🐴 Get on '+horseName(best),fn:()=>mount(best)};
+  if(best&&(K.apples>0||K.bag.carrot>0)&&(best.wild||best.love<=0))return K.apples>0?{label:'🍎 Give apple',fn:()=>giveApple(best)}:{label:'🥕 Give carrot',fn:()=>giveApple(best,'carrot')};
+  if(best&&!best.wild)return best.M.saddle?{label:'🐴 Get on '+horseName(best),fn:()=>mount(best)}:{label:'🐎 Saddle up '+horseName(best),fn:()=>saddleUp(best)};
+  for(const a of K.animals){ const d=Math.hypot(a.p[0]-pl.p[0],a.p[2]-pl.p[2]); if(d>2.2)continue;
+    if(a.kind==='chicken'&&K.bag.wheat>0)return {label:'🌾 Feed the chicken',fn:()=>feed(a,'wheat')}; if(a.kind==='pig'&&K.bag.corn>0)return {label:'🌽 Feed the pig',fn:()=>feed(a,'corn')}; }
   if(near(wx,wz,2.2))return {label:'🤠 Cowboy gear',fn:openWardrobe};
-  if(pl.p[0]>S.x0&&pl.p[0]<S.x1+4&&pl.p[2]>S.z0&&pl.p[2]<S.z1)return {label:'🐴 Pick a horse',fn:openStable};
+  if(near(SHED.rack[0],SHED.rack[1],2.4))return {label:'🧰 Tool rack',fn:openShed};
+  if(near(STAND[0],STAND[1],2.3))return {label:'🧺 Farm stand',fn:openStand};
+  if(hp<MAXHP&&(K.bag.tomato>0||K.bag.carrot>0))return K.bag.tomato>0?{label:'🍅 Eat a tomato',fn:()=>eat('tomato')}:{label:'🥕 Eat a carrot',fn:()=>eat('carrot')};
   return null; }
 
 // --- the horse ride in Demo Mode: up the trail past the lake (with a drink), a gallop across the meadow, a steer roped
@@ -4557,6 +4634,153 @@ function rideDemoCam(dt){ const K=ranchK, a=K&&K.ride; if(!a)return; const C=dem
     const cam=h.clone().lerp(to,tt), g=gyAt(cam)+0.9; return {cam,look:pr[1],ok:tt>0.55&&cam.y>g-0.4,g}; };
   let sh=tryShot(C.cur); if(!sh.ok&&C.cur!=='chase')sh=tryShot('chase'); // blocked: the view from behind, along the trail we just rode
   camera.position.copy(sh.cam); camera.position.y=Math.max(sh.cam.y,sh.g); camera.lookAt(sh.look); if(C.cur==='pov'&&sh.ok)model.visible=false; } // the rider's eye view: just the horse's head and the trail
+// ================= RANCH FARMING AND WILDLIFE =================
+// The tool shed hands out tools: a hoe tills grass into farmland, the seed bag plants corn, wheat, carrots or tomatoes, the watering
+// can makes them grow faster (refill it at the lake or the trough), compost makes rich soil (faster again, and a bigger harvest),
+// and scarecrows keep the bunnies off. Crops grow in about two minutes. Sell the harvest at the farm stand, feed it to the animals
+// (carrots win a horse over, wheat makes a chicken lay an egg, corn makes a pig happy) or eat tomatoes and carrots to heal.
+// Deer and bunnies roam the meadows and run when you come near; switch to the bow to hunt them for coins.
+const SHED={x0:83,x1:88,z0:105,z1:110,rack:[87.2,107.5]}, STAND=[65.5,104.6], PLOT={x0:84,x1:95,z0:114,z1:123}, TROUGH=[73,85];
+const RTOOLS={lasso:{n:'Lasso',i:'🪢',d:'Catch steers and wild horses.'},bow:{n:'Hunting bow',i:'🏹',d:'Hunt deer and bunnies for coins.'},
+  hoe:{n:'Hoe',i:'⛏️',d:'Till grass or dirt into farmland.'},seeds:{n:'Seed bag',i:'🌱',d:'Plant seeds in farmland.'},
+  water:{n:'Watering can',i:'🚿',d:'Watered crops grow faster. Refill it at the lake or the trough.'},compost:{n:'Compost',i:'💩',d:'Makes rich soil: faster growing and a bigger harvest.'},
+  scarecrow:{n:'Scarecrow',i:'🎃',d:'Put one by your crops and the bunnies stay away.'}};
+const RTOOL_ORDER=['lasso','bow','hoe','seeds','water','compost','scarecrow'];
+const CROPS={corn:{n:'Corn',i:'🌽',price:3},wheat:{n:'Wheat',i:'🌾',price:2},carrot:{n:'Carrots',i:'🥕',price:2},tomato:{n:'Tomatoes',i:'🍅',price:3}};
+const BAG_PRICE={corn:3,wheat:2,carrot:2,tomato:3,egg:2};
+const CROP_TIME=120, WET_TIME=90;
+// what grows on the soil: each crop has four looks as it grows (sprout, leafy, nearly there, ripe)
+const cropMats={}; function cmat(c){ return cropMats[c]||(cropMats[c]=lm(c)); }
+function cropMesh(type,st){ const g=new THREE.Group(), add=(w,h,d,c,x,y,z,ry)=>{ const b=box(w,h,d,cmat(c)); b.position.set(x,y,z); if(ry)b.rotation.y=ry; g.add(b); return b; };
+  const green=0x4f9a2e, dk=0x3a7a22;
+  if(st===0){ for(const [x,z] of [[-0.2,-0.2],[0.2,0.15],[-0.1,0.25],[0.22,-0.2]])add(0.05,0.12,0.05,green,x,0.06,z); return g; }
+  if(type==='wheat'){ const h=[0,0.32,0.6,0.82][st], c=st===3?0xe0b84a:st===2?0xb8c050:green;
+    for(let i=0;i<9;i++){ const x=-0.3+(i%3)*0.3, z=-0.3+Math.floor(i/3)*0.3; add(0.05,h,0.05,c,x,h/2,z); if(st>=2)add(0.09,0.16,0.09,st===3?0xf2cc5a:0xc8c860,x,h+0.04,z); } }
+  else if(type==='corn'){ const h=[0,0.6,1.3,1.9][st]; add(0.12,h,0.12,st===3?0x8aa040:green,0,h/2,0);
+    for(let k=0;k<Math.min(3,st+1);k++){ const l=add(0.5,0.04,0.12,dk,0,0.3+k*0.45,0); l.rotation.y=k*1.9; l.rotation.z=0.3; }
+    if(st===3){ for(const sx of [-1,1]){ const cb=add(0.13,0.32,0.13,0xf2cc3a,sx*0.12,1.0+sx*0.15,0); cb.rotation.z=sx*0.25; add(0.15,0.2,0.15,0x8ab84a,sx*0.12,0.88+sx*0.15,0); } add(0.04,0.25,0.04,0xd8b860,0,h+0.12,0); } }
+  else if(type==='carrot'){ const h=[0,0.2,0.32,0.42][st]; for(const [x,z] of [[-0.18,-0.15],[0.18,0.12],[-0.1,0.22],[0.2,-0.2]]){ for(const r of [0,0.6,1.2])add(0.04,h,0.12,green,x+Math.cos(r)*0.05,h/2,z,r);
+      if(st===3)add(0.12,0.1,0.12,0xf07a20,x,0.02,z); } }
+  else { const s=[0,0.35,0.55,0.65][st]; add(0.06,s,0.06,dk,0,s/2,0); add(s*0.9,s*0.6,s*0.9,green,0,s*0.75,0); add(s*0.6,s*0.4,s*0.6,dk,0,s*1.05,0); // tomato plant
+    if(st===2)for(const [x,y,z] of [[0.2,0.5,0.15],[-0.18,0.6,-0.1],[0.05,0.7,-0.22]])add(0.06,0.06,0.06,0xf2dc3a,x,y,z);
+    if(st===3)for(const [x,y,z] of [[0.24,0.45,0.18],[-0.24,0.55,-0.1],[0.08,0.72,-0.26],[-0.12,0.35,0.24],[0.22,0.68,-0.16]])add(0.14,0.14,0.14,0xd8202a,x,y,z); }
+  return g; }
+function scarecrowMesh(){ const g=new THREE.Group(), add=(w,h,d,c,x,y,z)=>{ const b=box(w,h,d,cmat(c)); b.position.set(x,y,z); g.add(b); return b; };
+  add(0.12,1.9,0.12,0x6b4a2a,0,0.95,0); add(1.3,0.1,0.1,0x6b4a2a,0,1.45,0); add(0.5,0.6,0.28,0xb8282e,0,1.35,0); for(const sx of [-1,1])add(0.36,0.22,0.24,0xb8282e,sx*0.4,1.45,0);
+  for(const sx of [-1,1])add(0.12,0.16,0.12,0xe8c860,sx*0.62,1.42,0); add(0.46,0.46,0.46,0xe8c860,0,1.92,0); add(0.07,0.07,0.02,0x1a1410,-0.1,1.97,-0.235); add(0.07,0.07,0.02,0x1a1410,0.1,1.97,-0.235);
+  add(0.7,0.04,0.7,0x6b4a2a,0,2.16,0); add(0.36,0.24,0.36,0x6b4a2a,0,2.28,0); return g; }
+// the tool in your hand
+function toolMesh(t){ const g=new THREE.Group(), add=(w,h,d,c,x,y,z)=>{ const b=box(w,h,d,cmat(c)); b.position.set(x,y,z); g.add(b); return b; }, wood=0x8a5a2e;
+  if(t==='hoe'){ add(0.05,0.9,0.05,wood,0,0.1,0); add(0.05,0.06,0.24,0x9aa0a8,0,0.55,-0.1); }
+  else if(t==='water'){ add(0.24,0.22,0.18,0x5aa04a,0,0,0); const sp=add(0.04,0.04,0.3,0x5aa04a,0,0.08,-0.2); sp.rotation.x=-0.6; add(0.18,0.03,0.03,0x3a7a2a,0,0.14,0.05); }
+  else if(t==='seeds'){ add(0.22,0.24,0.16,0xd8c8a0,0,0,0); add(0.1,0.06,0.1,0xb8a880,0,0.14,0); }
+  else if(t==='compost'){ add(0.24,0.26,0.18,0x6b4a2a,0,0,0); add(0.2,0.04,0.14,0x3a2a1a,0,0.14,0); }
+  else if(t==='scarecrow'){ const s=scarecrowMesh(); s.scale.setScalar(0.22); s.position.y=-0.25; g.add(s); }
+  return g; }
+const toolHand=new THREE.Group(); toolHand.position.set(0,-0.66,-0.08); rig.armR.add(toolHand);
+function equipTool(t,quiet){ const K=ranchK; if(!K||!RTOOLS[t])return; K.tool=t; toolHand.clear(); const tm=toolMesh(t); toolHand.add(tm);
+  if(t==='bow'){ if(weapon!=='bow')K.prevWeapon=weapon; weapon='bow'; } else if(weapon==='bow'&&K.prevWeapon!==undefined&&K.prevWeapon!=='bow'){ weapon=K.prevWeapon; }
+  refreshWeapon(); if(t!=='bow'&&t!=='lasso')tpWeapon.visible=false; refreshToolChip();
+  if(!quiet)rtoast(RTOOLS[t].i+' '+RTOOLS[t].n+(t==='seeds'?' ('+CROPS[K.seed].i+' '+CROPS[K.seed].n+')':'')+': '+RTOOLS[t].d); }
+function cycleTool(){ const K=ranchK, own=RTOOL_ORDER.filter(t=>K.tools.includes(t)); equipTool(own[(own.indexOf(K.tool)+1)%own.length]); }
+// a little panel under your coins: the tool you're holding (tap it to switch) and what's in your bag
+const toolChip=document.createElement('div'); toolChip.id='rTool'; toolChip.className='ui';
+toolChip.style.cssText='position:fixed;top:calc(64px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));background:rgba(20,24,32,.68);color:#fff;font:800 13px sans-serif;padding:5px 10px;border-radius:10px;display:none;z-index:4;cursor:pointer;max-width:70vw';
+document.body.appendChild(toolChip); tap(toolChip,()=>{ if(onRanch())cycleTool(); });
+function refreshToolChip(){ const K=ranchK; if(!K||!onRanch()||demo){ toolChip.style.display='none'; return; } const T=RTOOLS[K.tool], b=K.bag;
+  const inv=[['🍎',K.apples],...Object.keys(BAG_PRICE).map(k=>[k==='egg'?'🥚':CROPS[k].i,b[k]])].filter(q=>q[1]>0).map(q=>q[0]+q[1]).join(' ');
+  toolChip.innerHTML=T.i+' '+T.n+(K.tool==='seeds'?' · '+CROPS[K.seed].i:'')+(K.tool==='water'?' · 💧'+K.can:'')+(K.tools.length>1?' <span style="opacity:.6">⇄</span>':'')+(inv?'<br><span style="font-weight:700">'+inv+'</span>':''); toolChip.style.display='block'; }
+// --- the farm: crops, and what each tool does to the soil
+const isFarm=id=>id===ID.farmland||id===ID.farmland_wet||id===ID.farmland_rich||id===ID.farmland_rich_wet;
+const isRich=id=>id===ID.farmland_rich||id===ID.farmland_rich_wet, isWet=id=>id===ID.farmland_wet||id===ID.farmland_rich_wet;
+function soil(rich,wet){ return rich?(wet?ID.farmland_rich_wet:ID.farmland_rich):(wet?ID.farmland_wet:ID.farmland); }
+function cropAt(x,y,z){ return ranchK.crops.find(c=>c.x===x&&c.y===y&&c.z===z); }
+function plantCrop(x,y,z,type,g){ const c={x,y,z,type,g:g||0,st:-1,mesh:null}; ranchK.crops.push(c); cropLook(c); return c; }
+function cropLook(c){ const st=c.g>=1?3:Math.min(2,Math.floor(c.g*3)); if(st===c.st)return; c.st=st; if(c.mesh){ scene.remove(c.mesh); c.mesh.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); }
+  c.mesh=cropMesh(c.type,st); c.mesh.position.set(c.x+0.5,c.y+1,c.z+0.5); c.mesh.rotation.y=((c.x*7+c.z*3)%4)*Math.PI/2; scene.add(c.mesh); }
+function removeCrop(c){ scene.remove(c.mesh); c.mesh.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); ranchK.crops.splice(ranchK.crops.indexOf(c),1); }
+function nearWater(){ for(let dx=-3;dx<=3;dx++)for(let dz=-3;dz<=3;dz++)for(let dy=-2;dy<=1;dy++)if(get(Math.floor(pl.p[0])+dx,Math.floor(pl.p[1])+dy,Math.floor(pl.p[2])+dz)===ID.water)return true;
+  return Math.hypot(pl.p[0]-TROUGH[0]-0.5,pl.p[2]-TROUGH[1]-0.5)<2.6; }
+// hitting with a farm tool (true means it was handled, so nothing gets broken by accident)
+function farmHit(){ const K=ranchK, t=K.tool, T=target, b=T&&T.b; swingT=0.25;
+  if(t==='water'&&nearWater()&&(!T||!isFarm(b))){ K.can=10; sfx('whoosh'); rtoast('🚿 You fill the watering can.'); refreshToolChip(); return true; }
+  if(!T){ return true; }
+  const above=get(T.x,T.y+1,T.z), crop=isFarm(b)?cropAt(T.x,T.y,T.z):null;
+  if(t==='hoe'){ if((b===ID.grass||b===ID.dirt)&&!above){ setBlock(T.x,T.y,T.z,ID.farmland); sfx('place'); burst(T.x,T.y+0.6,T.z,B[ID.dirt].avg,4); if(!K.said.hoe){ K.said.hoe=1; rtoast('⛏️ Farmland! Now plant some seeds in it with the seed bag.'); } }
+    else if(!isFarm(b))rtoast('⛏️ The hoe works on grass or dirt.'); return true; }
+  if(!isFarm(b)){ if(t==='scarecrow'&&!above&&B[b].solid){ placeScarecrow(T.x,T.y+1,T.z); return true; } rtoast(RTOOLS[t].i+' Use that on farmland. Till grass with the hoe first.'); return true; }
+  if(t==='seeds'){ if(crop)rtoast(CROPS[crop.type].i+' Something is already growing there.'); else if(above)rtoast('🌱 Clear the space above the soil first.'); else { plantCrop(T.x,T.y,T.z,K.seed,0); sfx('place'); } return true; }
+  if(t==='water'){ if(K.can<=0){ rtoast('🚿 The can is empty. Fill it at the lake or the trough.'); return true; } K.can--; setBlock(T.x,T.y,T.z,soil(isRich(b),true)); K.wet.set(T.x+','+T.y+','+T.z,WET_TIME); sfx('whoosh'); refreshToolChip(); return true; }
+  if(t==='compost'){ if(isRich(b)){ rtoast('💩 That soil is already rich.'); return true; } setBlock(T.x,T.y,T.z,soil(true,isWet(b))); sfx('place'); burst(T.x,T.y+0.6,T.z,new THREE.Color(0.25,0.17,0.1),4); return true; }
+  if(t==='scarecrow'){ rtoast('🎃 Put the scarecrow on the ground next to your crops, not on the farmland.'); return true; }
+  return true; }
+function harvest(c){ const K=ranchK, b=get(c.x,c.y,c.z), n=2+(isRich(b)?1:0)+(c.type==='wheat'?1:0); K.bag[c.type]=(K.bag[c.type]||0)+n; removeCrop(c); sfx('coin');
+  burst(c.x,c.y+1.2,c.z,new THREE.Color(c.type==='tomato'?0xd8202a:c.type==='carrot'?0xf07a20:0xe0b84a),8); rtoast(CROPS[c.type].i+' +'+n+' '+CROPS[c.type].n+'! Sell them at the farm stand, feed the animals, or eat them.'); refreshToolChip(); queueSave(); }
+function placeScarecrow(x,y,z){ const K=ranchK; if(K.scare.length>=6){ rtoast('🎃 That\'s plenty of scarecrows (6 is the most).'); return; } const m=scarecrowMesh(); m.position.set(x+0.5,y,z+0.5); m.rotation.y=Math.random()*6; scene.add(m);
+  K.scare.push({x,y,z,m}); sfx('place'); rtoast('🎃 A scarecrow! Bunnies won\'t come near the crops around it.'); queueSave(); }
+const guarded=(x,z)=>ranchK.scare.some(s=>Math.hypot(s.x-x,s.z-z)<7);
+function farmTick(dt){ const K=ranchK;
+  for(const c of K.crops){ if(c.g>=1)continue; const b=get(c.x,c.y,c.z); if(!isFarm(b)){ c.dead=true; continue; } c.g=Math.min(1,c.g+dt/CROP_TIME*(isWet(b)?1.6:1)*(isRich(b)?1.5:1)); cropLook(c); }
+  for(const c of K.crops.filter(q=>q.dead))removeCrop(c);
+  for(const [k,t] of K.wet){ const nt=t-dt; if(nt>0){ K.wet.set(k,nt); continue; } K.wet.delete(k); const [x,y,z]=k.split(',').map(Number), b=get(x,y,z); if(isWet(b))setBlock(x,y,z,soil(isRich(b),false)); } } // the soil dries out
+// --- the farm stand, and feeding the animals
+function openStand(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK, b=K.bag;
+  let h='<h2>🧺 Farm Stand</h2><div class="say">Sell what you grow (and the eggs your chickens lay) for coins.</div>', tot=0;
+  for(const k of Object.keys(BAG_PRICE)){ const n=b[k]||0, nm=k==='egg'?'🥚 Eggs':CROPS[k].i+' '+CROPS[k].n; tot+=n*BAG_PRICE[k];
+    h+='<div class="item"><div class="tx"><b>'+nm+'</b><div class="fx">'+BAG_PRICE[k]+' 🪙 each · you have '+n+'</div></div><button class="ibtn'+(n?'':' gray')+'" data-sell="'+k+'"'+(n?'':' disabled')+'>Sell</button></div>'; }
+  h+='<div class="row"><button class="mbtn gold" id="stAll"'+(tot?'':' disabled')+'>💰 Sell everything ('+tot+' 🪙)</button><button class="mbtn gray" id="stBack2">Done</button></div>';
+  $('mbox').innerHTML=h; $('modal').style.display='flex';
+  const sell=ks=>{ let c=0; for(const k of ks){ c+=(b[k]||0)*BAG_PRICE[k]; b[k]=0; } if(c){ coins+=c; updateHUD(); sfx('coin'); toast('💰 +'+c+' coins!'); } refreshToolChip(); queueSave(); openStand(); };
+  $('mbox').querySelectorAll('[data-sell]').forEach(e=>onClick(e,()=>sell([e.dataset.sell]))); onClick($('stAll'),()=>sell(Object.keys(BAG_PRICE))); tap($('stBack2'),closeMenu); }
+function feed(a,food){ const K=ranchK; K.bag[food]--; burst(a.p[0]-0.5,a.p[1]+a.h,a.p[2]-0.5,new THREE.Color(1,0.3,0.45),8); sfx('coin');
+  if(a.kind==='chicken'){ K.bag.egg=(K.bag.egg||0)+1; rtoast('🥚 The chicken pecks up the wheat and lays an egg!'); }
+  else if(a.kind==='pig'){ a.love=30; a.st='follow'; rtoast('🐷 The pig loves the corn and trots after you!'); if(!a.heart){ a.heart=new THREE.Sprite(new THREE.SpriteMaterial({map:HEART_TEX,depthWrite:false})); a.heart.scale.setScalar(0.4); scene.add(a.heart); } }
+  refreshToolChip(); queueSave(); }
+function eat(food){ const K=ranchK; K.bag[food]--; const before=hp; hp=Math.min(MAXHP,hp+(food==='tomato'?2:1)); updateHUD(); sfx('coin'); rtoast((food==='tomato'?'🍅':'🥕')+' Yum! +'+(hp-before)+' heart'+(hp-before===1?'':'s')); refreshToolChip(); queueSave(); }
+// the tool shed: pick a tool
+function openShed(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; const K=ranchK;
+  let h='<h2>🧰 Tool Shed</h2><div class="say">Which tool would you like? Take as many as you want; switch between them with the tool panel by your coins (or Q).</div>';
+  for(const t of RTOOL_ORDER){ const T=RTOOLS[t], has=K.tools.includes(t); h+='<div class="item"><div class="ic">'+T.i+'</div><div class="tx"><b>'+T.n+'</b><div class="fx">'+T.d+'</div></div><button class="ibtn'+(K.tool===t?' gray':'')+'" data-tool="'+t+'">'+(K.tool===t?'Holding':has?'Use':'Take')+'</button></div>';
+    if(t==='seeds')h+='<div class="chips" style="margin:-2px 0 6px 58px">'+Object.entries(CROPS).map(([k,c])=>'<div class="chip'+(K.seed===k?' on':'')+'" data-seed="'+k+'">'+c.i+' '+c.n+'</div>').join('')+'</div>'; }
+  h+='<div class="fx">🌱 Crops grow in about 2 minutes: faster in watered soil, faster again (and a bigger harvest) in rich soil.</div><div class="row"><button class="mbtn gray" id="shBack">Done</button></div>';
+  $('mbox').innerHTML=h; $('modal').style.display='flex';
+  $('mbox').querySelectorAll('[data-tool]').forEach(e=>onClick(e,()=>{ const t=e.dataset.tool; if(!K.tools.includes(t))K.tools.push(t); equipTool(t,true); queueSave(); openShed(); }));
+  $('mbox').querySelectorAll('[data-seed]').forEach(e=>onClick(e,()=>{ K.seed=e.dataset.seed; if(!K.tools.includes('seeds'))K.tools.push('seeds'); equipTool('seeds',true); queueSave(); openShed(); }));
+  tap($('shBack'),closeMenu); }
+// the shed, the farm stand and a starter garden, stamped into the world (also into ranches saved before they existed)
+function farmBuild(){ const put=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, S=SHED;
+  for(let x=S.x0;x<=S.x1;x++)for(let z=S.z0;z<=S.z1;z++){ put(x,FY-1,z,ID.planks); for(let y=FY;y<FY+7;y++)put(x,y,z,0); }
+  for(let y=FY;y<FY+3;y++){ for(let x=S.x0;x<=S.x1;x++){ put(x,y,S.z0,ID.planks); put(x,y,S.z1,ID.planks); } for(let z=S.z0;z<=S.z1;z++){ put(S.x0,y,z,ID.planks); put(S.x1,y,z,ID.planks); } }
+  for(const [x,z] of [[S.x0,S.z0],[S.x1,S.z0],[S.x0,S.z1],[S.x1,S.z1]])for(let y=FY;y<FY+3;y++)put(x,y,z,ID.log);
+  for(let y=FY;y<FY+2;y++)for(let z=107;z<=108;z++)put(S.x0,y,z,0); put(S.x1,FY+1,107,ID.glass); // the door and a window
+  for(let k=0;k<=3;k++)for(let z=S.z0-1;z<=S.z1+1;z++){ put(S.x0-1+k,FY+3+k,z,ID.roof); put(S.x1+1-k,FY+3+k,z,ID.roof); }
+  for(let k=0;k<=3;k++)for(let x=S.x0+k;x<=S.x1-k;x++){ put(x,FY+3+k,S.z0,ID.planks); put(x,FY+3+k,S.z1,ID.planks); }
+  put(87,FY,106,ID.crate); put(87,FY,109,ID.crate); put(86,FY,109,ID.hay);
+  // the farm stand by the farmhouse: a counter under a striped awning
+  for(let x=64;x<=67;x++){ put(x,FY,103,ID.planks); put(x,FY+3,102,x%2?ID.paint_red:ID.paint_white); put(x,FY+3,103,x%2?ID.paint_white:ID.paint_red); }
+  for(const x of [64,67])for(let y=FY+1;y<FY+3;y++)put(x,y,103,ID.log); put(68,FY,103,ID.crate); put(63,FY,102,ID.hay);
+  // the garden: rows of farmland with grass paths between
+  for(let z=PLOT.z0;z<=PLOT.z1;z++)for(let x=PLOT.x0;x<=PLOT.x1;x++){ for(let y=FY;y<FY+3;y++)put(x,y,z,0); put(x,FY-1,z,(z-PLOT.z0)%2===0?ID.farmland:ID.grass); }
+  put(TROUGH[0],FY,TROUGH[1],ID.water); } // water in the corral's trough, for the watering can
+// --- deer and bunnies
+function wildSpot2(near){ const R=RANCH; for(let k=0;k<40;k++){ const x=R.wild.x0+Math.random()*(R.wild.x1-R.wild.x0), z=R.wild.z0+Math.random()*(R.wild.z1-R.wild.z0);
+    if(Math.hypot(x-R.lake[0],z-R.lake[1])<R.lake[2]+3||Math.hypot(x-pl.p[0],z-pl.p[2])<(near?0:30))continue; const s=surfaceAt(Math.floor(x),Math.floor(z)); if(s.id===ID.water||s.y>32)continue; return [x,z]; } return [30,60]; }
+function spawnGame(kind){ const [x,z]=kind==='bunny'&&Math.random()<0.4?[PLOT.x0-4+Math.random()*16,PLOT.z0-8+Math.random()*4]:wildSpot2(true);
+  return makeAnimal(kind,kind==='deer'?(Math.random()<0.35?'buck':'doe'):['grey','brown','white'][Math.floor(Math.random()*3)],x,z,{wild:true,game:true,zone:RANCH.wild}); }
+function huntHit(a){ const n=a.kind==='deer'?4+Math.floor(Math.random()*4):1+Math.floor(Math.random()*3); burst(a.p[0]-0.5,a.p[1]+a.h*0.5-0.5,a.p[2]-0.5,new THREE.Color(a.kind==='deer'?0x9a6a3a:0xd8d0c8),16); sfx('hit');
+  dropCoins(a.p[0],a.p[1]+0.5,a.p[2],n); if(!ranchK.said.hunt){ ranchK.said.hunt=1; rtoast('🏹 Got one! Walk over the coins to pick them up.'); } removeAnimal(a); }
+// how deer and bunnies behave: they run when you get close, and bunnies sneak off to nibble crops that no scarecrow is guarding
+function gameAI(a,dt,hero,riding2){ const K=ranchK, dx=a.p[0]-hero[0], dz=a.p[2]-hero[2], d=Math.hypot(dx,dz), scare=riding2?15:a.kind==='deer'?11:7;
+  if(d<scare){ a.flee=2.5; a.fleeH=Math.atan2(-dx,-dz)+Math.PI; }
+  if(a.flee>0){ a.flee-=dt; turnAnimal(a,a.fleeH,dt,6); return a.kind==='deer'?8:5.5; }
+  if(a.kind==='bunny'){ a.nibT=(a.nibT===undefined?8+Math.random()*10:a.nibT)-dt;
+    if(a.nibT<=0&&!a.crop){ const open=K.crops.filter(c=>c.g>0.2&&!guarded(c.x,c.z)); a.nibT=12+Math.random()*12; if(open.length)a.crop=open[Math.floor(Math.random()*open.length)]; }
+    const c=a.crop; if(c){ if(!K.crops.includes(c)||guarded(c.x,c.z)){ a.crop=null; return 0; } const cx=c.x+0.5-a.p[0], cz=c.z+0.5-a.p[2], cd=Math.hypot(cx,cz);
+      if(cd>0.9){ turnAnimal(a,Math.atan2(-cx,-cz),dt,5); return 2.8; } a.eatT=(a.eatT||0)+dt; a.graze=1;
+      if(a.eatT>2.5){ a.eatT=0; c.g=Math.max(0,c.g-0.45); c.st=-1; cropLook(c); a.crop=null; burst(c.x,c.y+1,c.z,new THREE.Color(0.3,0.6,0.2),5);
+        if(K.t-(K.nibbled||-99)>40){ K.nibbled=K.t; rtoast('🐰 A bunny nibbled your '+CROPS[c.type].n.toLowerCase()+'! A scarecrow keeps them away.'); } }
+      return 0; } }
+  return -1; } // nothing special: wander like everyone else
 // ================= UPDATE =================
 const tmp=new THREE.Vector3();
 let padYWas=false, waterT=0, lavaT=0, fireT=0, spawnT=2, animT=0, animPh=0;
@@ -4825,7 +5049,7 @@ $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.tog
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
 window.__bs={get cityK(){return cityK;},makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
-  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openStable, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
+  look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
 </script>
