@@ -3422,7 +3422,8 @@ function findChopTree(P){ let best=null, bd=1e9; const R=26, x0=Math.floor(pl.p[
 function fellTree(t,ang){ if(!axeMats){ const m=n=>new THREE.MeshLambertMaterial({map:tileTex(n),alphaTest:0.5}); axeMats={[ID.log]:m('log_side'),[ID.leaves]:m('leaves')}; }
   const g=new THREE.Group(), px=t.x+0.5, pz=t.z+0.5; g.position.set(px,t.y,pz); scene.add(g); const geo=new THREE.BoxGeometry(1,1,1);
   for(let y=t.y;y<=t.top+2;y++)for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++){ const x=t.x+dx, z=t.z+dz, id=get(x,y,z);
-    if(!(id===ID.log&&!dx&&!dz)&&!(id===ID.leaves&&y>=t.top-2))continue; setBlock(x,y,z,0); const m=new THREE.Mesh(geo,axeMats[id]); m.position.set(x+0.5-px,y+0.5-t.y,z+0.5-pz); g.add(m); }
+    const leaf=id===ID.leaves||id===ID.leaves_pink||id===ID.leaves_orange||id===ID.leaves_red||id===ID.leaves_gold; if(!(id===ID.log&&!dx&&!dz)&&!(leaf&&y>=t.top-2))continue; setBlock(x,y,z,0);
+    if(!axeMats[id])axeMats[id]=new THREE.MeshLambertMaterial({map:tileTex(B[id].key),alphaTest:0.5}); const m=new THREE.Mesh(geo,axeMats[id]); m.position.set(x+0.5-px,y+0.5-t.y,z+0.5-pz); g.add(m); }
   const dx=Math.sin(ang), dz=Math.cos(ang); fallen.push({g,geo,axis:new THREE.Vector3(dz,0,-dx).normalize(),dir:[dx,dz],th:0,w:0.25,land:false,t:0,h:t.top-t.y+2}); sfx('break'); }
 function fallTick(dt){ for(const f of fallen.slice()){ f.t+=dt;
     if(!f.land){ f.w+=(3.2*Math.sin(f.th)+0.5)*dt; f.th=Math.min(Math.PI/2-0.05,f.th+f.w*dt); f.g.quaternion.setFromAxisAngle(f.axis,f.th);
@@ -4172,7 +4173,7 @@ const CITY_LANDMARKS={
     '0,3':o=>{} },
   sanfran:{'2,1':o=>{ const {put}=lmKit(o,o.cx,o.cz); for(let y=0;y<34;y++){ const r=Math.max(0,Math.round(8*(1-y/36))); for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++){ if(Math.abs(x)!==r&&Math.abs(z)!==r&&y%5)continue; put(x,y,z,(x+y)%3===0?ID.window:ID.quartz); } } put(0,34,0,ID.steel); put(0,35,0,ID.steel); }, // the Transamerica Pyramid
     '1,2':o=>{ const cols=['paint_blue','paint_yellow','paint_green','paint_red','paint_white']; for(let k=0;k<5;k++){ const a=o.x0+k*4, b=a+3; // the Painted Ladies
-        const S2=Object.assign({},o.S,{walls:[cols[k]],trims:['paint_white'],roofs:['roof'],h:[7,7],glass:0}); cityBuilding({P:o.P,x0:a,z0:o.z0,x1:b,z1:o.z0+7,S:S2,rnd:()=>0.7,pick:x=>x[0],lot:[o.x0,o.z0,o.x1,o.z1]}); } } },
+        const S2=Object.assign({},o.S,{walls:[cols[k]],trims:['paint_white','asphalt'],roofs:['roof'],h:[7,7],glass:0}); cityBuilding({P:o.P,x0:a,z0:o.z0,x1:b,z1:o.z0+7,S:S2,rnd:()=>0.7,pick:x=>x[0],lot:[o.x0,o.z0,o.x1,o.z1]}); } } },
   orlando:{'1,1':o=>{ const {put}=lmKit(o,o.cx,o.cz), W2=ID.paint_white, BL=ID.paint_blue, GD=ID.gold; // a theme-park castle
       for(let x=-9;x<=9;x++)for(let z=-9;z<=9;z++){ const e=Math.abs(x)===9||Math.abs(z)===9; for(let y=0;y<6;y++)if(e&&!(z===9&&Math.abs(x)<=1&&y<3))put(x,y,z,W2); if(e&&(x+z)%2===0)put(x,6,z,W2); }
       const tower=(x,z,h,r)=>{ for(let y=0;y<h;y++)for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++)if(Math.hypot(a,b)<=r+0.3)put(x+a,y,z+b,(y%5===3&&!a)?ID.glass:W2);
@@ -4686,7 +4687,7 @@ function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false; if(aimFruit
   if(!best&&!riding())return false; // nothing to rope: a normal hit
   K.lasso={t:0,a:best,dur:best?0.25+bd*0.03:0.5,miss:best?null:o.clone().addScaledVector(new THREE.Vector3(d.x,0,d.z).normalize(),9)}; hipCoil.visible=false; swingT=0.25; sfx('swing'); return true; }
 function handPos(){ return rig.armR.localToWorld(new THREE.Vector3(0,-0.68,0)); }
-function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt); K.chipT=(K.chipT||0)-dt; if(K.chipT<=0){ K.chipT=0.5; refreshToolChip(); } const hero=riding()?K.ride.p:pl.p;
+function ranchTick(dt){ const K=ranchK; K.t+=dt; ranchSkyTick(dt); farmTick(dt); if(fallen.length&&!(demo&&demo.sc))fallTick(dt); K.chipT=(K.chipT||0)-dt; if(K.chipT<=0){ K.chipT=0.5; refreshToolChip(); } const hero=riding()?K.ride.p:pl.p;
   // the lasso flies out and catches (or misses), then the rope stays tied on
   if(K.lasso){ const L=K.lasso; L.t+=dt; const f=Math.min(1,L.t/L.dur), h=handPos(), tg=L.a?new THREE.Vector3(L.a.p[0],L.a.p[1]+L.a.h*0.85,L.a.p[2]):L.miss, ret=!L.a&&L.t>L.dur;
     const p=ret?tg.clone().lerp(h,Math.min(1,(L.t-L.dur)/0.35)):h.clone().lerp(tg,f); p.y+=Math.sin(f*Math.PI)*1.2; lassoLoop.visible=true; lassoLoop.position.copy(p); lassoLoop.rotation.set(Math.PI/2,0,K.t*12);
@@ -4915,8 +4916,11 @@ const SHED={x0:83,x1:88,z0:105,z1:110,rack:[87.2,107.5]}, STAND=[65.5,104.6], PL
 const RTOOLS={lasso:{n:'Lasso',i:'🪢',d:'Catch steers and wild horses.'},bow:{n:'Hunting bow',i:'🏹',d:'Hunt deer and bunnies for coins.'},
   hoe:{n:'Hoe',i:'⛏️',d:'Till grass or dirt into farmland.'},seeds:{n:'Seed bag',i:'🌱',d:'Plant seeds in farmland.'},
   water:{n:'Watering can',i:'🚿',d:'Watered crops grow faster. Refill it at the lake or the trough.'},compost:{n:'Compost',i:'💩',d:'Makes rich soil: faster growing and a bigger harvest.'},
-  scarecrow:{n:'Scarecrow',i:'🎃',d:'Put one by your crops and the bunnies stay away.'}};
-const RTOOL_ORDER=['lasso','bow','hoe','seeds','water','compost','scarecrow'];
+  scarecrow:{n:'Scarecrow',i:'🎃',d:'Put one by your crops and the bunnies stay away.'},
+  shovel:{n:'Shovel',i:'🪏',d:'Dig up dirt, grass, sand, clay and snow. Now and then you dig up an old coin!'},
+  pick:{n:'Pickaxe',i:'⛏️',d:'Break rock and stone, from granite to marble. Keep an eye out for gold!'},
+  axe:{n:'Axe',i:'🪓',d:'Chop a tree trunk and the whole tree comes down. Also chops planks, crates and barrels.'}};
+const RTOOL_ORDER=['lasso','bow','hoe','shovel','pick','axe','seeds','water','compost','scarecrow'];
 const CROPS={corn:{n:'Corn',i:'🌽',price:3},wheat:{n:'Wheat',i:'🌾',price:2},carrot:{n:'Carrots',i:'🥕',price:2},tomato:{n:'Tomatoes',i:'🍅',price:3}};
 const BAG_PRICE={corn:3,wheat:2,carrot:2,tomato:3,egg:2};
 const CROP_TIME=120, WET_TIME=90;
@@ -4947,6 +4951,9 @@ function toolMesh(t){ const g=new THREE.Group(), add=(w,h,d,c,x,y,z)=>{ const b=
   else if(t==='seeds'){ add(0.22,0.24,0.16,0xd8c8a0,0,0,0); add(0.1,0.06,0.1,0xb8a880,0,0.14,0); }
   else if(t==='compost'){ add(0.24,0.26,0.18,0x6b4a2a,0,0,0); add(0.2,0.04,0.14,0x3a2a1a,0,0.14,0); }
   else if(t==='scarecrow'){ const s=scarecrowMesh(); s.scale.setScalar(0.22); s.position.y=-0.25; g.add(s); }
+  else if(t==='shovel'){ add(0.05,0.9,0.05,wood,0,0.1,0); add(0.12,0.05,0.04,wood,0,-0.36,0); add(0.2,0.04,0.26,0x9aa0a8,0,0.6,-0.04); }
+  else if(t==='pick'){ add(0.05,0.85,0.05,wood,0,0.1,0); const hd=add(0.05,0.07,0.56,0x8a8e96,0,0.52,0); for(const z of [-0.3,0.3]){ const tp=add(0.04,0.05,0.08,0xd8dce4,0,0.5,z); } }
+  else if(t==='axe'){ add(0.05,0.85,0.05,wood,0,0.1,0); add(0.05,0.2,0.24,0xb8bcc4,0,0.48,-0.1); add(0.055,0.22,0.04,0xeef0f4,0,0.48,-0.23); }
   return g; }
 const toolHand=new THREE.Group(); toolHand.position.set(0,-0.66,-0.08); rig.armR.add(toolHand);
 function equipTool(t,quiet){ const K=ranchK; if(!K||!RTOOLS[t])return; K.tool=t; toolHand.clear(); const tm=toolMesh(t); toolHand.add(tm);
@@ -4972,10 +4979,31 @@ function cropLook(c){ const st=c.g>=1?3:Math.min(2,Math.floor(c.g*3)); if(st===c
 function removeCrop(c){ scene.remove(c.mesh); c.mesh.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); ranchK.crops.splice(ranchK.crops.indexOf(c),1); }
 function nearWater(){ for(let dx=-3;dx<=3;dx++)for(let dz=-3;dz<=3;dz++)for(let dy=-2;dy<=1;dy++)if(get(Math.floor(pl.p[0])+dx,Math.floor(pl.p[1])+dy,Math.floor(pl.p[2])+dz)===ID.water)return true;
   return Math.hypot(pl.p[0]-TROUGH[0]-0.5,pl.p[2]-TROUGH[1]-0.5)<2.6; }
+
+// --- the shovel, the pickaxe and the axe: each one breaks its own kind of block
+const isLeafId=id=>id===ID.leaves||id===ID.leaves_pink||id===ID.leaves_orange||id===ID.leaves_red||id===ID.leaves_gold;
+const DIG_KIND={shovel:['grass','dirt','sand','clay','wetsand','farmland','farmland_wet','farmland_rich','farmland_rich_wet','snow','hay','scorch'],
+  pick:['granite','basalt','obsidian','pumice','sandstone','limestone','shale','conglomerate','coal','marble','slate','quartzite','gneiss','quartz','brick','concrete','iron','gold','steel','glass','window','regolith','moonrock','meteor','paint_red','paint_blue','paint_yellow','paint_green','paint_white','asphalt'],
+  axe:['log','planks','leaves','leaves_pink','leaves_orange','leaves_red','leaves_gold','crate','barrel','bookshelf','roof']};
+const DIG_WHO={}; for(const [t,list] of Object.entries(DIG_KIND))for(const k of list)if(ID[k]!==undefined)DIG_WHO[ID[k]]=t;
+function digHit(t,T,b){ const K=ranchK, right=DIG_WHO[b];
+  if(T.y===0){ rtoast('That bottom layer is bedrock. Nothing can break it!'); return true; }
+  if(!right){ rtoast(RTOOLS[t].i+' You can\'t break that.'); return true; }
+  if(right!==t){ rtoast(RTOOLS[t].i+' That needs the '+RTOOLS[right].i+' '+RTOOLS[right].n.toLowerCase()+'. Get it from the tool shed!'); sfx('thunk'); return true; }
+  if(t==='axe'&&b===ID.log){ chopRanchTree(T); return true; } // a tree trunk: the whole tree comes down
+  const crop=isFarm(b)?cropAt(T.x,T.y,T.z):null; if(crop)removeCrop(crop);
+  setBlock(T.x,T.y,T.z,0); burst(T.x,T.y,T.z,B[b].avg,6); sfx(t==='pick'?'rock':'break'); K.wet.delete(T.x+','+T.y+','+T.z);
+  if(t==='shovel'&&Math.random()<0.04){ coins+=1; updateHUD(); sfx('coin'); rtoast('🪙 You dug up an old coin!'); }
+  if(t==='pick'&&(b===ID.gold||Math.random()<0.03)){ const n=b===ID.gold?3:1; coins+=n; updateHUD(); sfx('coin'); rtoast('✨ A gold nugget! 🪙+'+n); }
+  queueSave(); return true; }
+function chopRanchTree(T){ let base=T.y, top=T.y; while(get(T.x,base-1,T.z)===ID.log)base--; while(get(T.x,top+1,T.z)===ID.log)top++;
+  for(const tr of appleTrees.slice())if(Math.abs(tr.x-T.x)<=1&&Math.abs(tr.z-T.z)<=1){ for(const sl of tr.slots.slice())dropFruit(tr,sl); appleTrees.splice(appleTrees.indexOf(tr),1); }
+  const ang=Math.atan2(T.x+0.5-pl.p[0],T.z+0.5-pl.p[2]); fellTree({x:T.x,y:base,z:T.z,top},ang); rtoast('🪓 Timber!'); queueSave(); }
 // hitting with a farm tool (true means it was handled, so nothing gets broken by accident)
 function farmHit(){ const K=ranchK, t=K.tool, T=target, b=T&&T.b; swingT=0.25;
   if(t==='water'&&nearWater()&&(!T||!isFarm(b))){ K.can=10; sfx('whoosh'); rtoast('🚿 You fill the watering can.'); refreshToolChip(); return true; }
   if(!T){ return true; }
+  if(t==='shovel'||t==='pick'||t==='axe')return digHit(t,T,b);
   const above=get(T.x,T.y+1,T.z), crop=isFarm(b)?cropAt(T.x,T.y,T.z):null;
   if(t==='hoe'){ if((b===ID.grass||b===ID.dirt)&&!above){ setBlock(T.x,T.y,T.z,ID.farmland); sfx('place'); burst(T.x,T.y+0.6,T.z,B[ID.dirt].avg,4); if(!K.said.hoe){ K.said.hoe=1; rtoast('⛏️ Farmland! Now plant some seeds in it with the seed bag.'); } }
     else if(!isFarm(b))rtoast('⛏️ The hoe works on grass or dirt.'); return true; }
