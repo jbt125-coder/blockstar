@@ -395,6 +395,7 @@ makeTile('bookshelf',132,(x,y,r)=>{ if(y===0||y===15||y===7||y===8||x===0||x===1
 makeTile('leaves_orange',133,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[220,110,30]:[240,140,40],r,.2); });
 makeTile('leaves_red',134,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[170,40,30]:[200,60,40],r,.2); });
 makeTile('leaves_gold',135,(x,y,r)=>{ const q=r(); return q<0.12?[0,0,0,0]:nz(q<0.4?[220,180,40]:[245,210,70],r,.2); });
+makeTile('portal_odyssey',136,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz((x+y)%3?[40,110,200]:[230,240,255],r,.1); if(x>=4&&x<=11&&y>=8&&y<11)return [130,80,40]; if(x===7&&y>=2&&y<8)return [110,70,40]; if(x>=8&&x<=10&&y>=3&&y<=6&&x-8<=6-y)return [245,240,230]; return nz([255,200,120],r,.1); });
 const seedTile=(name,sd,fn)=>makeTile(name,sd,(x,y,r)=>{ if(x<2||x>13||y<1||y>14)return [0,0,0,0]; if(y<4)return nz([200,170,110],r,.1); const c=fn(x-8,y-9,r); return c||nz([236,214,160],r,.06); }); // a little seed packet
 seedTile('seed_apple',101,(x,y,r)=>Math.hypot(x,y)<3.6?nz([215,40,45],r,.1):(x===0&&y<-3&&y>-6)?[90,60,30]:null);
 seedTile('seed_oak',102,(x,y,r)=>y<-1&&Math.abs(x)<4&&y>-4?nz([120,84,40],r,.1):Math.hypot(x,(y-0.5)*1.2)<3.2?nz([170,120,60],r,.1):null);
@@ -491,6 +492,7 @@ addBlock('farmland_wet','Watered Farmland','Soil','Damp soil. Plants pull water 
 addBlock('farmland_rich','Rich Farmland','Soil','Soil mixed with compost: rotted plants and manure full of nutrients like nitrogen. Crops grow faster and bigger.',{top:'farm_rich',side:'dirt',bottom:'dirt'},{hidden:true});
 addBlock('farmland_rich_wet','Rich Watered Farmland','Soil','Rich, damp soil: the best place to grow crops.',{top:'farm_rich_wet',side:'dirt',bottom:'dirt'},{hidden:true});
 addBlock('portal_mansion','Thanksgiving Mansion Portal','Portal','Place it and a doorway to a big mansion opens, where the whole family is sitting down to Thanksgiving dinner. The first Thanksgiving feast was in 1621 and lasted three days!',{t:'portal_mansion'},{portal:'mansion'});
+addBlock('portal_odyssey','Odyssey Sea Portal','Portal','Place it and a doorway to the sea of the Odyssey opens: Troy, the Cyclops, Circe, the Sirens and Ithaca. Homer\'s Odyssey is almost 3,000 years old and is one of the oldest stories still read today.',{t:'portal_odyssey'},{portal:'odyssey'});
 addBlock('bookshelf','Bookshelf','Building','Shelves full of books. The Library of Congress in Washington, D.C. is the biggest library in the world, with more than 170 million items.',{top:'planks',side:'bookshelf',bottom:'planks'},{flammable:true});
 addBlock('leaves_orange','Orange Fall Leaves','Plants','In fall, trees stop making green chlorophyll, so the yellow and orange colors that were hiding in the leaves show through.',{t:'leaves_orange'},{opaque:false,flammable:true});
 addBlock('leaves_red','Red Fall Leaves','Plants','Red fall leaves, like a maple\'s, get their color from a pigment the tree makes in autumn, when days are sunny and nights are cool.',{t:'leaves_red'},{opaque:false,flammable:true});
@@ -806,7 +808,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion);
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife();
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1674,7 +1676,7 @@ const OUT_MAX=70;
 function outsideDist(){ const ox=Math.max(0,-pl.p[0],pl.p[0]-W), oz=Math.max(0,-pl.p[2],pl.p[2]-D); return Math.hypot(ox,oz); }
 let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
-  if(curPlace()==='drag'||curPlace()==='mansion'){ viewF=0; return; }
+  if(curPlace()==='drag'||curPlace()==='mansion'||curPlace()==='odyssey'){ viewF=0; return; }
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
   const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
@@ -1808,6 +1810,7 @@ function openNewGame(fromTitle){
     '<div class="item" style="display:block"><div style="display:flex;gap:12px;align-items:center"><div class="ic">🏙️</div><div class="tx"><b>City</b><div class="fx">Start in a brand-new city: walk the streets, open the garage and drive, and go inside the school, the club and more. Pick a city:</div></div></div>'+
     '<div class="chips" style="margin-top:8px">'+CITY_PLACES.map(k=>'<button class="ibtn" data-newcity="'+k+'">'+PLACES[k].icon+' '+PLACES[k].name+'</button>').join('')+'</div></div>'+
     '<div class="item"><div class="ic">🐴</div><div class="tx"><b>Mountain Ranch</b><div class="fx">'+PLACES.ranch.blurb+' Saddle up a horse in the stable and ride. Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="ranch">Start</button></div>'+
+    '<div class="item"><div class="ic">🏛️</div><div class="tx"><b>Odyssey Sea</b><div class="fx">'+PLACES.odyssey.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="odyssey">Start</button></div>'+
     '<div class="item"><div class="ic">🦃</div><div class="tx"><b>Thanksgiving Mansion</b><div class="fx">'+PLACES.mansion.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="mansion">Start</button></div>'+
     '<div class="item"><div class="ic">🏁</div><div class="tx"><b>Car World</b><div class="fx">'+PLACES.drag.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="drag">Start</button></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
@@ -1822,7 +1825,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -1989,7 +1992,7 @@ const tgMat=new THREE.MeshBasicMaterial({map:(()=>{ const c=document.createEleme
 function discMesh(R,mat){ const m=new THREE.Mesh(new THREE.PlaneGeometry(R*2,R*2),mat||tgMat); m.userData.R=R; return m; }
 function titleBit(c,x,y,z){ const m=new THREE.Mesh(titleBitGeo,cfxMat(c)); m.position.set(x,y,z); titleRoot.add(m); return m; }
 const titleEl=document.createElement('div'); titleEl.id='title'; titleEl.className='ui';
-titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button></div></div><button id="tGear" title="Settings">⚙️</button>';
+titleEl.innerHTML='<div class="tbox"><div class="tname">Blockstar</div><div class="tsub">A Game from Earth</div></div><div class="tbtns"><button id="tStart">▶ Start New Game</button><button id="tCont"></button><div class="tsmall"><button id="tLook">🎨 Customize Character</button><button id="tDemo">🎬 Demo Mode</button><button id="tCity">🏙️ City</button><button id="tRanch">🐴 Ranch</button><button id="tDrag">🏁 Car World</button><button id="tMansion">🦃 Mansion</button><button id="tOdyssey">🏛️ Odyssey</button></div></div><button id="tGear" title="Settings">⚙️</button>';
 document.body.appendChild(titleEl);
 function showTitle(){ if(document.pointerLockElement)document.exitPointerLock(); paused=true; $('modal').style.display='none';
   if(!demo)musicStop(); if(!titleK)buildTitle(); titleOn=true; titleRoot.visible=true; document.body.classList.add('title'); fpHolder.visible=false; model.visible=false;
@@ -1998,7 +2001,7 @@ function showTitle(){ if(document.pointerLockElement)document.exitPointerLock();
 function hideTitle(){ titleOn=false; titleRoot.visible=false; document.body.classList.remove('title'); viewF=-1; if(mus.game&&!demo&&mus.src!=='none')musicPlay(); }
 tap($('tStart'),()=>{ audioInit(); openNewGame(true); }); tap($('tGear'),()=>{ audioInit(); openSettings(); });
 tap($('tCont'),()=>{ audioInit(); hideTitle(); applyMode(); closeMenu(); });
-tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
+tap($('tLook'),()=>{ audioInit(); ccOpen(); }); tap($('tCity'),()=>{ audioInit(); openCities(); }); tap($('tRanch'),()=>{ audioInit(); goCity('ranch',false); }); tap($('tDrag'),()=>{ audioInit(); goCity('drag',false); }); tap($('tMansion'),()=>{ audioInit(); goCity('mansion',false); }); tap($('tOdyssey'),()=>{ audioInit(); goCity('odyssey',false); }); tap($('tDemo'),()=>{ audioInit(); openDemo(); });
 function toTitle(){ saveNow(); hadSave=true; showTitle(); }
 
 // ================= CHARACTER CREATOR =================
@@ -2336,7 +2339,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2396,14 +2399,15 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      isOdy(s)?'':
       s.act==='thanks'?'<label>Story'+sel(DM_MSTORY,'mstory',i,s.mstory)+'</label>':
       s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
       s.act==='ride'?'<label>Story'+sel(DM_RSTORY,'rstory',i,s.rstory)+'</label><label>Horse'+sel(DM_HORSE,'horse',i,s.horse)+'</label><label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label>':
       s.act==='city'?'<label>City'+sel(Object.assign({},DM_CITY,...CITY_PLACES.map(k=>({[k]:PLACES[k].icon+' '+PLACES[k].name}))),'dcity',i,s.dcity)+'</label><label>Which city'+sel(DM_DSRC,'dsrc',i,s.dsrc)+'</label>':
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
-    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
+    (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isOdy(s)?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2423,11 +2427,12 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:isOdy(sc2)?OD_CH[sc2.act].secs:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
     saveDemo(); if(el.dataset.k==='act'||el.dataset.k==='mstory'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
+  onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
   onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
   box2.querySelectorAll('[data-src]').forEach(el=>onClick(el,()=>{ musicStop(); mus.src=el.dataset.src; saveMus(); redraw(); }));
@@ -2496,7 +2501,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc)))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2510,7 +2515,8 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); storyReset(); if(riding
   if(sc.act==='fire'){ fireSetup(sc,P); return; }
   if(sc.act==='ride'){ demoRanchSetup(sc,P); return; }
   if(sc.act==='drag'){ demoDragSetup(sc,P); return; }
-  if(sc.act==='thanks'){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
+  if(isOdy(sc)){ demoOdySetup(sc,P); return; }
+  if(sc.act==='thanks'){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
   if(sc.act==='showcase'){ pl.p=[CX+0.5,groundY(CX,CZ+3),CZ+3.5]; yaw=Math.PI; }
   else if(sc.act==='explore'){ pl.p=landSpot(CX,CZ,22); yaw=Math.random()*6.28; }
@@ -2536,6 +2542,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
   if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='drag'){ dragPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='thanks')return mansionPilot(dt,P);
+  if(isOdy(sc)){ odyPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='concert'){ concertPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='stadium'){ stadiumPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='fire'){ firePilot(dt,P); return {ix:0,iz:0}; }
@@ -2557,7 +2564,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(isOdy(demo.sc)){ odyCam(dt); return; } if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -3946,7 +3953,7 @@ function demoRoute(tx,tz){ const xs=roadLines(CX,W), zs=roadLines(CZ,D), ax=near
 function ringProject(r,x,z){ const w=r[2]-r[0], h=r[3]-r[1], c=[[Math.max(0,Math.min(w,x-r[0])),Math.abs(z-r[1])],[w+Math.max(0,Math.min(h,z-r[1])),Math.abs(x-r[2])],[w+h+Math.max(0,Math.min(w,r[2]-x)),Math.abs(z-r[3])],[2*w+h+Math.max(0,Math.min(h,r[3]-z)),Math.abs(x-r[0])]];
   return c.sort((a,b)=>a[1]-b[1])[0][0]; }
 // --- the scene: a fresh city, or your own saved one (never saved back)
-function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
+function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } const keys=CITY_PLACES, k=sc.dcity==='random'||!PLACES[sc.dcity]?keys[Math.floor(Math.random()*keys.length)]:sc.dcity;
   demo.cityPlace=k; demo.vplace=k; demo.cityKey=PLACES[k].city; demo.inKind=null; demo.stack=[]; demo.cityWorld=true;
   clearCityLife(); clearInteriorLife(); setWorldSize(...PLACES[k].dims); let mine=false;
   if(sc.dsrc==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(s&&Array.isArray(s.w)&&s.cityVer===CITY_VER){ world=rleDecode(s.w); meta=rleDecode(s.m); mine=true; } }catch(e){}
@@ -3954,7 +3961,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4057,9 +4064,10 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   ranch:{name:'Mountain Ranch',icon:'🐴',key:'blockstar_ranch',dims:[128,64,128],col:[214,160,90],ranch:true,blurb:'Tall snowy mountains, a stable full of horses, wild herds and a trail to the top.'},
   orlando:{name:'Orlando',icon:'🏰',key:'blockstar_city_orl',dims:[160,48,160],col:[90,150,255],city:'orlando',blurb:'Sunshine, palm trees, a lake and a theme-park castle.'},
   mansion:{name:'Thanksgiving Mansion',icon:'🦃',key:'blockstar_mansion',dims:[112,40,112],col:[240,140,60],mansion:true,blurb:'A big mansion on an autumn evening. The whole family is sitting down to Thanksgiving dinner, and there\'s a seat saved for you.'},
+  odyssey:{name:'Odyssey Sea',icon:'🏛️',key:'blockstar_odyssey',dims:[256,48,256],col:[60,150,255],odyssey:true,blurb:'The sea of Homer\'s Odyssey: Troy and its wooden horse, the Cyclops\'s cave, Circe\'s magic island, the Sirens, Scylla and the whirlpool, and Ithaca, home.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4227,6 +4235,7 @@ function cityTick(dt){ const K=cityK; if(!K)return; K.t+=dt;
 function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACES[cp].interior; if(I){ const bg=I==='club'?0x050308:0xcfe3f5; scene.background.setHex(bg); scene.fog.color.setHex(bg); scene.fog.near=60; scene.fog.far=200; setWeather('clear'); return; }
   if(cp==='drag'){ applyDragSky(); return; }
   if(cp==='mansion'){ applyMansionSky(); return; }
+  if(cp==='odyssey'){ odSky('day'); return; }
   if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
   scene.background.setHex(S.bg); scene.fog.color.setHex(S.fogC||S.bg); scene.fog.near=S.fog[0]; scene.fog.far=S.fog[1]; setWeather(S.wx==='rain'?'rain':'clear'); }
@@ -4284,12 +4293,12 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest; const inner=PLACES[dest].interior; let sp=null;
-  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].odyssey){ generateOdyssey((Math.random()*1e9)|0); pl.p=[64.5,15,176.5]; } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion||!!PLACES[dest].odyssey; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
   if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -4740,7 +4749,7 @@ function ranchAction(){ const K=ranchK; if(!onRanch())return null; if(K.ride)ret
 
 // --- the horse ride in Demo Mode: up the trail past the lake (with a drink), a gallop across the meadow, a steer roped
 // along the way, the view from the top, then back down
-function demoRanchSetup(sc,P){ if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
+function demoRanchSetup(sc,P){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='ranch'; demo.ranchWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.ranch.dims);
   generateRanch(dmCfg.seed+11); rebuildAll(); refreshPortals(); buildRanchLife(null); applyPlaceSky(); setTime(sc.time); setWeather(sc.wx);
   const K=ranchK; if(sc.horse!=='random'&&HORSES[sc.horse]&&!K.own.some(o=>o.breed===sc.horse)){ const o=K.own[0]; removeAnimal(o.a); o.breed=sc.horse; placeOwned(o,0); }
   const o=sc.horse==='random'?K.own[Math.floor(Math.random()*K.own.length)]:K.own.find(q=>q.breed===sc.horse)||K.own[0], a=o.a, path=ranchPath();
@@ -5271,7 +5280,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -5786,7 +5795,7 @@ function dragHudTick(){ const R=dragK.race, el=$('dragHud'); if(!R||!drive){ if(
 // pulls the chute and stops on the yellow lines, or keeps going off the ramp and flies the jet over the city
 const dragAuto={gas:0,brk:0,str:0,pin:0};
 for(const k of DR.LEFT.concat(DR.RIGHT))DM_DCAR[k]=VEH[k].icon+' '+VEH[k].name+(k.startsWith('lift')?' ('+['white','black','red'][+k[4]-1]+')':'');
-function demoDragSetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='drag'; demo.dragWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples();
+function demoDragSetup(sc,P){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } demo.vplace='drag'; demo.dragWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples();
   setWorldSize(...PLACES.drag.dims); generateDrag(dmCfg.seed+23); rebuildAll(); refreshPortals(); buildDragLife(null); applyPlaceSky();
   const K=dragK, t=VEH[sc.dcar]&&K.cars.some(c=>c.type===sc.dcar)?sc.dcar:K.cars[Math.floor(Math.random()*K.cars.length)].type, v=K.cars.find(c=>c.type===t), L=v.home.side<0?0:1;
   v.p=[DR.LANE[L],DR.GY,DR.Z0+30]; v.h=0; vehPlace(v); pl.p=v.p.slice(); enterVehicle(v,true); camMode=3; chase.p=null;
@@ -6406,6 +6415,403 @@ function mansionDemoCam(dt){ const P=demo.pil, K=mansionK; if(!K)return; const {
   if(!demo.cam||demo.cam.k!=='man')demo.cam={k:'man',p:want.clone(),l:look.clone()}; const jump=demo.cam.p.distanceTo(want)>12; if(jump){ demo.cam.p.copy(want); demo.cam.l.copy(look); } else { const k=snap?6:2; demo.cam.p.lerp(want,Math.min(1,dt*k)); demo.cam.l.lerp(look,Math.min(1,dt*(k+1))); }
   camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); model.visible=true; }
 
+// ================= THE ODYSSEY: AN OCEAN WORLD OF ISLANDS =================
+// One big sea with an island for each stop on Odysseus's journey home: Troy, the Cyclops's mountain, Circe's forest, the
+// Sirens' rocks, Scylla's strait (and the whirlpool Charybdis), the Sun God's island, Calypso's paradise and Ithaca.
+// The Underworld is a glowing cavern far below the sea. Demo Mode tells the story in 10 short chapters.
+const OD={SEA:10,troy:[58,198],cyc:[60,62],circe:[196,60],sirens:[128,128],helios:[128,26],calypso:[200,214],ithaca:[140,228],strait:{x0:198,x1:214,z0:128,z1:168},
+  cave:{x:62,z:62,floor:13}, horse:[58,14,171], under:[128,-70,128]};
+const OD_ISLES=[[58,198,48,14,'troy'],[60,62,30,34,'cyc'],[196,60,28,16,'circe'],[128,26,18,13,'helios'],[200,214,26,15,'calypso'],[140,228,30,23,'ithaca']];
+function odHeight(x,z,n){ let h=3+n(x/30,z/30)*2; for(const [cx,cz,r,top,k] of OD_ISLES){ const d=Math.hypot(x-cx,z-cz)/r; if(d>=1)continue; let t=1-d;
+    t=k==='troy'?Math.min(1,t*2.6):k==='cyc'?Math.pow(t,0.9):k==='ithaca'?Math.min(1,t*1.4):Math.min(1,t*2.2); h=Math.max(h,3+(top-3)*t+(k==='cyc'||k==='ithaca'?n(x/9,z/9)*2:n(x/14,z/14)*0.8)); }
+  const S=OD.strait; for(const [a,b] of [[S.x0-22,S.x0],[S.x1,S.x1+22]])if(x>a-3&&x<b+3&&z>S.z0-6&&z<S.z1+6){ const e=Math.min(x-(a-3),b+3-x,z-(S.z0-6),S.z1+6-z); h=Math.max(h,Math.min(28,3+e*4)+n(x/6,z/6)*2); } // the strait's two cliffs
+  return h; }
+function generateOdyssey(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
+  const P=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, F=(x0,y0,z0,x1,y1,z1,id)=>{ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)P(x,y,z,id); };
+  const n=makeNoise(s), r=mulberry32(s+3), SEA=OD.SEA;
+  for(let z=0;z<D;z++)for(let x=0;x<W;x++){ const h=Math.round(odHeight(x,z,n)); P(x,0,z,ID.granite);
+    if(h<=SEA){ for(let y=1;y<=h;y++)P(x,y,z,y<h?ID.sand:(h<SEA-3?ID.sand:ID.sand)); for(let y=h+1;y<=SEA;y++)P(x,y,z,ID.water); continue; }
+    const rocky=h>24; for(let y=1;y<=h;y++)P(x,y,z,y<h-3?ID.granite:y<h?ID.dirt:(h<=SEA+2?ID.sand:rocky?ID.granite:ID.grass)); }
+  // the Sirens' rocks: tall jagged spires
+  for(const [dx,dz,hh] of [[0,0,15],[-7,4,10],[6,-5,12],[-3,-8,8],[8,6,9]]){ const [cx,cz]=[OD.sirens[0]+dx,OD.sirens[1]+dz]; for(let y=1;y<=SEA+hh;y++){ const R=Math.max(0.6,2.6*(1-y/(SEA+hh+2))); for(let a=-3;a<=3;a++)for(let b=-3;b<=3;b++)if(Math.hypot(a,b)<=R)P(cx+a,y,cz+b,y>SEA+hh-2?ID.slate:ID.granite); } }
+  // Troy: a ring of walls with towers, a gate facing the beach, houses and a temple
+  { const [cx,cz]=OD.troy, G=15, R=20; for(let a=0;a<360;a+=0.5){ const x=Math.round(cx+Math.cos(a*Math.PI/180)*R), z=Math.round(cz+Math.sin(a*Math.PI/180)*R); for(let y=G;y<G+7;y++)P(x,y,z,ID.limestone); if(Math.round(a*2)%8<4)P(x,G+7,z,ID.limestone); }
+    F(cx-2,G,cz-R-1,cx+2,G+5,cz-R+1,0); // the gate (it faces the beach, toward -z)
+    for(const a of [45,135,225,315]){ const x=Math.round(cx+Math.cos(a*Math.PI/180)*R), z=Math.round(cz+Math.sin(a*Math.PI/180)*R); F(x-2,G,z-2,x+2,G+11,z+2,ID.sandstone); F(x-1,G+12,z-1,x+1,G+12,z+1,ID.roof); }
+    for(const x of [cx-5,cx+5])F(x-1,G,cz-R-1,x+1,G+10,cz-R+1,ID.sandstone);
+    for(let i=0;i<16;i++){ const a=r()*Math.PI*2, d=6+r()*10, x=Math.round(cx+Math.cos(a)*d), z=Math.round(cz+Math.sin(a)*d), w=2+Math.floor(r()*2), hh=3+Math.floor(r()*3); if(Math.abs(x-cx)<5&&Math.abs(z-cz)<5)continue; F(x-w,G,z-w,x+w,G+hh,z+w,r()<0.5?ID.sandstone:ID.brick); F(x-w+1,G,z-w+1,x+w-1,G+hh-1,z+w-1,0); F(x-w,G+hh+1,z-w,x+w,G+hh+1,z+w,ID.roof); }
+    F(cx-4,G,cz-3,cx+4,G,cz+3,ID.marble); for(const [a,b] of [[-4,-3],[-1,-3],[2,-3],[4,-3],[-4,3],[-1,3],[2,3],[4,3]])F(cx+a,G+1,cz+b,cx+a,G+6,cz+b,ID.quartz); F(cx-5,G+7,cz-4,cx+5,G+7,cz+4,ID.marble); }
+  // the Cyclops's cave: a tunnel into the mountain and a great dark room
+  { const {x:cx,z:cz,floor:f}=OD.cave; for(let x=cx-13;x<=cx+34;x++)for(let z=cz-12;z<=cz+12;z++)for(let y=f;y<=f+12;y++){ const room=Math.pow((x-cx)/13,2)+Math.pow((z-cz)/11,2)+Math.pow((y-f)/9,2)<1, tun=x>cx&&Math.abs(z-cz)<=3&&y<f+7; if(room||tun)P(x,y,z,0); }
+    for(let x=cx-13;x<=cx+34;x++)for(let z=cz-12;z<=cz+12;z++)if(!world[idx(x,f,z)]&&world[idx(x,f-1,z)])P(x,f-1,z,ID.granite);
+    F(cx+16,f-1,cz-2,cx+34,f-1,cz+2,ID.planks); for(let x=cx+18;x<=cx+34;x+=4)for(const z of [cz-2,cz+2])F(x,1,z,x,f-2,z,ID.log); } // a wooden pier out to deep water
+  // Circe's palace: white marble with columns, in the forest
+  { const [cx,cz]=OD.circe, G=17; F(cx-7,G-1,cz-12,cx+7,G-1,cz-2,ID.marble); F(cx-7,G,cz-12,cx+7,G+6,cz-4,ID.quartz); F(cx-6,G,cz-11,cx+6,G+5,cz-5,0); F(cx-1,G,cz-4,cx+1,G+3,cz-4,0);
+    for(const x of [cx-6,cx-3,cx+3,cx+6])F(x,G,cz-3,x,G+6,cz-3,ID.marble); F(cx-7,G+7,cz-12,cx+7,G+7,cz-2,ID.paint_white);
+    for(let i=0;i<34;i++){ const a=r()*Math.PI*2, d=10+r()*14, x=Math.round(cx+Math.cos(a)*d), z=Math.round(cz+Math.sin(a)*d); if(z<cz+2&&Math.abs(x-cx)<10)continue; const g=surfaceAt(x,z).y+1; if(g<=SEA+1)continue; cityTree(P,x,g,z,r()<0.3?'pine':'round',r); } }
+  // the Sun God's island: a golden sun on a pillar
+  { const [cx,cz]=OD.helios; F(cx-1,13,cz-1,cx+1,20,cz+1,ID.gold); }
+  // Calypso's island: palms, a rock with a waterfall, and a little palace
+  { const [cx,cz]=OD.calypso; for(let x=cx-14;x<=cx-8;x++)for(let z=cz-6;z<=cz+2;z++){ const t=surfaceAt(x,z).y; for(let y=t;y<=24;y++)P(x,y,z,(x+y+z)%3?ID.granite:ID.sandstone); }
+    F(cx+2,15,cz-6,cx+12,15,cz+2,ID.marble); for(const [a,b] of [[2,-6],[12,-6],[2,2],[12,2],[7,-6],[7,2]])F(cx+a,16,cz+b,cx+a,21,cz+b,ID.quartz); F(cx+1,22,cz-7,cx+13,22,cz+3,ID.gold);
+    for(let i=0;i<14;i++){ const a=r()*Math.PI*2, d=12+r()*10, x=Math.round(cx+Math.cos(a)*d), z=Math.round(cz+Math.sin(a)*d), g=surfaceAt(x,z).y+1; if(g<=SEA+1||g>18)continue; cityTree(P,x,g,z,'palm',r); } }
+  // Ithaca: Odysseus's palace on the hill, with a great hall, and olive trees
+  { const [cx,cz]=OD.ithaca, G=23; F(cx-12,1,cz-13,cx+12,G-2,cz+11,ID.granite); F(cx-12,G-2,cz-13,cx+12,G-2,cz+11,ID.grass); for(let x=cx-12;x<=cx+12;x++)for(let z=cz-13;z<=cz+11;z++)for(let y=G-1;y<G+9;y++)P(x,y,z,0); // a flat hilltop
+    F(cx-10,G-1,cz-8,cx+10,G-1,cz+8,ID.limestone); F(cx-10,G,cz-8,cx+10,G+7,cz+8,ID.limestone); F(cx-9,G,cz-7,cx+9,G+6,cz+7,0); F(cx-2,G,cz-8,cx+2,G+4,cz-8,0);
+    for(const a of [-9,-5,5,9])F(cx+a,G,cz-10,cx+a,G+7,cz-10,ID.quartz); F(cx-10,G-1,cz-11,cx+10,G-1,cz-9,ID.limestone); F(cx-11,G+8,cz-11,cx+11,G+8,cz+9,ID.roof); F(cx-9,G-1,cz-7,cx+9,G-1,cz+7,ID.marble);
+    for(let x=cx-9;x<=cx+9;x+=3)for(const z of [cz-8,cz+8])F(x,G+2,z,x+1,G+4,z,ID.glass);
+    for(let i=0;i<12;i++){ const a=r()*Math.PI*2, d=14+r()*9, x=Math.round(cx+Math.cos(a)*d), z=Math.round(cz+Math.sin(a)*d), g=surfaceAt(x,z).y+1; if(g<=SEA+1)continue; cityTree(P,x,g,z,'round',r); } } }
+// --- models
+function shipMesh(sailC){ const g=new THREE.Group(), wd=mm(0x7a4a22), dk=mm(0x5a3418), add=(...a)=>mb(g,...a);
+  add(2.6,0.9,9,wd,0,0.35,0); add(2.2,0.5,8.4,dk,0,0.85,0); for(const s of[-1,1])add(0.2,0.5,9,wd,s*1.3,1.0,0); // the hull, the deck and the rails
+  const prow=add(0.5,2.2,0.5,wd,0,1.3,-4.6); prow.rotation.x=-0.35; const st=add(0.5,2.4,0.5,wd,0,1.4,4.6); st.rotation.x=0.4; msph(g,0.35,mm(0x2a6ad8),0,1.6,-4.45); // the prow and stern (with a painted eye)
+  mcyl(g,0.12,0.12,7,dk,0,4.3,0.4,8); add(4.6,0.12,0.12,dk,0,7.2,0.4); const sail=new THREE.Mesh(new THREE.PlaneGeometry(4.4,3.6),new THREE.MeshLambertMaterial({color:0xf8f4ea,side:THREE.DoubleSide})); sail.position.set(0,5.3,0.45); g.add(sail);
+  if(sailC){ const st2=new THREE.Mesh(new THREE.PlaneGeometry(4.4,0.7),new THREE.MeshLambertMaterial({color:sailC,side:THREE.DoubleSide})); st2.position.set(0,5.3,0.46); g.add(st2); }
+  const oars=[]; for(const s of[-1,1])for(let k=0;k<5;k++){ const o=new THREE.Group(); o.position.set(s*1.4,0.9,-2.8+k*1.4); g.add(o); const b=mb(o,2.4,0.08,0.12,mm(0xc89a6a),s*1.2,0,0); o.rotation.z=s*0.5; oars.push({o,s}); mcyl(g,0.3,0.3,0.06,mm(0xd8a020),s*1.42,0.75,-2.8+k*1.4,12).rotation.z=Math.PI/2; } // oars and bronze shields
+  return {g,oars,sail}; }
+function horseMesh(){ const g=new THREE.Group(), w=mm(0xa0703a), d=mm(0x7a5028), add=(...a)=>mb(g,...a);
+  add(4,3,8,w,0,5,0); for(const [x,z] of [[-1.4,-3],[1.4,-3],[-1.4,3],[1.4,3]])add(0.9,3.6,0.9,d,x,1.8+0.5,z); add(5,0.6,9,d,0,0.3,0); for(const [x,z] of [[-2.6,-3.5],[2.6,-3.5],[-2.6,3.5],[2.6,3.5]]){ const wh=mcyl(g,0.9,0.9,0.4,mm(0x5a3a1a),x,0.9,z,12); wh.rotation.z=Math.PI/2; }
+  const nk=add(2,4,2.4,w,0,7.8,-3.6); nk.rotation.x=0.45; add(2,1.8,3.4,w,0,9.6,-5.6); for(const s of[-1,1])add(0.4,0.8,0.4,d,s*0.7,10.8,-4.8); add(0.4,3.6,1.2,mm(0x5a3418),0,8.6,-3.2); add(0.6,3.2,0.6,d,0,5,4.4).rotation.x=0.5;
+  const hatch=new THREE.Group(); hatch.position.set(2.02,5,0.6); g.add(hatch); mb(hatch,0.1,1.6,1.8,mm(0x6a4020),0,0,-0.9); return {g,hatch}; }
+function odSheep(par,x,y,z){ const g=grp(par,x,y,z,Math.random()*6); mb(g,0.9,0.75,1.2,mm(0xf2f0ea),0,0.75,0); mb(g,0.45,0.45,0.45,mm(0x3a3430),0,0.95,-0.75); for(const [a,b] of [[-0.3,-0.4],[0.3,-0.4],[-0.3,0.4],[0.3,0.4]])mb(g,0.16,0.45,0.16,mm(0x3a3430),a,0.22,b); return g; }
+function goldCow(par,x,y,z){ const M=animalModel('steer','hereford'); M.g.traverse(o=>{ if(o.isMesh){ o.material=new THREE.MeshLambertMaterial({color:0xffc83a,emissive:0x5a3a00}); } }); M.g.position.set(x,y,z); M.g.rotation.y=Math.random()*6; par.add(M.g); return M; }
+function pigMesh(par){ const M=animalModel('pig','pink'); par.add(M.g); return M; }
+// people: soldiers with bronze helmets, gods, giants
+function odLook(o){ const L=randomLook(); L.helm=L.chest=L.legs=L.boots='none'; L.cape='none'; L.back='none'; return cleanLook(Object.assign(L,o||{})); }
+function gearUp(R,opt){ const o=opt||{}, br=mm(0xc8902a,{emissive:0x302000}), items=[]; const put=(par,m)=>{ par.add(m); items.push(m); return m; };
+  if(o.helm!==false){ const h=put(R.head,box(0.58,0.3,0.58,br)); h.position.set(0,0.42,0); const c=put(R.head,box(0.1,0.24,0.54,mm(o.crest||0xc81a1a))); c.position.set(0,0.66,0.02); }
+  if(o.shield!==false){ const s=put(R.armL,new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.06,16),br)); s.rotation.z=Math.PI/2; s.position.set(-0.16,-0.4,0); const b2=put(R.armL,new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.08,10),mm(0x2a6ad8))); b2.rotation.z=Math.PI/2; b2.position.set(-0.2,-0.4,0); }
+  if(o.weapon!==false){ const sp=put(R.armR,box(0.06,o.spear?2.2:0.9,0.06,mm(o.spear?0x8a5a2a:0xd8dce4))); sp.position.set(0,-0.75,-0.25); sp.rotation.x=Math.PI/2; }
+  if(o.cape){ const c=put(R.torso,box(0.62,1.0,0.05,mm(o.cape))); c.position.set(0,1.0,0.2); } return items; }
+function odPerson(par,x,y,z,ry,look,gear,scale){ const g=grp(par,x,y,z,ry), R=makeRig(g); dressRig(R,look||odLook()); if(gear)gearUp(R,gear); if(scale)g.scale.setScalar(scale); return {g,R,ph:Math.random()*6}; }
+function glowAll(g,color,op){ g.traverse(o=>{ if(o.isMesh){ o.material=new THREE.MeshBasicMaterial({color,transparent:op<1,opacity:op}); } }); }
+function athenaMesh(par,x,y,z){ const a=odPerson(par,x,y,z,0,odLook({skin:'#e8d8c8',hair:'long',hairC:'#d8c890',top:'tee',topC:'#b8c8e8',bottom:'dress',bottomC:'#c8d8f0'}),{crest:0x2a6ad8,spear:true,cape:0xd8e4ff});
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),new THREE.MeshBasicMaterial({color:0x9ad0ff,transparent:true,opacity:0.18,blending:THREE.AdditiveBlending,depthWrite:false})); halo.position.y=1.1; a.g.add(halo); a.halo=halo;
+  const owl=grp(a.R.armL,0,-0.2,0.1); msph(owl,0.13,mm(0x8a6a4a),0,0,0); for(const s of[-1,1])msph(owl,0.04,new THREE.MeshBasicMaterial({color:0xffd23a}),s*0.05,0.05,-0.11); return a; }
+function giantMesh(par,x,y,z,kind){ let L; if(kind==='cyclops')L=odLook({skin:'#c8a070',hair:'buzz',hairC:'#4a3418',top:'tee',topC:'#7a5a3a',bottom:'pants',bottomC:'#5a4028'});
+  else L=odLook({skin:'#5ab0a0',hair:'long',hairC:'#d8f0f0',top:'tee',topC:'#2a8a9a',bottom:'pants',bottomC:'#1a6a7a'});
+  const a=odPerson(par,x,y,z,0,L,null,kind==='cyclops'?4.4:7.5), H=a.R.head;
+  if(kind==='cyclops'){ const eye=mb(H,0.28,0.2,0.04,mm(0xffffff),0,0.27,-0.27); const pu=mb(H,0.1,0.1,0.03,mm(0x2a1a0a),0,0.27,-0.3); a.eye=eye; a.pupil=pu; }
+  else { mb(H,0.5,0.4,0.1,mm(0xe0f8f8),0,0.02,-0.3); for(const s of[-1,1])mb(H,0.08,0.05,0.03,new THREE.MeshBasicMaterial({color:0x7affff}),s*0.11,0.3,-0.28); for(let i=0;i<5;i++)mb(H,0.07,0.16,0.07,mm(0xffd040),-0.2+i*0.1,0.62,0);
+    const tr=grp(a.R.armR,0,-0.7,0); mb(tr,0.05,2.4,0.05,mm(0xffd040),0,0.3,0); for(const s of[-1,0,1])mb(tr,0.04,0.35,0.04,mm(0xffd040),s*0.12,1.55,0); mb(tr,0.3,0.04,0.04,mm(0xffd040),0,1.38,0); a.trident=tr; }
+  return a; }
+function circeMesh(par,x,y,z){ const a=odPerson(par,x,y,z,0,odLook({skin:'#f0d0b0',hair:'long',hairC:'#2a1a3a',top:'tee',topC:'#7a2ab8',bottom:'dress',bottomC:'#6a1aa8'})); const st=grp(a.R.armR,0,-0.7,0);
+  mb(st,0.05,1.6,0.05,mm(0xd8b048),0,0.2,0); const orb=msph(st,0.13,new THREE.MeshBasicMaterial({color:0xd06aff}),0,1.05,0); a.orb=orb; for(let i=0;i<4;i++)mb(a.R.head,0.06,0.12,0.06,mm(0xffd040),-0.15+i*0.1,0.32,-0.2); return a; }
+
+// --- the world's life: what you see when you visit (and what the story uses)
+let odyK=null;
+function onOdyssey(){ return curPlace()==='odyssey'&&!!odyK; }
+function gy(x,z){ return surfaceAt(Math.floor(x),Math.floor(z)).y+1; } // the ground (or treetop) at x,z
+function buildOdyLife(){ clearOdyLife(); const root=new THREE.Group(); scene.add(root); const K=odyK={root,t:0,fires:[],speak:[],sheep:[],cows:[],sirens:[],heads:[],tent:[],notes:[]};
+  // Troy: the wooden horse at the gate, burning houses, ships pulled up by the beach
+  const H=horseMesh(); H.g.position.set(OD.horse[0],15,OD.horse[2]); root.add(H.g); K.horse=H;
+  K.gate=[]; for(const s of[-1,1]){ const d=grp(root,OD.troy[0]+s*2.5,15,OD.troy[1]-20.5); mb(d,2.5,6,0.3,mm(0x6a4020),-s*1.25,3,0); K.gate.push(d); }
+  for(const [x,z] of [[50,192],[66,190],[52,206],[64,207],[47,200]]){ const f=flames(root,x,gy(x,z),z,1.6); f.g.scale.setScalar(1.6); K.fires.push(f); }
+  K.ships=[]; for(let i=0;i<3;i++){ const s=shipMesh(i?0x2a6ad8:0xc81a1a); s.g.position.set(46+i*12,OD.SEA+0.6,157); root.add(s.g); K.ships.push(s); }
+  // the Cyclops's cave: cheese wheels, giant bowls, the boulder, sheep outside, and the Cyclops himself, asleep
+  { const {x:cx,z:cz,floor:f}=OD.cave; for(const [x,z,r2] of [[54,54,1.4],[56,57,1.0],[52,68,1.6]]){ const c=mcyl(root,r2,r2,0.9,mm(0xf2c84a),x,f+0.45,z,16); mb(root,0.6,0.92,0.6,mm(0xe0b030),x+r2*0.7,f+0.45,z); }
+    for(const [x,z] of [[68,52],[70,72]]){ mcyl(root,1.4,1.0,1.0,mm(0x7a4a22),x,f+0.5,z,12); mcyl(root,1.25,1.25,0.05,mm(0x6a3a1a),x,f+1.0,z,12); }
+    K.boulder=msph(root,3.2,mm(0x7a7a7a),79,f+3.1,57.5); K.boulder.scale.set(1,1,0.8);
+    for(let i=0;i<8;i++){ const x=72+Math.random()*10, z=48+Math.random()*28; const y=gy(x,z); if(y>OD.SEA+1)K.sheep.push(odSheep(root,x,y,z)); }
+    K.cyc=giantMesh(root,56,f,62,'cyclops'); K.cyc.g.scale.setScalar(3.6); K.cyc.g.rotation.set(0,0,Math.PI/2); K.cyc.g.position.set(56,f+1.4,62); K.cyc.sleep=true; K.speak.push(K.cyc);
+    for(let i=0;i<5;i++){ const fp=mb(root,1.2,0.05,2.0,mm(0x4a3a2a),86-i*3,f+0.03,61+(i%2?1.4:-1.4)); } }
+  // Circe's island: giant flowers, glowing mushrooms and magic sparkles, and Circe at her door
+  { const [cx,cz]=OD.circe; for(let i=0;i<26;i++){ const a=Math.random()*Math.PI*2, d=6+Math.random()*16, x=cx+Math.cos(a)*d, z=cz+8+Math.sin(a)*d*0.7; const y=gy(x,z); if(y<=OD.SEA+1||y>20)continue;
+      if(i%2){ const fl=grp(root,x,y,z); mcyl(fl,0.08,0.1,1.6,mm(0x3a9a2a),0,0.8,0,6); const c=[0xff3a8a,0xffd23a,0x3ad8ff,0xff8a1a][i%4]; for(let k=0;k<6;k++){ const pt=msph(fl,0.32,mm(c),Math.cos(k)*0.4,1.7,Math.sin(k)*0.4,1,0.4,1); } msph(fl,0.22,mm(0xffe8a0),0,1.75,0); }
+      else { const mu=grp(root,x,y,z); mcyl(mu,0.15,0.2,0.8,mm(0xf2eedc),0,0.4,0,8); const cap=msph(mu,0.6,new THREE.MeshBasicMaterial({color:[0x7a3aff,0x3affd0,0xff3ad8][i%3]}),0,0.85,0,1,0.55,1); } }
+    const n=180, pos=new Float32Array(n*3); for(let i=0;i<n;i++){ pos[i*3]=cx-18+Math.random()*36; pos[i*3+1]=17+Math.random()*8; pos[i*3+2]=cz-14+Math.random()*34; } const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    K.sparks=new THREE.Points(g,new THREE.PointsMaterial({color:0xc06aff,size:0.25})); root.add(K.sparks); K.circe=circeMesh(root,cx,17,cz-2.6); K.speak.push(K.circe); }
+  // the Sirens, on their rocks, with music notes drifting out over the sea
+  for(const [dx,dz,hh] of [[0,0,15],[-7,4,10],[6,-5,12]]){ const s=odPerson(root,OD.sirens[0]+dx,OD.SEA+hh+1,OD.sirens[1]+dz,Math.PI*0.75,odLook({hair:'long',hairC:['#f2d06a','#d84a2a','#2a1a1a'][K.sirens.length],top:'tee',topC:'#5ad8c8',bottom:'dress',bottomC:'#2aa8b8',back:'wings'})); K.sirens.push(s); K.speak.push(s); }
+  // Scylla on her cliff: six long necks with snapping heads; Charybdis, the whirlpool, across the water
+  { const S=OD.strait, bx=S.x1+10, by=29, bz=148; const body=msph(root,3,mm(0x4a7a6a),bx,by,bz,1.2,0.8,1.4); for(let i=0;i<6;i++){ const ch=[], par=grp(root,bx-1,by+1,bz-4+i*1.6); let cur=par;
+      for(let k=0;k<7;k++){ const seg=grp(cur,k?-1.2:0,0,0); mb(seg,1.3,0.55,0.55,mm(0x5a8a7a),-0.6,0,0); cur=seg; ch.push(seg); } const hd=grp(cur,-1.3,0,0); mb(hd,1.0,0.7,0.8,mm(0x4a7a6a),-0.4,0,0); const jaw=mb(hd,0.9,0.2,0.7,mm(0x3a6a5a),-0.45,-0.42,0);
+      for(const s of[-1,1])mb(hd,0.12,0.12,0.05,new THREE.MeshBasicMaterial({color:0xffe02a}),-0.5,0.2,s*0.41); for(let k=0;k<3;k++)mb(hd,0.08,0.18,0.08,mm(0xffffff),-0.7+k*0.2,-0.28,0); K.heads.push({par,ch,hd,jaw,ph:i*1.1,i}); }
+    const wc=canvasTex(128,128), x=wc.x; x.fillStyle='#1a4a7a'; x.fillRect(0,0,128,128); x.strokeStyle='rgba(220,240,255,0.85)'; x.lineWidth=3; for(let k=0;k<5;k++){ x.beginPath(); for(let a=0;a<12;a+=0.1){ const r2=a*5; x.lineTo(64+Math.cos(a+k*1.25)*r2,64+Math.sin(a+k*1.25)*r2); } x.stroke(); } wc.t.needsUpdate=true;
+    K.whirl=new THREE.Mesh(new THREE.CircleGeometry(3.6,40),new THREE.MeshBasicMaterial({map:wc.t,transparent:true,opacity:0.92})); K.whirl.rotation.x=-Math.PI/2; K.whirl.position.set(S.x0+6.5,OD.SEA+1.02,140); root.add(K.whirl);
+    for(let i=0;i<3;i++){ const base=grp(root,S.x0+6.5+Math.cos(i*2.1)*2,OD.SEA+0.6,140+Math.sin(i*2.1)*2); let cur=base, segs=[]; for(let k=0;k<8;k++){ const sg=grp(cur,0,k?0.9:0,0); mb(sg,0.6-k*0.05,0.95,0.6-k*0.05,mm(0x3a8a4a),0,0.45,0); cur=sg; segs.push(sg); } K.tent.push({base,segs,ph:i*2}); } }
+  // the Sun God's island: a golden sun on its pillar, and the golden cattle
+  { const [cx,cz]=OD.helios; const sun=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,0.3,24),new THREE.MeshBasicMaterial({color:0xffd23a})); sun.rotation.x=Math.PI/2; sun.position.set(cx+0.5,23,cz+0.5); root.add(sun); K.sun=sun;
+    for(let i=0;i<12;i++){ const ray=mb(root,0.3,1.4,0.2,new THREE.MeshBasicMaterial({color:0xffa020}),cx+0.5+Math.cos(i/12*Math.PI*2)*3,23+Math.sin(i/12*Math.PI*2)*3,cz+0.5); ray.rotation.z=i/12*Math.PI*2-Math.PI/2; }
+    for(let i=0;i<7;i++){ const a=Math.PI+i/6*Math.PI, x=cx+Math.cos(a)*7, z=cz+Math.sin(a)*5; /* on the north half of the island */ K.cows.push(goldCow(root,x,gy(x,z),z)); } }
+  // Calypso's island: the waterfall off the big rock, and Calypso
+  { const [cx,cz]=OD.calypso, wc=canvasTex(32,128); wc.x.fillStyle='#8fd4f4'; wc.x.fillRect(0,0,32,128); for(let i=0;i<70;i++){ wc.x.fillStyle=i%2?'rgba(255,255,255,0.8)':'rgba(60,140,210,0.5)'; wc.x.fillRect(Math.random()*32,Math.random()*128,1+Math.random()*2,8+Math.random()*24); }
+    wc.t.wrapS=wc.t.wrapT=THREE.RepeatWrapping; K.fallTex=wc.t; const fall=new THREE.Mesh(new THREE.PlaneGeometry(4,13),new THREE.MeshBasicMaterial({map:wc.t,transparent:true,opacity:0.9,side:THREE.DoubleSide})); fall.position.set(cx-7.4,18.5,cz-2); fall.rotation.y=Math.PI/2; root.add(fall);
+    K.calypso=odPerson(root,cx+7,16,cz-2,Math.PI/2,odLook({skin:'#d8a070',hair:'long',hairC:'#1a1a1a',top:'tee',topC:'#2ad8b8',bottom:'dress',bottomC:'#f2d06a'})); K.speak.push(K.calypso); }
+  // Ithaca: Penelope at her loom and Telemachus, in the palace hall
+  { const [cx,cz]=OD.ithaca; K.pen=odPerson(root,cx,23,cz+5,Math.PI,odLook({skin:'#f0c8a0',hair:'long',hairC:'#6a3a1a',top:'tee',topC:'#f2f2f2',bottom:'dress',bottomC:'#2a5ad8'})); K.tel=odPerson(root,cx+3,23,cz+2,Math.PI,odLook({hair:'short',hairC:'#3a2418',top:'tee',topC:'#c8a050',bottom:'pants',bottomC:'#5a4028'}),{helm:false,shield:false}); K.speak.push(K.pen,K.tel);
+    const loom=grp(root,cx,23,cz+6.4); for(const s of[-1,1])mb(loom,0.15,2.2,0.15,mm(0x7a4a22),s*1.0,1.1,0); mb(loom,2.2,0.15,0.15,mm(0x7a4a22),0,2.2,0); mb(loom,1.8,1.4,0.04,mm(0xd84a2a),0,1.3,0);
+    for(let i=0;i<3;i++){ const tb=grp(root,cx-5+i*5,23,cz-1); mb(tb,3.2,0.12,1.4,mm(0x7a4a22),0,0.8,0); for(const [a,b] of [[-1.4,-0.6],[1.4,-0.6],[-1.4,0.6],[1.4,0.6]])mb(tb,0.12,0.8,0.12,mm(0x5a3418),a,0.4,b); for(let k=0;k<4;k++)msph(tb,0.15,mm([0xd8301a,0xf2c21a,0x8a3ac8,0x3ad84a][k]),-1+k*0.7,0.95,0); } }
+  // the Underworld, far below the sea: a dark cavern with a glowing river, spirits and the prophet Tiresias
+  { const U=new THREE.Group(), [ux,uy,uz]=OD.under; U.position.set(ux,uy,uz); root.add(U); U.visible=false; K.under=U;
+    U.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(48,24,16),new THREE.MeshBasicMaterial({color:0x0a0614,side:THREE.BackSide,fog:false})),{}));
+    const fl=new THREE.Mesh(new THREE.PlaneGeometry(96,96),mm(0x2a2438)); fl.rotation.x=-Math.PI/2; U.add(fl);
+    const rc=canvasTex(32,128); rc.x.fillStyle='#2ad8ff'; rc.x.fillRect(0,0,32,128); for(let i=0;i<40;i++){ rc.x.fillStyle=i%2?'rgba(255,255,255,0.7)':'rgba(120,60,255,0.6)'; rc.x.fillRect(Math.random()*32,Math.random()*128,2,10+Math.random()*20); } rc.t.wrapS=rc.t.wrapT=THREE.RepeatWrapping; rc.t.repeat.set(1,6); K.riverTex=rc.t;
+    const pos=[],uv=[]; for(let i=0;i<40;i++){ const z0=-40+i*2, z1=z0+2, x0=Math.sin(z0*0.12)*6, x1=Math.sin(z1*0.12)*6; pos.push(x0-2.5,0.05,z0, x0+2.5,0.05,z0, x1+2.5,0.05,z1, x0-2.5,0.05,z0, x1+2.5,0.05,z1, x1-2.5,0.05,z1); uv.push(0,i/40,1,i/40,1,(i+1)/40,0,i/40,1,(i+1)/40,0,(i+1)/40); }
+    const rg=new THREE.BufferGeometry(); rg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); rg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); U.add(new THREE.Mesh(rg,new THREE.MeshBasicMaterial({map:rc.t,side:THREE.DoubleSide})));
+    for(let i=0;i<40;i++){ const a=Math.random()*Math.PI*2, d=10+Math.random()*30, h=2+Math.random()*7; const c=new THREE.Mesh(new THREE.ConeGeometry(0.8+Math.random(),h,5),mm(0x3a3248)); c.position.set(Math.cos(a)*d,h/2,Math.sin(a)*d); U.add(c);
+      const st=new THREE.Mesh(new THREE.ConeGeometry(0.6+Math.random(),h,5),mm(0x2a2438)); st.rotation.x=Math.PI; st.position.set(Math.cos(a+1)*d,16-h/2,Math.sin(a+1)*d); U.add(st); }
+    const crys=[]; for(let i=0;i<14;i++){ const m=new THREE.MeshBasicMaterial({color:[0x7a3aff,0x2affd0,0xff3ad8][i%3]}); const c=new THREE.Mesh(new THREE.OctahedronGeometry(0.5+Math.random()*0.6),m); c.position.set((Math.random()-0.5)*50,0.6+Math.random()*2,(Math.random()-0.5)*50); U.add(c); crys.push(c); } K.crys=crys;
+    K.ghosts=[]; for(let i=0;i<9;i++){ const g=odPerson(U,(Math.random()-0.5)*30,0.3,(Math.random()-0.5)*40,Math.random()*6); glowAll(g.g,0xb8e8ff,0.35); g.drift=[(Math.random()-0.5)*0.8,(Math.random()-0.5)*0.8]; K.ghosts.push(g); }
+    K.tir=odPerson(U,2,0,-6,0,odLook({skin:'#e8d8c8',hair:'bald',top:'tee',topC:'#e8e4dc',bottom:'dress',bottomC:'#d8d4cc'}),{helm:false,shield:false,weapon:false}); mb(K.tir.R.head,0.5,0.5,0.1,mm(0xffffff),0,0.0,-0.28); const staff=mb(K.tir.R.armR,0.07,2,0.07,mm(0x8a6a3a),0,-0.4,-0.2);
+    const tl=new THREE.PointLight(0x9ad0ff,1.5,12); tl.position.set(2,3,-6); U.add(tl); K.tirLight=tl; }
+  if(curPlace()==='odyssey')odHeroGear(true); }
+function clearOdyLife(){ const K=odyK; if(!K)return; scene.remove(K.root); K.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odyK=null; odHeroGear(false); odHeroCloak(false); }
+// --- your hero in Odysseus's gear: a bronze helmet, a blue cape, a round shield and a sword
+let odGear=null, odCloak=null;
+function odHeroGear(on){ if(on&&!odGear)odGear=gearUp(rig,{crest:0x2a6ad8,cape:0x2a5ad8}); if(!on&&odGear){ for(const m of odGear)m.parent&&m.parent.remove(m); odGear=null; } }
+function odHeroCloak(on){ if(on&&!odCloak){ odCloak=[]; const c=box(0.75,1.55,0.55,mm(0x6a4a2a)); c.position.set(0,0.95,0); rig.torso.add(c); odCloak.push(c); const h=box(0.62,0.5,0.62,mm(0x5a3a1a)); h.position.set(0,0.3,0.05); rig.head.add(h); odCloak.push(h); if(odGear)for(const m of odGear)m.visible=false; }
+  if(!on&&odCloak){ for(const m of odCloak)m.parent&&m.parent.remove(m); odCloak=null; if(odGear)for(const m of odGear)m.visible=true; } }
+// --- the sea world ticking along: fires, the whirlpool, Scylla's heads, the Sirens' songs, waterfalls, ghosts
+function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t;
+  for(const f of K.fires){ for(const c of f.fl){ c.scale.y=0.75+Math.random()*0.5; } } K.smT=(K.smT||0)-dt; if(K.smT<=0){ K.smT=0.25; const f=K.fires[Math.floor(Math.random()*K.fires.length)]; puff(f.g.position.x,f.g.position.y+2.5,f.g.position.z,true); }
+  K.whirl.rotation.z+=dt*(K.whirlFast?4:1.6); for(const T of K.tent){ T.segs.forEach((s,k)=>{ s.rotation.z=Math.sin(t*1.5+T.ph+k*0.5)*0.25*(K.whirlFast?1.6:1); s.rotation.x=Math.cos(t*1.2+T.ph+k*0.4)*0.18; }); }
+  for(const h of K.heads){ const lunge=h.lunge>0?Math.sin((1-h.lunge)*Math.PI):0; if(h.lunge>0)h.lunge-=dt*1.4; h.ch.forEach((s,k)=>{ s.rotation.z=(k<3?0.25:-0.12)+Math.sin(t*1.3+h.ph+k*0.6)*0.12-lunge*(k<3?0.25:0.05); s.rotation.y=Math.sin(t*0.8+h.ph+k*0.3)*0.12; }); h.jaw.rotation.z=Math.max(0,Math.sin(t*4+h.ph))*0.35+lunge*0.5; }
+  for(const s of K.sirens){ s.R.armL.rotation.z=-0.6-Math.sin(t*2+s.ph)*0.3; s.R.armR.rotation.z=0.6+Math.sin(t*2+s.ph)*0.3; animRig(s.R,dt,0); }
+  K.noteT=(K.noteT||0)-dt; if(K.noteT<=0){ K.noteT=0.5; const s=K.sirens[Math.floor(Math.random()*K.sirens.length)], n=labelSprite(Math.random()<0.5?'♪':'♫'); n.scale.set(1.6,0.4,1); n.position.copy(s.g.position).add(new THREE.Vector3(0,2.4,0)); K.root.add(n); K.notes.push({n,t:0}); }
+  for(const q of K.notes.slice()){ q.t+=dt; q.n.position.x-=dt*1.6; q.n.position.y+=dt*0.6; q.n.material.opacity=Math.max(0,1-q.t/4); if(q.t>4){ K.root.remove(q.n); q.n.material.map.dispose(); K.notes.splice(K.notes.indexOf(q),1); } }
+  K.fallTex.offset.y-=dt*1.3; K.sparks.rotation.y+=dt*0.05; for(const s of K.sheep)s.position.y+=Math.sin(t*3+s.id)*0.002;
+  for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } }
+  if(K.under.visible){ K.riverTex.offset.y-=dt*0.4; K.crys.forEach((c,i)=>{ c.rotation.y+=dt; c.position.y+=Math.sin(t*2+i)*0.005; }); for(const g of K.ghosts){ g.g.position.x+=g.drift[0]*dt; g.g.position.z+=g.drift[1]*dt; g.g.position.y=0.3+Math.sin(t*1.5+g.ph)*0.3; if(Math.hypot(g.g.position.x,g.g.position.z)>26){ g.drift[0]*=-1; g.drift[1]*=-1; } animRig(g.R,dt,0); } }
+  if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&demo.sc.act.slice(0,2)==='od')odMusicTick(dt); }
+// --- sound: everything here goes through odS, which plays quieter when you've picked your own song for the demo
+function odUserSong(){ return !!demo&&mus.src!=='none'; }
+function odS(fn){ if(!AC||!sfxOn)return; try{ fn(odUserSong()?0.25:1); }catch(e){} }
+const OD_SFX={wave:v=>noise(500,1.4,0.18*v,'lowpass'), thunder:v=>{ noise(180,1.6,0.6*v,'lowpass'); tone('sawtooth',70,30,1.2,0.12*v); }, cheer:v=>noise(1500,1.2,0.22*v,'bandpass'),
+  roar:v=>{ tone('sawtooth',110,55,1.0,0.22*v); noise(300,0.9,0.25*v,'lowpass'); }, oink:v=>{ tone('square',420,300,0.14,0.08*v); tone('square',380,260,0.12,0.06*v,0.16); }, magic:v=>{ tone('sine',400,1600,0.6,0.1*v); tone('triangle',800,2400,0.5,0.06*v,0.1); },
+  clang:v=>{ tone('square',1800,1600,0.12,0.08*v); noise(5000,0.15,0.12*v,'highpass'); }, splash:v=>noise(900,0.7,0.3*v,'lowpass'), poof:v=>{ noise(2500,0.3,0.2*v,'bandpass'); tone('sine',800,200,0.3,0.06*v); }, bonk:v=>{ tone('square',200,90,0.15,0.15*v); noise(800,0.1,0.15*v,'lowpass'); }, creak:v=>tone('sawtooth',140,90,0.8,0.06*v)};
+function odSfx(k){ odS(OD_SFX[k]); }
+// the built-in music: a lyre and a drum, with a mood for each chapter (and silent if you picked your own song)
+const OD_MOODS={hero:{bpm:96,notes:[62,65,69,67,65,64,62,57],drum:1},sea:{bpm:84,notes:[62,64,65,69,67,65,64,60],drum:0},storm:{bpm:132,notes:[50,53,50,56,50,53,57,56],drum:2},spooky:{bpm:70,notes:[50,53,56,53,49,52,55,52],drum:0},
+  magic:{bpm:100,notes:[69,72,76,74,72,71,69,64],drum:0},calm:{bpm:76,notes:[64,67,71,69,67,64,62,64],drum:0},joy:{bpm:112,notes:[62,66,69,74,73,69,66,64],drum:1}};
+function odMusicTick(dt){ if(odUserSong()||!AC||!sfxOn)return; const M=OD_MOODS[odMood]||OD_MOODS.hero, K=odyK; K.mT=(K.mT||0)-dt; if(K.mT>0)return; K.mT=60/M.bpm/2; K.mS=((K.mS||0)+1)%16; const s=K.mS;
+  try{ const f=midiF(M.notes[(s>>1)%8]+(s>=8&&s%4===2?12:0)); if(s%2===0){ tone('triangle',f,f*0.998,0.5,0.06); tone('sine',f*2,f*2,0.25,0.015); }
+    if(M.drum===1&&s%4===0)tone('sine',95,50,0.22,0.12); if(M.drum===2&&s%2===0)tone('sine',85,45,0.2,0.14); if(s%8===4&&M.drum)noise(1200,0.06,0.05,'bandpass'); if(s===0)tone('sine',midiF(M.notes[0]-12),midiF(M.notes[0]-12),1.6,0.05); }catch(e){} }
+let odMood='hero';
+// --- skies for the chapters
+function odSky(k){ const S={night:[0x0a1028,[0.32,0.36,0.55]],day:[0x8fd0f0,[1,1,1]],storm:[0x2a3038,[0.42,0.46,0.56]],sunset:[0xf2a272,[1,0.82,0.7]],magic:[0xb898e0,[0.95,0.85,1]],
+  under:[0x05030a,[0.2,0.18,0.3]],gold:[0xffd890,[1,0.95,0.75]],tropic:[0x7ad8f8,[1,1,0.95]],mist:[0xb8c8d0,[0.85,0.9,0.95]]}[k]||[0x8fd0f0,[1,1,1]];
+  scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false;
+  scene.fog.near=k==='storm'?30:k==='mist'?25:k==='under'?12:70; scene.fog.far=k==='storm'?170:k==='mist'?140:k==='under'?75:340; if(camera.far<700){ camera.far=700; camera.updateProjectionMatrix(); } setWeather(k==='storm'?'rain':'clear'); }
+function odSkyLerp(a,b,k){ const A=new THREE.Color(a), B=new THREE.Color(b); A.lerp(B,k); scene.background.copy(A); scene.fog.color.copy(A); }
+// a bolt of lightning, with a flash
+function odBolt(x,z,y0){ const g=new THREE.Group(); let px=x,py=y0||70,pz=z; const m=new THREE.MeshBasicMaterial({color:0xe8f4ff}); while(py>OD.SEA+1){ const nx=px+(Math.random()-0.5)*5, ny=py-5-Math.random()*4, nz=pz+(Math.random()-0.5)*5;
+    const len=Math.hypot(nx-px,ny-py,nz-pz), b=box(0.35,len,0.35,m); b.position.set((px+nx)/2,(py+ny)/2,(pz+nz)/2); b.lookAt(nx,ny,nz); b.rotateX(Math.PI/2); g.add(b); px=nx; py=ny; pz=nz; }
+  odyK.root.add(g); const bg=scene.background.clone(); scene.background.setHex(0xe8f0ff); odSfx('thunder'); setTimeout(()=>{ scene.background.copy(bg); },90); setTimeout(()=>{ odyK&&odyK.root.remove(g); },380); }
+// a quick white flash over the whole screen
+function odFlash(ms){ const f=$('dmFade'); if(!f)return; f.style.transition='none'; f.style.background='#fff'; f.style.opacity=1; requestAnimationFrame(()=>requestAnimationFrame(()=>{ f.style.transition='opacity '+((ms||500)/1000)+'s'; f.style.opacity=0; setTimeout(()=>{ f.style.background=''; },(ms||500)+50); })); }
+
+// ================= THE ODYSSEY IN DEMO MODE: TEN CHAPTERS =================
+// Each chapter is a little film: its own cast (made fresh each time), a script of timed moments, and a camera that cuts
+// between shots. Your hero plays Odysseus. All ten share the ocean world, so playing them in a row flows without reloading.
+let odStage=null;
+const isOdy=sc=>!!sc&&/^od\d+$/.test(sc.act||'');
+const odAt=(S,t,k,fn)=>{ if(S.t>=t&&!S.done[k]){ S.done[k]=1; fn(); } };
+const odSeg=(S,a,b)=>Math.max(0,Math.min(1,(S.t-a)/(b-a)));
+const odE=k=>k*k*(3-2*k);
+const odL=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
+function odSay(S,who,text,big){ npcSay(who,text); if(big&&who.bub)who.bub.scale.multiplyScalar(big); if(!S.speak.includes(who))S.speak.push(who); }
+function odSpk(S,par,x,y,z){ const g=grp(par||S.grp,x,y,z); return {g}; } // a speaker for giants (their own bubbles would be giant too)
+function odWalk(a,dt,on,sp){ a.ph+=dt*(on?(sp||9):0); const s=on?Math.sin(a.ph)*0.6:0; a.R.legL.rotation.x=s; a.R.legR.rotation.x=-s; a.R.armL.rotation.x=-s*0.6; a.R.armR.rotation.x=s*0.6; animRig(a.R,dt,on?2:0); }
+function odCheer(a,dt){ a.ph+=dt*8; a.R.armL.rotation.z=-2.6-Math.sin(a.ph)*0.25; a.R.armR.rotation.z=2.6+Math.sin(a.ph)*0.25; a.R.armL.rotation.x=a.R.armR.rotation.x=0; animRig(a.R,dt,0); }
+function odRest(a){ a.R.armL.rotation.z=a.R.armR.rotation.z=0; a.R.armL.rotation.x=a.R.armR.rotation.x=0; a.R.legL.rotation.x=a.R.legR.rotation.x=0; }
+function odSit(a){ a.R.legL.rotation.x=a.R.legR.rotation.x=1.45; a.R.armL.rotation.x=a.R.armR.rotation.x=0.7; }
+function odMove(a,from,to,k){ const p=odL(from,to,k); a.g.position.set(p[0],p[1],p[2]); if(k<1){ const dx=to[0]-from[0], dz=to[2]-from[2]; if(Math.hypot(dx,dz)>0.01)a.g.rotation.y=Math.atan2(-dx,-dz); } }
+function odHeroTo(S,p,yw,walking){ pl.p=[p[0],p[1],p[2]]; if(yw!==undefined)yaw=yw; S.hs=walking?2.6:0; }
+function odHeroPath(S,from,to,a,b){ const k=odSeg(S,a,b); odHeroTo(S,odL(from,to,k),k<1?Math.atan2(-(to[0]-from[0]),-(to[2]-from[2])):undefined,k>0&&k<1); }
+function odLW(obj,p){ obj.updateMatrixWorld(true); const v=new THREE.Vector3(p[0],p[1],p[2]).applyMatrix4(obj.matrixWorld); return [v.x,v.y,v.z]; }
+function odShip(S,sailC){ const s=shipMesh(sailC); S.grp.add(s.g); return s; }
+function odShipTick(S,s,x,z,h,rock,row){ const t=S.t; s.g.position.set(x,OD.SEA+0.55+Math.sin(t*1.7+x)*0.12*(1+rock*4),z); s.g.rotation.set(Math.sin(t*1.3)*rock*0.5,h,Math.sin(t*1.1+0.5)*rock,'YXZ'); for(const o of s.oars)o.o.rotation.x=Math.sin(t*(row||4))*0.5; }
+function odCrew(S,n,o){ const out=[]; for(let i=0;i<n;i++){ const a=odPerson(S.grp,0,0,0,0,odLook(),Object.assign({crest:[0xc81a1a,0x1a1a1a,0xf2f2f2,0x2a8a3a,0xd8a020][i%5]},o||{})); out.push(a); } return out; }
+function odOnShip(s,a,lp,ry){ s.g.add(a.g); a.g.position.set(lp[0],lp[1],lp[2]); a.g.rotation.set(0,ry||0,0); }
+function odPoof(x,y,z,c){ for(let k=0;k<3;k++)burst(x-0.5+(Math.random()-0.5),y+(Math.random()),z-0.5+(Math.random()-0.5),new THREE.Color(c||0xd8b0ff),8); puff(x,y+0.6,z,false); odSfx('poof'); }
+function odGrow(a,k,s){ a.g.visible=k>0.01; a.g.scale.setScalar(Math.max(0.01,(s||1)*k)); }
+// the chapter engine
+function demoOdySetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } clearCityLife(); clearInteriorLife();
+  demo.vplace='odyssey'; demo.cityKey=null; if(!demo.odyWorld){ demo.odyWorld=true; clearApples(); setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); }
+  odHeroGear(true); odHeroCloak(false); odStageClear(); odDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model}}; odyK.root.add(S.grp); odStage=S; P.S=S;
+  demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; odMood=ch.mood||'hero'; odSky(ch.sky); ch.init(S); demo.cam=null; }
+function odStageClear(){ if(!odStage)return; const S=odStage; if(S.hero.bub){ model.remove(S.hero.bub); S.hero.bub=null; } if(odyK)odyK.root.remove(S.grp); S.grp.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odStage=null; if(odyK)odyK.whirlFast=false; model.rotation.x=model.rotation.z=0; }
+function odDefaults(){ const K=odyK; K.under.visible=false; K.cyc.g.visible=K.circe.g.visible=K.calypso.g.visible=true; K.cows.forEach(c=>c.g.visible=true); K.ships.forEach(s=>s.g.visible=true);
+  K.boulder.position.set(79,OD.cave.floor+3.1,57.5); K.horse.hatch.rotation.y=0; K.gate.forEach(g=>g.rotation.y=0); const [ix,iz]=OD.ithaca; K.pen.g.position.set(ix,23,iz+5); K.pen.g.rotation.y=Math.PI; K.tel.g.position.set(ix+3,23,iz+2); K.tel.g.rotation.y=Math.PI; K.pen.g.visible=K.tel.g.visible=true; odRest(K.pen); odRest(K.tel); }
+function odyPilot(dt,P){ const S=P.S; if(!S||!odyK)return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } }
+  if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0&&S.hero.bub){ model.remove(S.hero.bub); S.hero.bub=null; } } }
+function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!odyK)return; if(S.ch.pose)S.ch.pose(S); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
+  if(!demo.cam||demo.cam.k!=='od'||demo.cam.shot!==c[2])demo.cam={k:'od',p:want.clone(),l:look.clone(),shot:c[2]}; else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
+  camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
+const OD_CH={};
+// ---------- 1. THE FALL OF TROY ----------
+OD_CH.od1={secs:30,sky:'night',mood:'hero',init(S){ const K=odyK; S.crew=odCrew(S,4); S.crew.forEach(a=>a.g.visible=false); S.hideHero=true; S.arrows=[];
+    S.troj=[]; for(const a of [255,263,271,279,287]){ const r=a*Math.PI/180, x=OD.troy[0]+Math.cos(r)*20, z=OD.troy[1]+Math.sin(r)*20; S.troj.push(odPerson(S.grp,x,22,z,0,odLook({top:'tee',topC:'#7a1a8a'}),{crest:0x7a1a8a,spear:true})); }
+    S.ath=athenaMesh(S.grp,45.8,27.2,185.2); S.ath.g.rotation.y=Math.PI*0.75; odGrow(S.ath,0); },
+  tick(S,dt){ const K=odyK, t=S.t, H=[OD.horse[0],15,OD.horse[2]];
+    S.arT=(S.arT||0)-dt; if(S.arT<=0&&t<22){ S.arT=0.25; const tr=S.troj[Math.floor(Math.random()*S.troj.length)], a=box(0.06,0.06,1.0,mm(0x5a3a1a)); a.position.copy(tr.g.position).add(new THREE.Vector3(0,1.6,0)); S.grp.add(a); S.arrows.push({m:a,v:[(Math.random()-0.5)*6,6,-16-Math.random()*6],t:0}); }
+    for(const q of S.arrows.slice()){ q.t+=dt; q.v[1]-=14*dt; q.m.position.x+=q.v[0]*dt; q.m.position.y+=q.v[1]*dt; q.m.position.z+=q.v[2]*dt; q.m.lookAt(q.m.position.x+q.v[0],q.m.position.y+q.v[1],q.m.position.z+q.v[2]); if(q.t>2.2){ S.grp.remove(q.m); S.arrows.splice(S.arrows.indexOf(q),1); } }
+    K.horse.hatch.rotation.y=-1.6*odSeg(S,12,13);
+    if(t>=13&&t<22){ S.hideHero=false; const k=odSeg(S,13,14.5); odHeroTo(S,[H[0]+2.6+k*1.6,H[1]+4*(1-k),H[2]+0.6],-Math.PI/2,false); if(t>16)odHeroTo(S,odL([H[0]+4.2,15,H[2]+0.6],[H[0]+1.5,15,180],odSeg(S,19.5,22)),Math.PI,t>19.5); }
+    odAt(S,15,'s1',()=>odSay(S,S.hero,'Troy is ours!'));
+    S.crew.forEach((a,i)=>{ const t0=15.4+i*0.5; if(t<t0)return; a.g.visible=true; const spot=[H[0]+5.5+i*1.1,15,H[2]-1+(i%2)*2]; if(t<t0+1)odMove(a,[H[0]+2.6,19,H[2]+0.6],spot,odSeg(S,t0,t0+1)); else if(t<19.5){ a.g.position.set(...spot); a.g.rotation.y=Math.PI*0.9; odCheer(a,dt); }
+      else { odRest(a); odMove(a,spot,[H[0]-2+i*1.3,15,181+(i%2)],odSeg(S,19.5,22)); odWalk(a,dt,t<22); } if(t>=22)a.g.visible=false; });
+    odAt(S,18,'s2',()=>{ odSay(S,S.troj[2],'The horse!!'); odSfx('cheer'); }); for(const g of K.gate)g.rotation.y=(g===K.gate[0]?-1.4:1.4)*odSeg(S,19,21);
+    if(t>=22){ odHeroTo(S,[43.9,28,183.9],-2.36,false); odGrow(S.ath,odE(odSeg(S,23.5,24.3))); S.ath.halo.scale.setScalar(1+Math.sin(t*3)*0.06); }
+    odAt(S,24.6,'s3',()=>odSay(S,S.ath,'The way home will test you.'));
+    if(t>27){ const k=odSeg(S,27,30); odSkyLerp(0x0a1028,0xf2a272,k); blockMat.color.setRGB(0.32+0.68*k,0.36+0.46*k,0.55+0.15*k); } },
+  cam(S){ const t=S.t; if(t<7){ const a=3.7+t*0.11; return [[58+Math.cos(a)*55,44,198+Math.sin(a)*55],[58,18,195],0]; }
+    if(t<12)return [odL([28,27,138],[48,19.5,158],odE(odSeg(S,7,12))),[58,20,172],1]; if(t<19)return [[70,18.5,163],[61,17.5,172],2]; if(t<22)return [[69,19.5,168],[58,17.5,180],3];
+    return [odL([39.5,30.2,179.6],[35,33,174],odSeg(S,22,30)),[45,28.8,185],4]; } };
+// ---------- 2. THE GREAT VOYAGE ----------
+OD_CH.od2={secs:30,sky:'day',mood:'sea',init(S){ const K=odyK; K.ships.forEach(s=>s.g.visible=false); S.ships=[odShip(S,0xc81a1a),odShip(S,0x2a6ad8),odShip(S,0x2a6ad8)];
+    S.crew=odCrew(S,8,{shield:false}); S.crew.forEach((a,i)=>{ const s=S.ships[i<4?0:i<6?1:2], k=i<4?i:i<6?i-4:i-6; odOnShip(s,a,[k%2?0.7:-0.7,0.6,-1.6+Math.floor(k/2)*2.4],0); odSit(a); });
+    S.pos=giantMesh(S.grp,0,0,0,'poseidon'); S.pos.g.visible=false; S.pspk=odSpk(S,null,0,0,0);
+    S.wave=new THREE.Group(); S.grp.add(S.wave); mb(S.wave,4,14,46,new THREE.MeshLambertMaterial({color:0x1a6aa8,transparent:true,opacity:0.92}),0,0,0); mb(S.wave,4.6,1.6,46,mm(0xf2f8ff),-0.6,7.2,0); S.wave.visible=false; },
+  lead(S){ return 64+S.t*3; },
+  tick(S,dt){ const t=S.t, x=this.lead(S), storm=t>12, rock=storm?0.16:0.03; odShipTick(S,S.ships[0],x,150,-Math.PI/2,rock); odShipTick(S,S.ships[1],x-9,144,-Math.PI/2,rock); odShipTick(S,S.ships[2],x-9,156,-Math.PI/2,rock);
+    odHeroTo(S,odLW(S.ships[0].g,[0,0.65,-3.4]),-Math.PI/2+Math.sin(t*1.1)*0.05,false);
+    odAt(S,7,'s1',()=>odSay(S,S.hero,'To Ithaca! Home!')); S.crew.slice(0,4).forEach(a=>{ if(t>8&&t<10.5){ a.R.armL.rotation.z=-2.6; a.R.armR.rotation.z=2.6; a.R.armL.rotation.x=a.R.armR.rotation.x=0; } else { a.R.armL.rotation.z=a.R.armR.rotation.z=0; a.R.armL.rotation.x=a.R.armR.rotation.x=0.7+Math.sin(t*4)*0.4; } animRig(a.R,dt,0); });
+    odAt(S,8,'cheer',()=>odSfx('cheer')); odAt(S,12,'storm',()=>{ odSky('storm'); odMood='storm'; odSfx('wave'); }); odAt(S,16,'b1',()=>odBolt(x+18,150)); odAt(S,17.6,'b2',()=>odBolt(x+10,160));
+    const px=142, pk=odE(odSeg(S,16.5,20.5)); S.pos.g.visible=t>16.4; S.pos.g.position.set(px,OD.SEA-14+10.5*pk,150); S.pos.g.rotation.y=Math.PI/2; S.pos.R.armR.rotation.x=t>19?-2.4:-0.3; S.pos.R.armL.rotation.x=-0.4; animRig(S.pos.R,dt,0); S.pspk.g.position.set(px,OD.SEA-14+10.5*pk+14.5,150);
+    odAt(S,20.2,'s2',()=>{ odSay(S,S.pspk,'You will NOT get home easily!',5); odSfx('roar'); }); odAt(S,21,'b3',()=>odBolt(px,145));
+    if(t>24){ const k=odSeg(S,24,28); S.wave.visible=t<28.6; S.wave.position.set(px-10-k*(px-10-x+4),OD.SEA-6+k*9,150); S.wave.rotation.z=-k*0.5; } odAt(S,28,'crash',()=>{ odFlash(900); odSfx('splash'); odSfx('wave'); }); },
+  cam(S){ const t=S.t, x=this.lead(S); if(t<6)return [[x-14,30,126],[x+4,11,150],0]; if(t<11)return [odLW(S.ships[0].g,[0,3.2,-10]),odLW(S.ships[0].g,[0,2.2,-3.4]),1];
+    if(t<16)return [[x+6,9,133],[x,12,150],2]; if(t<24)return [[x-14,15,153],[142,20,150],3]; return [[x-26,22,136],[x+8,14,150],4]; } };
+// ---------- 3. THE LAND OF THE CYCLOPS ----------
+OD_CH.od3={secs:30,sky:'day',mood:'hero',init(S){ const K=odyK, f=OD.cave.floor; K.cyc.g.visible=false; S.ship=odShip(S,0xc81a1a); S.crew=odCrew(S,3,{shield:false}); S.cy=giantMesh(S.grp,98,f,62,'cyclops'); S.cy.g.scale.setScalar(3.6); S.cspk=odSpk(S,null,0,0,0);
+    S.sheep=[]; for(let i=0;i<4;i++)S.sheep.push(odSheep(S.grp,58+i*3,f,66-i)); S.stake=new THREE.Group(); mb(S.stake,0.25,0.25,3.2,mm(0x7a4a22),0,0,0); mb(S.stake,0.3,0.3,0.4,new THREE.MeshBasicMaterial({color:0xff8a2a}),0,0,-1.7); S.stake.position.set(66,f+0.2,67); S.grp.add(S.stake); },
+  tick(S,dt){ const K=odyK, t=S.t, f=OD.cave.floor, cy=S.cy; odShipTick(S,S.ship,t<5?112-13*odE(odSeg(S,0,5)):t>27?99+12*odSeg(S,27,30):99,67,Math.PI/2,0.03,t>27?6:3);
+    if(t<5){ odHeroTo(S,odLW(S.ship.g,[0,0.65,-3]),Math.PI/2,false); S.crew.forEach((a,i)=>{ if(a.g.parent!==S.ship.g){ odOnShip(S.ship,a,[(i-1)*0.8,0.6,0],0); } }); }
+    else if(t<11){ odHeroPath(S,[95,f,62],[68,f,62],5,10.4); S.crew.forEach((a,i)=>{ if(a.g.parent!==S.grp){ S.grp.add(a.g); a.g.rotation.set(0,0,0); } odMove(a,[92+i*1.3,f,61+i],[70+i*1.3,f,60+i*1.5],odSeg(S,5,10.6)); odWalk(a,dt,t<10.6); }); }
+    if(t>=11&&t<16){ const k=odSeg(S,11,14.5); cy.g.position.set(98-24*k,f,62); cy.g.rotation.y=Math.PI/2; odWalk(cy,dt,k<1,5); odHeroTo(S,[68,f,62],-Math.PI/2,false); S.crew.forEach(a=>{ a.g.rotation.y=-Math.PI/2; a.R.armL.rotation.z=-2.4; a.R.armR.rotation.z=2.4; animRig(a.R,dt,0); }); }
+    odAt(S,12.4,'s1',()=>{ odSay(S,S.cspk,'WHO IS IN MY CAVE?!',2.2); odSfx('roar'); }); S.cspk.g.position.set(cy.g.position.x,f+8.2,cy.g.position.z);
+    if(t>=14.5&&t<16.5){ const k=odSeg(S,14.5,16.5); K.boulder.position.set(79,f+3.1,57.5+4.5*k); K.boulder.rotation.x=k*3; } odAt(S,14.6,'creak',()=>odSfx('creak'));
+    if(t>=16&&t<20.3){ const k=odSeg(S,16,17.5); cy.g.position.set(74-4*k,f+1.4*k,62-4*k); cy.g.rotation.set(0,Math.PI/2,k*Math.PI/2); odRest(cy); S.crew.forEach(a=>odRest(a)); }
+    odAt(S,17.6,'z',()=>odSay(S,S.cspk,'Zzz...',2)); if(t>=16.5&&t<18)odHeroPath(S,[68,f,62],[66.5,f,66.2],16.5,18); odAt(S,18,'take',()=>{ S.grp.remove(S.stake); armR.add(S.stake); S.stake.position.set(0,-0.8,-1.2); S.stake.rotation.set(0,0,0); S.held=true; });
+    if(t>=18&&t<20.3)odHeroPath(S,[66.5,f,66.2],[64.6,f,61.4],18,20.2);
+    odAt(S,20.3,'poke',()=>{ odFlash(800); odSfx('roar'); odSay(S,S.cspk,'MY EYE!!',2.4); }); if(t>=20.3&&t<23.5){ cy.g.rotation.set(0,Math.PI/2+Math.sin(t*6)*0.4,0); cy.g.position.set(68,f+Math.abs(Math.sin(t*7))*1.2,59); cy.R.armL.rotation.x=cy.R.armR.rotation.x=-2.6; animRig(cy.R,dt,0); }
+    odAt(S,22,'drop',()=>{ if(S.held){ armR.remove(S.stake); S.held=false; } }); if(t>=22.5&&t<24){ const k=odSeg(S,22.5,24); K.boulder.position.set(79,f+3.1,62-4.5*k); cy.g.position.set(68+4*k,f,59-3*k); odRest(cy); }
+    if(t>=23.5){ S.sheep.forEach((sh,i)=>{ const k=odSeg(S,23.5+i*0.6,28.5+i*0.4); sh.position.set(68+27*k,f,62+(i%2?0.8:-0.8)); sh.rotation.y=-Math.PI/2; const a=S.crew[i]; if(a){ if(a.g.parent!==sh){ sh.add(a.g); a.g.scale.setScalar(0.7); a.g.position.set(-0.6,0.12,0); a.g.rotation.set(-Math.PI/2,Math.PI/2,0,'YXZ'); a.R.armL.rotation.x=a.R.armR.rotation.x=-2.8; } } });
+      odHeroPath(S,[66,f,60],[93,f,62],24.5,29); }
+    odAt(S,27.2,'s3',()=>odSay(S,S.hero,'Back to the ships!')); },
+  cam(S){ const t=S.t, cy=S.cy.g.position; if(t<5)return [[118,24,84],[100,14,64],0]; if(t<8)return [[100,17.5,68],[86,14.5,62],1]; if(t<11)return [[56,18,71],[70,14.5,60],2];
+    if(t<16)return [[62,17,69],[cy.x,f3(),62],3]; if(t<20)return [[60,16.5,66],[66,14,58],4]; if(t<23.5)return [[58,16,66.5],[67,17,59],5]; return [[101,16.5,55],[86,14,62],6];
+    function f3(){ return OD.cave.floor+5; } } };
+// ---------- 4. CIRCE AND THE PIGS ----------
+OD_CH.od4={secs:30,sky:'magic',mood:'magic',init(S){ const K=odyK, [cx,cz]=OD.circe; K.circe.g.visible=false; S.ci=circeMesh(S.grp,cx,17,cz-2.6); S.ci.g.rotation.y=Math.PI; S.crew=odCrew(S,4);
+    S.table=grp(S.grp,cx,17,cz-8); mb(S.table,4,0.12,1.6,mm(0x7a4a22),0,0.8,0); for(let k=0;k<6;k++)msph(S.table,0.16,mm([0xd8301a,0xf2c21a,0x8a3ac8,0x3ad84a,0xff8a1a,0xd8301a][k]),-1.6+k*0.64,0.95,0);
+    S.pigs=S.crew.map(()=>{ const M=pigMesh(S.grp); M.g.visible=false; return M; }); S.ath=athenaMesh(S.grp,cx-2.6,17,cz+3); odGrow(S.ath,0); S.ath.g.rotation.y=-Math.PI/2;
+    S.herb=msph(S.grp,0.15,new THREE.MeshBasicMaterial({color:0x5aff6a}),0,0,0); S.herb.visible=false; S.shield=msph(S.grp,1.3,new THREE.MeshBasicMaterial({color:0x5aff6a,transparent:true,opacity:0.25,depthWrite:false}),0,0,0); S.shield.visible=false;
+    S.bolt=mcyl(S.grp,0.1,0.1,1,new THREE.MeshBasicMaterial({color:0xd06aff}),0,0,0,6); S.bolt.visible=false; },
+  tick(S,dt){ const t=S.t, [cx,cz]=OD.circe, seats=[[cx-1.5,cz-9.2,Math.PI],[cx+1.5,cz-9.2,Math.PI],[cx-1.5,cz-6.8,0],[cx+1.5,cz-6.8,0]];
+    S.ci.orb.material.color.setHex(t>25?0x6a4a7a:0xd06aff); S.ci.orb.scale.setScalar(1+Math.sin(t*5)*0.2);
+    if(t<9){ odHeroPath(S,[cx+0.5,17,cz+16],[cx+0.5,17,cz+3.4],4,8.6); S.crew.forEach((a,i)=>{ odMove(a,[cx-2+i*1.3,17,cz+17+i*0.6],[cx-2+i*1.3,17,cz+4.6+(i%2)],odSeg(S,4,8.6)); odWalk(a,dt,t>4&&t<8.6); }); }
+    odAt(S,7.6,'s1',()=>odSay(S,S.ci,'Welcome! Come eat!'));
+    if(t>=9&&t<17){ S.ci.g.position.set(cx+3.2,17,cz-8); S.ci.g.rotation.y=Math.PI/2; S.crew.forEach((a,i)=>{ const s=seats[i]; a.g.position.set(s[0],17.6-0.72,s[1]); a.g.rotation.y=s[2]; odSit(a); a.R.armR.rotation.x=0.7+Math.max(0,Math.sin(t*4+i))*0.8; animRig(a.R,dt,0); }); odHeroTo(S,[cx+0.5,17,cz+3.4],0,false); }
+    odAt(S,13,'zap',()=>{ odSfx('magic'); for(let k=0;k<5;k++)burst(cx-0.5+(Math.random()-0.5)*4,18.5,cz-8.5+(Math.random()-0.5)*3,new THREE.Color(0xc06aff),10); }); if(t>13&&t<15)S.ci.R.armR.rotation.x=-2.8;
+    S.crew.forEach((a,i)=>{ odAt(S,13.6+i*0.5,'pig'+i,()=>{ const p=a.g.position; odPoof(p.x,p.y,p.z,0xff9ad8); a.g.visible=false; S.pigs[i].g.visible=true; S.pigs[i].g.position.set(p.x,17,p.z); odSfx('oink'); const h=mb(S.grp,0.58,0.3,0.58,mm(0xc8902a),p.x,p.y+1.8,p.z); S.helms=(S.helms||[]).concat([{m:h,v:2+Math.random()*2}]); }); });
+    for(const h of S.helms||[]){ h.v-=10*dt; h.m.position.y=Math.max(17.15,h.m.position.y+h.v*dt); h.m.rotation.y+=dt*6; }
+    S.pigs.forEach((M,i)=>{ if(!M.g.visible)return; const a=t*2+i*1.6, x=cx+Math.cos(a)*(2.2+i*0.3), z=cz-8+Math.sin(a)*2; M.g.position.set(x,17,z); M.g.rotation.y=-a; if(Math.random()<dt*0.6)odSfx('oink'); });
+    if(t>=17&&t<26){ S.ci.g.position.set(cx,17,cz-2.6); S.ci.g.rotation.y=Math.PI; } odAt(S,17.3,'s2',()=>odSay(S,S.hero,'My men!!')); odAt(S,18.8,'s3',()=>odSay(S,S.ci,"They're happier as pigs!"));
+    odGrow(S.ath,odE(odSeg(S,20,20.8))); if(t>20)S.ath.halo.scale.setScalar(1+Math.sin(t*3)*0.06); odAt(S,21,'s4',()=>odSay(S,S.ath,'Take this magic herb!'));
+    if(t>21.4&&t<22.6){ S.herb.visible=true; const k=odSeg(S,21.4,22.4); S.herb.position.set(cx-2.4+k*2.9,18.3+Math.sin(k*Math.PI)*0.8,cz+3+k*0.4); } else S.herb.visible=false;
+    if(t>23&&t<23.7){ S.bolt.visible=true; const a=new THREE.Vector3(cx,18.6,cz-2.4), b=new THREE.Vector3(cx+0.5,18,cz+3.4), k=odSeg(S,23,23.5), e=a.clone().lerp(b,k); S.bolt.position.copy(a).lerp(e,0.5); S.bolt.scale.set(1,a.distanceTo(e)+0.01,1); S.bolt.lookAt(e); S.bolt.rotateX(Math.PI/2); } else S.bolt.visible=false;
+    odAt(S,23,'zap2',()=>odSfx('magic')); S.shield.visible=t>22.6&&t<25.5; S.shield.position.set(cx+0.5,18,cz+3.4); S.shield.scale.setScalar(1+Math.sin(t*8)*0.05);
+    odAt(S,25.2,'s5',()=>odSay(S,S.ci,'Okay, okay! You win!'));
+    S.crew.forEach((a,i)=>{ odAt(S,26+i*0.3,'back'+i,()=>{ const M=S.pigs[i]; M.g.visible=false; a.g.visible=true; a.g.position.set(cx-2+i*1.3,17,cz+1.5+(i%2)); a.g.rotation.y=Math.PI; odPoof(a.g.position.x,17,a.g.position.z,0xc0ffc0); odRest(a); }); if(t>27.6)odCheer(a,dt); });
+    odAt(S,27.4,'s6',()=>odSay(S,S.crew[0],'I kinda liked being a pig.')); odAt(S,28,'laugh',()=>odSfx('cheer')); },
+  cam(S){ const t=S.t, [cx,cz]=OD.circe; if(t<6)return [odL([cx+20,32,cz+36],[cx+8,24,cz+16],odE(odSeg(S,0,6))),[cx,19,cz-2],0]; if(t<9)return [[cx+8,19.5,cz+9],[cx,18,cz-1],1];
+    if(t<17)return [[cx+5.2,20.2,cz-4.9],[cx-0.5,17.6,cz-8.4],2]; /* inside the hall, looking at the feast */ if(t<26)return [[cx+6,19.5,cz+8],[cx-0.5,18,cz],3]; return [[cx+8.5,20,cz+10],[cx,17.8,cz+1],4]; } };
+// ---------- 5. THE SIRENS ----------
+OD_CH.od5={secs:28,sky:'mist',mood:'magic',init(S){ S.ship=odShip(S,0xc81a1a); S.crew=odCrew(S,4,{shield:false}); S.crew.forEach((a,i)=>{ odOnShip(S.ship,a,[i%2?0.7:-0.7,0.6,-2.2+Math.floor(i/2)*3.2],0); odSit(a); });
+    S.wax=[]; for(const a of S.crew)for(const s of[-1,1]){ const w=mb(a.R.head,0.1,0.14,0.14,mm(0xffd23a),s*0.28,0.22,0); w.visible=false; S.wax.push(w); }
+    S.ropes=[]; for(const y of [1.6,2.3]){ const r=new THREE.Mesh(new THREE.TorusGeometry(0.45,0.06,6,14),mm(0xc8a060)); r.rotation.x=Math.PI/2; r.position.set(0,y,0.75); r.visible=false; S.ship.g.add(r); S.ropes.push(r); } },
+  x(S){ return 96+S.t*2; },
+  tick(S,dt){ const t=S.t, x=this.x(S); odShipTick(S,S.ship,x,114,-Math.PI/2,0.04,t>10&&t<22?7:3.5); odHeroTo(S,odLW(S.ship.g,[0,0.65,1.1]),-Math.PI/2,false);
+    S.crew.forEach(a=>{ a.R.armL.rotation.x=a.R.armR.rotation.x=0.7+Math.sin(t*(t>10&&t<22?7:3.5))*0.4; animRig(a.R,dt,0); });
+    odAt(S,6.4,'wax',()=>{ S.wax.forEach(w=>w.visible=true); odSay(S,S.crew[0],'Wax in our ears!'); }); odAt(S,8,'tie',()=>{ S.ropes.forEach(r=>r.visible=true); odSay(S,S.hero,'Tie me to the mast!'); odSfx('creak'); });
+    odAt(S,11,'s1',()=>odSay(S,odyK.sirens[0],'♪ Come closer... ♪',1.8)); odAt(S,13.6,'s2',()=>odSay(S,S.hero,'Let me GO!!')); odAt(S,15.5,'s3',()=>odSay(S,odyK.sirens[2],'♪ Stay with us! ♪',1.8)); odAt(S,18,'s4',()=>odSay(S,odyK.sirens[1],'♪ La la laaa ♪',1.8));
+    odAt(S,23,'untie',()=>{ S.ropes.forEach(r=>r.visible=false); S.wax.forEach(w=>w.visible=false); }); odAt(S,24,'s5',()=>odSay(S,S.hero,'Phew! Thanks, crew!')); },
+  pose(S){ const t=S.t; if(t>8&&t<23){ armL.rotation.x=armR.rotation.x=0; armL.rotation.z=-0.3; armR.rotation.z=0.3; if(t>11&&t<21){ model.rotation.z=Math.sin(t*18)*0.08; model.position.x+=Math.sin(t*23)*0.05; } } },
+  cam(S){ const t=S.t, x=this.x(S); if(t<6)return [[x-14,20,96],[x+4,12,114],0]; if(t<10)return [odLW(S.ship.g,[3.6,3.2,4]),odLW(S.ship.g,[0,2,0.8]),1];
+    if(t<16)return [[124,24.5,139],[x,12.5,114],2]; if(t<21)return [odLW(S.ship.g,[0,3,-6.5]),odLW(S.ship.g,[0,2.2,1]),3]; return [[x-16,16,103],[x,12,114],4]; } };
+// ---------- 6. THE UNDERWORLD ----------
+OD_CH.od6={secs:28,sky:'under',mood:'spooky',init(S){ const K=odyK; K.under.visible=true; odGrow(K.tir,0); K.ghosts.forEach(g=>g.g.traverse(o=>{ if(o.isMesh)o.material.opacity=0.35; })); },
+  tick(S,dt){ const K=odyK, t=S.t, [ux,uy,uz]=OD.under; if(t<22)odHeroPath(S,[ux+9,uy,uz+30],[ux+3,uy,uz-1],5,14); else odHeroPath(S,[ux+3,uy,uz-1],[ux+7,uy,uz+12],22.5,28);
+    odAt(S,7,'s1',()=>odSay(S,S.hero,'Where am I...?')); odGrow(K.tir,odE(odSeg(S,14,15.2))); K.tir.g.rotation.y=Math.PI; K.tirLight.intensity=1.2+Math.sin(t*3)*0.3;
+    odAt(S,15.6,'s2',()=>odSay(S,K.tir,'Danger lies ahead, Odysseus.')); odAt(S,18.6,'s3',()=>odSay(S,K.tir,"Never eat the Sun God's cattle!")); odAt(S,15.6,'spk',()=>{ if(!S.speak.includes(K.tir))S.speak.push(K.tir); });
+    if(t>22){ const o=0.35*(1-odSeg(S,22,27)); K.ghosts.forEach(g=>g.g.traverse(m=>{ if(m.isMesh)m.material.opacity=o; })); } },
+  cam(S){ const t=S.t, [ux,uy,uz]=OD.under; if(t<6)return [odL([ux-18,uy+8,uz+32],[ux-6,uy+5,uz+22],odE(odSeg(S,0,6))),[ux,uy+1,uz+4],0]; if(t<14)return [[pl.p[0]+5,uy+2.6,pl.p[2]+6],[pl.p[0],uy+1.3,pl.p[2]],1];
+    if(t<22)return [[ux-2,uy+2.2,uz+2],[ux+2,uy+1.6,uz-6],2]; return [odL([ux-2,uy+2.2,uz+2],[ux,uy+10,uz+14],odSeg(S,22,28)),[ux+2,uy+1,uz-4],3]; } };
+// ---------- 7. SCYLLA AND CHARYBDIS ----------
+OD_CH.od7={secs:28,sky:'storm',mood:'storm',init(S){ odyK.whirlFast=true; S.ship=odShip(S,0xc81a1a); S.crew=odCrew(S,4,{shield:false}); S.crew.forEach((a,i)=>{ odOnShip(S.ship,a,[i%2?0.7:-0.7,0.6,-2.2+Math.floor(i/2)*3.2],0); odSit(a); }); },
+  z(S){ return 182-2.4*S.t; },
+  tick(S,dt){ const K=odyK, t=S.t, z=this.z(S), x=208+(t>14&&t<22?Math.sin((t-14)/8*Math.PI)*2.4:0), rock=t>6&&t<22?0.22:0.06; odShipTick(S,S.ship,x,z,0,rock,t>6&&t<24?8:4); odHeroTo(S,odLW(S.ship.g,[0,0.65,-3.4]),Math.sin(t*1.3)*0.1,false);
+    S.crew.forEach(a=>{ if(t>24){ odCheer(a,dt); return; } a.R.armL.rotation.z=a.R.armR.rotation.z=0; a.R.armL.rotation.x=a.R.armR.rotation.x=0.7+Math.sin(t*8)*0.4; animRig(a.R,dt,0); });
+    for(const [tt,i] of [[8.5,0],[10.5,2],[12.5,4],[16,1],[18.5,3]])odAt(S,tt,'h'+i,()=>{ K.heads[i].lunge=1; odSfx('roar'); });
+    odAt(S,10.8,'helm',()=>{ const p=S.crew[1].g.getWorldPosition(new THREE.Vector3()); const h=mb(S.grp,0.58,0.3,0.58,mm(0xc8902a),p.x,p.y+1.8,p.z); S.flyH={m:h,v:[3,7,0]}; odSay(S,S.crew[1],'My helmet!'); });
+    if(S.flyH){ const q=S.flyH; q.v[1]-=9*dt; q.m.position.x+=q.v[0]*dt; q.m.position.y+=q.v[1]*dt; q.m.rotation.z+=dt*8; }
+    odAt(S,15,'s1',()=>odSay(S,S.hero,'Row! ROW!!')); S.spT=(S.spT||0)-dt; if(t>6&&t<22&&S.spT<=0){ S.spT=0.3; burst(x-0.5+(Math.random()-0.5)*5,OD.SEA+1,z-0.5+(Math.random()-0.5)*7,new THREE.Color(0xe8f4ff),6); }
+    odAt(S,12,'w',()=>odSfx('wave')); odAt(S,18,'w2',()=>odSfx('wave')); odAt(S,13.5,'b',()=>odBolt(222,150)); odAt(S,24,'s2',()=>{ odSay(S,S.hero,'We made it!'); odSfx('cheer'); }); },
+  cam(S){ const t=S.t, z=this.z(S); if(t<6)return [[186,46,184],[206,16,146],0]; if(t<14)return [odLW(S.ship.g,[-2.6,3.4,5]),[213,19,z-7],1]; if(t<22)return [[200,13,z-13],[208,12,z],2]; return [[208,22,z-24],[208,12,z],3]; } };
+// ---------- 8. THE ISLAND OF THE SUN GOD ----------
+OD_CH.od8={secs:28,sky:'gold',mood:'calm',init(S){ const [cx,cz]=OD.helios; S.crew=odCrew(S,4,{shield:false}); S.by=gy(cx,cz+7); S.ship=odShip(S,0xc81a1a); S.plank=mb(S.grp,0.9,0.2,3,mm(0x8a5a2a),0,0,0); S.plank.visible=false; S.debris=[]; },
+  tick(S,dt){ const K=odyK, t=S.t, [cx,cz]=OD.helios, by=S.by;
+    if(t<20){ odShipTick(S,S.ship,cx+6,cz+22,0.4,0.02); S.crew.forEach((a,i)=>{ const home=[cx-3+i*1.6,by,cz+7+(i%2)]; if(t<11){ a.g.position.set(...home); a.g.rotation.y=Math.PI; odRest(a); if(t>7&&t<8.6)a.R.head.rotation.x=Math.sin(t*12)*0.3; animRig(a.R,dt,0); }
+        else if(t<13.6){ odMove(a,home,[cx-3+i*2,gy(cx-3+i*2,cz-2),cz-2],odSeg(S,11,13.4)); odWalk(a,dt,t<13.4); } }); }
+    if(t<9)odHeroTo(S,[cx,by,cz+5.5],0,false); else if(t<11)odHeroPath(S,[cx,by,cz+5.5],[cx-7,gy(cx-7,cz+6),cz+6],9,11); else if(t<17)odHeroTo(S,[cx-7,gy(cx-7,cz+6),cz+6],Math.PI/2,false);
+    odAt(S,6.5,'s1',()=>odSay(S,S.hero,'Do NOT touch the golden cattle!')); odAt(S,8.2,'s2',()=>odSay(S,S.crew[0],'Okay...')); odAt(S,11.4,'z',()=>odSay(S,S.hero,'Zzz...'));
+    K.cows.forEach((c,i)=>odAt(S,13.6+i*0.15,'cow'+i,()=>{ const p=c.g.position; odPoof(p.x,p.y,p.z,0xffd23a); c.g.visible=false; })); odAt(S,14.4,'s3',()=>odSay(S,S.crew[1],'Oops...'));
+    S.smT=(S.smT||0)-dt; if(t>14&&t<17&&S.smT<=0){ S.smT=0.2; puff(cx-1,by+1,cz-2,true); }
+    odAt(S,16,'storm',()=>{ odSky('storm'); odMood='storm'; odBolt(cx+2,cz+2,80); }); odAt(S,17.2,'s4',()=>odSay(S,S.hero,'What did you DO?!')); odAt(S,17.8,'b2',()=>odBolt(cx-6,cz+8,80));
+    if(t>=20){ const x=150+(t-20)*3; if(!S.broke){ odShipTick(S,S.ship,x,58,-Math.PI/2,0.18); S.crew.forEach((a,i)=>{ if(a.g.parent!==S.ship.g){ odOnShip(S.ship,a,[i%2?0.7:-0.7,0.6,-2.2+Math.floor(i/2)*3.2],0); odSit(a); } }); odHeroTo(S,odLW(S.ship.g,[0,0.65,-3.4]),-Math.PI/2,false); }
+      odAt(S,22.5,'wreck',()=>{ odBolt(x,58,70); odFlash(500); odSfx('splash'); S.broke=true; S.ship.g.visible=false; for(let i=0;i<10;i++){ const d=mb(S.grp,0.4+Math.random(),0.2,1+Math.random()*2,mm(0x7a4a22),x,OD.SEA+1.5,58); S.debris.push({m:d,v:[(Math.random()-0.5)*8,4+Math.random()*4,(Math.random()-0.5)*8]}); } S.plank.visible=true; S.px=x; });
+      if(S.broke){ for(const d of S.debris){ d.v[1]-=12*dt; d.m.position.x+=d.v[0]*dt; d.m.position.z+=d.v[2]*dt; d.m.position.y=Math.max(OD.SEA+0.9,d.m.position.y+d.v[1]*dt); d.m.rotation.x+=dt*3; }
+        S.plank.position.set(S.px+(t-22.5)*0.6,OD.SEA+0.95+Math.sin(t*2)*0.1,58); S.plank.rotation.z=Math.sin(t*1.5)*0.12; odHeroTo(S,[S.plank.position.x,OD.SEA+1.0,58.2],-Math.PI/2,false); } }
+    odAt(S,25,'s5',()=>odSay(S,S.hero,'Not again...')); },
+  pose(S){ const t=S.t; if(t>=11&&t<17){ model.rotation.x=-Math.PI/2; model.position.y+=0.3; } if(S.broke){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.9; model.position.y-=0.6; } },
+  cam(S){ const t=S.t, [cx,cz]=OD.helios; if(t<6){ const a=t*0.2+0.5; return [[cx+Math.cos(a)*32,30,cz+Math.sin(a)*32],[cx,15,cz],0]; } if(t<11)return [[cx+6,S.by+3,cz+15],[cx,S.by+1,cz+6],1];
+    if(t<16)return [[cx+8,S.by+5,cz+10],[cx,S.by+1,cz-2],2]; if(t<20)return [[cx-12,S.by+7,cz+16],[cx-5,S.by+1,cz+5],3]; if(t<22.6){ const x=150+(t-20)*3; return [[x-12,16,46],[x,12,58],4]; }
+    const p=S.plank.position; return [[p.x+5,OD.SEA+3.5,p.z+5],[p.x,OD.SEA+1.4,p.z],5]; } };
+// ---------- 9. CALYPSO'S ISLAND ----------
+OD_CH.od9={secs:28,sky:'tropic',mood:'calm',init(S){ const K=odyK, [cx,cz]=OD.calypso; K.calypso.g.visible=false; S.ca=odPerson(S.grp,cx+7,16,cz-2,Math.PI/2,odLook({skin:'#d8a070',hair:'long',hairC:'#1a1a1a',top:'tee',topC:'#2ad8b8',bottom:'dress',bottomC:'#f2d06a'}));
+    S.plank=mb(S.grp,0.9,0.2,3,mm(0x8a5a2a),0,0,0); S.raft=new THREE.Group(); S.grp.add(S.raft); for(let i=0;i<5;i++){ const l=mcyl(S.raft,0.25,0.25,3,mm(0x8a5a2a),(i-2)*0.5,0,0,8); l.rotation.x=Math.PI/2; } mcyl(S.raft,0.06,0.06,2.6,mm(0x5a3418),0,1.3,0,6); const sl=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.6),new THREE.MeshLambertMaterial({color:0xf8f4ea,side:THREE.DoubleSide})); sl.position.set(0,1.8,0.05); S.raft.add(sl); S.raft.visible=false;
+    S.ath=athenaMesh(S.grp,cx+19,0,cz-3); odGrow(S.ath,0); S.bx=cx+18; S.by=gy(cx+18,cz); },
+  tick(S,dt){ const t=S.t, [cx,cz]=OD.calypso, by=S.by;
+    if(t<5){ const x=238-12*odE(odSeg(S,0,5)); S.plank.position.set(x,OD.SEA+0.95+Math.sin(t*2)*0.08,cz); odHeroTo(S,[x,OD.SEA+1,cz+0.2],-Math.PI/2,false); } else if(t<12)odHeroPath(S,[S.bx+2,by,cz],[S.bx,by,cz+1],5,6);
+    if(t>=6&&t<12){ odMove(S.ca,[cx+7,16,cz-2],[S.bx-3,by,cz-1],odSeg(S,6,8.6)); odWalk(S.ca,dt,t<8.6); } odAt(S,9,'s1',()=>odSay(S,S.ca,'Stay with me forever!'));
+    if(t>=12&&t<24){ odHeroTo(S,[S.bx,by,cz+2],-Math.PI/2,false); const k=odSeg(S,12,18), cols=[0x7ad8f8,0xf2a272,0x0a1028,0x7ad8f8], seg=Math.min(2.999,k*3), i=Math.floor(seg); if(t<18.2)odSkyLerp(cols[i],cols[i+1],seg-i); else odSky('tropic'); }
+    odAt(S,14.5,'s2',()=>odSay(S,S.hero,'I miss home...')); if(t>=12){ S.ca.g.position.set(S.bx-3,by,cz-1); S.ca.g.rotation.y=-Math.PI/2; odRest(S.ca); animRig(S.ca.R,dt,0); }
+    if(t>=18){ S.ath.g.position.set(S.bx-4,by+0.2,cz+3); odGrow(S.ath,odE(odSeg(S,18,18.8))); S.ath.g.rotation.y=-Math.PI/2; S.ath.halo.scale.setScalar(1+Math.sin(t*3)*0.06); } odAt(S,19,'s3',()=>odSay(S,S.ath,'Let him go home, Calypso.')); odAt(S,21.6,'s4',()=>odSay(S,S.ca,'...Okay. Go home.'));
+    if(t>=24){ S.raft.visible=true; S.plank.visible=false; const x=S.bx+3+odSeg(S,24,28)*10; S.raft.position.set(x,OD.SEA+0.85+Math.sin(t*2)*0.08,cz+2); odHeroTo(S,[x,OD.SEA+1.1,cz+2],-Math.PI/2,false); S.ca.R.armR.rotation.z=2.4+Math.sin(t*9)*0.3; } },
+  pose(S){ const t=S.t; if(t<5){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.9; model.position.y-=0.6; } if(t>=12&&t<24){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.7; model.position.y-=0.6; } },
+  cam(S){ const t=S.t, [cx,cz]=OD.calypso; if(t<6)return [[244,14,207],[pl.p[0],11.5,cz],0]; if(t<9)return [[S.bx+3,S.by+2.5,cz+6],[S.bx-2,S.by+1.2,cz],1]; if(t<12)return [[cx-26,25,cz+10],[cx-8,19,cz-2],2];
+    if(t<18)return [[S.bx+5,S.by+1.8,cz+6.5],[S.bx-1,S.by+0.8,cz+1],3]; if(t<24)return [[S.bx+4,S.by+2.4,cz-6],[S.bx-2,S.by+1.2,cz],4]; return [odL([S.bx+6,16,cz+12],[S.bx+3,24,cz+20],odSeg(S,24,28)),[S.raft.position.x,11.5,cz+2],5]; } };
+// ---------- 10. THE RETURN TO ITHACA (and the finale) ----------
+OD_CH.od10={secs:40,sky:'sunset',mood:'calm',init(S){ const K=odyK, [cx,cz]=OD.ithaca; S.raft=new THREE.Group(); S.grp.add(S.raft); for(let i=0;i<5;i++){ const l=mcyl(S.raft,0.25,0.25,3,mm(0x8a5a2a),(i-2)*0.5,0,0,8); l.rotation.x=Math.PI/2; }
+    S.suit=[]; for(let i=0;i<6;i++){ const tx=cx-5+Math.floor(i/2)*5, a=odPerson(S.grp,tx+(i%2?0.9:-0.9),23,cz-2.1,Math.PI,odLook({top:'tee',topC:['#d8a020','#8a2ad8','#2ad8a0','#d82a6a','#2a6ad8','#ff8a1a'][i]})); a.x0=a.g.position.x; S.suit.push(a); }
+    S.sy=gy(cx,cz-20); },
+  tick(S,dt){ const K=odyK, t=S.t, [cx,cz]=OD.ithaca, pen=K.pen, tel=K.tel;
+    if(t<3){ const z=cz-38+6*odE(odSeg(S,0,3)); S.raft.position.set(cx,OD.SEA+0.85,z); odHeroTo(S,[cx,OD.SEA+1.1,z],Math.PI,false); } else if(t<5){ S.raft.position.set(cx,OD.SEA+0.85,cz-32); odHeroTo(S,[cx,S.sy,cz-20],Math.PI,false); }
+    odAt(S,3.6,'cloak',()=>{ odPoof(cx,S.sy,cz-20,0xd8c8a0); odHeroCloak(true); }); odAt(S,4.1,'s1',()=>odSay(S,S.hero,'Home... in disguise.'));
+    S.suit.forEach((a,i)=>{ if(t<14.5){ odSit(a); a.g.position.y=23+0.57-0.72; a.R.armR.rotation.x=0.7+Math.max(0,Math.sin(t*3+i))*0.8; animRig(a.R,dt,0); } });
+    odAt(S,5.5,'s2',()=>odSay(S,S.suit[0],'Ha! More food!')); odAt(S,7.4,'s3',()=>odSay(S,S.suit[3],'Out, old beggar!'));
+    if(t>=5&&t<13.5)odHeroPath(S,[cx,23,cz-8.5],[cx,23,cz-4],5,8); if(t>=8.5&&t<26){ odMove(tel,[cx+3,23,cz+2],[cx+1.2,23,cz-2.6],odSeg(S,8.5,10)); odWalk(tel,dt,t<10); if(t>10)tel.g.rotation.y=Math.PI*0.8; }
+    odAt(S,10,'s4',()=>odSay(S,tel,'Who are you, old man?')); odAt(S,11.4,'s5',()=>odSay(S,S.hero,"It's me, son. Your father.")); odAt(S,12.8,'s6',()=>odSay(S,tel,'Father?!'));
+    odAt(S,13.6,'reveal',()=>{ odFlash(700); odHeroCloak(false); for(let k=0;k<4;k++)burst(cx-0.5,24,cz-4.5,new THREE.Color(0xffd23a),10); odSfx('magic'); }); odAt(S,14,'s7',()=>{ odSay(S,S.hero,'I am ODYSSEUS!'); odMood='hero'; });
+    S.suit.forEach((a,i)=>{ if(t>=14.5&&t<18.5){ a.g.position.y=23; odRest(a); a.R.armL.rotation.z=-2.6; a.R.armR.rotation.z=2.6; animRig(a.R,dt,0); }
+      if(t>=18.5){ const t0=18.5+i*0.45, path=[[a.x0,23,cz-2.1],[cx,23,cz-9],[cx+(i-2.5)*1.2,23,cz-12],[cx+(i-2.5)*1.6,S.sy,cz-20],[cx+(i-2.5)*1.6,OD.SEA,cz-30]], k=odSeg(S,t0,t0+5.5), n=path.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u);
+        odRest(a); odMove(a,path[j],path[j+1],u-j); if(j===n-1)a.g.position.y+=Math.sin((u-j)*Math.PI)*2; odWalk(a,dt,k<1,12); a.R.armL.rotation.z=-2.4; a.R.armR.rotation.z=2.4; if(k>=1&&!a.wet){ a.wet=true; a.g.visible=false; odSfx('splash'); burst(a.g.position.x-0.5,OD.SEA+0.5,a.g.position.z-0.5,new THREE.Color(0xd0f0ff),14); } } });
+    for(const [tt,k] of [[16,'b1'],[16.7,'b2'],[17.4,'b3']])odAt(S,tt,k,()=>odSfx('bonk')); odAt(S,18.8,'s8',()=>odSay(S,S.suit[1],'RUN!!')); odAt(S,20.3,'s9',()=>odSay(S,S.suit[4],'Aaaah!'));
+    if(t>=26){ odHeroTo(S,[cx,23,cz-10.4],Math.PI,false); odMove(pen,[cx,23,cz+5],[cx-1.1,23,cz-10],odSeg(S,26,27.6)); odWalk(pen,dt,t<27.6); odMove(tel,[cx+1.2,23,cz-2.6],[cx+1.2,23,cz-10],odSeg(S,26,27.6)); odWalk(tel,dt,t<27.6);
+      if(t>27.6&&t<32){ pen.g.rotation.y=-Math.PI/2; tel.g.rotation.y=Math.PI/2; for(const a of [pen,tel]){ a.R.armL.rotation.x=a.R.armR.rotation.x=-1.4; animRig(a.R,dt,0); } }
+      if(t>=32){ for(const a of [pen,tel]){ a.g.rotation.y=0; odRest(a); animRig(a.R,dt,0); } odHeroTo(S,[cx,23,cz-10.4],0,false); } }
+    odAt(S,27,'s10',()=>{ odSay(S,pen,"Odysseus! You're home!"); odMood='joy'; }); odAt(S,28,'hearts',()=>{ for(let k=0;k<5;k++)burst(cx-0.5,25,cz-11,new THREE.Color(0xff5a9a),10); odSfx('cheer'); }); },
+  pose(S){ const t=S.t; if(t<3){ legL.rotation.x=legR.rotation.x=0; } if(t>=16&&t<18){ armR.rotation.x=-1.2+Math.sin((t-16)*Math.PI*3)*1.6; } if(t>27.6&&t<32){ armL.rotation.x=armR.rotation.x=-1.4; } },
+  cam(S){ const t=S.t, [cx,cz]=OD.ithaca; if(t<5)return [[cx+7,15,cz-46],[cx,12,cz-30],0]; if(t<8)return [[cx,26.5,cz+6],[cx,24,cz-5],1]; if(t<13.5)return [[cx-3.6,25,cz-3],[cx+0.6,24.2,cz-3.6],2];
+    if(t<18)return [[cx+3,24,cz-6.8],[cx,24.6,cz-3.8],3]; if(t<22)return [[cx-6,26,cz+5],[cx,24,cz-8],4]; if(t<26)return [[cx+8,28,cz-13],[cx,16,cz-25],5]; if(t<32)return [[cx,25.2,cz-15.4],[cx,24.3,cz-10.4],6];
+    const k=odE(odSeg(S,32,40)); return [odL([cx,25.5,cz-15.5],[cx,64,cz-62],k),odL([cx,24.4,cz-10.4],[cx,20,cz-4],k),7]; } };
+// the ten chapters as Demo Mode scenes, and one click to line them all up
+const OD_NAMES=['The Fall of Troy','The Great Voyage','The Land of the Cyclops','Circe and the Pigs','The Sirens','The Underworld','Scylla and Charybdis','The Island of the Sun God',"Calypso's Island",'The Return to Ithaca'];
+function loadOdyssey(){ dmCfg.scenes=OD_NAMES.map((n,i)=>cleanScene({act:'od'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['od'+(i+1)].secs,cap:''})); saveDemo(); }
+
 // ================= START =================
 graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
 { const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'); const r=mulberry32(7);
@@ -6416,7 +6822,7 @@ hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},OD,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
