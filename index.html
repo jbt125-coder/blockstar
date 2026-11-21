@@ -1052,7 +1052,7 @@ const fpWeapon=new THREE.Group(); fpHolder.add(fpWeapon); fpWeapon.rotation.set(
 function refreshWeapon(){
   tpWeapon.clear(); tpWeapon.add(weaponMesh(weapon,false));
   fpWeapon.clear(); fpWeapon.add(weaponMesh(weapon,true));
-  const w=WP[weapon]; $('bWeapon').textContent=w.icon+' '+w.name.split(' ')[0]; refreshHeld();
+  const w=WP[weapon]; $('bWeapon').textContent=w.icon+' '+w.name.split(' ')[0]; if(ranchK&&onRanch()&&ranchK.tool&&RTOOLS[ranchK.tool]&&(!demo||demo.user))$('bWeapon').textContent=RTOOLS[ranchK.tool].i+' '+RTOOLS[ranchK.tool].n; refreshHeld();
 }
 let swingT=0;
 
@@ -4678,7 +4678,7 @@ function giveApple(a,food){ const K=ranchK; if(food==='carrot')K.bag.carrot--; e
 function ranchHit(){ const K=ranchK; if(!K||!onRanch())return false; if(aimFruit)return false; // picking an apple comes first
   if(!K.ride&&target&&isFarm(target.b)&&K.tool!=='bow'){ const c=cropAt(target.x,target.y,target.z); if(c&&c.g>=1){ harvest(c); return true; } if(c&&K.tool==='lasso'){ rtoast(CROPS[c.type].i+' Still growing ('+Math.round(c.g*100)+'%).'); return true; } }
   if(K.tool==='bow'){ if(weapon!=='bow'){ weapon='bow'; refreshWeapon(); } swingT=0.25; if(atkCd<=0)shoot(WP.bow); return true; }
-  if(K.tool==='pole'){ if(weapon!=='pole'){ weapon='pole'; refreshWeapon(); } fishingHit(); return true; } // fishing in the lake // the hunting bow always shoots (even from the saddle)
+  if(K.tool==='pole'){ if(weapon!=='pole'){ if(weapon!=='bow')K.prevWeapon=weapon; weapon='pole'; refreshWeapon(); } fishingHit(); return true; } // fishing in the lake // the hunting bow always shoots (even from the saddle)
   if(K.tool!=='lasso'&&!K.ride)return farmHit();
   if(K.lasso)return true; if(K.rope){ const a=K.rope.a; K.rope=null; ropeLine.visible=false; a.st='wander'; rtoast('🪢 You let the '+(a.kind==='horse'?horseName(a):STEERS[a.breed].n+' steer')+' go.'); return true; }
   const o=new THREE.Vector3(pl.p[0],pl.p[1]+1.5,pl.p[2]), d=lookDir(); let best=null, bd=15;
@@ -4957,7 +4957,7 @@ function toolMesh(t){ const g=new THREE.Group(), add=(w,h,d,c,x,y,z)=>{ const b=
   return g; }
 const toolHand=new THREE.Group(); toolHand.position.set(0,-0.66,-0.08); rig.armR.add(toolHand);
 function equipTool(t,quiet){ const K=ranchK; if(!K||!RTOOLS[t])return; K.tool=t; toolHand.clear(); const tm=toolMesh(t); toolHand.add(tm);
-  if(t==='bow'||t==='pole'){ if(weapon!=='bow'&&weapon!=='pole')K.prevWeapon=weapon; weapon=t; } else if((weapon==='bow'||weapon==='pole')&&K.prevWeapon!==undefined&&K.prevWeapon!=='bow'&&K.prevWeapon!=='pole'){ weapon=K.prevWeapon; }
+  if(t==='bow'||t==='pole'){ if(weapon!=='bow'&&weapon!=='pole')K.prevWeapon=weapon; weapon=t; } else if(weapon==='bow'||weapon==='pole'){ const pw=K.prevWeapon; weapon=pw&&pw!=='bow'&&pw!=='pole'&&owned.includes(pw)?pw:'fists'; }
   if(t!=='pole'&&fishK.cast)fishReel(false); refreshWeapon(); if(t!=='bow'&&t!=='lasso'&&t!=='pole')tpWeapon.visible=false; refreshToolChip();
   if(!quiet)rtoast(RTOOLS[t].i+' '+RTOOLS[t].n+(t==='seeds'?' ('+CROPS[K.seed].i+' '+CROPS[K.seed].n+')':'')+': '+RTOOLS[t].d); }
 function cycleTool(){ const K=ranchK, own=RTOOL_ORDER.filter(t=>K.tools.includes(t)||(t==='pole'&&owned.includes('pole'))); equipTool(own[(own.indexOf(K.tool)+1)%own.length]); }
@@ -4965,7 +4965,7 @@ function cycleTool(){ const K=ranchK, own=RTOOL_ORDER.filter(t=>K.tools.includes
 const toolChip=document.createElement('div'); toolChip.id='rTool'; toolChip.className='ui';
 toolChip.style.cssText='position:fixed;top:calc(64px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));background:rgba(20,24,32,.68);color:#fff;font:800 13px sans-serif;padding:5px 10px;border-radius:10px;display:none;z-index:4;cursor:pointer;max-width:70vw';
 document.body.appendChild(toolChip); tap(toolChip,()=>{ if(onRanch())cycleTool(); });
-function refreshToolChip(){ const K=ranchK; if(!K||!onRanch()||(demo&&!demo.user)){ toolChip.style.display='none'; return; } const T=RTOOLS[K.tool], b=K.bag;
+function refreshToolChip(){ const K=ranchK; if(!K||!onRanch()||(demo&&!demo.user)){ toolChip.style.display='none'; return; } if(RTOOLS[K.tool])$('bWeapon').textContent=RTOOLS[K.tool].i+' '+RTOOLS[K.tool].n; const T=RTOOLS[K.tool], b=K.bag;
   const inv=[['🍎',K.apples],...Object.keys(BAG_PRICE).map(k=>[k==='egg'?'🥚':CROPS[k].i,b[k]])].filter(q=>q[1]>0).map(q=>q[0]+q[1]).join(' ');
   toolChip.innerHTML=T.i+' '+T.n+(K.tool==='seeds'?' · '+CROPS[K.seed].i:'')+(K.tool==='water'?' · 💧'+K.can:'')+(K.tools.length>1?' <span style="opacity:.6">⇄</span>':'')+(inv?'<br><span style="font-weight:700">'+inv+'</span>':''); toolChip.style.display='block'; }
 // --- the farm: crops, and what each tool does to the soil
