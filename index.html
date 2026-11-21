@@ -7035,14 +7035,14 @@ function petDemoCam(dt){ const P=demo.pil, t=P.t; let want, look;
 // (from the clerk or from Flint), cast into water, wait for a bite, and click to reel it in.
 const FISH={goldfish:{n:'Goldfish',w:'fresh',price:2,c:0xf28a1a,c2:0xffc040,len:0.35,fact:'Goldfish can live 10 to 20 years, and some have lived over 40!'},
   koi:{n:'Koi',w:'fresh',price:4,c:0xf4f2ee,c2:0xe8501a,c3:0x1a1a1a,spots:1,len:0.6,fact:'Koi are colorful carp. One famous koi named Hanako lived to be 226 years old!'},
-  trout:{n:'Rainbow trout',w:'fresh',price:3,c:0x8a9a5a,c2:0xe86a8a,stripe:1,len:0.55,fact:'Rainbow trout have a pink stripe along their sides, like a rainbow.'},
+  bluegill:{n:'Bluegill',w:'fresh',price:2,c:0x4a6a8a,c2:0xf2902a,belly:1,earspot:1,tall:1,len:0.35,fact:'Bluegill are one of the most common pond fish in America. The dark spot by their gills looks like an ear!'},
   bass:{n:'Largemouth bass',w:'fresh',price:3,c:0x5a8a3a,c2:0x2a3a1a,stripe:1,len:0.6,fact:'A largemouth bass can open its mouth wide enough to swallow a frog in one gulp.'},
   catfish:{n:'Catfish',w:'fresh',price:3,c:0x6a5a4a,c2:0x8a7a6a,whiskers:1,len:0.65,fact:'Catfish are named for their whiskers, called barbels. They taste the water with them!'},
   clown:{n:'Clownfish',w:'salt',price:4,c:0xf2701a,c2:0xffffff,bands:1,len:0.3,fact:'Clownfish live safely inside stinging sea anemones. Their slimy coat protects them.'},
   tang:{n:'Blue tang',w:'salt',price:4,c:0x2a5ae8,c2:0xffd21a,len:0.4,fact:'Blue tangs are bright blue with a yellow tail, and they can change to a darker blue at night.'},
   puffer:{n:'Pufferfish',w:'salt',price:5,c:0xd8c070,c2:0x6a5a3a,round:1,len:0.4,fact:'A pufferfish gulps water to blow up like a spiky ball when it gets scared.'},
-  angel:{n:'Angelfish',w:'salt',price:5,c:0xffd21a,c2:0x2a5ae8,tall:1,stripe:1,len:0.4,fact:'Angelfish have tall, flat bodies that let them slip between corals.'},
-  sword:{n:'Swordfish',w:'salt',price:6,c:0x3a5a8a,c2:0xd8e0f0,bill:1,len:1.1,fact:'Swordfish can swim over 50 miles per hour, one of the fastest fish in the sea.'}};
+  snapper:{n:'Red snapper',w:'salt',price:4,c:0xe0484a,c2:0xf8b0a8,belly:1,len:0.6,fact:'Red snapper live near reefs and shipwrecks, and can live more than 50 years.'},
+  tuna:{n:'Yellowfin tuna',w:'salt',price:6,c:0x1a3a6a,c2:0xd8e0e8,c3:0xffd21a,belly:1,finlets:1,len:1.0,fact:'Yellowfin tuna can swim over 40 miles per hour and dive more than 1,000 feet deep.'}};
 const FISH_BAG_KEY='blockstar_fishbag';
 let fishBag=[], fishes=[], fishK={cast:null,breedT:15};
 function fishBagLoad(){ try{ const s=JSON.parse(localStorage.getItem(FISH_BAG_KEY)||'null'); if(s&&Array.isArray(s.bag))fishBag=s.bag.filter(k=>FISH[k]).slice(0,40); }catch(e){} }
@@ -7052,7 +7052,8 @@ function waterKind(){ const p=curPlace(); return p==='odyssey'||p==='city'||p===
 function fishMesh(k){ const F=FISH[k], g=new THREE.Group(), L=F.len, M=c=>new THREE.MeshLambertMaterial({color:c}), add=(w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); g.add(b); return b; };
   const body=new THREE.Group(); g.add(body);
   if(F.round){ const s=msph(body,L*0.45,M(F.c),0,0,0); for(let i=0;i<10;i++){ const a=i*0.9, b2=i*1.7; mb(body,0.03,0.03,0.08,M(F.c2),Math.cos(a)*L*0.45,Math.sin(b2)*L*0.3,Math.sin(a)*L*0.45); } }
-  else { const h=L*(F.tall?0.7:0.32); const bb=box(L*0.22,h,L,M(F.c)); body.add(bb); if(F.stripe)mb(body,L*0.23,h*0.25,L*0.9,M(F.c2),0,0,0);
+  else { const h=L*(F.tall?0.7:0.32); const bb=box(L*0.22,h,L,M(F.c)); body.add(bb); if(F.stripe)mb(body,L*0.23,h*0.25,L*0.9,M(F.c2),0,0,0); if(F.belly)mb(body,L*0.23,h*0.42,L*0.92,M(F.c2),0,-h*0.3,0); if(F.earspot)for(const sd of[-1,1])mb(body,0.02,h*0.22,L*0.12,M(0x101820),sd*L*0.115,h*0.05,-L*0.22);
+    if(F.finlets)for(let i=0;i<4;i++){ mb(body,0.02,h*0.22,0.05,M(F.c3),0,h*0.55,L*(0.12+i*0.09)); mb(body,0.02,h*0.22,0.05,M(F.c3),0,-h*0.55,L*(0.12+i*0.09)); }
     if(F.bands)for(const z of [-0.25,0.05,0.3])mb(body,L*0.24,h*0.95,L*0.08,M(F.c2),0,0,z*L);
     if(F.spots)for(let i=0;i<5;i++)mb(body,L*0.24,h*0.3,L*0.16,M(i%2?F.c2:F.c3),0,(i%3-1)*h*0.25,(i/4-0.5)*L*0.7);
     if(F.bill)mb(body,0.04,0.04,L*0.5,M(F.c2),0,h*0.05,-L*0.72); if(F.whiskers)for(const s of[-1,1])mb(body,0.02,0.02,L*0.3,M(0x2a2a2a),s*L*0.12,-h*0.2,-L*0.6);
@@ -7108,7 +7109,7 @@ function fishCastTick(dt){ const C=fishK.cast; if(!C)return; C.t+=dt; const tip=
   if(C.ph==='wait'&&C.t>=C.bite){ C.ph='bite'; C.bt=C.t; toast('🎣 A bite! Click (or tap Hit) now!'); if(AC&&sfxOn)try{ noise(1500,0.15,0.2,'bandpass'); tone('sine',900,500,0.12,0.05); }catch(e){} burst(BOB.position.x-0.5,BOB.position.y-0.3,BOB.position.z-0.5,new THREE.Color(0xd0f0ff),6); }
   if(C.ph==='bite'&&C.t-C.bt>1.4){ toast('🐟 It got away! Cast again.'); fishReel(false); } }
 function fishCatch(C){ const kind=waterKind(); let k=null, near=fishes.filter(f=>f.b===C.body&&Math.hypot(f.p[0]-BOB.position.x,f.p[2]-BOB.position.z)<10).sort((a,b)=>Math.hypot(a.p[0]-BOB.position.x,a.p[2]-BOB.position.z)-Math.hypot(b.p[0]-BOB.position.x,b.p[2]-BOB.position.z));
-  if(near.length&&Math.random()<0.8){ k=near[0].k; removeFish(near[0]); } else { const ks=Object.keys(FISH).filter(q=>FISH[q].w===kind&&q!=='sword'||(kind==='salt'&&q==='sword'&&Math.random()<0.15)); k=ks[Math.floor(Math.random()*ks.length)]; }
+  if(near.length&&Math.random()<0.8){ k=near[0].k; removeFish(near[0]); } else { const ks=Object.keys(FISH).filter(q=>FISH[q].w===kind); k=ks[Math.floor(Math.random()*ks.length)]; }
   fishBag.push(k); fishBagSave(); coins+=1; updateHUD(); sfx('coin'); burst(BOB.position.x-0.5,BOB.position.y,BOB.position.z-0.5,new THREE.Color(0xd0f0ff),12);
   toast('🎣 You caught a '+FISH[k].n.toLowerCase()+'! 🪙+1. '+FISH[k].fact+' (It\'s in your bag: put it back in some water, or keep it.)'); fishReel(false); queueSave(); }
 // the pole you hold, and buying fish at the Pet Shop
@@ -7124,7 +7125,7 @@ function bindFishShop(redo){ $('mbox').querySelectorAll('[data-fish]').forEach(b
 // the Pet Shop's fish tank
 function fishTank(root){ const t=grp(root,33,1,30); mb(t,6,1,2.4,mm(0x2a2a2e),0,0.5,0); mb(t,6,2.6,2.4,new THREE.MeshLambertMaterial({color:0x7ad0f0,transparent:true,opacity:0.35}),0,2.3,0); mb(t,5.8,0.2,2.2,mm(0xe8d8a0),0,1.1,0);
   for(let i=0;i<4;i++){ const p=mcyl(t,0.05,0.07,1.2+Math.random(),mm(0x3aa04a),-2.4+i*1.5,1.7,(Math.random()-0.5)*1.4,6); } const lb=labelSprite('🐟 Fish & fishing'); lb.position.set(0,4.2,0); t.add(lb);
-  const fs=[]; Object.keys(FISH).forEach((k,i)=>{ const m=fishMesh(k); m.g.scale.setScalar(k==='sword'?0.5:0.8); t.add(m.g); fs.push({m,ph:i*0.7,r:0.6+(i%3)*0.35,y:1.6+(i%4)*0.4}); }); return fs; }
+  const fs=[]; Object.keys(FISH).forEach((k,i)=>{ const m=fishMesh(k); m.g.scale.setScalar(k==='tuna'?0.5:0.8); t.add(m.g); fs.push({m,ph:i*0.7,r:0.6+(i%3)*0.35,y:1.6+(i%4)*0.4}); }); return fs; }
 
 // ================= START =================
 graniteTex=tileTex('granite'); lavaTex=tileTex('lava');
