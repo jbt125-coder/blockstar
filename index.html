@@ -7421,7 +7421,8 @@ function rkDress(S,kind){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,m
   if(kind==='sweats'){ put(rig.torso,0.55,0.77,0.31,0x8a8a90,0,1.08,0); put(rig.torso,0.4,0.22,0.12,0x7a7a80,0,1.48,0.16); for(const a of [armL,armR])put(a,0.28,0.74,0.28,0x8a8a90,0,-0.34,0); for(const l of [legL,legR])put(l,0.28,0.7,0.28,0x7e7e84,0,-0.34,0); put(head,0.5,0.1,0.5,0x1a1a1e,0,0.47,0); }
   if(kind==='gloves')for(const a of [armL,armR])put(a,0.3,0.3,0.34,0xc81a1a,0,-0.78,-0.02); }
 // a boxer's fists: a guard up in front of the face, and one fist at a time snapping out
-function rkFists(L,R,t,rate,ph){ const c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=1.15; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=1.15+0.45*e; else L.rotation.x=1.15+0.45*e; return {e,right:c<1}; }
+function rkFists(L,R,t,rate,ph,base,reach){ const b=base||1.15, r=reach||0.45, c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=b; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=b+r*e; else L.rotation.x=b+r*e; return {e,right:c<1}; }
+function rkSpeedBag(L,R,t){ L.rotation.x=2.25+Math.sin(t*22)*0.28; R.rotation.x=2.25+Math.sin(t*22+Math.PI)*0.28; L.rotation.z=0.35; R.rotation.z=-0.35; } // fists up high, rolling in fast little circles
 function rkSign(par,text,w,h,bg,fg,x,y,z,ry){ const c=canvasTex(256,Math.round(256*h/w)); c.x.fillStyle=bg; c.x.fillRect(0,0,256,c.c.height); c.x.fillStyle=fg; c.x.font='bold '+Math.round(c.c.height*0.5)+'px sans-serif'; c.x.textAlign='center'; c.x.textBaseline='middle'; c.x.fillText(text,128,c.c.height/2+2); c.t.needsUpdate=true;
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:c.t})); m.position.set(x,y,z); m.rotation.y=ry||0; par.add(m); return m; }
 let rkK=null;
@@ -7433,7 +7434,9 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
     mxDesk(root,64.5,g,92.4,0,1.4,1); for(const s of[-1,1])mxChair(root,64.5+s*1.1,g,92.4,s*Math.PI/2,0x6a4a2a).scale.set(0.5,0.6,0.5); for(let i=0;i<3;i++)mcyl(root,0.06,0.06,0.16,mm([0xf2f2f2,0xd8c8a0,0xc8a040][i]),64.2+i*0.3,g+0.89,92.3,8);
     const bed=grp(root,67.2,g,89.8,Math.PI/2); mb(bed,1.4,0.45,2.4,mm(0x5a4a3a),0,0.22,0); mb(bed,1.3,0.12,2.3,mm(0xd8d0c0),0,0.5,0); mb(bed,1.3,0.1,1.4,mm(0x6a2a2a),0,0.58,0.4);
     const sh=grp(root,61.5,g,89.2); mb(sh,0.8,0.9,0.6,mm(0x6a4a2a),0,0.45,0); mb(sh,0.7,0.35,0.45,new THREE.MeshLambertMaterial({color:0xa8d8f0,transparent:true,opacity:0.45}),0,1.08,0); mb(sh,0.68,0.08,0.43,mm(0x6a8a4a),0,0.94,0);
-    K.turtles=[0,1].map(i=>{ const t=grp(sh,-0.15+i*0.3,1.0,0); mb(t,0.16,0.07,0.2,mm(0x3a7a3a),0,0,0); mb(t,0.06,0.05,0.07,mm(0x8ab86a),0,0,-0.12); return t; });
+    K.turtles=[0,1].map(i=>{ const t=grp(sh,-0.15+i*0.3,0.99,0), skin=mm(0x8ab86a); t.scale.setScalar(0.8); const shell=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,6,0,Math.PI*2,0,Math.PI/2),mm(i?0x4a6a2a:0x3a7a3a)); shell.scale.set(1,0.75,1.25); t.add(shell); mb(t,0.17,0.02,0.22,mm(0xd8c870),0,0.005,0);
+      for(let k=0;k<5;k++)mb(t,0.045,0.012,0.045,mm(0x2a4a1a),Math.cos(k*1.26)*0.05,0.07,Math.sin(k*1.26)*0.06); msph(t,0.04,skin,0,0.03,-0.15,1,0.9,1.2); for(const s of[-1,1])msph(t,0.008,mm(0x0a0a0a),s*0.022,0.045,-0.18);
+      for(const [x,z] of [[-0.08,-0.07],[0.08,-0.07],[-0.08,0.07],[0.08,0.07]])mb(t,0.04,0.02,0.05,skin,x,0.0,z); mb(t,0.02,0.015,0.05,skin,0,0.01,0.14); return t; }); msph(sh,0.06,mm(0x8a8a8a),0.12,0.97,0.08,1.4,0.6,1);
     const mr=grp(root,64.2,g,95.85); mb(mr,0.9,1.2,0.06,mm(0x5a3a1a),0,1.6,0); mb(mr,0.78,1.06,0.02,new THREE.MeshBasicMaterial({color:0xc8d8e0}),0,1.6,-0.04); for(const [x,y] of [[-0.25,1.95],[0.18,1.35]])mb(mr,0.2,0.26,0.02,mm(0xe8e0c0),x,y,-0.06);
     rkSign(root,'BOXING · FRIDAY',1.2,0.8,'#d8c070','#2a1a10',62,g+1.9,95.9,Math.PI); }
   // the pet shop: fish tanks, birds, puppies, the counter, Adrian, and Butkus
@@ -7444,7 +7447,7 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
     const ct=grp(root,36,g,94.3); mb(ct,5,1,0.8,mm(0x6a4a2a),0,0.5,0); mb(ct,0.5,0.35,0.4,mm(0x3a3a3a),1.6,1.18,0); mb(ct,0.4,0.5,0.3,mm(0xd8b070),-1.4,1.25,0);
     const pen=grp(root,38.6,g,90); for(const [w,d,x,z] of [[2,0.08,0,-1],[2,0.08,0,1],[0.08,2,-1,0],[0.08,2,1,0]])mb(pen,w,0.6,d,mm(0xc8c8c8),x,0.3,z);
     K.pups=[0,1].map(i=>{ const M=petMesh({kind:'dog',breed:'jack',size:0.55,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3',coat:'short',ears:'fold',seed:3+i}); M.mat.userData.own=true; M.g.position.set(38.2+i*0.8,g,89.7+i*0.5); root.add(M.g); M.ph=0; return M; });
-    K.adrian=rkPerson(root,'adrian',36,g,95.6,Math.PI); K.speak.push(K.adrian); K.butkus=rkButkus(root); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; }
+    K.adrian=rkPerson(root,'adrian',36,g,95.6,0.001); K.speak.push(K.adrian); K.butkus=rkButkus(root); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; }
   // Mickey's gym: the ring, heavy bags, a speed bag, lockers, a mirror, and boxers who never stop training
   { const Y=RK.gym; rkSign(root,"MIGHTY MICK'S BOXING",7,1,'#2a1a10','#f2d060',63.5,g+3.5,Y.z1+1.06,0);
     const ring=grp(root,61,g,61); K.ring=ring; mb(ring,7,0.8,7,mm(0x3a3a4a),0,0.4,0); mb(ring,6.6,0.04,6.6,mm(0xd8d0c0),0,0.82,0); for(const [x,z,c] of [[-3.2,-3.2,0xc81a1a],[3.2,-3.2,0x2a4ad8],[-3.2,3.2,0xf2f2f2],[3.2,3.2,0xf2f2f2]])mb(ring,0.18,1.7,0.18,mm(c),x,1.65,z);
@@ -7465,9 +7468,9 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
     const bp=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.7,1.1,16),bm); bp.position.y=1.8; bell.add(bp); const lip=new THREE.Mesh(new THREE.CylinderGeometry(0.74,0.74,0.12,16),bm); lip.position.y=1.22; bell.add(lip); mb(bell,0.04,0.7,0.02,mm(0x1a1a1a),0.1,1.6,-0.6); K.bell=bell;
     const ck=new THREE.Mesh(new THREE.CircleGeometry(0.7,20),new THREE.MeshBasicMaterial({color:0xf2f2e8})); ck.position.set(127.5,g+12,67.06); root.add(ck); mb(root,0.06,0.5,0.02,mm(0x1a1a1a),127.5,g+12.2,67.08); mb(root,0.4,0.06,0.02,mm(0x1a1a1a),127.65,g+12,67.08); }
   // the corner: three singers under the lamp, kids on a stoop, the grocer at the corner store
-  K.singers=[0,1,2].map(i=>{ const s=rkPerson(root,'singer',56.4+i*0.9,g,85.6,Math.PI,{skin:['#a8704a','#e8c4a0','#7a4a2a'][i]}); K.speak.push(s); return s; });
-  mb(root,1.8,0.5,0.6,mm(0xb8b0a0),59.55,g+0.25,85.9); K.kids=[0,1].map(i=>{ const k=rkPerson(root,'kid',59.2+i*0.7,g,85.9,Math.PI,i?{hair:'ponytail',topC:'#3a8ad8',hairC:'#2a1a10'}:{}); k.g.scale.setScalar(0.72); K.speak.push(k); return k; });
-  K.grocer=rkPerson(root,'grocer',70.6,g,85.6,Math.PI); K.speak.push(K.grocer); const hy=grp(root,44,g,85); mcyl(hy,0.18,0.2,0.7,mm(0xd8c02a),0,0.35,0,8); msph(hy,0.16,mm(0xd8c02a),0,0.72,0); K.hydrant=hy;
+  K.singers=[0,1,2].map(i=>{ const s=rkPerson(root,'singer',56.4+i*0.9,g,85.6,0,{skin:['#a8704a','#e8c4a0','#7a4a2a'][i]}); K.speak.push(s); return s; });
+  mb(root,1.8,0.5,0.6,mm(0xb8b0a0),59.55,g+0.25,85.75); K.kids=[0,1].map(i=>{ const k=rkPerson(root,'kid',59.2+i*0.7,g,85.4,0.001,i?{hair:'ponytail',topC:'#3a8ad8',hairC:'#2a1a10'}:{}); k.g.scale.setScalar(0.72); K.speak.push(k); return k; });
+  K.grocer=rkPerson(root,'grocer',70.6,g,85.6,0.001); K.speak.push(K.grocer); const hy=grp(root,44,g,85); mcyl(hy,0.18,0.2,0.7,mm(0xd8c02a),0,0.35,0,8); msph(hy,0.16,mm(0xd8c02a),0,0.72,0); K.hydrant=hy;
   K.pigeons=[0,1,2].map(i=>{ const p=grp(root,47+i*0.6,g,84.4+(i%2)*0.4); mb(p,0.14,0.12,0.24,mm(0x8a8a9a),0,0.1,0); mb(p,0.08,0.08,0.08,mm(0x5a6a7a),0,0.2,-0.12); return p; }); buildRkLife2(K); }
 function clearRkLife(){ rkStageClear(); const K=rkK; if(!K)return; scene.remove(K.root); odFree(K.root); for(const b of K.boxers)undress(b.g); rkK=null; }
 function rkTick(dt){ const K=rkK; K.t+=dt; const t=K.t, S=rkStage;
@@ -7478,12 +7481,12 @@ function rkTick(dt){ const K=rkK; K.t+=dt; const t=K.t, S=rkStage;
   K.speed.rotation.z=Math.sin(t*(S&&S.speedOn?40:3))*(S&&S.speedOn?0.6:0.08);
   // the gym's boxers keep training whatever happens in the story (unless a chapter borrows them)
   for(const b of K.boxers){ if(b.borrowed)continue; const R=b.R; if(b.job==='spar'){ const f=rkFists(R.armL,R.armR,t+b.home[0],1.6,0); b.g.position.x=b.home[0]+Math.sin(t*1.3+b.home[0])*0.25; b.g.position.y=b.home[1]+Math.abs(Math.sin(t*5))*0.05; }
-    else if(b.job==='bag'){ const f=rkFists(R.armL,R.armR,t,2.2,0.5); if(f.e>0.95&&!b.hit){ b.hit=true; K.bags[2].va+=f.right?0.4:-0.4; K.bags[2].vz+=0.2; } if(f.e<0.5)b.hit=false; }
+    else if(b.job==='bag'){ const f=rkFists(R.armL,R.armR,t,2.2,0.5,1.5,0.32); if(f.e>0.95&&!b.hit){ b.hit=true; K.bags[2].va+=f.right?0.4:-0.4; K.bags[2].vz+=0.2; } if(f.e<0.5)b.hit=false; }
     else { const hop=Math.abs(Math.sin(t*7)); b.g.position.y=b.home[1]+hop*0.25; R.armL.rotation.z=-0.5; R.armR.rotation.z=0.5; R.armL.rotation.x=R.armR.rotation.x=0.4; K.rope.position.set(b.home[0],b.home[1]+0.9,b.home[2]); K.rope.rotation.set(t*14,0,0); }
     animRig(R,dt,0); }
   if(!(S&&S.mickeyBusy)){ const M=K.mickey; M.R.armR.rotation.x=Math.sin(t*2)>0.6?2.2:0.4; animRig(M.R,dt,0); }
   K.singers.forEach((s,i)=>{ s.R.armL.rotation.x=s.R.armR.rotation.x=0.3+Math.max(0,Math.sin(t*4+i))*0.4; s.g.position.y=RK.g+Math.abs(Math.sin(t*4+i))*0.04; animRig(s.R,dt,0); });
-  K.kids.forEach((k,i)=>{ if(!k.busy){ odSit(k); k.g.position.set(59.2+i*0.7,RK.g-0.02,85.9); k.g.rotation.y=Math.PI; animRig(k.R,dt,0); } });
+  K.kids.forEach((k,i)=>{ if(!k.busy){ odSit(k); k.g.position.set(59.2+i*0.7,RK.g-0.02,85.4); k.g.rotation.y=0; animRig(k.R,dt,0); } });
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   rkTick2(dt); if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&isRk(demo.sc))rkMusicTick(dt); }
 
@@ -7499,9 +7502,9 @@ function demoRkSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mans
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; rkMood=ch.mood||'street'; rkSky(ch.sky||'day'); ch.init(S); demo.cam=null; }
 function rkStageClear(){ const S=rkStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(rkK)rkK.root.remove(S.grp); odFree(S.grp); rkStage=null;
   model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(rkK)rkDefaults(); rkTitle('',false); }
-function rkDefaults(){ const K=rkK, g=RK.g; K.adrian.g.position.set(36,g,95.6); K.adrian.g.rotation.y=Math.PI; odRest(K.adrian); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; K.butkus.g.visible=true;
+function rkDefaults(){ const K=rkK, g=RK.g; K.adrian.g.position.set(36,g,95.6); K.adrian.g.rotation.y=0; odRest(K.adrian); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; K.butkus.g.visible=true;
   K.mickey.g.position.set(60,g,66); K.mickey.g.rotation.y=Math.PI*0.8; odRest(K.mickey); K.boxers.forEach(b=>{ b.borrowed=false; b.g.position.set(b.home[0],b.home[1],b.home[2]); b.g.rotation.set(0,b.home[3],0); odRest(b); });
-  K.paulie.g.position.set(33.5,g,69.5); K.paulie.g.rotation.y=Math.PI; odRest(K.paulie); K.rinkGuy.g.position.set(89,g,68.5); K.rinkGuy.g.rotation.y=Math.PI; K.adrian.g.visible=true; K.kids.forEach(k=>{ k.busy=false; k.g.visible=true; }); K.pigeons.forEach((p,i)=>{ p.position.set(47+i*0.6,g,84.4+(i%2)*0.4); p.visible=true; }); }
+  K.paulie.g.position.set(33.5,g,69.5); K.paulie.g.rotation.y=Math.PI; odRest(K.paulie); K.rinkGuy.g.position.set(89,g,68.5); K.rinkGuy.g.rotation.y=0; K.adrian.g.visible=true; K.kids.forEach(k=>{ k.busy=false; k.g.visible=true; }); K.pigeons.forEach((p,i)=>{ p.position.set(47+i*0.6,g,84.4+(i%2)*0.4); p.visible=true; }); }
 // skies: a hazy 1970s day, the warm evening, and the night
 function rkSky(k){ const S={day:[0xa8b8c4,[1,1,1],50,150],dawn:[0xe8b890,[1,0.86,0.76],40,140],dusk:[0xd88a6a,[0.92,0.74,0.7],40,140],night:[0x101828,[0.5,0.54,0.68],30,120]}[k]||[0xa8b8c4,[1,1,1],50,150];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); scene.fog.near=S[2]; scene.fog.far=S[3]; setWeather('clear'); }
@@ -7549,7 +7552,7 @@ OD_CH.rk2={secs:38,sky:'day',mood:'love',init(S){ rkDress(S,'street'); const K=r
     // into the pet shop
     if(t<6)odHeroPath(S,[42,g,84],[35.5,g,90.6],1.6,5.6); else if(t<16.4)odHeroTo(S,[35.6,g,93],Math.PI,false);
     if(t>=5.6&&t<6.2&&t<16.4)odHeroPath(S,[35.5,g,90.6],[35.6,g,93],5.6,6.2); odAt(S,4.4,'bell',()=>rkSfx('bell'));
-    if(t<16.4){ A.g.position.set(36,g,95.6); A.g.rotation.y=Math.PI; A.R.head.rotation.x=t<11?-0.35:0; animRig(A.R,dt,0); }
+    if(t<16.4){ A.g.position.set(36,g,95.6); A.g.rotation.y=0; A.R.head.rotation.x=t<11?-0.35:0; animRig(A.R,dt,0); }
     odAt(S,6.4,'r1',()=>odSay(S,S.hero,'Yo, Adrian!')); odAt(S,7.6,'a1',()=>odSay(S,A,'...Oh. Hi.')); odAt(S,8.8,'r2',()=>odSay(S,S.hero,'I came for some more turtle food.'));
     odAt(S,10,'box',()=>{ S.box.visible=true; S.box.position.set(35.7,g+1.1,94.2); }); odAt(S,11,'r3',()=>odSay(S,S.hero,"Why don't turtles get lost? They take their house!"));
     odAt(S,13.4,'a2',()=>odSay(S,A,'...Heh. That\'s silly.'));
@@ -7581,13 +7584,13 @@ OD_CH.rk2={secs:38,sky:'day',mood:'love',init(S){ rkDress(S,'street'); const K=r
 
 // ---------- 3. MICKEY'S GYM ----------
 OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,'gloves'); S.mickeyBusy=true; const K=rkK; S.rope=new THREE.Mesh(new THREE.TorusGeometry(1.05,0.035,4,24,Math.PI),mm(0x2a2a2a)); S.rope.visible=false; S.grp.add(S.rope);
-    S.opp=K.boxers[1]; S.opp.borrowed=true; },
+    S.opp=K.boxers[1]; S.opp.borrowed=true; S.out=K.boxers[0]; },
   tick(S,dt){ const K=rkK, t=S.t, g=RK.g, M=K.mickey, opp=S.opp, bag=K.bags[1];
     // in through the door
     if(t<9)odHeroPath(S,[63.5,g,76],[66.6,g,61],2.4,8.6); odAt(S,4.6,'m1',()=>odSay(S,M,'MOVE! Keep those hands UP!')); odAt(S,7,'m2',()=>odSay(S,M,'Balboa! Hit the bag!'));
     const mk=(p,ry)=>{ M.g.position.set(...p); M.g.rotation.y=ry; odRest(M); M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); };
     // the heavy bag
-    if(t>=8.6&&t<15){ odHeroTo(S,[67.1,g,61],-Math.PI/2,false); mk([66.4,g,63.4],Math.PI*0.9); const f=rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0); if(f.e>0.95&&!S.hit){ S.hit=true; bag.va+=f.right?0.5:-0.5; bag.vz+=0.25; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
+    if(t>=8.6&&t<15){ odHeroTo(S,[67.1,g,61],-Math.PI/2,false); mk([66.4,g,63.4],Math.PI*0.9); const f=rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0,1.5,0.32); if(f.e>0.95&&!S.hit){ S.hit=true; bag.va+=f.right?0.5:-0.5; bag.vz+=0.25; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
     odAt(S,10.2,'m3',()=>odSay(S,M,'Harder! You punch like my grandma!')); odAt(S,12.4,'r1',()=>odSay(S,S.hero,'Like THIS?!')); odAt(S,13.1,'big',()=>{ bag.vz+=1.4; rkSfx('thud'); const p=bag.pv.position; burst(p.x-0.5,g+1.8,p.z-0.5,new THREE.Color(0xffd23a),10); });
     // the speed bag
     if(t>=15&&t<20.4){ odHeroTo(S,[70.4,g,68],-Math.PI/2,false); S.speedOn=true; mk([68,g,66],-Math.PI*0.25); if(Math.random()<dt*14)rkSfx('tap'); } else S.speedOn=false;
@@ -7599,12 +7602,13 @@ OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,
     if(t>=25.4&&t<30.6){ odHeroTo(S,[64.6,g,70.4],0,false); mk([62.4,g,67.6],-Math.PI*0.3); }
     for(const [tt,n] of [[26.4,'1...'],[27.4,'2...'],[28.4,'3...']])odAt(S,tt,'c'+n,()=>odSay(S,S.hero,n)); odAt(S,29.4,'m6',()=>odSay(S,M,"Not bad, kid. Not bad."));
     // sparring in the ring
-    if(t>=30.6){ const hx=59.8; odHeroTo(S,[hx,g+0.8,61],-Math.PI/2,false); mk([65,g,59.4],-Math.PI*0.6); opp.g.position.set(62.2,g+0.8,61); opp.g.rotation.y=Math.PI/2; const R=opp.R;
+    if(t>=30.6){ const O=S.out; O.borrowed=true; O.g.position.set(57,g,64.6); O.g.rotation.set(0,-Math.PI*0.75,0); O.R.armL.rotation.x=O.R.armR.rotation.x=0; O.R.armL.rotation.z=-2.4-Math.sin(t*8)*0.3; O.R.armR.rotation.z=2.4+Math.sin(t*8)*0.3; animRig(O.R,dt,0);
+      const hx=59.8; odHeroTo(S,[hx,g+0.8,61],-Math.PI/2,false); mk([65,g,59.4],-Math.PI*0.6); opp.g.position.set(62.2,g+0.8,61); opp.g.rotation.y=Math.PI/2; const R=opp.R;
       if(t<33.4){ rkFists(R.armL,R.armR,t,1.6,1); } else if(t<35){ const k=odSeg(S,33.4,34.2); opp.g.position.x=62.2+k*1.2; opp.g.rotation.z=-k*0.35; R.armL.rotation.x=R.armR.rotation.x=0.2; } else { opp.g.position.x=63.4; opp.g.rotation.z=-0.35; }
       animRig(R,dt,0); }
     odAt(S,32,'duck',()=>rkSfx('whoosh')); odAt(S,33.3,'hook',()=>{ rkSfx('thud'); burst(62.2-0.5,g+2.4,61-0.5,new THREE.Color(0xffffff),10); odSay(S,opp,'Oof!'); });
     odAt(S,34.4,'m7',()=>odSay(S,M,"NOW that's a punch!")); odAt(S,36,'r2',()=>odSay(S,S.hero,'Yo, Mick! I got this!')); },
-  pose(S){ const t=S.t; model.rotation.x=0;
+  pose(S){ const t=S.t; model.rotation.x=0; if(t>=8.6&&t<15)rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0,1.5,0.32); if(t>=15&&t<20.4)rkSpeedBag(armL,armR,t);
     if(t>=20.4&&t<25.4){ model.position.y+=Math.abs(Math.sin(t*7.5))*0.25; armL.rotation.z=-0.5; armR.rotation.z=0.5; armL.rotation.x=armR.rotation.x=0.4; }
     if(t>=25.4&&t<30.6){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; armL.rotation.z=-0.3; legL.rotation.x=legR.rotation.x=0; }
     if(t>=30.6){ if(t>=31.6&&t<32.4){ model.position.y-=0.45; armL.rotation.x=armR.rotation.x=1.4; } else if(t>=32.9&&t<33.6){ armR.rotation.x=1.6; armR.rotation.z=1.2; armL.rotation.x=1.15; } else if(t<35.6)rkFists(armL,armR,t,1.8,0); else { armL.rotation.z=-2.6; armR.rotation.z=2.6; armL.rotation.x=armR.rotation.x=0; } } },
@@ -7650,7 +7654,7 @@ function buildRkLife2(K){ const root=K.root, g=RK.g;
     for(const x of [89.5,91.5,93.5])mb(root,1.6,0.45,0.5,mm(0x8a5a2a),x,g+0.22,70.6); const sn=grp(root,101,g,70.4); mb(sn,3,1.1,0.8,mm(0xd8402a),0,0.55,0); rkSign(sn,'HOT COCOA 10¢',2.4,0.5,'#f2e0a0','#8a1a1a',0,2,-0.1,Math.PI);
     const bth=grp(root,89,g,69.4); mb(bth,1.4,1.2,1.2,mm(0x5a6a7a),0,0.6,0); K.horn=mcyl(root,0.12,0.32,0.5,mm(0x9a9aa0),88.2,g+4,71.4,10); K.horn.rotation.x=-1.2;
     K.bulbs=[]; for(let i=0;i<4;i++)for(let k=0;k<14;k++){ const b=msph(root,0.09,new THREE.MeshBasicMaterial({color:[0xff3a3a,0x3aff6a,0x3a8aff,0xffe02a][(i+k)%4]}),89+k,g+5.6,58+i*2.6); K.bulbs.push(b); }
-    K.rinkGuy=rkPerson(root,'rinkguy',89,g,68.5,Math.PI); K.speak.push(K.rinkGuy); }
+    K.rinkGuy=rkPerson(root,'rinkguy',89,g,68.5,0.001); K.speak.push(K.rinkGuy); }
   { const M=RK.meat; rkSign(root,'PHILLY MEAT CO.',6,1,'#8a1a1a','#f2f2f2',31.5,g+3.4,M.z1+1.06,0); K.meat=[];
     for(const x of [27,31.5,36]){ mb(root,0.12,0.12,13,mm(0x8a8a90),x,g+4.7,62.5); for(const z of [58,61,64,67])K.meat.push(rkCarcass(root,x,g+4.6,z)); }
     for(let x=25;x<=39;x+=4)mb(root,0.8,0.06,0.3,new THREE.MeshBasicMaterial({color:0xc8e8ff}),x,g+6.9,62); K.paulie=rkPerson(root,'paulie',33.5,g,69.5,Math.PI); K.speak.push(K.paulie); }
@@ -7779,7 +7783,7 @@ OD_CH.rk6={secs:34,sky:'cold',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S
     if(t>=8.2){ Pa.g.position.set(33.8,g,64.4); Pa.g.rotation.y=Math.PI*0.7; odRest(Pa); animRig(Pa.R,dt,0); }
     // punching the meat
     const mm2=(t>=8.6&&t<23)?m0:(t>=23&&t<31)?m1:null; if(t>=8.6&&t<23)odHeroTo(S,[31.5,g,62.4],0,false); if(t>=23&&t<31)odHeroTo(S,[31.5,g,59.4],0,false);
-    if(mm2){ const f=rkFists(armL,armR,t,t>18.4&&t<19.2?0.9:2.8,0); if(f.e>0.95&&!S.hit){ S.hit=true; mm2.va+=f.right?0.35:-0.35; mm2.vb+=0.35; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
+    if(mm2){ const f=rkFists(armL,armR,t,t>18.4&&t<19.2?0.9:2.8,0,1.45,0.32); if(f.e>0.95&&!S.hit){ S.hit=true; mm2.va+=f.right?0.35:-0.35; mm2.vb+=0.35; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
     odAt(S,18.9,'big',()=>{ m0.vb+=1.2; m0.va+=0.8; rkSfx('thud'); burst(31,g+1.8,61-0.5,new THREE.Color(0xffd23a),10); });
     odAt(S,12,'p2',()=>odSay(S,Pa,"Hey! That's my meat you're punchin'!"));
     if(t>=13.4){ const k=odSeg(S,13.4,15.4); odMove(M,[31.5,g,74],[29.4,g,64.4],k); if(k<1)odWalk(M,dt,true); else { M.g.rotation.y=-Math.PI*0.75; odRest(M); M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); } }
@@ -7816,7 +7820,7 @@ OD_CH.rk7={secs:40,sky:'dawn',mood:'gym',init(S){ rkDress(S,'sweats'); const K=r
   pose(S){ const t=S.t; model.rotation.x=0; if(t<4){ mxSitPose(); if(t<1.8)head.rotation.x=-0.6; }
     if(t>=4&&t<7.4){ mxSitPose(); if(t>5){ armR.rotation.x=t>6?2.6:1.2; armR.rotation.z=t>6?-0.3:0; } }
     if(t>=10.4&&t<16)armL.rotation.x=0.9; if(t>=16&&t<22){ const ph=((t-16)*1.3)%1; armR.rotation.x=0.6+Math.max(0,Math.sin(ph*Math.PI*2))*1.2; }
-    if(t>=22&&t<25)rkFists(armL,armR,t,8,0); if(t>=25&&t<28){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; legL.rotation.x=legR.rotation.x=0; }
+    if(t>=22&&t<25)rkSpeedBag(armL,armR,t); if(t>=25&&t<28){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; legL.rotation.x=legR.rotation.x=0; }
     if(t>=36){ armL.rotation.z=-2.6; armR.rotation.z=2.6; armL.rotation.x=armR.rotation.x=0; } },
   cam(S){ const t=S.t, g=RK.g; if(t<4)return [[65.2,g+1.9,93.6],[67.2,g+1.2,91],0]; if(t<7.4)return [[62.2,g+1.8,93.6],[63.4,g+1.5,92.4],1];
     if(t<12)return [[pl.p[0]+3.6,g+2,80.6],[pl.p[0],g+1.4,84.2],2]; if(t<16)return [[79.4,g+2.4,pl.p[2]+3],[75.6,g+1.4,pl.p[2]],3]; if(t<22)return [[61,g+1.8,78],[58.4,g+1.4,74.2],4];
