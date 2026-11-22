@@ -2382,7 +2382,8 @@ const DM_DEND={stop:'🪂 Stop on the lines, dance, then fly off the ramp',jet:'
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
+const DM_MXLOOK={green:'💚 Matrix green',normal:'🎨 Normal colors'};
+const DM_SCENE0={mxlook:'green',act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2398,7 +2399,7 @@ const DEMO0={scenes:[
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY],['mxlook',DM_MXLOOK]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando|philly)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2417,6 +2418,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      isMx(s)?'<label>Matrix look'+sel(DM_MXLOOK,'mxlook',i,s.mxlook)+'</label>':
       isFilm(s)?'':
       s.act==='thanks'?'<label>Story'+sel(DM_MSTORY,'mstory',i,s.mstory)+'</label>':
       s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
@@ -2513,7 +2515,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
 function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; camp.visible=false; if(campK){ campK.mic.visible=false; campK.gl=null; } canvas.style.transform=''; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); mxRainOff(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
-function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); } }
+function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); demo.odyWorld=demo.mxWorld=demo.rkWorld=demo.ranchWorld=demo.dragWorld=demo.mansionWorld=demo.petWorld=false; } }
   if(demo.bak){ world.set(demo.bak.w); meta.set(demo.bak.m); lavaSet.clear(); for(const q of demo.bak.lava)lavaSet.add(q); lavaArr=null; demo.bak=null; // put the land back after a wonder
     activeW.clear(); activeL.clear(); fires.clear(); for(const sh of shots.slice())freeShot(sh); rebuildAll(); }
   demo.i=i; demo.t=0; demo.st=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
@@ -2522,7 +2524,8 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOnNow=''; demo.tunePaused=true; } } else if(demo.tunePaused){ demo.tunePaused=false; musicPlay(); } // the stories bring their own soundtrack
+  if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -5340,7 +5343,7 @@ function frame(now){
   try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
     let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
     renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); frameErrs=0; }
-  catch(e){ console.error(e); if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
+  catch(e){ console.error(e); $('dmFade').style.opacity=0; if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
 }
 let frameErrs=0;
 
@@ -6613,7 +6616,7 @@ function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t;
   if(K.under.visible){ K.riverTex.offset.y-=dt*0.4; K.crys.forEach((c,i)=>{ c.rotation.y+=dt; c.position.y+=Math.sin(t*2+i)*0.005; }); for(const g of K.ghosts){ g.g.position.x+=g.drift[0]*dt; g.g.position.z+=g.drift[1]*dt; g.g.position.y=0.3+Math.sin(t*1.5+g.ph)*0.3; if(Math.hypot(g.g.position.x,g.g.position.z)>26){ g.drift[0]*=-1; g.drift[1]*=-1; } animRig(g.R,dt,0); } }
   if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&demo.sc.act.slice(0,2)==='od')odMusicTick(dt); }
 // --- sound: everything here goes through odS, which plays quieter when you've picked your own song for the demo
-function odUserSong(){ return !!demo&&mus.src!=='none'; }
+function odUserSong(){ return !!demo&&(mus.src==='mp3'||mus.src==='yt'); } // your own MP3 or YouTube song wins; otherwise the story plays its own music
 function odS(fn){ if(!AC||!sfxOn)return; try{ fn(odUserSong()?0.25:1); }catch(e){} }
 const OD_SFX={wave:v=>noise(500,1.4,0.18*v,'lowpass'), thunder:v=>{ noise(180,1.6,0.6*v,'lowpass'); tone('sawtooth',70,30,1.2,0.12*v); }, cheer:v=>noise(1500,1.2,0.22*v,'bandpass'),
   roar:v=>{ tone('sawtooth',110,55,1.0,0.22*v); noise(300,0.9,0.25*v,'lowpass'); }, oink:v=>{ tone('square',420,300,0.14,0.08*v); tone('square',380,260,0.12,0.06*v,0.16); }, magic:v=>{ tone('sine',400,1600,0.6,0.1*v); tone('triangle',800,2400,0.5,0.06*v,0.1); },
@@ -6666,7 +6669,7 @@ function odPoof(x,y,z,c){ for(let k=0;k<3;k++)burst(x-0.5+(Math.random()-0.5),y+
 function odGrow(a,k,s){ a.g.visible=k>0.01; a.g.scale.setScalar(Math.max(0.01,(s||1)*k)); }
 // the chapter engine
 function demoOdySetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } clearCityLife(); clearInteriorLife();
-  demo.vplace='odyssey'; demo.cityKey=null; if(!demo.odyWorld){ demo.odyWorld=true; clearApples(); setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); }
+  demo.vplace='odyssey'; demo.cityKey=null; if(!demo.odyWorld||!odyK){ demo.odyWorld=true; clearApples(); setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); }
   odHeroGear(true); odHeroCloak(false); odStageClear(); odDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model}}; odyK.root.add(S.grp); odStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; odMood=ch.mood||'hero'; odSky(ch.sky); ch.init(S); demo.cam=null; }
 function odStageClear(){ if(!odStage)return; const S=odStage; odBubOff(model,S.hero); if(odyK)odyK.root.remove(S.grp); odFree(S.grp); odStage=null; if(odyK)odyK.whirlFast=false; model.rotation.x=model.rotation.z=0; }
@@ -6936,22 +6939,49 @@ function mxRainTick(dt){ mxRainA+=(mxRainWant-mxRainA)*Math.min(1,dt*3); if(mxRa
     for(let k=0;k<col.len;k++){ const yy=Math.floor(col.y/fs)*fs-k*fs; if(yy<0||yy>h+fs)continue; if(!col.g[k]||Math.random()<0.05)col.g[k]=MX_GLYPHS[Math.floor(Math.random()*MX_GLYPHS.length)];
       x.fillStyle=k===0?'rgba(220,255,225,0.95)':'rgba(40,255,100,'+(0.85*(1-k/col.len)).toFixed(3)+')'; x.fillText(col.g[k],i*fs+fs/2,yy); } }); }
 // skies: the city's green night and day, the club, the rain, and the real world's black sky
-function mxSky(k){ const S={night:[0x060c08,[0.6,0.8,0.64],24,160],day:[0x9fc0a6,[0.9,1,0.88],40,200],club:[0x020104,[0.34,0.28,0.48],10,70],rain:[0x0e1812,[0.6,0.74,0.64],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]}[k]||[0x060c08,[0.6,0.8,0.64],24,160];
+function mxGreen(){ if(!mxK)return false; if(demo)return !!demo.sc&&isMx(demo.sc)&&demo.sc.mxlook!=='normal'&&!mxK.rw.visible; return curPlace()==='matrix'; } // Matrix green, or normal colors (a choice for each scene in Demo Mode)
+function mxSky(k){ const G=demo&&demo.sc&&isMx(demo.sc)?demo.sc.mxlook!=='normal':true;
+  const S=(G?{night:[0x060c08,[0.6,0.8,0.64],24,160],day:[0x9fc0a6,[0.9,1,0.88],40,200],club:[0x020104,[0.34,0.28,0.48],10,70],rain:[0x0e1812,[0.6,0.74,0.64],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]}
+    :{night:[0x0c1220,[0.7,0.74,0.84],24,160],day:[0xa8c8e8,[1,1,1],40,200],club:[0x040208,[0.4,0.3,0.48],10,70],rain:[0x141c26,[0.68,0.72,0.8],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]})[k]||[0x060c08,[0.6,0.8,0.64],24,160];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false; scene.fog.near=S[2]; scene.fog.far=S[3];
-  if(camera.far<320){ camera.far=320; camera.updateProjectionMatrix(); } setWeather(k==='rain'?'rain':'clear'); mxGrade(k!=='real'); }
-function mxGrade(on){ canvas.style.filter=on?'sepia(0.3) hue-rotate(62deg) saturate(1.2) contrast(1.06)':''; }
+  if(camera.far<320){ camera.far=320; camera.updateProjectionMatrix(); } setWeather(k==='rain'?'rain':'clear'); mxGrade(G&&k!=='real'); }
+const MX_GRADE='sepia(0.3) hue-rotate(62deg) saturate(1.2) contrast(1.06)';
+function mxGrade(on){ if(on||canvas.style.filter===MX_GRADE)canvas.style.filter=on?MX_GRADE:''; }
 // --- sound: the same quiet-when-you-picked-a-song rule as the Odyssey
 const MX_SFX={key:v=>tone('square',1700+Math.random()*700,1500,0.03,0.025*v), knock:v=>{ for(let i=0;i<3;i++)tone('sine',150,70,0.12,0.3*v,i*0.2); }, ring:v=>{ for(let i=0;i<4;i++){ tone('square',880,880,0.08,0.035*v,i*0.17); tone('square',660,660,0.08,0.035*v,i*0.17+0.085); } },
   door:v=>tone('sawtooth',180,110,0.4,0.05*v), ding:v=>{ tone('sine',1320,1320,0.5,0.08*v); tone('sine',1050,1050,0.6,0.06*v,0.25); }, glitch:v=>{ for(let i=0;i<6;i++)tone('sawtooth',100+Math.random()*900,60+Math.random()*300,0.06,0.05*v,i*0.05); noise(3000,0.3,0.1*v,'bandpass'); },
   thunder:v=>{ noise(180,1.6,0.5*v,'lowpass'); tone('sawtooth',70,30,1.2,0.1*v); }, squeal:v=>{ tone('square',1800,2600,0.25,0.04*v); tone('square',2400,1600,0.2,0.035*v,0.2); }, gulp:v=>tone('sine',300,110,0.22,0.12*v),
   gasp:v=>noise(1200,0.6,0.22*v,'bandpass'), whoosh:v=>noise(600,0.8,0.2*v,'lowpass'), muffle:v=>{ tone('sawtooth',150,130,0.35,0.06*v); tone('sawtooth',170,140,0.35,0.06*v,0.4); }, wind:v=>noise(400,2.2,0.1*v,'lowpass'), splat:v=>noise(800,0.25,0.3*v,'lowpass'), pop:v=>{ noise(2500,0.2,0.2*v,'bandpass'); tone('sine',600,150,0.2,0.08*v); }};
 function mxSfx(k){ odS(MX_SFX[k]); }
-const MX_MOODS={hack:{bpm:92,notes:[57,60,64,67,64,60,62,65],bass:45,kick:0},club:{bpm:124,notes:[69,69,72,69,67,67,64,67],bass:45,kick:1},tense:{bpm:112,notes:[50,51,50,53,50,51,56,53],bass:38,kick:2},
-  myst:{bpm:72,notes:[57,60,59,62,60,64,63,59],bass:45,kick:0},real:{bpm:60,notes:[45,46,45,48,45,46,50,48],bass:33,kick:0}};
-let mxMood='hack';
-function mxMusicTick(dt){ if(odUserSong()||!AC||!sfxOn)return; const M=MX_MOODS[mxMood]||MX_MOODS.hack, K=mxK; K.mT=(K.mT||0)-dt; if(K.mT>0)return; K.mT=60/M.bpm/4; K.mS=((K.mS||0)+1)%16; const s=K.mS;
-  try{ if(M.kick===1){ const b=midiF(M.bass+(s>=8?3:0)); if(s%4===0)tone('sine',110,45,0.18,0.16); if(s%4===2)noise(7000,0.04,0.035,'highpass'); if(s%8===4)noise(1800,0.08,0.05,'bandpass'); if(s%2===0)tone('sawtooth',b,b,0.12,0.03); if(s%4===3){ const f=midiF(M.notes[(s>>1)%8]); tone('square',f,f,0.08,0.018); } }
-    else { if(s%2===0){ const f=midiF(M.notes[(s>>1)%8]); tone('square',f,f,0.1,0.014); tone('triangle',f/2,f/2,0.2,0.03); } if(s===0)tone('sawtooth',midiF(M.bass),midiF(M.bass),1.6,0.028); if(M.kick===2&&s%4===0)tone('sine',90,45,0.18,0.12); if(M.kick===2&&s%8===6)noise(1500,0.06,0.04,'bandpass'); } }catch(e){} }
+// --- the Matrix soundtrack: a little chiptune band (two pulse waves, a triangle bass and noise drums), like an old
+// game console. Each mood is a looping song; notes are scheduled a moment ahead so the beat stays steady.
+// prog: the chords, one per bar (root note, m = minor, M = major). bass/kick/snare/hat: one letter per 16th note.
+// lead: notes above each chord's root, in semitones (null = rest). arp: chord arpeggios (1 = 16ths, 2 = 32nds).
+const MX_SONGS={
+  hack:{bpm:100,prog:[[52,'m'],[48,'M'],[45,'m'],[47,'M']],bass:'R.......r.....R.',bLen:6,kick:'k...............',snare:'................',hat:'....h.......h.h.',arp:1,arpV:0.022,leadV:0.03,
+    lead:[24,null,null,null,null,null,27,null,null,null,null,null,31,null,29,null, 27,null,null,null,24,null,null,null,22,null,24,null,null,null,null,null]},
+  club:{bpm:128,prog:[[52,'m'],[52,'m'],[48,'M'],[50,'M']],bass:'RrRrRrRrRrRrRrRr',bLen:1,kick:'k...k...k...k...',snare:'....s.......s...',hat:'..h...h...h...h.',arp:1,arpV:0.016,leadV:0.034,
+    lead:[12,null,15,null,19,null,15,null,12,null,15,null,22,null,19,null, 12,null,15,null,19,null,24,null,22,null,19,null,15,null,14,null]},
+  tense:{bpm:138,prog:[[50,'m'],[50,'m'],[46,'M'],[45,'M']],bass:'RRrRRRrRRRrRRrRr',bLen:1,kick:'k..k..k.k..k..k.',snare:'....s.......s.ss',hat:'h.h.h.h.h.h.h.h.',arp:0,leadV:0.032,
+    lead:[12,12,null,15,null,12,null,17,null,15,null,12,null,null,10,null, 12,12,null,15,null,17,null,19,null,20,null,19,null,17,15,null]},
+  myst:{bpm:84,prog:[[50,'m'],[53,'M'],[48,'M'],[45,'m']],bass:'R.......5.......',bLen:7,kick:'................',snare:'................',hat:'....h.......h...',arp:1,arpV:0.02,leadV:0.028,
+    lead:[24,null,null,null,null,null,null,null,22,null,null,null,21,null,null,null, 19,null,null,null,null,null,21,null,22,null,null,null,null,null,null,null]},
+  real:{bpm:66,prog:[[48,'m'],[44,'M'],[48,'m'],[43,'M']],bass:'R...............',bLen:15,kick:'................',snare:'................',hat:'................',arp:0,leadV:0.026,
+    lead:[24,null,null,null,23,null,null,null,20,null,null,null,19,null,null,null, 24,null,null,null,27,null,null,null,26,null,null,null,23,null,null,null]}};
+let mxMood='hack', mxChipOut=null; const mxDuty={};
+function mxPulseWave(d){ if(mxDuty[d])return mxDuty[d]; const n=32, re=new Float32Array(n), im=new Float32Array(n); for(let k=1;k<n;k++)im[k]=2/(k*Math.PI)*Math.sin(k*Math.PI*d); return mxDuty[d]=AC.createPeriodicWave(re,im); }
+function mxVoice(kind,f,t,dur,vol,f1){ const o=AC.createOscillator(), g=AC.createGain(); if(kind==='tri')o.type='triangle'; else if(kind==='sine')o.type='sine'; else o.setPeriodicWave(mxPulseWave(kind)); o.frequency.setValueAtTime(f,t); if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.setValueAtTime(vol,t+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(mxChipOut); o.start(t); o.stop(t+dur+0.02); }
+function mxNoiseHit(t,dur,vol,freq,type){ const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=noiseBuf; f.type=type; f.frequency.value=freq; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); s.connect(f); f.connect(g); g.connect(mxChipOut); s.start(t); s.stop(t+dur+0.02); }
+function mxChipStep(S,i,t,sp){ const s=i%16, bar=Math.floor(i/16), [root,q]=S.prog[bar%S.prog.length], ch=[0,q==='m'?3:4,7];
+  const b=S.bass[s]; if(b!=='.')mxVoice('tri',midiF(root-12+(b==='r'?12:b==='5'?7:0)),t,sp*(S.bLen||1)*0.95,0.09);
+  if(S.kick[s]==='k')mxVoice('sine',150,t,0.13,0.2,42); if(S.snare[s]==='s'){ mxNoiseHit(t,0.11,0.09,1800,'bandpass'); mxVoice('tri',220,t,0.06,0.04,110); } if(S.hat[s]==='h')mxNoiseHit(t,0.03,0.035,8000,'highpass');
+  if(S.arp){ const n=S.arp===2?2:1; for(let k=0;k<n;k++){ const j=(i*n+k)%3, f=midiF(root+12+ch[j]+(Math.floor((i*n+k)/3)%2?12:0)); mxVoice(0.125,f,t+k*sp/n,sp/n*0.9,S.arpV); } }
+  const L=S.lead[(i%32)]; if(L!==null&&L!==undefined){ let len=1; while(len<8&&S.lead[(i+len)%32]===null)len++; mxVoice(0.25,midiF(root+L),t,sp*Math.min(len,4)*0.9,S.leadV); mxVoice(0.5,midiF(root+L)*1.005,t,sp*Math.min(len,4)*0.6,S.leadV*0.25); } }
+function mxMusicTick(dt){ if(odUserSong()||!AC||!sfxOn||!noiseBuf)return; const K=mxK, S=MX_SONGS[mxMood]||MX_SONGS.hack;
+  if(!mxChipOut){ mxChipOut=AC.createGain(); mxChipOut.gain.value=0.9; mxChipOut.connect(AC.destination); }
+  if(K.song!==S){ K.song=S; K.step=0; K.next=AC.currentTime+0.06; } const sp=60/S.bpm/4; if(K.next<AC.currentTime-0.25)K.next=AC.currentTime+0.03; // after a pause, pick up again instead of racing to catch up
+  try{ while(K.next<AC.currentTime+0.15){ mxChipStep(S,K.step,K.next,sp); K.step++; K.next+=sp; } }catch(e){} }
 // --- the world's life: props, the club, and the real world far below
 let mxK=null;
 function onMatrix(){ return curPlace()==='matrix'&&!!mxK; }
@@ -7030,6 +7060,7 @@ function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
   K.codeT-=dt; if(K.codeT<=0){ K.codeT=0.12; mxCodeDraw(K.code); } K.neon.material.opacity=Math.random()<0.03?0.35:1;
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(K.rw.visible){ K.rwFl=(K.rwFl||0)-dt; if(K.rwFl<=0){ K.rwFl=1.5+Math.random()*3; K.rwFlash=0.25; } K.rwFlash=Math.max(0,(K.rwFlash||0)-dt); scene.background.setHex(K.rwFlash>0?0x3a1a3a:0x07050a); K.rwLight.intensity=1.1+Math.sin(t*3)*0.2; }
+  if(fxKind()==='normal'){ const want=mxGreen(); if((canvas.style.filter===MX_GRADE)!==want)mxGrade(want); }
   if(demo&&wxPts)updateWeather(dt); mxRainTick(dt); if(demo&&demo.sc&&isMx(demo.sc))mxMusicTick(dt); }
 
 // ================= THE MATRIX IN DEMO MODE =================
@@ -7040,7 +7071,7 @@ const isMx=sc=>!!sc&&/^mx\d+$/.test(sc.act||'');
 const isFilm=sc=>isOdy(sc)||isMx(sc)||isRk(sc);
 function demoMxSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
   if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; } clearCityLife(); clearInteriorLife();
-  demo.vplace='matrix'; demo.cityKey=null; if(!demo.mxWorld){ demo.mxWorld=true; clearApples(); setWorldSize(...PLACES.matrix.dims); generateMatrix(dmCfg.seed+57); rebuildAll(); refreshPortals(); buildMxLife(); }
+  demo.vplace='matrix'; demo.cityKey=null; if(!demo.mxWorld||!mxK){ demo.mxWorld=true; clearApples(); setWorldSize(...PLACES.matrix.dims); generateMatrix(dmCfg.seed+57); rebuildAll(); refreshPortals(); buildMxLife(); }
   mxStageClear(); mxDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},mx:true,bits:[]}; mxK.root.add(S.grp); mxStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; mxMood=ch.mood||'hack'; mxSky(ch.sky||'night'); ch.init(S); demo.cam=null; }
 // leaving a chapter: its cast goes, your hero gets their own look back, the screen goes back to normal
@@ -7161,7 +7192,7 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
     if(t>=12&&t<14.6)odHeroPath(S,[76,f,24.6],[75.6,f,20.6],12,14); if(t>=14.6&&t<27.4)odHeroPath(S,[75.6,f,20.6],[75,f,18.2],14.6,15.6);
     if(t<14.4){ M.g.position.set(75,f,10.4); M.g.rotation.y=t<12.6?0:Math.PI; odRest(M); animRig(M.R,dt,0); }
     else if(t<27.4){ const k=odSeg(S,14.4,15.6); if(k<1){ odMove(M,[75,f,10.4],[75,f,12.6],k); M.g.rotation.y=Math.PI; odWalk(M,dt,true); } else { M.g.position.set(75,f-OD_SEAT,12.6); M.g.rotation.y=Math.PI; odSit(M); if(t>20.4&&t<26){ M.R.armL.rotation.x=M.R.armR.rotation.x=1.35; M.R.armL.rotation.z=-0.25; M.R.armR.rotation.z=0.25; } animRig(M.R,dt,0); } }
-    S.thT=(S.thT||0)-dt; if(t>=12&&t<34&&S.thT<=0){ S.thT=3+Math.random()*2.5; mxSfx('thunder'); S.flash=0.18; } S.flash=Math.max(0,(S.flash||0)-dt); if(t>=12&&t<34)scene.background.setHex(S.flash>0?0xd8f0e0:0x060c08);
+    S.thT=(S.thT||0)-dt; if(t>=12&&t<34&&S.thT<=0){ S.thT=3+Math.random()*2.5; mxSfx('thunder'); S.flash=0.18; } S.flash=Math.max(0,(S.flash||0)-dt); if(t>=12&&t<34)scene.background.setHex(S.flash>0?0xd8f0e0:mxGreen()?0x060c08:0x0c1220);
     odAt(S,12.8,'m1',()=>odSay(S,M,'At last. Welcome, Neo.'));
     odAt(S,16,'m2',()=>odSay(S,M,"You've felt it your whole life. Something is wrong with the world.")); odAt(S,18.8,'n2',()=>odSay(S,S.hero,'Every day. Like nothing is real.'));
     // the pills
@@ -7328,7 +7359,7 @@ let rkStage=null;
 const isRk=sc=>!!sc&&/^rk\d+$/.test(sc.act||'');
 function demoRkSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
   if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; }
-  if(!demo.rkWorld){ demo.rkWorld=true; demo.cityWorld=false; clearCityLife(); clearInteriorLife(); demo.cityPlace='philly'; demo.vplace='philly'; demo.cityKey='philly'; demo.inKind=null; demo.stack=[];
+  if(!demo.rkWorld||!rkK){ demo.rkWorld=true; demo.cityWorld=false; clearCityLife(); clearInteriorLife(); demo.cityPlace='philly'; demo.vplace='philly'; demo.cityKey='philly'; demo.inKind=null; demo.stack=[];
     clearApples(); setWorldSize(...PLACES.philly.dims); generateCity(dmCfg.seed+71); cityExtras('philly'); activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); buildRkLife(); }
   rkStageClear(); rkDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},rk:true,bits:[]}; rkK.root.add(S.grp); rkStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; rkMood=ch.mood||'street'; rkSky(ch.sky||'day'); ch.init(S); demo.cam=null; }
