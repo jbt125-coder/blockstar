@@ -1038,6 +1038,7 @@ function weaponMesh(id,fp){
   const M=c=>{ const m=new THREE.MeshLambertMaterial({color:c}); if(fp){m.depthTest=false;} return m; };
   const add=(w,h,d,c,y,x)=>{ const m=box(w,h,d,M(c)); m.position.set(x||0,y,0); if(fp)m.renderOrder=999; g.add(m); return m; };
   add(0.06,0.3,0.06,0x6b4a2a,0.05);
+  if(id==='ball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,8),M(0xd8304a)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='boomerang'){ g.children[0].visible=false; boomerangShape(g,M,fp); }
   if(id==='laser'){ g.children[0].visible=false; add(0.12,0.14,0.42,0xe8ecf2,0.2).position.z=-0.05; add(0.07,0.07,0.22,0x2a2e36,0.22).position.z=-0.34; add(0.08,0.08,0.05,0x40e0ff,0.22).position.z=-0.46; add(0.07,0.2,0.09,0x2a2e36,0.06).position.z=0.06; g.scale.setScalar(0.55); }
   if(id==='pole'){ g.children[0].visible=false; const r=add(0.035,1.6,0.035,0x6b4a2a,0.75); r.rotation.x=-0.5; r.position.z=-0.36; const reel=add(0.12,0.12,0.06,0x9aa0a8,0.12); reel.position.set(0.07,0.12,-0.02); add(0.03,0.15,0.03,0xd82a2a,0.0); }
@@ -1376,7 +1377,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
-  if(drive)return; if(petTapAim())return; if(weapon==='pole'&&!(ranchK&&onRanch())){ fishingHit(); return; } if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; // on the ranch, hitting throws your lasso at a steer or wild horse
+  if(drive)return; if(petTapAim())return; if(weapon==='pole'&&!(ranchK&&onRanch())){ fishingHit(); return; } if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; if(weapon==='ball'){ rkBallThrow(); return; } if(weapon==='fists'&&rkK&&onPhilly()&&!demo&&rkPunch())return; // Rocky's rubber ball, and boxing in Philadelphia // on the ranch, hitting throws your lasso at a steer or wild horse
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   const w=WP[weapon];
@@ -2357,7 +2358,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2427,7 +2428,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isFilm(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the Matrix (chapters 1–3 so far)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load Rocky (chapters 1–3 so far)</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the Matrix (chapters 1–3 so far)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2454,7 +2455,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
   onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
   onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the Matrix chapters (about 2 minutes so far)?'))return; loadMatrix(); redraw(); });
-  onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the Rocky chapters (about 2 minutes so far)?'))return; loadRocky(); redraw(); });
+  onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of Rocky (about 6½ minutes)?'))return; loadRocky(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
   onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
   box2.querySelectorAll('[data-src]').forEach(el=>onClick(el,()=>{ musicStop(); mus.src=el.dataset.src; saveMus(); redraw(); }));
@@ -4096,7 +4097,7 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   petshop:{name:'Pet Shop',icon:'🐾',key:'blockstar_petshop',dims:[40,14,40],col:[255,150,80],petshop:true,blurb:'Make your own cat or dog. It follows you everywhere, sits and stays, and guards you from monsters.'},
   odyssey:{name:'Odyssey Sea',icon:'🏛️',key:'blockstar_odyssey',dims:[256,48,256],col:[60,150,255],odyssey:true,blurb:'The sea of Homer\'s Odyssey: Troy and its wooden horse, the Cyclops\'s cave, Circe\'s magic island, the Sirens, Scylla and the whirlpool, and Ithaca, home.'},
   matrix:{name:'Matrix City',icon:'💊',key:'blockstar_matrix',dims:[128,48,128],col:[40,220,90],matrix:true,blurb:'A green-tinted city that isn\'t real: Neo\'s apartment, a neon club, the office tower, the agents\' building, and the real world hiding far below.'},
-  philly:{name:'Philadelphia',icon:'🔔',key:'blockstar_city_phl',dims:[160,48,160],col:[200,90,70],city:'philly',blurb:'1970s row houses, the Art Museum and its famous steps, Independence Hall, the Liberty Bell, a pet shop and an old boxing gym.'},
+  philly:{name:'Philadelphia',icon:'🔔',key:'blockstar_city_phl2',dims:[160,48,160],col:[200,90,70],city:'philly',blurb:'1970s row houses, the Art Museum and its famous steps, Independence Hall, the Liberty Bell, a pet shop and an old boxing gym.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando','philly'];
 const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop','matrix','philly']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
@@ -5318,7 +5319,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); if(rkK)rkTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); if(rkK)rkTick(dt); rkBallTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -7420,7 +7421,8 @@ function rkDress(S,kind){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,m
   if(kind==='sweats'){ put(rig.torso,0.55,0.77,0.31,0x8a8a90,0,1.08,0); put(rig.torso,0.4,0.22,0.12,0x7a7a80,0,1.48,0.16); for(const a of [armL,armR])put(a,0.28,0.74,0.28,0x8a8a90,0,-0.34,0); for(const l of [legL,legR])put(l,0.28,0.7,0.28,0x7e7e84,0,-0.34,0); put(head,0.5,0.1,0.5,0x1a1a1e,0,0.47,0); }
   if(kind==='gloves')for(const a of [armL,armR])put(a,0.3,0.3,0.34,0xc81a1a,0,-0.78,-0.02); }
 // a boxer's fists: a guard up in front of the face, and one fist at a time snapping out
-function rkFists(L,R,t,rate,ph){ const c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=1.15; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=1.15+0.45*e; else L.rotation.x=1.15+0.45*e; return {e,right:c<1}; }
+function rkFists(L,R,t,rate,ph,base,reach){ const b=base||1.15, r=reach||0.45, c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=b; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=b+r*e; else L.rotation.x=b+r*e; return {e,right:c<1}; }
+function rkSpeedBag(L,R,t){ L.rotation.x=2.25+Math.sin(t*22)*0.28; R.rotation.x=2.25+Math.sin(t*22+Math.PI)*0.28; L.rotation.z=0.35; R.rotation.z=-0.35; } // fists up high, rolling in fast little circles
 function rkSign(par,text,w,h,bg,fg,x,y,z,ry){ const c=canvasTex(256,Math.round(256*h/w)); c.x.fillStyle=bg; c.x.fillRect(0,0,256,c.c.height); c.x.fillStyle=fg; c.x.font='bold '+Math.round(c.c.height*0.5)+'px sans-serif'; c.x.textAlign='center'; c.x.textBaseline='middle'; c.x.fillText(text,128,c.c.height/2+2); c.t.needsUpdate=true;
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:c.t})); m.position.set(x,y,z); m.rotation.y=ry||0; par.add(m); return m; }
 let rkK=null;
@@ -7432,7 +7434,9 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
     mxDesk(root,64.5,g,92.4,0,1.4,1); for(const s of[-1,1])mxChair(root,64.5+s*1.1,g,92.4,s*Math.PI/2,0x6a4a2a).scale.set(0.5,0.6,0.5); for(let i=0;i<3;i++)mcyl(root,0.06,0.06,0.16,mm([0xf2f2f2,0xd8c8a0,0xc8a040][i]),64.2+i*0.3,g+0.89,92.3,8);
     const bed=grp(root,67.2,g,89.8,Math.PI/2); mb(bed,1.4,0.45,2.4,mm(0x5a4a3a),0,0.22,0); mb(bed,1.3,0.12,2.3,mm(0xd8d0c0),0,0.5,0); mb(bed,1.3,0.1,1.4,mm(0x6a2a2a),0,0.58,0.4);
     const sh=grp(root,61.5,g,89.2); mb(sh,0.8,0.9,0.6,mm(0x6a4a2a),0,0.45,0); mb(sh,0.7,0.35,0.45,new THREE.MeshLambertMaterial({color:0xa8d8f0,transparent:true,opacity:0.45}),0,1.08,0); mb(sh,0.68,0.08,0.43,mm(0x6a8a4a),0,0.94,0);
-    K.turtles=[0,1].map(i=>{ const t=grp(sh,-0.15+i*0.3,1.0,0); mb(t,0.16,0.07,0.2,mm(0x3a7a3a),0,0,0); mb(t,0.06,0.05,0.07,mm(0x8ab86a),0,0,-0.12); return t; });
+    K.turtles=[0,1].map(i=>{ const t=grp(sh,-0.15+i*0.3,0.99,0), skin=mm(0x8ab86a); t.scale.setScalar(0.8); const shell=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,6,0,Math.PI*2,0,Math.PI/2),mm(i?0x4a6a2a:0x3a7a3a)); shell.scale.set(1,0.75,1.25); t.add(shell); mb(t,0.17,0.02,0.22,mm(0xd8c870),0,0.005,0);
+      for(let k=0;k<5;k++)mb(t,0.045,0.012,0.045,mm(0x2a4a1a),Math.cos(k*1.26)*0.05,0.07,Math.sin(k*1.26)*0.06); msph(t,0.04,skin,0,0.03,-0.15,1,0.9,1.2); for(const s of[-1,1])msph(t,0.008,mm(0x0a0a0a),s*0.022,0.045,-0.18);
+      for(const [x,z] of [[-0.08,-0.07],[0.08,-0.07],[-0.08,0.07],[0.08,0.07]])mb(t,0.04,0.02,0.05,skin,x,0.0,z); mb(t,0.02,0.015,0.05,skin,0,0.01,0.14); return t; }); msph(sh,0.06,mm(0x8a8a8a),0.12,0.97,0.08,1.4,0.6,1);
     const mr=grp(root,64.2,g,95.85); mb(mr,0.9,1.2,0.06,mm(0x5a3a1a),0,1.6,0); mb(mr,0.78,1.06,0.02,new THREE.MeshBasicMaterial({color:0xc8d8e0}),0,1.6,-0.04); for(const [x,y] of [[-0.25,1.95],[0.18,1.35]])mb(mr,0.2,0.26,0.02,mm(0xe8e0c0),x,y,-0.06);
     rkSign(root,'BOXING · FRIDAY',1.2,0.8,'#d8c070','#2a1a10',62,g+1.9,95.9,Math.PI); }
   // the pet shop: fish tanks, birds, puppies, the counter, Adrian, and Butkus
@@ -7443,7 +7447,7 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
     const ct=grp(root,36,g,94.3); mb(ct,5,1,0.8,mm(0x6a4a2a),0,0.5,0); mb(ct,0.5,0.35,0.4,mm(0x3a3a3a),1.6,1.18,0); mb(ct,0.4,0.5,0.3,mm(0xd8b070),-1.4,1.25,0);
     const pen=grp(root,38.6,g,90); for(const [w,d,x,z] of [[2,0.08,0,-1],[2,0.08,0,1],[0.08,2,-1,0],[0.08,2,1,0]])mb(pen,w,0.6,d,mm(0xc8c8c8),x,0.3,z);
     K.pups=[0,1].map(i=>{ const M=petMesh({kind:'dog',breed:'jack',size:0.55,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3',coat:'short',ears:'fold',seed:3+i}); M.mat.userData.own=true; M.g.position.set(38.2+i*0.8,g,89.7+i*0.5); root.add(M.g); M.ph=0; return M; });
-    K.adrian=rkPerson(root,'adrian',36,g,95.6,Math.PI); K.speak.push(K.adrian); K.butkus=rkButkus(root); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; }
+    K.adrian=rkPerson(root,'adrian',36,g,95.6,0.001); K.speak.push(K.adrian); K.butkus=rkButkus(root); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; }
   // Mickey's gym: the ring, heavy bags, a speed bag, lockers, a mirror, and boxers who never stop training
   { const Y=RK.gym; rkSign(root,"MIGHTY MICK'S BOXING",7,1,'#2a1a10','#f2d060',63.5,g+3.5,Y.z1+1.06,0);
     const ring=grp(root,61,g,61); K.ring=ring; mb(ring,7,0.8,7,mm(0x3a3a4a),0,0.4,0); mb(ring,6.6,0.04,6.6,mm(0xd8d0c0),0,0.82,0); for(const [x,z,c] of [[-3.2,-3.2,0xc81a1a],[3.2,-3.2,0x2a4ad8],[-3.2,3.2,0xf2f2f2],[3.2,3.2,0xf2f2f2]])mb(ring,0.18,1.7,0.18,mm(c),x,1.65,z);
@@ -7462,12 +7466,12 @@ function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(r
   { const st=rkPerson(root,'boxer',86.9,g+2,40.9,Math.PI,{}); glowAll(st.g,0x8a6a3a,1); st.g.traverse(o=>{ if(o.isMesh)o.material=new THREE.MeshLambertMaterial({color:0x8a6a3a,emissive:0x2a1a08}); }); st.R.armL.rotation.z=-2.7; st.R.armR.rotation.z=2.7; rkGloves(st.R,0x8a6a3a); st.g.scale.setScalar(1.5); K.statue=st;
     const bell=grp(root,127.5,g,70); mb(bell,2.2,0.2,0.3,mm(0x5a3a1a),0,2.5,0); for(const s of[-1,1])mb(bell,0.2,2.5,0.3,mm(0x5a3a1a),s*1.0,1.25,0); const bm=mm(0x8a6a3a,{emissive:0x201408});
     const bp=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.7,1.1,16),bm); bp.position.y=1.8; bell.add(bp); const lip=new THREE.Mesh(new THREE.CylinderGeometry(0.74,0.74,0.12,16),bm); lip.position.y=1.22; bell.add(lip); mb(bell,0.04,0.7,0.02,mm(0x1a1a1a),0.1,1.6,-0.6); K.bell=bell;
-    const ck=new THREE.Mesh(new THREE.CircleGeometry(0.7,20),new THREE.MeshBasicMaterial({color:0xf2f2e8})); ck.position.set(127.5,g+12,66.06); root.add(ck); mb(root,0.06,0.5,0.02,mm(0x1a1a1a),127.5,g+12.2,66.08); mb(root,0.4,0.06,0.02,mm(0x1a1a1a),127.65,g+12,66.08); }
+    const ck=new THREE.Mesh(new THREE.CircleGeometry(0.7,20),new THREE.MeshBasicMaterial({color:0xf2f2e8})); ck.position.set(127.5,g+12,67.06); root.add(ck); mb(root,0.06,0.5,0.02,mm(0x1a1a1a),127.5,g+12.2,67.08); mb(root,0.4,0.06,0.02,mm(0x1a1a1a),127.65,g+12,67.08); }
   // the corner: three singers under the lamp, kids on a stoop, the grocer at the corner store
-  K.singers=[0,1,2].map(i=>{ const s=rkPerson(root,'singer',56.4+i*0.9,g,85.6,Math.PI,{skin:['#a8704a','#e8c4a0','#7a4a2a'][i]}); K.speak.push(s); return s; });
-  mb(root,1.8,0.5,0.6,mm(0xb8b0a0),59.55,g+0.25,85.9); K.kids=[0,1].map(i=>{ const k=rkPerson(root,'kid',59.2+i*0.7,g,85.9,Math.PI,i?{hair:'ponytail',topC:'#3a8ad8',hairC:'#2a1a10'}:{}); k.g.scale.setScalar(0.72); K.speak.push(k); return k; });
-  K.grocer=rkPerson(root,'grocer',70.6,g,85.6,Math.PI); K.speak.push(K.grocer); const hy=grp(root,44,g,85); mcyl(hy,0.18,0.2,0.7,mm(0xd8c02a),0,0.35,0,8); msph(hy,0.16,mm(0xd8c02a),0,0.72,0); K.hydrant=hy;
-  K.pigeons=[0,1,2].map(i=>{ const p=grp(root,47+i*0.6,g,84.4+(i%2)*0.4); mb(p,0.14,0.12,0.24,mm(0x8a8a9a),0,0.1,0); mb(p,0.08,0.08,0.08,mm(0x5a6a7a),0,0.2,-0.12); return p; }); }
+  K.singers=[0,1,2].map(i=>{ const s=rkPerson(root,'singer',56.4+i*0.9,g,85.6,0,{skin:['#a8704a','#e8c4a0','#7a4a2a'][i]}); K.speak.push(s); return s; });
+  mb(root,1.8,0.5,0.6,mm(0xb8b0a0),59.55,g+0.25,85.75); K.kids=[0,1].map(i=>{ const k=rkPerson(root,'kid',59.2+i*0.7,g,85.4,0.001,i?{hair:'ponytail',topC:'#3a8ad8',hairC:'#2a1a10'}:{}); k.g.scale.setScalar(0.72); K.speak.push(k); return k; });
+  K.grocer=rkPerson(root,'grocer',70.6,g,85.6,0.001); K.speak.push(K.grocer); const hy=grp(root,44,g,85); mcyl(hy,0.18,0.2,0.7,mm(0xd8c02a),0,0.35,0,8); msph(hy,0.16,mm(0xd8c02a),0,0.72,0); K.hydrant=hy;
+  K.pigeons=[0,1,2].map(i=>{ const p=grp(root,47+i*0.6,g,84.4+(i%2)*0.4); mb(p,0.14,0.12,0.24,mm(0x8a8a9a),0,0.1,0); mb(p,0.08,0.08,0.08,mm(0x5a6a7a),0,0.2,-0.12); return p; }); buildRkLife2(K); }
 function clearRkLife(){ rkStageClear(); const K=rkK; if(!K)return; scene.remove(K.root); odFree(K.root); for(const b of K.boxers)undress(b.g); rkK=null; }
 function rkTick(dt){ const K=rkK; K.t+=dt; const t=K.t, S=rkStage;
   K.tv.material.color.setHSL(0.55,0.2,0.45+Math.random()*0.15); K.turtles.forEach((tu,i)=>{ tu.position.x=-0.15+i*0.3+Math.sin(t*0.5+i*2)*0.12; tu.rotation.y=Math.sin(t*0.5+i*2)*0.8; });
@@ -7477,14 +7481,14 @@ function rkTick(dt){ const K=rkK; K.t+=dt; const t=K.t, S=rkStage;
   K.speed.rotation.z=Math.sin(t*(S&&S.speedOn?40:3))*(S&&S.speedOn?0.6:0.08);
   // the gym's boxers keep training whatever happens in the story (unless a chapter borrows them)
   for(const b of K.boxers){ if(b.borrowed)continue; const R=b.R; if(b.job==='spar'){ const f=rkFists(R.armL,R.armR,t+b.home[0],1.6,0); b.g.position.x=b.home[0]+Math.sin(t*1.3+b.home[0])*0.25; b.g.position.y=b.home[1]+Math.abs(Math.sin(t*5))*0.05; }
-    else if(b.job==='bag'){ const f=rkFists(R.armL,R.armR,t,2.2,0.5); if(f.e>0.95&&!b.hit){ b.hit=true; K.bags[2].va+=f.right?0.4:-0.4; K.bags[2].vz+=0.2; } if(f.e<0.5)b.hit=false; }
+    else if(b.job==='bag'){ const f=rkFists(R.armL,R.armR,t,2.2,0.5,1.5,0.32); if(f.e>0.95&&!b.hit){ b.hit=true; K.bags[2].va+=f.right?0.4:-0.4; K.bags[2].vz+=0.2; } if(f.e<0.5)b.hit=false; }
     else { const hop=Math.abs(Math.sin(t*7)); b.g.position.y=b.home[1]+hop*0.25; R.armL.rotation.z=-0.5; R.armR.rotation.z=0.5; R.armL.rotation.x=R.armR.rotation.x=0.4; K.rope.position.set(b.home[0],b.home[1]+0.9,b.home[2]); K.rope.rotation.set(t*14,0,0); }
     animRig(R,dt,0); }
   if(!(S&&S.mickeyBusy)){ const M=K.mickey; M.R.armR.rotation.x=Math.sin(t*2)>0.6?2.2:0.4; animRig(M.R,dt,0); }
   K.singers.forEach((s,i)=>{ s.R.armL.rotation.x=s.R.armR.rotation.x=0.3+Math.max(0,Math.sin(t*4+i))*0.4; s.g.position.y=RK.g+Math.abs(Math.sin(t*4+i))*0.04; animRig(s.R,dt,0); });
-  K.kids.forEach((k,i)=>{ if(!k.busy){ odSit(k); k.g.position.set(59.2+i*0.7,RK.g-0.02,85.9); k.g.rotation.y=Math.PI; animRig(k.R,dt,0); } });
+  K.kids.forEach((k,i)=>{ if(!k.busy){ odSit(k); k.g.position.set(59.2+i*0.7,RK.g-0.02,85.4); k.g.rotation.y=0; animRig(k.R,dt,0); } });
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
-  if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&isRk(demo.sc))rkMusicTick(dt); }
+  rkTick2(dt); if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&isRk(demo.sc))rkMusicTick(dt); }
 
 CITY_LANDMARKS.philly=RK_LOTS;
 // ================= ROCKY IN DEMO MODE =================
@@ -7497,10 +7501,10 @@ function demoRkSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mans
   rkStageClear(); rkDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},rk:true,bits:[]}; rkK.root.add(S.grp); rkStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; rkMood=ch.mood||'street'; rkSky(ch.sky||'day'); ch.init(S); demo.cam=null; }
 function rkStageClear(){ const S=rkStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(rkK)rkK.root.remove(S.grp); odFree(S.grp); rkStage=null;
-  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(rkK)rkDefaults(); }
-function rkDefaults(){ const K=rkK, g=RK.g; K.adrian.g.position.set(36,g,95.6); K.adrian.g.rotation.y=Math.PI; odRest(K.adrian); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; K.butkus.g.visible=true;
+  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(rkK)rkDefaults(); rkTitle('',false); }
+function rkDefaults(){ const K=rkK, g=RK.g; K.adrian.g.position.set(36,g,95.6); K.adrian.g.rotation.y=0; odRest(K.adrian); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; K.butkus.g.visible=true;
   K.mickey.g.position.set(60,g,66); K.mickey.g.rotation.y=Math.PI*0.8; odRest(K.mickey); K.boxers.forEach(b=>{ b.borrowed=false; b.g.position.set(b.home[0],b.home[1],b.home[2]); b.g.rotation.set(0,b.home[3],0); odRest(b); });
-  K.kids.forEach(k=>k.busy=false); K.pigeons.forEach((p,i)=>{ p.position.set(47+i*0.6,g,84.4+(i%2)*0.4); p.visible=true; }); }
+  K.paulie.g.position.set(33.5,g,69.5); K.paulie.g.rotation.y=Math.PI; odRest(K.paulie); K.rinkGuy.g.position.set(89,g,68.5); K.rinkGuy.g.rotation.y=0; K.adrian.g.visible=true; K.kids.forEach(k=>{ k.busy=false; k.g.visible=true; }); K.pigeons.forEach((p,i)=>{ p.position.set(47+i*0.6,g,84.4+(i%2)*0.4); p.visible=true; }); }
 // skies: a hazy 1970s day, the warm evening, and the night
 function rkSky(k){ const S={day:[0xa8b8c4,[1,1,1],50,150],dawn:[0xe8b890,[1,0.86,0.76],40,140],dusk:[0xd88a6a,[0.92,0.74,0.7],40,140],night:[0x101828,[0.5,0.54,0.68],30,120]}[k]||[0xa8b8c4,[1,1,1],50,150];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); scene.fog.near=S[2]; scene.fog.far=S[3]; setWeather('clear'); }
@@ -7548,7 +7552,7 @@ OD_CH.rk2={secs:38,sky:'day',mood:'love',init(S){ rkDress(S,'street'); const K=r
     // into the pet shop
     if(t<6)odHeroPath(S,[42,g,84],[35.5,g,90.6],1.6,5.6); else if(t<16.4)odHeroTo(S,[35.6,g,93],Math.PI,false);
     if(t>=5.6&&t<6.2&&t<16.4)odHeroPath(S,[35.5,g,90.6],[35.6,g,93],5.6,6.2); odAt(S,4.4,'bell',()=>rkSfx('bell'));
-    if(t<16.4){ A.g.position.set(36,g,95.6); A.g.rotation.y=Math.PI; A.R.head.rotation.x=t<11?-0.35:0; animRig(A.R,dt,0); }
+    if(t<16.4){ A.g.position.set(36,g,95.6); A.g.rotation.y=0; A.R.head.rotation.x=t<11?-0.35:0; animRig(A.R,dt,0); }
     odAt(S,6.4,'r1',()=>odSay(S,S.hero,'Yo, Adrian!')); odAt(S,7.6,'a1',()=>odSay(S,A,'...Oh. Hi.')); odAt(S,8.8,'r2',()=>odSay(S,S.hero,'I came for some more turtle food.'));
     odAt(S,10,'box',()=>{ S.box.visible=true; S.box.position.set(35.7,g+1.1,94.2); }); odAt(S,11,'r3',()=>odSay(S,S.hero,"Why don't turtles get lost? They take their house!"));
     odAt(S,13.4,'a2',()=>odSay(S,A,'...Heh. That\'s silly.'));
@@ -7580,13 +7584,13 @@ OD_CH.rk2={secs:38,sky:'day',mood:'love',init(S){ rkDress(S,'street'); const K=r
 
 // ---------- 3. MICKEY'S GYM ----------
 OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,'gloves'); S.mickeyBusy=true; const K=rkK; S.rope=new THREE.Mesh(new THREE.TorusGeometry(1.05,0.035,4,24,Math.PI),mm(0x2a2a2a)); S.rope.visible=false; S.grp.add(S.rope);
-    S.opp=K.boxers[1]; S.opp.borrowed=true; },
+    S.opp=K.boxers[1]; S.opp.borrowed=true; S.out=K.boxers[0]; },
   tick(S,dt){ const K=rkK, t=S.t, g=RK.g, M=K.mickey, opp=S.opp, bag=K.bags[1];
     // in through the door
     if(t<9)odHeroPath(S,[63.5,g,76],[66.6,g,61],2.4,8.6); odAt(S,4.6,'m1',()=>odSay(S,M,'MOVE! Keep those hands UP!')); odAt(S,7,'m2',()=>odSay(S,M,'Balboa! Hit the bag!'));
     const mk=(p,ry)=>{ M.g.position.set(...p); M.g.rotation.y=ry; odRest(M); M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); };
     // the heavy bag
-    if(t>=8.6&&t<15){ odHeroTo(S,[67.1,g,61],-Math.PI/2,false); mk([66.4,g,63.4],Math.PI*0.9); const f=rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0); if(f.e>0.95&&!S.hit){ S.hit=true; bag.va+=f.right?0.5:-0.5; bag.vz+=0.25; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
+    if(t>=8.6&&t<15){ odHeroTo(S,[67.1,g,61],-Math.PI/2,false); mk([66.4,g,63.4],Math.PI*0.9); const f=rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0,1.5,0.32); if(f.e>0.95&&!S.hit){ S.hit=true; bag.va+=f.right?0.5:-0.5; bag.vz+=0.25; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
     odAt(S,10.2,'m3',()=>odSay(S,M,'Harder! You punch like my grandma!')); odAt(S,12.4,'r1',()=>odSay(S,S.hero,'Like THIS?!')); odAt(S,13.1,'big',()=>{ bag.vz+=1.4; rkSfx('thud'); const p=bag.pv.position; burst(p.x-0.5,g+1.8,p.z-0.5,new THREE.Color(0xffd23a),10); });
     // the speed bag
     if(t>=15&&t<20.4){ odHeroTo(S,[70.4,g,68],-Math.PI/2,false); S.speedOn=true; mk([68,g,66],-Math.PI*0.25); if(Math.random()<dt*14)rkSfx('tap'); } else S.speedOn=false;
@@ -7598,12 +7602,13 @@ OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,
     if(t>=25.4&&t<30.6){ odHeroTo(S,[64.6,g,70.4],0,false); mk([62.4,g,67.6],-Math.PI*0.3); }
     for(const [tt,n] of [[26.4,'1...'],[27.4,'2...'],[28.4,'3...']])odAt(S,tt,'c'+n,()=>odSay(S,S.hero,n)); odAt(S,29.4,'m6',()=>odSay(S,M,"Not bad, kid. Not bad."));
     // sparring in the ring
-    if(t>=30.6){ const hx=59.8; odHeroTo(S,[hx,g+0.8,61],-Math.PI/2,false); mk([65,g,59.4],-Math.PI*0.6); opp.g.position.set(62.2,g+0.8,61); opp.g.rotation.y=Math.PI/2; const R=opp.R;
+    if(t>=30.6){ const O=S.out; O.borrowed=true; O.g.position.set(57,g,64.6); O.g.rotation.set(0,-Math.PI*0.75,0); O.R.armL.rotation.x=O.R.armR.rotation.x=0; O.R.armL.rotation.z=-2.4-Math.sin(t*8)*0.3; O.R.armR.rotation.z=2.4+Math.sin(t*8)*0.3; animRig(O.R,dt,0);
+      const hx=59.8; odHeroTo(S,[hx,g+0.8,61],-Math.PI/2,false); mk([65,g,59.4],-Math.PI*0.6); opp.g.position.set(62.2,g+0.8,61); opp.g.rotation.y=Math.PI/2; const R=opp.R;
       if(t<33.4){ rkFists(R.armL,R.armR,t,1.6,1); } else if(t<35){ const k=odSeg(S,33.4,34.2); opp.g.position.x=62.2+k*1.2; opp.g.rotation.z=-k*0.35; R.armL.rotation.x=R.armR.rotation.x=0.2; } else { opp.g.position.x=63.4; opp.g.rotation.z=-0.35; }
       animRig(R,dt,0); }
     odAt(S,32,'duck',()=>rkSfx('whoosh')); odAt(S,33.3,'hook',()=>{ rkSfx('thud'); burst(62.2-0.5,g+2.4,61-0.5,new THREE.Color(0xffffff),10); odSay(S,opp,'Oof!'); });
     odAt(S,34.4,'m7',()=>odSay(S,M,"NOW that's a punch!")); odAt(S,36,'r2',()=>odSay(S,S.hero,'Yo, Mick! I got this!')); },
-  pose(S){ const t=S.t; model.rotation.x=0;
+  pose(S){ const t=S.t; model.rotation.x=0; if(t>=8.6&&t<15)rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0,1.5,0.32); if(t>=15&&t<20.4)rkSpeedBag(armL,armR,t);
     if(t>=20.4&&t<25.4){ model.position.y+=Math.abs(Math.sin(t*7.5))*0.25; armL.rotation.z=-0.5; armR.rotation.z=0.5; armL.rotation.x=armR.rotation.x=0.4; }
     if(t>=25.4&&t<30.6){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; armL.rotation.z=-0.3; legL.rotation.x=legR.rotation.x=0; }
     if(t>=30.6){ if(t>=31.6&&t<32.4){ model.position.y-=0.45; armL.rotation.x=armR.rotation.x=1.4; } else if(t>=32.9&&t<33.6){ armR.rotation.x=1.6; armR.rotation.z=1.2; armL.rotation.x=1.15; } else if(t<35.6)rkFists(armL,armR,t,1.8,0); else { armL.rotation.z=-2.6; armR.rotation.z=2.6; armL.rotation.x=armR.rotation.x=0; } } },
@@ -7614,6 +7619,287 @@ OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,
 // the chapters as Demo Mode scenes, and one click to line them all up
 const RK_NAMES=["Rocky's Neighborhood",'Adrian and Butkus',"Mickey's Gym"];
 function loadRocky(){ dmCfg.scenes=RK_NAMES.map((n,i)=>cleanScene({act:'rk'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['rk'+(i+1)].secs,cap:''})); saveDemo(); }
+
+// --- more of Philadelphia: the ice rink, the meat plant, the arena, and a plaza for the champion's announcement
+RK.rink={x0:87,x1:104,z0:55,z1:72}; RK.meat={x0:23,x1:40,z0:55,z1:72}; RK.arena={x0:118,x1:137,z0:118,z1:137,cx:127.5,cz:127.5}; RK.bell=[133,68.5];
+Object.assign(RK_LOTS,{
+  '2,1':o=>{ const {P,g}=o, R=RK.rink; rkShell(P,R.x0,R.z0,R.x1,R.z1,g,g+6,ID.brick); rkBox(P,R.x0,g+7,R.z0,R.x1,g+7,R.z1,ID.concrete); rkBox(P,R.x0+1,g-1,R.z0+1,R.x1-1,g-1,R.z1-1,ID.quartz); // the ice rink
+    for(let x=R.x0+2;x<R.x1-1;x+=3)rkBox(P,x,g+3,R.z1,x+1,g+4,R.z1,ID.window); rkBox(P,95,g,R.z1,96,g+2,R.z1,0); rkBox(P,R.x0,g+5,R.z1,R.x1,g+5,R.z1,ID.paint_blue); },
+  '0,1':o=>{ const {P,g}=o, M=RK.meat; rkShell(P,M.x0,M.z0,M.x1,M.z1,g,g+6,ID.concrete); rkBox(P,M.x0,g+7,M.z0,M.x1,g+7,M.z1,ID.steel); rkBox(P,M.x0+1,g-1,M.z0+1,M.x1-1,g-1,M.z1-1,ID.slate); // the meat plant
+    rkBox(P,31,g,M.z1,32,g+2,M.z1,0); rkBox(P,M.x0,g+4,M.z1,M.x1,g+4,M.z1,ID.paint_red); for(let x=M.x0+2;x<M.x1-1;x+=4)P(x,g+2,M.z1,ID.window); },
+  '3,3':o=>{ const {P,g}=o, A=RK.arena; rkShell(P,A.x0,A.z0,A.x1,A.z1,g,g+12,ID.concrete); rkBox(P,A.x0,g+13,A.z0,A.x1,g+13,A.z1,ID.steel); rkBox(P,A.x0+1,g-1,A.z0+1,A.x1-1,g-1,A.z1-1,ID.slate); // the arena
+    for(let t=0;t<3;t++){ const d=1+t, h=2-t; for(let x=A.x0+d;x<=A.x1-d;x++)for(let z=A.z0+d;z<=A.z1-d;z++){ if(x!==A.x0+d&&x!==A.x1-d&&z!==A.z0+d&&z!==A.z1-d)continue; if(Math.abs(x-127.5)<2&&z<A.cz)continue; rkBox(P,x,g,z,x,g+h,z,ID.concrete); } } // three rows of seats, with an aisle from the door
+    rkBox(P,127,g,A.z0,128,g+2,A.z0,0); for(let x=A.x0+1;x<A.x1;x+=2)rkBox(P,x,g+9,A.z0,x,g+10,A.z0,ID.window); rkBox(P,A.x0,g+11,A.z0,A.x1,g+11,A.z0,ID.paint_red); rkBox(P,A.x0,g+12,A.z0,A.x1,g+12,A.z0,ID.paint_white); },
+  '3,1':o=>{ const {P,g,x0,x1,z0,z1}=o; for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)P(x,g-1,z,(x+z)%2?ID.brick:ID.granite); // Independence Hall, a brick plaza, and the Liberty Bell's glass pavilion
+    rkShell(P,119,56,136,63,g,g+9,ID.brick); rkBox(P,120,g,57,135,g+9,62,ID.brick); rkBox(P,119,g+10,56,136,g+10,63,ID.slate); rkBox(P,120,g+11,57,135,g+11,62,ID.slate);
+    for(let x=120;x<136;x+=2)for(const y of [g+1,g+2,g+5,g+6]){ P(x,y,63,ID.window); P(x,y,56,ID.window); } for(let x=120;x<136;x+=2)P(x,g+3,63,ID.paint_white);
+    rkBox(P,126,g,64,129,g+15,66,ID.brick); rkBox(P,127,g,66,128,g+1,66,ID.door); rkBox(P,126,g+16,64,129,g+17,66,ID.paint_white); rkBox(P,127,g+18,64,128,g+21,66,ID.paint_white); rkBox(P,127,g+22,65,128,g+23,65,ID.paint_white); P(127,g+24,65,ID.gold); P(128,g+24,65,ID.gold);
+    rkShell(P,130,66,136,71,g,g+3,ID.glass); rkBox(P,130,g+4,66,136,g+4,71,ID.concrete); rkBox(P,130,g,68,130,g+1,69,0); rkBox(P,131,g-1,67,135,g-1,70,ID.slate); }});
+// the people of the second half
+Object.assign(RK_CAST,{
+  paulie:{skin:'#e8c4a0',hair:'short',hairC:'#3a2a1a',top:'jacket',topC:'#5a5a6a',bottom:'pants',bottomC:'#2a2a30',shoes:'shoes',shoeC:'#1a1a1a',hat:'cap',hatC:'#2a2a2a'},
+  apollo:{skin:'#6a4028',hair:'short',hairC:'#141414',eyes:'#1a1010',top:'tank',topC:'#6a4028',bottom:'shorts',bottomC:'#f2f2f2',shoes:'shoes',shoeC:'#f2f2f2'},
+  suit:{skin:'#6a4028',hair:'short',hairC:'#141414',top:'jacket',topC:'#f2f2f2',bottom:'pants',bottomC:'#f2f2f2',shoes:'shoes',shoeC:'#f2f2f2'},
+  ref:{skin:'#e8c4a0',hair:'buzz',hairC:'#8a8a8a',top:'long',topC:'#f2f2f2',bottom:'pants',bottomC:'#3a3a3a',shoes:'shoes',shoeC:'#1a1a1a'},
+  reporter:{skin:'#e0b898',hair:'short',hairC:'#5a3a1a',top:'jacket',topC:'#6a5a3a',bottom:'pants',bottomC:'#3a3a3a',shoes:'shoes',shoeC:'#1a1a1a',hat:'cap',hatC:'#6a5a3a'},
+  rinkguy:{skin:'#e8c8a8',hair:'short',hairC:'#2a2a2a',top:'jacket',topC:'#2a5ad8',bottom:'pants',bottomC:'#2a2a3a',shoes:'shoes',shoeC:'#1a1a1a',hat:'cap',hatC:'#2a5ad8'}});
+function rkStars(R){ const m=mm(0x1a3aa8), r=mm(0xc81a1a), w=mm(0xf2f2f2); for(const l of [R.legL,R.legR]){ mb(l,0.27,0.24,0.27,m,0,-0.12,0); mb(l,0.08,0.24,0.28,r,0.1,-0.12,0); } mb(R.torso,0.5,0.1,0.27,r,0,0.75,0); } // Apollo's stars-and-stripes trunks
+function rkCarcass(par,x,y,z){ const pv=grp(par,x,y,z), red=mm(0xb84a4a), fat=mm(0xf0e2d2); mb(pv,0.04,0.5,0.04,mm(0x9a9aa0),0,-0.25,0); const c=grp(pv,0,-0.5,0);
+  mb(c,0.7,2.2,0.45,red,0,-1.2,0); mb(c,0.74,0.16,0.48,fat,0,-0.6,0); mb(c,0.74,0.16,0.48,fat,0,-1.3,0); mb(c,0.6,0.6,0.4,red,0,-2.5,0); mb(c,0.3,0.4,0.3,fat,0,-0.1,0); return {pv,a:0,va:0,b:0,vb:0}; }
+// the new sets: the rink's ice and lights, the meat plant's hanging meat, the arena's ring, seats and crowd, the press stand
+function buildRkLife2(K){ const root=K.root, g=RK.g;
+  { const R=RK.rink; rkSign(root,'ICE SKATING',6,1,'#2a5ad8','#f2f8ff',95.5,g+3.4,R.z1+1.06,0);
+    const ice=new THREE.Mesh(new THREE.PlaneGeometry(14,10),new THREE.MeshLambertMaterial({color:0xd8f0ff,emissive:0x1a2a3a})); ice.rotation.x=-Math.PI/2; ice.position.set(95.5,g+0.03,62); root.add(ice);
+    for(const [w,d,x,z] of [[14.4,0.15,95.5,56.85],[0.15,10.3,88.35,62],[0.15,10.3,102.65,62],[6,0.15,91.5,67.15],[6,0.15,99.5,67.15]])mb(root,w,1,d,mm(0xf2f2f2),x,g+0.5,z);
+    for(const x of [89.5,91.5,93.5])mb(root,1.6,0.45,0.5,mm(0x8a5a2a),x,g+0.22,70.6); const sn=grp(root,101,g,70.4); mb(sn,3,1.1,0.8,mm(0xd8402a),0,0.55,0); rkSign(sn,'HOT COCOA 10¢',2.4,0.5,'#f2e0a0','#8a1a1a',0,2,-0.1,Math.PI);
+    const bth=grp(root,89,g,69.4); mb(bth,1.4,1.2,1.2,mm(0x5a6a7a),0,0.6,0); K.horn=mcyl(root,0.12,0.32,0.5,mm(0x9a9aa0),88.2,g+4,71.4,10); K.horn.rotation.x=-1.2;
+    K.bulbs=[]; for(let i=0;i<4;i++)for(let k=0;k<14;k++){ const b=msph(root,0.09,new THREE.MeshBasicMaterial({color:[0xff3a3a,0x3aff6a,0x3a8aff,0xffe02a][(i+k)%4]}),89+k,g+5.6,58+i*2.6); K.bulbs.push(b); }
+    K.rinkGuy=rkPerson(root,'rinkguy',89,g,68.5,0.001); K.speak.push(K.rinkGuy); }
+  { const M=RK.meat; rkSign(root,'PHILLY MEAT CO.',6,1,'#8a1a1a','#f2f2f2',31.5,g+3.4,M.z1+1.06,0); K.meat=[];
+    for(const x of [27,31.5,36]){ mb(root,0.12,0.12,13,mm(0x8a8a90),x,g+4.7,62.5); for(const z of [58,61,64,67])K.meat.push(rkCarcass(root,x,g+4.6,z)); }
+    for(let x=25;x<=39;x+=4)mb(root,0.8,0.06,0.3,new THREE.MeshBasicMaterial({color:0xc8e8ff}),x,g+6.9,62); K.paulie=rkPerson(root,'paulie',33.5,g,69.5,Math.PI); K.speak.push(K.paulie); }
+  { const A=RK.arena, ry=g+1; rkSign(root,'TONIGHT: CREED vs BALBOA',9,1.2,'#1a3aa8','#f2f2f2',127.5,g+6,A.z0-0.06,Math.PI);
+    const ring=grp(root,A.cx,g,A.cz); K.aring=ring; mb(ring,7,1,7,mm(0x1a3aa8),0,0.5,0); mb(ring,6.6,0.04,6.6,mm(0xe8e2d8),0,1.02,0); for(const [x,z,c] of [[-3.2,-3.2,0xc81a1a],[3.2,-3.2,0xf2f2f2],[-3.2,3.2,0xf2f2f2],[3.2,3.2,0x1a3aa8]])mb(ring,0.18,1.7,0.18,mm(c),x,1.85,z);
+    for(const y of [1.45,1.9,2.35])for(const [w,d,x,z] of [[6.4,0.05,0,-3.2],[6.4,0.05,0,3.2],[0.05,6.4,-3.2,0],[0.05,6.4,3.2,0]])mb(ring,w,0.05,d,mm(y<1.6?0xc81a1a:y<2?0xf2f2f2:0x1a3aa8),x,y,z);
+    for(const [x,z] of [[-2.8,2.8],[2.8,-2.8]])mb(ring,0.4,0.5,0.4,mm(0x3a3a3a),x,1.25,z); const lt=grp(root,A.cx,g+10,A.cz); mb(lt,6,0.3,6,mm(0x2a2a2a),0,0,0); mb(lt,5.6,0.05,5.6,new THREE.MeshBasicMaterial({color:0xfff8e0}),0,-0.18,0);
+    for(const [z,ry2] of [[A.z0+1.2,0],[A.z1-1.2,Math.PI]])rkSign(root,'APOLLO CREED vs ROCKY BALBOA',8,1,'#c81a1a','#f2f2f2',A.cx,g+7.5,z,ry2);
+    mb(root,3,0.8,0.8,mm(0x5a3a1a),A.cx,g+0.4,A.cz+5.4);
+    // the crowd: hundreds of fans in two instanced meshes, bouncing more as the fight heats up
+    const seats=[]; for(let t=0;t<3;t++){ const d=1+t, y=g+3-t; for(let x=A.x0+d;x<=A.x1-d;x++)for(let z=A.z0+d;z<=A.z1-d;z++){ if(x!==A.x0+d&&x!==A.x1-d&&z!==A.z0+d&&z!==A.z1-d)continue; if(Math.abs(x-127.5)<2&&z<A.cz)continue; seats.push([x+0.5,y,z+0.5]); } }
+    for(let k=0;k<40;k++){ const a=k/40*Math.PI*2; seats.push([A.cx+Math.cos(a)*5.3,g,A.cz+Math.sin(a)*5.3]); }
+    const body=new THREE.InstancedMesh(new THREE.BoxGeometry(0.5,0.75,0.3),new THREE.MeshLambertMaterial(),seats.length), hd=new THREE.InstancedMesh(new THREE.BoxGeometry(0.4,0.4,0.4),new THREE.MeshLambertMaterial(),seats.length), col=new THREE.Color();
+    seats.forEach((s,i)=>{ body.setColorAt(i,col.setHex([0xc81a1a,0x1a3aa8,0xf2f2f2,0x3a8a3a,0xd8a020,0x5a3a8a,0x2a2a2a][i%7])); hd.setColorAt(i,col.setHex(['#f0d0b0','#c8946a','#8a5a3a','#e8c4a0','#6a4028'].map(c=>parseInt(c.slice(1),16))[i%5])); });
+    root.add(body,hd); K.crowd={body,hd,seats,hype:0.3}; K.flashes=[]; for(let i=0;i<10;i++){ const f=msph(root,0.12,new THREE.MeshBasicMaterial({color:0xffffff}),0,0,0); f.visible=false; K.flashes.push(f); } }
+  { const st=grp(root,124,g,66.6); mb(st,1,1.2,0.6,mm(0x5a3a1a),0,0.6,0); rkSign(st,'1776 · 1976',1,0.35,'#1a3aa8','#f2f2f2',0,0.8,0.31,0); mcyl(st,0.02,0.02,0.4,mm(0x2a2a2a),0,1.4,-0.1,4);
+    for(const x of [120,128])for(let k=0;k<3;k++){ const fl=grp(root,x+k*0.9,g,66.4); mcyl(fl,0.04,0.04,3,mm(0xd8d8d8),0,1.5,0,6); mb(fl,0.9,0.55,0.02,mm([0xc81a1a,0xf2f2f2,0x1a3aa8][k]),0.47,2.7,0); }
+    const bell=K.bell; if(bell)bell.position.set(RK.bell[0],g,RK.bell[1]); } }
+function rkTick2(dt){ const K=rkK, t=K.t, S=rkStage;
+  for(const m of K.meat){ m.va+=(-m.a*7-m.va*0.6)*dt; m.a+=m.va*dt; m.vb+=(-m.b*7-m.vb*0.6)*dt; m.b+=m.vb*dt; m.pv.rotation.set(m.b,0,m.a); }
+  K.bulbs.forEach((b,i)=>b.visible=((Math.floor(t*3)+i)%3)!==0);
+  const C=K.crowd; if(C){ const near=Math.hypot(camera.position.x-RK.arena.cx,camera.position.z-RK.arena.cz)<16, d=new THREE.Object3D(); if(near){ const hype=S&&S.hype!==undefined?S.hype:0.3;
+      C.seats.forEach((s,i)=>{ const jump=Math.max(0,Math.sin(t*(4+hype*6)+i*1.7))*0.25*hype; d.position.set(s[0],s[1]+0.4+jump,s[2]); d.rotation.set(0,Math.atan2(-(RK.arena.cx-s[0]),-(RK.arena.cz-s[2])),0); d.updateMatrix(); C.body.setMatrixAt(i,d.matrix); d.position.y+=0.58; d.updateMatrix(); C.hd.setMatrixAt(i,d.matrix); });
+      C.body.instanceMatrix.needsUpdate=C.hd.instanceMatrix.needsUpdate=true; for(const f of K.flashes){ if(f.visible&&Math.random()<dt*12)f.visible=false; else if(!f.visible&&Math.random()<dt*hype*3){ const s=C.seats[Math.floor(Math.random()*C.seats.length)]; f.position.set(s[0],s[1]+1.2,s[2]); f.visible=true; } } }
+    C.body.visible=C.hd.visible=near; }
+  if(!demo&&onPhilly()&&owned&&!owned.includes('ball'))rkGiveBall(); }
+// --- the rubber ball and your fists: in Philadelphia the hit button throws Rocky's ball, or punches if you have your fists out
+WP.ball={id:'ball',name:'Rubber Ball',icon:'🔴',dmg:2,cd:0.35,fact:"A rubber ball bounces because the rubber squashes and springs back. Rocky bounces his off walls all over Philadelphia."}; WEAPON_IDS.push('ball');
+const rkBalls=[]; let rkKnocks=[];
+function rkGiveBall(){ if(demo||!owned||owned.includes('ball'))return; owned.push('ball'); weapon='ball'; refreshWeapon(); toast("🔴 You've got Rocky's rubber ball! Hit to throw it, and catch it when it bounces back. Swap to your fists to box."); queueSave(); }
+function rkPeople(){ const K=rkK, out=[]; if(K){ for(const p of [K.adrian,K.mickey,K.paulie,K.grocer,K.rinkGuy,...K.boxers,...K.kids,...K.singers])if(p&&p.g.visible)out.push(p); } if(cityK)for(const p of cityK.people)if(!p.gone)out.push(p); return out; }
+function rkOof(p,dx,dz,line){ const L=Math.hypot(dx,dz)||1; rkKnocks.push({p,t:0,dx:dx/L,dz:dz/L}); npcSay(p,line); p.bubT=2.2; }
+function rkPunch(){ const K=rkK, f=lookDir(); f.y=0; f.normalize(); const me=pl.p; let best=null, bd=2.3;
+  for(const p of rkPeople()){ const v=p.g.position, dx=v.x-me[0], dz=v.z-me[2], d=Math.hypot(dx,dz); if(d<bd&&Math.abs(v.y-me[1])<1.5&&(dx*f.x+dz*f.z)/(d||1)>0.55){ bd=d; best=p; } }
+  if(best===K.adrian){ swingT=0; npcSay(K.adrian,'...Rocky?'); K.adrian.bubT=2; rkHearts(K.adrian.g.position.x,K.adrian.g.position.y+2.4,K.adrian.g.position.z); toast("🥊 Rocky would never hit Adrian. 💕"); return true; } // he never hits Adrian
+  const bags=[...K.bags.map(b=>({b,p:b.pv.getWorldPosition(new THREE.Vector3())})),...K.meat.map(b=>({b,p:b.pv.getWorldPosition(new THREE.Vector3())}))];
+  for(const q of bags){ const dx=q.p.x-me[0], dz=q.p.z-me[2], d=Math.hypot(dx,dz); if(d<1.7&&(!best||d<bd)&&(dx*f.x+dz*f.z)/(d||1)>0.4){ /* whichever is closer: a bag or a person */ swingT=0.25; atkCd=0.3; q.b.va=(q.b.va||0)+(Math.random()-0.5)*0.8; q.b.vb=(q.b.vb||0)+0.7; if(q.b.vz!==undefined)q.b.vz+=0.6; rkSfx('thud'); burst(q.p.x-0.5,me[1]+1.2,q.p.z-0.5,new THREE.Color(0xffd23a),5); return true; } }
+  if(!best)return false; swingT=0.25; atkCd=0.45; rkSfx('thud'); const v=best.g.position; burst(v.x-0.5,v.y+1.5,v.z-0.5,new THREE.Color(0xffffff),8);
+  rkOof(best,v.x-me[0],v.z-me[2],best===K.mickey?"Ow! Save it for the ring, ya bum!":K.boxers.includes(best)?'Nice one, Rock!':['Hey!','Oof!','Watch it, pal!','Yo! What was that for?!','Ow!'][Math.floor(Math.random()*5)]); return true; }
+function rkBallThrow(){ if(atkCd>0)return; if(rkBalls.length>=3){ const old=rkBalls.shift(); scene.remove(old.m); old.m.geometry.dispose(); }
+  const d=lookDir(), o=new THREE.Vector3(pl.p[0],pl.p[1]+EYE-0.2,pl.p[2]).addScaledVector(d,0.6); const m=new THREE.Mesh(new THREE.SphereGeometry(0.11,10,8),mm(0xd8304a)); m.position.copy(o); scene.add(m);
+  rkBalls.push({m,p:[o.x,o.y,o.z],v:[d.x*15,d.y*15+2,d.z*15],t:0,b:0}); atkCd=WP.ball.cd; swingT=0.25; sfx('swing'); }
+function rkBallTick(dt){ for(const B of rkBalls.slice()){ B.t+=dt; B.v[1]-=16*dt; const n=[...B.p];
+    for(const ax of [0,1,2]){ const q=[...n]; q[ax]+=B.v[ax]*dt; if(solidAt(Math.floor(q[0]),Math.floor(q[1]-(ax===1&&B.v[1]<0?0.11:0)),Math.floor(q[2]))){ B.v[ax]*=-0.72; if(ax===1){ B.v[0]*=0.9; B.v[2]*=0.9; } if(Math.abs(B.v[ax])>1.2){ B.b++; snd(()=>tone('sine',300+Math.random()*80,180,0.06,0.08)); } } else n[ax]=q[ax]; }
+    B.p=n; B.m.position.set(n[0],n[1],n[2]);
+    // people it bounces off (never Adrian: she catches it and tosses it back), monsters it bonks
+    if(B.t>0.15)for(const p of rkPeople()){ const v=p.g.position; if(Math.hypot(v.x-n[0],v.z-n[2])<0.45&&n[1]>v.y&&n[1]<v.y+1.9){ if(rkK&&p===rkK.adrian){ npcSay(p,'Got it! Here, Rocky!'); p.bubT=2; B.v=[(pl.p[0]-n[0])*0.9,6,(pl.p[2]-n[2])*0.9]; B.t=0.6; }
+        else { rkOof(p,B.v[0],B.v[2],['Hey!','Watch the ball!','Ow!','Yo, Rocky!'][Math.floor(Math.random()*4)]); B.v[0]*=-0.5; B.v[2]*=-0.5; snd(()=>tone('sine',260,160,0.08,0.12)); } break; } }
+    for(const m of mobs){ if(Math.hypot(m.p[0]-n[0],m.p[2]-n[2])<m.hw+0.2&&n[1]>m.p[1]&&n[1]<m.p[1]+m.h){ damageMob(m,WP.ball.dmg,B.v[0]*0.1,B.v[2]*0.1); B.v[0]*=-0.5; B.v[2]*=-0.5; break; } }
+    const near=Math.hypot(n[0]-pl.p[0],n[1]-(pl.p[1]+1),n[2]-pl.p[2]); if((B.t>0.25&&near<1.2)||B.t>6||n[1]<-5){ if(near<1.1&&B.t<=6)toast('🔴 Caught it!'); scene.remove(B.m); B.m.geometry.dispose(); rkBalls.splice(rkBalls.indexOf(B),1); } } // back in your hand
+  for(const k of rkKnocks.slice()){ k.t+=dt; const e=Math.sin(Math.min(1,k.t/0.7)*Math.PI); k.p.g.rotation.x=-e*0.35; if(k.t>=0.7){ k.p.g.rotation.x=0; rkKnocks.splice(rkKnocks.indexOf(k),1); }
+    if(k.p.bubT>0){ k.p.bubT-=dt; if(k.p.bubT<=0)odBubOff(k.p.g,k.p); } }
+  for(const p of rkPeople())if(p.bubT>0&&!rkKnocks.some(k=>k.p===p)&&!(rkK&&rkK.speak.includes(p))){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); } }
+// a big title over the screen (round cards and the ending)
+let rkTitleEl=null;
+function rkTitle(html,on){ if(!rkTitleEl){ rkTitleEl=document.createElement('div'); rkTitleEl.style.cssText='position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;z-index:9;color:#fff;font:900 clamp(26px,7vw,72px)/1.1 Georgia,serif;text-shadow:0 4px 18px #000,0 0 3px #000;opacity:0;transition:opacity .8s;padding:16px'; document.body.appendChild(rkTitleEl); }
+  if(html)rkTitleEl.innerHTML=html; rkTitleEl.style.opacity=on?1:0; }
+
+// ---------- Rocky, chapters 4 to 10 ----------
+RK_MOODS.triumph={bpm:104,notes:[60,64,67,72,67,72,76,79],drum:2,lead:'square'};
+function rkDress2(S,kind){ const sk=heroLook().skin, put=(par,w,h,d,col,x,y,z,list)=>{ const b=box(w,h,d,mm(col)); b.position.set(x,y,z); par.add(b); S.bits.push(b); if(list)list.push(b); return b; };
+  if(kind==='ring'){ put(rig.torso,0.54,0.76,0.3,sk,0,1.08,0); put(rig.torso,0.56,0.14,0.32,0x6a1a2a,0,0.76,0); for(const a of [armL,armR])put(a,0.27,0.72,0.27,sk,0,-0.34,0);
+    for(const l of [legL,legR]){ put(l,0.29,0.32,0.29,0x6a1a2a,0,-0.16,0); put(l,0.3,0.05,0.3,0xf2f2f2,0,-0.31,0); put(l,0.28,0.4,0.28,sk,0,-0.52,0); } rkDress(S,'gloves'); }
+  if(kind==='robe'){ S.robe=[]; put(rig.torso,0.62,0.86,0.38,0x6a1a2a,0,1.06,0,S.robe); for(const l of [legL,legR])put(l,0.33,0.42,0.33,0x6a1a2a,0,-0.2,0,S.robe); for(const a of [armL,armR])put(a,0.31,0.5,0.31,0x6a1a2a,0,-0.22,0,S.robe);
+    const sg=rkSign(rig.torso,'ITALIAN STALLION',0.58,0.2,'#6a1a2a','#f2d060',0,1.2,0.2,0); S.bits.push(sg); S.robe.push(sg); }
+  if(kind==='eye'){ put(head,0.16,0.12,0.03,0x6a3a8a,-0.11,0.2,-0.245); } }
+function rkUnrobe(S){ for(const b of S.robe||[])b.parent&&b.parent.remove(b); S.robe=[]; }
+const rkSky0=rkSky; rkSky=function(k){ if(k==='cold'){ rkSky0('day'); blockMat.color.setRGB(0.8,0.9,1); scene.background.setHex(0xa8c8e0); return; } if(k==='arena'){ rkSky0('night'); blockMat.color.setRGB(0.62,0.6,0.7); scene.background.setHex(0x05060a); scene.fog.color.setHex(0x05060a); return; } rkSky0(k); };
+function rkStepY(z){ const g=RK.g; if(z>=41)return g; if(z<=33.5)return g+8; return g+8-Math.min(7,Math.max(0,z-33.5)); } // the museum steps: from the street up to the top
+function rkRun(S){ S.hs=6.5; } // running, not walking
+function rkHit(S,who,c){ const p=who===S.hero?model.position:who.g.position; burst(p.x-0.5,p.y+1.9,p.z-0.5,new THREE.Color(c||0xffffff),8); rkSfx('thud'); if(who===S.hero)S.hitR=S.t; else S.hitA=S.t; }
+const RKC=()=>RK.arena; // the ring: Rocky stands south of the middle facing north, Apollo north facing south
+function rkFightSetup(S){ const K=rkK, A=RK.arena, g=RK.g; S.ap=rkPerson(S.grp,'apollo',A.cx,g+1,A.cz-1.1,Math.PI); rkStars(S.ap.R); rkGloves(S.ap.R,0xf2f2f2);
+  S.ref=rkPerson(S.grp,'ref',A.cx+2,g+1,A.cz,Math.PI/2); mb(S.ref.R.torso,0.16,0.08,0.02,mm(0x111111),0,1.4,-0.14); S.ann=rkPerson(S.grp,'suit',A.cx,g+1,A.cz,0,{skin:'#e8c4a0',hairC:'#c8c8c8',topC:'#1a1a1a',bottomC:'#1a1a1a',shoeC:'#111111'}); mcyl(S.ann.R.armR,0.04,0.04,0.25,mm(0x2a2a2a),0,-0.78,-0.05,6);
+  K.mickey.g.position.set(A.cx-3.9,g,A.cz+3.9); K.mickey.g.rotation.y=-Math.PI*0.75; S.mickeyBusy=true; }
+function rkApolloDance(S,dt,rate){ const R=S.ap.R, t=S.t; rkFists(R.armL,R.armR,t,rate||1.8,0.5); S.ap.g.position.y=RK.g+1+Math.abs(Math.sin(t*6))*0.08; const h=S.hitA!==undefined?Math.max(0,1-(t-S.hitA)/0.5):0; S.ap.g.rotation.x=-h*0.35; animRig(R,dt,0); }
+
+// ---------- 4. THE ICE RINK ----------
+OD_CH.rk4={secs:38,sky:'night',mood:'love',init(S){ rkDress(S,'street'); const K=rkK, g=RK.g; S.hornSpk={g:grp(S.grp,88.4,g+3.4,70.6)}; K.rinkGuy.g.position.set(89,g,68.5); K.rinkGuy.g.rotation.y=0; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, A=K.adrian, G=K.rinkGuy; S.mickeyBusy=false;
+    if(t<9){ const k=odSeg(S,4,8); odHeroTo(S,odL([95,g,76],[95,g,69.4],k),0,k>0&&k<1); odMove(A,[96.2,g,76.2],[96.2,g,69.6],k); odWalk(A,dt,k>0&&k<1); if(k>=1){ A.g.rotation.y=Math.PI*0.75; odRest(A); animRig(A.R,dt,0); } }
+    G.R.armR.rotation.x=t>5.4&&t<9?1.4:0.3; animRig(G.R,dt,0);
+    odAt(S,5.5,'g1',()=>odSay(S,G,"We're closed!")); odAt(S,7,'r1',()=>odSay(S,S.hero,'Yo, ten bucks for ten minutes?')); odAt(S,8.6,'g2',()=>odSay(S,G,'...Ten minutes. Not one second more!'));
+    // out on the ice: Adrian glides round, Rocky slides along beside her (he doesn't skate)
+    if(t>=9.4&&t<31){ const a=(t-9.4)*0.42, pa=[95.5+Math.cos(a)*4.6,g+0.03,62+Math.sin(a)*2.9], pr=[95.5+Math.cos(a-0.25)*3.4,g+0.03,62+Math.sin(a-0.25)*1.9]; A.g.position.set(...pa); A.g.rotation.y=Math.atan2(Math.sin(a)*4.6,-Math.cos(a)*2.9);
+      A.R.armL.rotation.z=-0.7; A.R.armR.rotation.z=0.7; A.R.legL.rotation.x=Math.sin(t*2.5)*0.3; A.R.legR.rotation.x=-Math.sin(t*2.5)*0.3; animRig(A.R,dt,0);
+      const fall=t>=14&&t<15.8; odHeroTo(S,pr,Math.atan2(Math.sin(a-0.25)*3.4,-Math.cos(a-0.25)*1.9),!fall); }
+    odAt(S,11,'a1',()=>odSay(S,A,"You don't skate?")); odAt(S,12.6,'r2',()=>odSay(S,S.hero,'Nah. I just kinda slide.')); odAt(S,14,'fall',()=>{ odSay(S,S.hero,'Whoa-WHOA!'); rkSfx('thud'); }); odAt(S,15.4,'a2',()=>odSay(S,A,'Hee hee!'));
+    odAt(S,17.4,'r3',()=>odSay(S,S.hero,'How come you\'re so shy, Adrian?')); odAt(S,19.4,'a3',()=>odSay(S,A,"...I don't know. People don't really see me.")); odAt(S,21.8,'r4',()=>{ odSay(S,S.hero,'I see you.'); rkHearts(pl.p[0],g+2.6,pl.p[2]); });
+    odAt(S,23.6,'h1',()=>{ odSay(S,S.hornSpk,'📢 FIVE MINUTES!'); rkSfx('bell'); }); odAt(S,25.4,'r5',()=>odSay(S,S.hero,"I fight 'cause it's the one thing I'm good at.")); odAt(S,27.6,'a4',()=>odSay(S,A,"You're good at being nice, too."));
+    odAt(S,29.6,'h2',()=>odSay(S,S.hornSpk,'📢 ONE MINUTE!'));
+    if(t>=31){ odHeroTo(S,[95,g+0.03,62.6],Math.PI/2*0+0,false); A.g.position.set(95,g+0.03,61.6); A.g.rotation.y=Math.PI; odRest(A); if(t>33.4)A.R.armR.rotation.x=A.R.armL.rotation.x=0.9; animRig(A.R,dt,0); }
+    odAt(S,32,'h3',()=>{ odSay(S,S.hornSpk,"📢 TIME'S UP!"); rkSfx('bell'); }); odAt(S,33.6,'r6',()=>odSay(S,S.hero,'Best ten bucks I ever spent.')); odAt(S,35.4,'h',()=>rkHearts(95,g+2.6,62.1)); },
+  pose(S){ const t=S.t; if(t>=14&&t<15.8){ const k=t<14.6?odSeg(S,14,14.6):1-odSeg(S,15.2,15.8); model.rotation.x=k*1.3; armL.rotation.z=-1.6*k; armR.rotation.z=1.6*k; } else model.rotation.x=0; if(t>33.4){ armL.rotation.x=armR.rotation.x=0.9; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<4)return [[95.5,g+3,84],[95.5,g+3,73],0]; if(t<9.4)return [[98.6,g+2.6,67.4],[94.4,g+1.5,72],1]; if(t<17)return [[95.5,g+4.6,56.6],[95.5,g+0.4,63.4],2];
+    if(t<23.4){ const a=(t-9.4)*0.42; return [[95.5+Math.cos(a-0.9)*7.5,g+2.4,62+Math.sin(a-0.9)*5],[95.5+Math.cos(a-0.12)*4,g+1.2,62+Math.sin(a-0.12)*2.4],3]; }
+    if(t<31)return [[88.8,g+2.8,57.6],[95.5,g+0.8,62],4]; return [[97.8,g+1.9,62.1],[95,g+1.6,62.1],5]; } };
+
+// ---------- 5. THE CHAMPION'S CHALLENGE ----------
+OD_CH.rk5={secs:38,sky:'day',mood:'street',init(S){ const g=RK.g; rkDress(S,'street'); S.apo=rkPerson(S.grp,'suit',124,g,65.9,Math.PI);
+    S.rep=[0,1,2,3].map(i=>{ const r=rkPerson(S.grp,'reporter',121+i*1.9,g,69.6+(i%2)*0.5,0,i%2?{topC:'#3a4a6a',hatC:'#3a4a6a'}:{}); const cam=grp(r.R.armR,0,-0.75,-0.1); mb(cam,0.24,0.18,0.2,mm(0x1a1a1a),0,0,0); mb(cam,0.08,0.08,0.12,mm(0x3a3a3a),0,0,-0.15); return r; });
+    S.fans=[0,1,2,3,4].map(i=>rkPerson(S.grp,['kid','grocer','singer','reporter','kid'][i],120.5+i*1.7,g,72.4,0,{})); S.fans[0].g.scale.setScalar(0.72); S.fans[4].g.scale.setScalar(0.72);
+    S.car=grp(S.grp,105,g,78.4); const hs=animalModel('horse'); hs.g.rotation.y=-Math.PI/2; hs.g.position.set(2.4,0,0); S.car.add(hs.g); S.horse=hs; mb(S.car,2,1.2,1.4,mm(0x1a1a1a),0,1.1,0); mb(S.car,2.2,0.1,1.6,mm(0x1a1a1a),0,1.9,0); for(const [x,z] of [[-0.7,0.75],[0.7,0.75],[-0.7,-0.75],[0.7,-0.75]]){ const w=mcyl(S.car,0.45,0.45,0.08,mm(0xc8a040),x,0.45,z,12); w.rotation.x=Math.PI/2; } },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, Ap=S.apo; S.car.position.x=105+t*2.6; if(S.horse.legs)S.horse.legs.forEach((L,i)=>L.rotation.x=Math.sin(t*8+i*1.6)*0.4);
+    if(t<24)odHeroTo(S,[127.2,g,72.2],0,false); animRig(Ap.R,dt,0); Ap.R.armR.rotation.x=t>5&&t<16?0.6+Math.max(0,Math.sin(t*3))*1.2:0.3;
+    odAt(S,5.6,'a1',()=>odSay(S,Ap,"Philadelphia! For America's 200th birthday...")); odAt(S,8,'a2',()=>odSay(S,Ap,'...my big fight is off. My opponent hurt his hand!')); odAt(S,10.4,'a3',()=>odSay(S,Ap,"So I'm giving a local nobody a shot at the title!"));
+    odAt(S,12.8,'a4',()=>{ odSay(S,Ap,'The ITALIAN STALLION... Rocky Balboa!'); rkSfx('cheer'); });
+    S.flT=(S.flT||0)-dt; if(t>12.8&&t<23&&S.flT<=0){ S.flT=0.25; const r=S.rep[Math.floor(Math.random()*4)]; const p=r.g.position; burst(p.x-0.5,g+1.8,p.z-0.6,new THREE.Color(0xffffff),4); }
+    odAt(S,14.6,'rp1',()=>odSay(S,S.rep[0],'Rocky! Rocky! Over here!')); odAt(S,15.8,'r1',()=>odSay(S,S.hero,'Me?! Yo... you serious?'));
+    S.rep.forEach((r,i)=>{ if(t>=16.4&&t<24){ const k=odSeg(S,16.4,18); odMove(r,[121+i*1.9,g,69.6+(i%2)*0.5],[125.6+i*0.9,g,70.8+(i%2)*0.3],k); if(k<1)odWalk(r,dt,true); else { r.g.rotation.y=Math.atan2(-(127.2-r.g.position.x),-(72.2-r.g.position.z)); r.R.armR.rotation.x=1.5; animRig(r.R,dt,0); } }
+      else { r.R.armR.rotation.x=1.5; animRig(r.R,dt,0); } });
+    odAt(S,18.6,'rp2',()=>odSay(S,S.rep[2],'How do you feel, Rocky?')); odAt(S,20.2,'r2',()=>odSay(S,S.hero,"Uh... I'm gonna do my best!")); odAt(S,22,'a5',()=>odSay(S,Ap,"Don't worry, kid. It'll be over in three!"));
+    // the Liberty Bell, alone
+    if(t>=24){ S.rep.forEach(r=>r.g.visible=false); S.fans.forEach(f=>f.g.visible=false); Ap.g.visible=false; odHeroPath(S,[128.4,g,68.5],[131.6,g,68.5],24,26); if(t>=26)odHeroTo(S,[131.6,g,68.5],-Math.PI/2,false); }
+    odAt(S,27.4,'r3',()=>odSay(S,S.hero,"This bell's got a big crack in it...")); odAt(S,30,'r4',()=>odSay(S,S.hero,"...but it still stands for somethin'."));
+    odAt(S,32.6,'r5',()=>odSay(S,S.hero,"I don't gotta win. I just wanna go the distance.")); odAt(S,35.4,'mus',()=>{ rkMood='gym'; }); },
+  pose(S){ if(S.t>=35.4){ armR.rotation.x=1.6; armR.rotation.z=0.2; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<5)return [odL([116,g+9,88],[120,g+6,84],odE(odSeg(S,0,5))),[127,g+6,62],0]; if(t<12.8)return [[124.4,g+2.2,70.4],[124,g+2,66],1]; if(t<16.4)return [[122.8,g+2.6,74.8],[125,g+1.6,69],2];
+    if(t<24)return [[124.8,g+2.4,74.4],[127.2,g+1.7,72.2],3]; if(t<30)return [[135.3,g+2.1,70.4],[131.8,g+1.6,68.4],4]; return [[134.6,g+1.6,69.6],[131.6,g+1.8,68.5],5]; } };
+
+// ---------- 6. THE MEAT LOCKER ----------
+OD_CH.rk6={secs:34,sky:'cold',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,'gloves'); const K=rkK, g=RK.g; K.paulie.g.position.set(31.6,g,73.4); K.paulie.g.rotation.y=Math.PI; S.mickeyBusy=true; K.mickey.g.position.set(31.5,g,76); },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, Pa=K.paulie, M=K.mickey, m0=K.meat[5], m1=K.meat[4];
+    if(t<4)odHeroTo(S,[33,g,76.5],Math.PI,false); odAt(S,2.2,'p1',()=>odSay(S,Pa,"Come on in, Rock! It's freezin' in here!"));
+    if(t>=4&&t<8.6){ const k=odSeg(S,4,8.2); odHeroTo(S,odL([31.5,g,74.5],[31.5,g,62.4],k),0,k<1); odMove(Pa,[31.6,g,73.4],[33.8,g,64],odSeg(S,4.4,8.2)); odWalk(Pa,dt,t<8.2); S.puT=(S.puT||0)-dt; if(S.puT<=0){ S.puT=0.7; puff(pl.p[0],g+1.7,pl.p[2]-0.4,false); } }
+    if(t>=8.2){ Pa.g.position.set(33.8,g,64.4); Pa.g.rotation.y=Math.PI*0.7; odRest(Pa); animRig(Pa.R,dt,0); }
+    // punching the meat
+    const mm2=(t>=8.6&&t<23)?m0:(t>=23&&t<31)?m1:null; if(t>=8.6&&t<23)odHeroTo(S,[31.5,g,62.4],0,false); if(t>=23&&t<31)odHeroTo(S,[31.5,g,59.4],0,false);
+    if(mm2){ const f=rkFists(armL,armR,t,t>18.4&&t<19.2?0.9:2.8,0,1.45,0.32); if(f.e>0.95&&!S.hit){ S.hit=true; mm2.va+=f.right?0.35:-0.35; mm2.vb+=0.35; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
+    odAt(S,18.9,'big',()=>{ m0.vb+=1.2; m0.va+=0.8; rkSfx('thud'); burst(31,g+1.8,61-0.5,new THREE.Color(0xffd23a),10); });
+    odAt(S,12,'p2',()=>odSay(S,Pa,"Hey! That's my meat you're punchin'!"));
+    if(t>=13.4){ const k=odSeg(S,13.4,15.4); odMove(M,[31.5,g,74],[29.4,g,64.4],k); if(k<1)odWalk(M,dt,true); else { M.g.rotation.y=-Math.PI*0.75; odRest(M); M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); } }
+    odAt(S,15.6,'m1',()=>odSay(S,M,'Body shots, kid! Work the body!')); odAt(S,18.2,'r1',()=>odSay(S,S.hero,'Like THIS?!')); odAt(S,20.4,'m2',()=>odSay(S,M,"You're gonna hit like a freight train!"));
+    odAt(S,25.4,'p3',()=>odSay(S,Pa,"Man... he's really somethin'.")); odAt(S,28.4,'m3',()=>odSay(S,M,'Now go home and get some sleep, ya bum!'));
+    if(t>=31){ odHeroTo(S,[31.5,g,60.2],Math.PI,false); S.puT=(S.puT||0)-dt; if(S.puT<=0){ S.puT=0.8; puff(pl.p[0],g+1.7,pl.p[2]+0.4,false); } } odAt(S,31.6,'r2',()=>odSay(S,S.hero,"Yo, Mick. I'm ready.")); },
+  pose(S){ const t=S.t; if(t>=31){ armL.rotation.x=armR.rotation.x=0.3; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<4)return [[31.5,g+3,84],[31.5,g+3,72],0]; if(t<8.6)return [[29,g+2.6,66],[31.5,g+1.5,72],1]; if(t<13.4)return [[33.4,g+2,63.8],[31.4,g+1.7,61],2]; if(t<18.4)return [[29.6,g+1.6,60.6],[31.5,g+1.4,62],3];
+    if(t<20)return [[32.3,g+1.4,61.9],[31.5,g+1.6,61],4]; if(t<23)return [[27.4,g+2.8,66.4],[31.4,g+1.4,61.4],5]; if(t<31)return [[34,g+2.2,59.2],[31.5,g+1.5,59],6]; return [[31.5,g+1.9,57.6],[31.5,g+1.6,60.2],7]; } };
+
+// ---------- 7. THE TRAINING MONTAGE ----------
+OD_CH.rk7={secs:40,sky:'dawn',mood:'gym',init(S){ rkDress(S,'sweats'); const K=rkK, g=RK.g; S.glass=mcyl(S.grp,0.07,0.06,0.2,new THREE.MeshLambertMaterial({color:0xffe080,transparent:true,opacity:0.8}),64.2,g+0.9,92.4,10); S.orange=msph(S.grp,0.1,mm(0xff8a1a),0,0,0); S.orange.visible=false;
+    S.ball=msph(S.grp,0.1,mm(0xd8304a),0,0,0); S.ball.visible=false; S.clock=grp(S.grp,66,g+0.62,88.4); mb(S.clock,0.4,0.3,0.2,mm(0xd8d0b0),0,0.15,0); rkSign(S.clock,'4:00',0.34,0.18,'#1a1a1a','#ff3a2a',0,0.16,-0.11,Math.PI);
+    S.kid3=rkPerson(S.grp,'kid',0,0,0,0,{topC:'#3ad84a',hair:'spiky',hairC:'#1a1a1a'}); S.kid3.g.scale.setScalar(0.72); S.kid3.g.visible=false; S.runKids=[K.kids[0],K.kids[1],S.kid3]; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, G=K.grocer;
+    // 4 a.m.: the alarm, raw eggs
+    if(t<4){ odHeroTo(S,[67.2,g+0.05,91],Math.PI,false); if(t<1.8&&Math.floor(t*6)%2)S.clock.rotation.z=0.1; else S.clock.rotation.z=0; } odAt(S,0.4,'ring',()=>mxSfx('ring')); odAt(S,1,'r0',()=>odSay(S,S.hero,'Ugh. Four in the morning...'));
+    if(t>=4&&t<7.4){ odHeroTo(S,[63.4,g,92.4],-Math.PI/2,false); if(t>5)S.glass.position.set(...odLW(armR,[0,-0.72,-0.1])); } odAt(S,6.2,'r1',()=>{ odSay(S,S.hero,'Raw eggs... BLEH!'); }); if(t>=7.4)S.glass.visible=false;
+    // the run, and the orange
+    const run=[[64.5,g,86],[64.5,g,84.2],[75.6,g,84.2],[75.6,g,70]];
+    if(t>=7.4&&t<16){ const k=odSeg(S,7.4,15.6), n=run.length-1, u=Math.min(n-0.0001,k*n*1.0), j=Math.floor(u); odHeroTo(S,odL(run[j],run[j+1],u-j),Math.atan2(-(run[j+1][0]-run[j][0]),-(run[j+1][2]-run[j][2])),k<1); rkRun(S); }
+    odAt(S,9.2,'g1',()=>odSay(S,G,'Hey, Rocky! Heads up!'));
+    if(t>=9.6&&t<10.5){ S.orange.visible=true; const k=odSeg(S,9.6,10.4), a=[70.6,g+1.5,85.4], b=odLW(armL,[0,-0.75,0]); S.orange.position.set(a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k+Math.sin(k*Math.PI)*1.6,a[2]+(b[2]-a[2])*k); }
+    else if(t>=10.5&&t<16)S.orange.position.set(...odLW(armL,[0,-0.75,0])); else S.orange.visible=false; odAt(S,10.6,'r2',()=>odSay(S,S.hero,'Thanks!'));
+    // handball against the gym wall
+    if(t>=16&&t<22){ odHeroTo(S,[58.5,g,75.6],0,false); S.ball.visible=true; const ph=((t-16)*1.3)%1, hand=odLW(armR,[0,-0.75,0]); S.ball.position.set(58.5+Math.sin(ph*Math.PI*2)*0.1,g+1.3+Math.sin(ph*Math.PI)*0.6,73.1+Math.abs(Math.cos(ph*Math.PI))*(hand[2]-73.1)); if(Math.abs(ph-0.5)<dt*1.3)snd(()=>tone('sine',320,180,0.06,0.1)); } else S.ball.visible=false;
+    // the gym, quickly
+    if(t>=22&&t<25){ odHeroTo(S,[70.4,g,68],-Math.PI/2,false); S.speedOn=true; if(Math.random()<dt*14)rkSfx('tap'); } else S.speedOn=false;
+    if(t>=25&&t<28)odHeroTo(S,[64.6,g,70.4],0,false);
+    // running again, and the neighborhood kids run with him
+    if(t>=28&&t<36){ const k=odSeg(S,28,36); odHeroTo(S,odL([75.6,g,70],[75.6,g,52.6],k),0,true); rkRun(S); S.runKids.forEach((kd,i)=>{ kd.busy=true; kd.g.visible=true; kd.g.position.set(75.6+(i-1)*0.9,g,pl.p[2]+1.6+i*0.8); kd.g.rotation.set(0,0,0); odWalk(kd,dt,true,12); }); }
+    odAt(S,30,'k1',()=>odSay(S,K.kids[0],'Go, Rocky, GO!')); odAt(S,32,'k2',()=>odSay(S,S.kid3,"Wait for us!"));
+    if(t>=36){ odHeroTo(S,[75.6,g,52.6],0,false); S.runKids.forEach((kd,i)=>{ odRest(kd); animRig(kd.R,dt,0); }); } odAt(S,36.6,'r3',()=>odSay(S,S.hero,"I'm gonna go the distance!")); },
+  pose(S){ const t=S.t; model.rotation.x=0; if(t<4){ mxSitPose(); if(t<1.8)head.rotation.x=-0.6; }
+    if(t>=4&&t<7.4){ mxSitPose(); if(t>5){ armR.rotation.x=t>6?2.6:1.2; armR.rotation.z=t>6?-0.3:0; } }
+    if(t>=10.4&&t<16)armL.rotation.x=0.9; if(t>=16&&t<22){ const ph=((t-16)*1.3)%1; armR.rotation.x=0.6+Math.max(0,Math.sin(ph*Math.PI*2))*1.2; }
+    if(t>=22&&t<25)rkSpeedBag(armL,armR,t); if(t>=25&&t<28){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; legL.rotation.x=legR.rotation.x=0; }
+    if(t>=36){ armL.rotation.z=-2.6; armR.rotation.z=2.6; armL.rotation.x=armR.rotation.x=0; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<4)return [[65.2,g+1.9,93.6],[67.2,g+1.2,91],0]; if(t<7.4)return [[62.2,g+1.8,93.6],[63.4,g+1.5,92.4],1];
+    if(t<12)return [[pl.p[0]+3.6,g+2,80.6],[pl.p[0],g+1.4,84.2],2]; if(t<16)return [[79.4,g+2.4,pl.p[2]+3],[75.6,g+1.4,pl.p[2]],3]; if(t<22)return [[61,g+1.8,78],[58.4,g+1.4,74.2],4];
+    if(t<25)return [[69.6,g+2.5,65.6],[70.9,g+2.1,68],5]; if(t<28)return [[66.8,g+1.4,71.2],[64.4,g+0.5,69.6],6]; return [[78.6,g+2.2,pl.p[2]-4.6],[75.6,g+1.3,pl.p[2]+0.6],7]; } };
+
+// ---------- 8. THE MUSEUM STEPS ----------
+OD_CH.rk8={secs:34,sky:'dawn',mood:'gym',init(S){ rkDress(S,'sweats'); },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g;
+    if(t<17){ const P=[[68,g,52.8,0],[95.5,g,52.8,8.4],[95.5,g,42,11],[95.5,g+8,32.6,16.4]]; let j=0; while(j<P.length-2&&t>=P[j+1][3])j++; const a=P[j], b=P[j+1], k=odSeg(S,a[3],b[3]); const z=a[2]+(b[2]-a[2])*k, x=a[0]+(b[0]-a[0])*k;
+      odHeroTo(S,[x,j===2?rkStepY(z):g,z],Math.atan2(-(b[0]-a[0]),-(b[2]-a[2])),k<1); rkRun(S); }
+    odAt(S,16.4,'top',()=>{ rkMood='triumph'; K.mS=0; rkSfx('cheer'); }); if(t>=16.4)odHeroTo(S,[95.5,g+8,32.6],Math.PI,false);
+    odAt(S,18.4,'r1',()=>odSay(S,S.hero,'YEAH!!')); if(t>=17&&t<26&&Math.random()<dt*2)burst(95,g+11+Math.random(),32.1,new THREE.Color([0xffd23a,0xff5a3a,0x3a8aff][Math.floor(Math.random()*3)]),6);
+    odAt(S,27,'r2',()=>odSay(S,S.hero,"Look at that, Philly. I'm ready.")); },
+  pose(S){ const t=S.t; if(t>=16.4&&t<26){ armL.rotation.z=-2.7+Math.sin(t*6)*0.15; armR.rotation.z=2.7-Math.sin(t*6)*0.15; armL.rotation.x=armR.rotation.x=0; model.position.y+=Math.max(0,Math.sin(t*5))*0.45; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<8.4)return [[pl.p[0]-1.5,g+2,49.4],[pl.p[0]+1.5,g+1.4,52.8],0]; if(t<11)return [[99.6,g+2,55],[95.5,g+1.4,47],1]; if(t<16.4)return [[95.5,pl.p[1]+2.6,pl.p[2]+6.4],[95.5,pl.p[1]+1.2,pl.p[2]-1],2];
+    if(t<26){ const a=-1.2+(t-16.4)*0.25; return [[95.5+Math.sin(a)*5,g+10.4,32.6+Math.cos(a)*5],[95.5,g+9.6,32.6],3]; } if(t<31)return [[96.5,g+10.2,31.3],[95.5,g+8,60],4]; return [[89.8,g+0.6,45],[87,g+3.6,40.9],5]; } };
+
+// ---------- 9. FIGHT NIGHT ----------
+OD_CH.rk9={secs:44,sky:'arena',mood:'gym',init(S){ rkDress2(S,'ring'); rkDress2(S,'robe'); rkFightSetup(S); S.hype=0.6; const A=RK.arena, g=RK.g; S.ap.g.position.set(A.cx,g,A.z0+1.5); S.ap.g.rotation.y=Math.PI;
+    S.hat=grp(S.ap.R.head,0,0.46,0); mb(S.hat,0.42,0.5,0.42,mm(0xf2f2f2),0,0.25,0); mb(S.hat,0.6,0.04,0.6,mm(0x1a3aa8),0,0.02,0); mb(S.hat,0.44,0.1,0.44,mm(0xc81a1a),0,0.12,0);
+    S.aRobe=[mb(S.ap.R.torso,0.62,0.86,0.38,mm(0x1a3aa8),0,1.06,0)]; for(const a of [S.ap.R.armL,S.ap.R.armR])S.aRobe.push(mb(a,0.31,0.5,0.31,mm(0xc81a1a),0,-0.22,0)); },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, A=RK.arena, Ap=S.ap, M=K.mickey, ry=g+1;
+    S.hype=t<9?0.6:t<29?0.7:t<34?1:0.8; S.ann.g.visible=t<9; S.ann.R.armR.rotation.x=1.6; animRig(S.ann.R,dt,0);
+    odAt(S,4.6,'an1',()=>odSay(S,S.ann,'Ladies and gentlemen!')); odAt(S,6.6,'an2',()=>odSay(S,S.ann,'For the heavyweight championship of the WORLD!'));
+    // Apollo's entrance, in a star-spangled top hat
+    if(t<9)Ap.g.position.set(A.cx,g,A.z0+1.5); else if(t<20.6){ const k=odSeg(S,9,12.4), p=k<0.8?odL([A.cx,g,A.z0+1.5],[A.cx,g,A.cz-4],k/0.8):odL([A.cx,g,A.cz-4],[A.cx,ry,A.cz-2],(k-0.8)/0.2); Ap.g.position.set(...p); Ap.g.rotation.y=Math.PI; if(k<1)odWalk(Ap,dt,true); else { odRest(Ap); Ap.R.armR.rotation.z=t<15?2.4+Math.sin(t*6)*0.3:0; Ap.R.armL.rotation.z=t<15?-2.4-Math.sin(t*6)*0.3:0; animRig(Ap.R,dt,0); } }
+    odAt(S,12.8,'ap1',()=>odSay(S,Ap,'I PREDICT... he goes down in THREE!')); odAt(S,15.2,'hat',()=>{ Ap.R.head.remove(S.hat); for(const b of S.aRobe)b.parent&&b.parent.remove(b); rkSfx('cheer'); });
+    // Rocky's entrance, in his robe, with Mickey
+    if(t<20.6){ const k=odSeg(S,15.6,19.4), p=k<0.8?odL([A.cx,g,A.z0+1.5],[A.cx,g,A.cz-4.6],k/0.8):odL([A.cx,g,A.cz-4.6],[A.cx,ry,A.cz+1.1],(k-0.8)/0.2); odHeroTo(S,t<15.6?[A.cx,g,A.z0+0.4]:p,Math.PI,k>0&&k<1);
+      M.g.position.set(...(t<15.6?[A.cx+0.8,g,A.z0+0.6]:odL([A.cx+0.8,g,A.z0+1],[A.cx-3.9,g,A.cz+3.9],k))); if(k>0&&k<1)odWalk(M,dt,true); }
+    odAt(S,16.4,'cr',()=>{ odSay(S,{g:grp(S.grp,A.cx-6,g+3,A.cz)},'ROCKY! ROCKY! ROCKY!'); rkSfx('cheer'); });
+    odAt(S,20.6,'unrobe',()=>{ rkUnrobe(S); S.ref.g.position.set(A.cx+0.9,ry,A.cz); });
+    if(t>=20.6&&t<23.4){ odHeroTo(S,[A.cx,ry,A.cz+1.1],0,false); Ap.g.position.set(A.cx,ry,A.cz-1.1); Ap.g.rotation.y=Math.PI; odRest(Ap); animRig(Ap.R,dt,0); } odAt(S,21,'ref',()=>odSay(S,S.ref,'Okay. A good clean fight. Touch gloves.'));
+    odAt(S,23.4,'bell',()=>{ rkSfx('bell'); S.ref.g.position.set(A.cx+2.6,ry,A.cz+1.4); rkTitle('ROUND 1',true); }); odAt(S,25,'t',()=>rkTitle('',false));
+    // round 1: Apollo dances and jabs... then Rocky knocks him DOWN
+    if(t>=23.4&&t<36.4){ odHeroTo(S,[A.cx,ry,A.cz+1.1],0,false); if(t<29.6||t>=33.2)rkApolloDance(S,dt,t<29.6?2:1.2); }
+    for(const tt of [24.6,25.4,26.6,27.4])odAt(S,tt,'h'+tt,()=>rkHit(S,S.hero)); odAt(S,26,'m1',()=>odSay(S,M,'Get your hands up!'));
+    odAt(S,29.4,'up',()=>{ rkHit(S,Ap,0xffd23a); rkSfx('cheer'); }); if(t>=29.6&&t<33.2){ const k=t<30.4?odSeg(S,29.6,30.4):t<32.4?1:1-odSeg(S,32.4,33.2); Ap.g.rotation.x=-k*Math.PI/2; Ap.g.position.set(A.cx,ry,A.cz-1.1-k*0.4); odRest(Ap); animRig(Ap.R,dt,0); }
+    odAt(S,30.6,'an3',()=>odSay(S,S.ann,'DOWN GOES CREED!!')); odAt(S,31.4,'m2',()=>odSay(S,M,"He's never been knocked down! NEVER!")); odAt(S,33.6,'ap2',()=>odSay(S,Ap,'...Whoa. Okay, kid.'));
+    odAt(S,36.4,'bell2',()=>{ rkSfx('bell'); rkSfx('bell'); });
+    if(t>=36.4){ odHeroTo(S,[A.cx-2.6,ry,A.cz+2.6],Math.PI*0.25,false); Ap.g.position.set(A.cx+2.6,ry,A.cz-2.6); Ap.g.rotation.set(0,-Math.PI*0.75,0); odRest(Ap); animRig(Ap.R,dt,0); M.g.position.set(A.cx-3.9,g,A.cz+3.9); }
+    odAt(S,37.4,'m3',()=>odSay(S,M,"You're doin' it, kid! You're doin' it!")); odAt(S,39.6,'r1',()=>odSay(S,S.hero,'He hits like a truck, Mick...'));
+    if(!S.mickeyBusy2){ M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); } },
+  pose(S){ const t=S.t, A=RK.arena; if(t>=23.4&&t<36.4){ const f=rkFists(armL,armR,t,1.4,0.3); if(t>=29&&t<29.6){ armR.rotation.x=2.6; armR.rotation.z=0.3; } const h=S.hitR!==undefined?Math.max(0,1-(t-S.hitR)/0.45):0; model.rotation.x=h*0.3; model.position.y+=Math.abs(Math.sin(t*6))*0.06; } else model.rotation.x=0;
+    if(t>=36.4){ mxSitPose(); armL.rotation.z=-0.6; armR.rotation.z=0.6; } },
+  cam(S){ const t=S.t, g=RK.g, A=RK.arena; if(t<4)return [[A.cx,g+4,A.z0-10],[A.cx,g+6,A.z0],0]; if(t<9)return [odL([A.cx-6,g+6,A.cz+6],[A.cx-5,g+4.5,A.cz+5],odSeg(S,4,9)),[A.cx,g+2.4,A.cz],1];
+    if(t<15.6)return [[A.cx+3.4,g+3,A.cz-1.6],[A.cx,g+1.8,Math.min(A.cz-2,S.ap.g.position.z)],2]; if(t<20.6)return [[A.cx-5.2,g+3.4,A.cz-4.6],[A.cx,g+1.6,pl.p[2]],3]; if(t<23.4)return [[A.cx-4.4,g+2.8,A.cz],[A.cx,g+2.3,A.cz],4];
+    if(t<29)return [[A.cx-5.6,g+3,A.cz+0.4],[A.cx,g+2.2,A.cz],5]; if(t<31)return [[A.cx-4.4,g+2.3,A.cz-0.6],[A.cx,g+1.4,A.cz-1.4],6]; if(t<36.4)return [[A.cx-4.8,g+3.4,A.cz-2.4],[A.cx,g+1.8,A.cz-1],7]; return [[A.cx-5.8,g+3,A.cz+5.4],[A.cx-2.6,g+2.2,A.cz+2.6],8]; } };
+
+// ---------- 10. THE LAST ROUND ----------
+OD_CH.rk10={secs:48,sky:'arena',mood:'gym',init(S){ rkDress2(S,'ring'); rkFightSetup(S); S.hype=0.8; const K=rkK, A=RK.arena, g=RK.g; S.ann.g.visible=false; S.ref.g.position.set(A.cx+2.6,g+1,A.cz+1.4); K.adrian.g.position.set(A.cx,g,A.z0+0.6); K.adrian.g.rotation.y=Math.PI; S.crowdSpk={g:grp(S.grp,A.cx-6,g+3,A.cz)}; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, A=RK.arena, Ap=S.ap, M=K.mickey, Ad=K.adrian, ry=g+1;
+    odAt(S,0.2,'r14',()=>{ rkTitle('ROUND 14',true); rkSfx('bell'); }); odAt(S,2,'t1',()=>rkTitle('',false));
+    if(t<26.6){ if(!(t>=8&&t<14))odHeroTo(S,[A.cx,ry,A.cz+1.1],0,false); if(!(t>=7.6&&t<8.4))rkApolloDance(S,dt,1.3); }
+    for(const tt of [3.4,4.2,5.4,6.2])odAt(S,tt,'h'+tt,()=>rkHit(S,S.hero)); odAt(S,4.8,'hr',()=>rkHit(S,Ap)); odAt(S,7.8,'big',()=>{ rkHit(S,S.hero,0xffd23a); rkSfx('cheer'); });
+    // Rocky goes down... and gets back up
+    if(t>=8&&t<14){ odHeroTo(S,[A.cx,ry,A.cz+1.1],0,false); } S.ref.g.position.set(...(t>=8.6&&t<13?[A.cx+1,ry,A.cz+1.6]:[A.cx+2.6,ry,A.cz+1.4])); S.ref.R.armR.rotation.x=t>=9&&t<13?1.4+Math.sin(t*9)*0.4:0.3; animRig(S.ref.R,dt,0);
+    for(const [tt,n] of [[9.2,'1!'],[10,'2!'],[10.8,'3!'],[11.6,'4!']])odAt(S,tt,'c'+n,()=>odSay(S,S.ref,n)); odAt(S,10.4,'m1',()=>odSay(S,M,'Stay down! STAY DOWN!'));
+    odAt(S,13,'up',()=>{ rkSfx('cheer'); S.hype=1; odSay(S,S.crowdSpk,'ROCKY! ROCKY! ROCKY!'); }); odAt(S,14.6,'ap1',()=>odSay(S,Ap,'...How is he still standing?!'));
+    odAt(S,17,'r15',()=>{ rkTitle('ROUND 15',true); rkSfx('bell'); }); odAt(S,18.8,'t2',()=>rkTitle('',false)); odAt(S,19,'eye',()=>rkDress2(S,'eye'));
+    for(const tt of [19.6,21.2,23.2])odAt(S,tt,'rb'+tt,()=>rkHit(S,Ap)); for(const tt of [20.4,22.4])odAt(S,tt,'ah'+tt,()=>rkHit(S,S.hero));
+    odAt(S,26.6,'end',()=>{ rkSfx('bell'); rkSfx('bell'); rkSfx('cheer'); S.hype=1; });
+    if(t>=26.6){ Ap.g.position.set(A.cx+1.2,ry,A.cz-1.6); Ap.g.rotation.set(0,Math.PI*0.9,0); odRest(Ap); Ap.R.armL.rotation.x=Ap.R.armR.rotation.x=0.3; animRig(Ap.R,dt,0); odHeroTo(S,[A.cx-0.3,ry,A.cz+1.4],0,false); }
+    odAt(S,27.8,'an',()=>{ S.ann.g.visible=true; S.ann.g.position.set(A.cx+2.4,ry,A.cz); S.ann.g.rotation.y=Math.PI/2; odSay(S,S.ann,"That's the fight! Fifteen rounds!"); }); odAt(S,29.6,'ap2',()=>odSay(S,Ap,"No rematch... you're one tough guy, Balboa."));
+    odAt(S,31,'r1',()=>odSay(S,S.hero,'ADRIAN!!')); odAt(S,32.6,'r2',()=>odSay(S,S.hero,'ADRIAAAAN!!'));
+    // Adrian pushes through the crowd and climbs into the ring
+    if(t>=32.4){ const k=odSeg(S,32.4,37), p=k<0.85?odL([A.cx,g,A.z0+0.6],[A.cx,g,A.cz-3.8],k/0.85):odL([A.cx,g,A.cz-3.8],[A.cx-0.3,ry,A.cz+0.4],(k-0.85)/0.15); Ad.g.position.set(...p); Ad.g.rotation.y=Math.PI; if(k<1)odWalk(Ad,dt,true); else { odRest(Ad); Ad.R.armL.rotation.x=Ad.R.armR.rotation.x=1.4; Ad.R.armL.rotation.z=0.4; Ad.R.armR.rotation.z=-0.4; animRig(Ad.R,dt,0); } }
+    odAt(S,34,'a1',()=>odSay(S,Ad,'ROCKY!')); odAt(S,38.2,'a2',()=>{ odSay(S,Ad,'I love you!'); rkHearts(A.cx-0.3,ry+2.6,A.cz+0.9); }); odAt(S,39.6,'r3',()=>{ odSay(S,S.hero,'I love you!'); rkHearts(A.cx-0.3,ry+2.8,A.cz+0.9); });
+    odAt(S,41.6,'title',()=>{ rkTitle('ROCKY<div style="font-size:.42em;letter-spacing:.2em;margin-top:.3em">A BLOCKSTAR ADVENTURE</div><div style="font-size:.36em;font-style:italic;margin-top:1.2em">"KEEP MOVING FORWARD."</div>',true); rkMood='triumph'; K.mS=0; });
+    if(Math.random()<dt*(t>26.6?3:1))burst(A.cx-6+Math.random()*12,g+5,A.cz-6+Math.random()*12,new THREE.Color([0xffd23a,0xffffff,0xff5a3a][Math.floor(Math.random()*3)]),4);
+    M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); },
+  pose(S){ const t=S.t; model.rotation.x=0;
+    if(t<26.6&&!(t>=7.8&&t<14)){ rkFists(armL,armR,t,t>17?0.9:1.3,0.3); const h=S.hitR!==undefined?Math.max(0,1-(t-S.hitR)/0.45):0; model.rotation.x=h*0.3; }
+    if(t>=7.8&&t<14){ const k=t<8.6?odSeg(S,7.8,8.6):t<12.6?1:1-odSeg(S,12.6,14); model.rotation.x=k*Math.PI/2; armL.rotation.z=-1.2*k; armR.rotation.z=1.2*k; if(t>=12.6&&t<14){ armR.rotation.x=2.4; } }
+    if(t>=30.6&&t<37){ armL.rotation.z=-2.2; armR.rotation.z=2.2; } if(t>=37){ armL.rotation.x=armR.rotation.x=1.4; armL.rotation.z=0.4; armR.rotation.z=-0.4; } },
+  cam(S){ const t=S.t, g=RK.g, A=RK.arena; if(t<7.8)return [[A.cx-5.6,g+3,A.cz+0.4],[A.cx,g+2.2,A.cz],0]; if(t<13)return [[A.cx+1.6,g+1.8,A.cz+4.4],[A.cx,g+1.4,A.cz+1.6],1]; if(t<17)return [[A.cx+0.4,g+2.9,A.cz-3.6],[A.cx,g+2.1,A.cz+1.1],2];
+    if(t<26.6)return [[A.cx-4.6,g+2.6,A.cz+1.6],[A.cx,g+2.2,A.cz],3]; if(t<31)return [[A.cx+3.2,g+2.8,A.cz+3.6],[A.cx,g+2.2,A.cz],4]; if(t<37)return [[A.cx-0.2,g+3.2,A.cz+5],[A.cx,g+2,A.cz-1],5];
+    if(t<41.6)return [[A.cx-2.4,g+2.6,A.cz+2.4],[A.cx-0.3,g+2.4,A.cz+0.9],6]; const k=odE(odSeg(S,41.6,48)); return [odL([A.cx-2.4,g+2.6,A.cz+2.4],[A.cx-7,g+8,A.cz+7],k),[A.cx-0.3,g+2.2,A.cz+0.9],7]; } };
+RK_NAMES.push('The Ice Rink',"The Champion's Challenge",'The Meat Locker','The Training Montage','The Museum Steps','Fight Night','The Last Round');
 
 // ================= PETS =================
 // Make a cat or a dog at the Pet Shop and it follows you everywhere, through portals too (one at a time). Tap it to say Sit,
@@ -7930,7 +8216,7 @@ petsLoad(); fishBagLoad(); hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
