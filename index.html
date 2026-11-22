@@ -410,6 +410,7 @@ makeTile('snow',108,(x,y,r)=>{ let c=nz([240,244,250],r,.05); if(r()<.07)c=[222,
 makeTile('hay_side',109,(x,y,r)=>{ if(y===3||y===12)return nz([150,110,40],r,.1); const v=Math.sin(x*1.7+y*0.3)*0.5+Math.sin(x*0.6)*0.3; return nz(v>0.3?[228,192,98]:[206,166,74],r,.12); });
 makeTile('hay_top',110,(x,y,r)=>{ const v=Math.sin(x*0.9+y*1.3)+Math.sin(x*1.6-y*0.7); return nz(v>0.5?[232,198,104]:[200,160,70],r,.14); });
 makeTile('portal_matrix',138,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [20,60,30]; const c=(x*7+3)%5; return (y+c*3)%7<4&&x%2?nz([60,240,110],r,.2):nz([4,22,10],r,.2); });
+makeTile('portal_drag',139,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(x>=3&&x<=4&&y>=2)return [70,70,78]; if(x>=5&&x<=12&&y>=2&&y<=8)return ((x>>1)+(y>>1))%2?[245,245,245]:[20,20,24]; return nz([255,200,60],r,.12); });
 { const furrow=(base,dk,r,x,y)=>{ let c=y%4<2?nz(base,r,.1):nz(dk,r,.1); if(r()<.05)c=mul(c,0.8); return c; };
   makeTile('farm_dry',111,(x,y,r)=>furrow([128,90,58],[100,68,44],r,x,y)); makeTile('farm_wet',112,(x,y,r)=>furrow([84,56,36],[64,42,28],r,x,y));
   makeTile('farm_rich',113,(x,y,r)=>{ const c=furrow([92,66,44],[70,50,34],r,x,y); return r()<.12?[40,30,22]:c; }); makeTile('farm_rich_wet',114,(x,y,r)=>{ const c=furrow([62,44,30],[46,32,22],r,x,y); return r()<.12?[28,20,14]:c; }); }
@@ -502,6 +503,7 @@ addBlock('leaves_orange','Orange Fall Leaves','Plants','In fall, trees stop maki
 addBlock('leaves_red','Red Fall Leaves','Plants','Red fall leaves, like a maple\'s, get their color from a pigment the tree makes in autumn, when days are sunny and nights are cool.',{t:'leaves_red'},{opaque:false,flammable:true});
 addBlock('leaves_gold','Golden Fall Leaves','Plants','Golden leaves, like an aspen\'s or a birch\'s. Their yellow pigments were in the leaf all summer, hidden by green.',{t:'leaves_gold'},{opaque:false,flammable:true});
 addBlock('portal_matrix','Matrix City Portal','Portal','Place it and a doorway to Matrix City opens: Neo\'s apartment, the club, the office tower and the agents\' building. The Matrix came out in 1999 and made slow-motion "bullet time" famous.',{t:'portal_matrix'},{portal:'matrix'});
+addBlock('portal_drag','Car World Portal','Portal','Place it and a doorway to Car World opens: a quarter-mile drag strip at night, with a garage to build and race your own car. A drag race is a straight sprint, and the fastest dragsters cover a quarter mile in under 4 seconds.',{t:'portal_drag'},{portal:'drag'});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
