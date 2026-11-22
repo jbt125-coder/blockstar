@@ -5342,7 +5342,7 @@ function frame(now){
   requestAnimationFrame(frame); // asked for first, so an error below can't stop the game from drawing
   try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
     let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
-    renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); frameErrs=0; }
+    bubbleLayout(); renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); frameErrs=0; }
   catch(e){ console.error(e); $('dmFade').style.opacity=0; if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
 }
 let frameErrs=0;
@@ -5575,7 +5575,18 @@ const NPC_HI=['Take her for a spin!','Want to race? Hop in!','She\'s fast, but c
 const NPC_TAKE=['Take her for a spin!','Go get \'em!','Watch for the green!','Don\'t forget the chute!','Bring her back in one piece!'];
 function bubbleSprite(text){ const c=document.createElement('canvas'), x=c.getContext('2d'); x.font='bold 26px sans-serif'; const w=Math.min(900,Math.ceil(x.measureText(text).width)+36); c.width=w; c.height=56;
   x.font='bold 26px sans-serif'; x.fillStyle='rgba(255,255,255,0.95)'; x.beginPath(); x.moveTo(14,4); x.lineTo(w-14,4); x.quadraticCurveTo(w-4,4,w-4,18); x.lineTo(w-4,36); x.quadraticCurveTo(w-4,48,w-14,48); x.lineTo(30,48); x.lineTo(18,56); x.lineTo(20,48); x.lineTo(14,48); x.quadraticCurveTo(4,48,4,36); x.lineTo(4,18); x.quadraticCurveTo(4,4,14,4); x.fill();
-  x.fillStyle='#222'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,w/2,27); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false})); sp.scale.set(w/56*0.55,0.55,1); sp.renderOrder=5; return sp; }
+  x.fillStyle='#222'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,w/2,27); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false})); sp.scale.set(w/56*0.55,0.55,1); sp.renderOrder=5; sp.userData.born=performance.now(); BUBS.add(sp); return sp; }
+// every frame, before drawing: older bubbles stay where they are, a newer one that would cover them moves up above them,
+// and any bubble too wide for the screen (a phone held upright, a close-up) shrinks to fit and slides back inside the edges
+const BUBS=new Set(), bubV=new THREE.Vector3(), bubS=new THREE.Vector3();
+function bubbleLayout(){ if(!BUBS.size)return; const Wd=canvas.clientWidth||innerWidth, Hd=canvas.clientHeight||innerHeight, tanF=Math.tan(camera.fov*Math.PI/360), list=[], placed=[];
+  for(const b of BUBS){ let o=b, on=false; while(o){ if(o===scene){ on=true; break; } o=o.parent; } if(!on){ BUBS.delete(b); continue; } if(b.visible)list.push(b); }
+  list.sort((a,b)=>a.userData.born-b.userData.born);
+  for(const b of list){ const u=b.userData; if(!u.base)u.base=[b.scale.x,b.scale.y]; b.getWorldPosition(bubV); bubS.copy(bubV).applyMatrix4(camera.matrixWorldInverse); const dist=Math.max(0.3,-bubS.z); if(bubS.z>=0)continue; bubV.project(camera); // size on screen goes by depth in front of the camera
+    b.parent.getWorldScale(bubS); let h=u.base[1]*bubS.y/(2*dist*tanF)*Hd, w=h*u.base[0]/u.base[1]; const f=Math.min(1,(Wd-12)/w,Hd*0.2/h); w*=f; h*=f; b.scale.set(u.base[0]*f,u.base[1]*f,1);
+    const cx=(bubV.x+1)/2*Wd, cy=(1-bubV.y)/2*Hd; let dx=0; if(cx-w/2<6)dx=6-(cx-w/2); else if(cx+w/2>Wd-6)dx=(Wd-6)-(cx+w/2);
+    let up=0; for(let n=0;n<6;n++){ up=n*h*1.06; const r=[cx+dx-w/2,cy-up-h/2,cx+dx+w/2,cy-up+h/2]; if(!placed.some(q=>r[0]<q[2]+4&&r[2]>q[0]-4&&r[1]<q[3]+3&&r[3]>q[1]-3))break; }
+    if(cy-up-h/2<4)up=cy-h/2-4; if(cy-up+h/2>Hd-4)up=cy+h/2-(Hd-4); placed.push([cx+dx-w/2,cy-up-h/2,cx+dx+w/2,cy-up+h/2]); b.center.set(0.5-dx/w,0.5-up/h); } }
 function npcSay(n,text){ if(n.bub){ n.g.remove(n.bub); n.bub.material.map.dispose(); n.bub.material.dispose(); } n.bub=bubbleSprite(text); n.bub.position.set(0,2.45,0); n.g.add(n.bub); n.bubT=3.5; }
 
 // --- the Christmas tree (the start lights), the scoreboards, light towers, the crowd and the ramp
@@ -6995,7 +7006,7 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
   // Neo's room: a desk of old computers, his chair, his bed, and the door to the hall
   { const f=MXC.apt.f; mxDesk(root,9.95,f,14.5,0,1.3,4.4); mxCRT(root,9.75,f+0.82,14.5,-Math.PI/2,scrMat(K.scr)); for(const z of [12.9,16.1]){ const c=mxCRT(root,9.75,f+0.82,z,-Math.PI/2+(z<14?0.25:-0.25),scrMat(K.code)); c.scale.setScalar(0.8); }
     mb(root,0.5,0.04,0.18,mm(0x2a2a2e),10.45,f+0.83,14.5); mb(root,0.3,0.5,0.45,mm(0x3a3a40),10.0,f+0.25,13.0); for(let i=0;i<5;i++)mb(root,0.05,0.05,0.05,glowM([0x3aff6a,0xff3a3a,0x3aff6a,0xffc83a,0x3aff6a][i]),10.25,f+0.4,12.86+i*0.07);
-    mxChair(root,11.95,f,14.5,-Math.PI/2,0x2a2a30).scale.set(0.7,0.75,0.7);
+    mxChair(root,11.95,f,14.5,Math.PI/2,0x2a2a30).scale.set(0.7,0.75,0.7);
     const bed=grp(root,19.6,f,16.8); mb(bed,2.0,0.4,3.6,mm(0x4a3a2a),0,0.2,0); mb(bed,1.9,0.15,3.5,mm(0xe8e8e0),0,0.47,0); mb(bed,1.9,0.12,2.2,mm(0x2a4a3a),0,0.56,-0.6); mb(bed,1.2,0.16,0.5,mm(0xf2f2f2),0,0.6,1.4); mb(bed,2.0,1.0,0.15,mm(0x4a3a2a),0,0.5,1.85);
     const ns=grp(root,21.4,f,18.6); mb(ns,0.6,0.6,0.6,mm(0x5a4a3a),0,0.3,0); K.homePhone=grp(ns,0,0.62,0); mb(K.homePhone,0.3,0.1,0.22,mm(0x1a1a1e),0,0.05,0); mb(K.homePhone,0.08,0.06,0.26,mm(0x1a1a1e),0,0.14,0);
     for(let i=0;i<4;i++)mb(root,0.6,0.07,0.6,mm(0xc8a040),17+i*0.05,f+0.04+i*0.07,11.3); // pizza boxes
@@ -7020,7 +7031,7 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
   // the office floor: rows of cubicles, Neo's desk, the elevator, and the empty office
   { const f=MXC.off.f, wall=mm(0x8a9aa8), dsk=mm(0xb8b0a0); for(const cx of [12.5,17.5,22.5])for(const cz of [57.5,62.5,67.5]){ const g=grp(root,cx,f,cz); mb(g,0.08,1.3,3.6,wall,-2,0.65,0); mb(g,4,1.3,0.08,wall,0,0.65,1.8); mb(g,4,1.3,0.08,wall,0,0.65,-1.8);
       mb(g,0.9,0.06,3.2,dsk,-1.5,0.78,0); const mn=grp(g,-1.65,0.81,0.2); mb(mn,0.12,0.36,0.46,mm(0x2a2a2e),0,0.2,0); const s=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.28),cx===12.5&&cz===57.5?scrMat(K.code):glowM(0x8ab8a0)); s.position.set(0.07,0.2,0); s.rotation.y=Math.PI/2; mn.add(s);
-      const ch=mxChair(g,0.4,0,0,-Math.PI/2,0x2a3a4a); ch.scale.set(0.6,0.7,0.6); }
+      const ch=mxChair(g,0.4,0,0,Math.PI/2,0x2a3a4a); ch.scale.set(0.6,0.7,0.6); }
     for(let x=12;x<=32;x+=5)for(let z=50;z<=70;z+=5)mb(root,1.6,0.04,0.6,glowM(0xe8f8e8),x,f+3.95,z);
     K.elev=[]; for(const s of[-1,1]){ const p=mb(root,1,2.6,0.1,mm(0xa8b0b8),28.75+s*0.5,f+1.3,70.9); K.elev.push(p); }
     mxDesk(root,12.5,f,48.5,0,2,1); mxChair(root,12.5,f,49.6,0,0x3a3a40).scale.set(0.6,0.7,0.6); }
@@ -7093,7 +7104,7 @@ OD_CH.mx1={secs:36,sky:'night',mood:'hack',init(S){ const f=MXC.apt.f;
   tick(S,dt){ const K=mxK, t=S.t, f=MXC.apt.f, G=MXC.G;
     mxRain(t<4.5?1:t<9?0.3:t<25?0.1:0);
     if(t<14)odHeroTo(S,[11.7,f,14.5],Math.PI/2,false);
-    if(t>=5&&t<9)mxType(S,K,5.4,'Wake up, Neo...'); else if(t>=9&&t<12.2)mxType(S,K,9.6,'Wake up, Neo...\nFollow the white rabbit.',16); else if(t>=12.2&&t<25)mxType(S,K,12.2,'Wake up, Neo...\nFollow the white rabbit.\n\nKnock, knock, Neo.',41);
+    if(t>=5&&t<9)mxType(S,K,5.4,'Wake up, Neo...'); else if(t>=9&&t<12.2)mxType(S,K,9.6,'Wake up, Neo...\nFollow the\nwhite rabbit.',16); else if(t>=12.2&&t<25)mxType(S,K,12.2,'Wake up, Neo...\nFollow the\nwhite rabbit.\n\nKnock, knock, Neo.',41);
     odAt(S,9.1,'huh',()=>odSay(S,S.hero,'Huh...?')); odAt(S,13.6,'knock',()=>mxSfx('knock')); odAt(S,14.1,'who',()=>odSay(S,S.hero,"Who's there?"));
     if(t>=14&&t<22)odHeroPath(S,[11.7,f,14.5],[16,f,20.3],14.6,16.6); if(t>=16.6&&t<22)odHeroTo(S,[16,f,20.3],Math.PI,false);
     K.door.rotation.y=1.6*odE(odSeg(S,16.4,17.2)); odAt(S,16.4,'door',()=>{ mxSfx('door'); S.fr.forEach(a=>a.g.visible=true); });
@@ -7105,37 +7116,37 @@ OD_CH.mx1={secs:36,sky:'night',mood:'hack',init(S){ const f=MXC.apt.f;
     odAt(S,23,'rab',()=>odSay(S,S.hero,'...A white rabbit?!')); odAt(S,24,'wait',()=>odSay(S,S.hero,"Hey, wait up! I'm coming!"));
     // the club
     odAt(S,25,'club',()=>{ mxSky('club'); mxMood='club'; S.tri.g.visible=true; K.door.rotation.y=0; K.bunny.visible=true; S.fr.forEach((a,i)=>{ a.g.position.set(47+i*1.6,G,16+i); }); });
-    if(t>=25){ odHeroTo(S,[55.2,G,26.2],Math.PI/2,false); S.fr.forEach((a,i)=>{ a.ph+=dt*7; const b=Math.sin(a.ph); a.g.position.y=G+Math.abs(b)*0.12; a.R.armL.rotation.z=-1.3-b*0.7; a.R.armR.rotation.z=1.3-b*0.7; a.g.rotation.y+=dt*0.6; animRig(a.R,dt,0); });
-      const k=odSeg(S,26,28.6); odMove(S.tri,[49,G,19.5],[53.9,G,25.7],k); if(k<1)odWalk(S.tri,dt,k>0); else { S.tri.g.rotation.y=-Math.PI/2; odRest(S.tri); animRig(S.tri.R,dt,0); } }
+    if(t>=25){ odHeroTo(S,[55,G,25.4],t<28.6?Math.PI/2:2.21,false); S.fr.forEach((a,i)=>{ a.ph+=dt*7; const b=Math.sin(a.ph); a.g.position.y=G+Math.abs(b)*0.12; a.R.armL.rotation.z=-1.3-b*0.7; a.R.armR.rotation.z=1.3-b*0.7; a.g.rotation.y+=dt*0.6; animRig(a.R,dt,0); });
+      const k=odSeg(S,26,28.6); odMove(S.tri,[49,G,19.5],[55,G,27],k); if(k<1)odWalk(S.tri,dt,k>0); else { S.tri.g.rotation.y=0.93; odRest(S.tri); animRig(S.tri.R,dt,0); } }
     odAt(S,29,'t1',()=>odSay(S,S.tri,'Hello, Neo.')); odAt(S,30.4,'n2',()=>odSay(S,S.hero,'How do you know my name?')); odAt(S,32,'t2',()=>odSay(S,S.tri,"I'm Trinity. They're watching you."));
     odAt(S,33.8,'t3',()=>odSay(S,S.tri,'Morpheus is looking for you, Neo.')); },
   pose(S){ const t=S.t; head.rotation.x=0; if(t<14.6){ mxSitPose(); if(t<9.1){ armL.rotation.x=armR.rotation.x=1.3; head.rotation.x=-0.7; } else armL.rotation.x=armR.rotation.x=1.05+(t>10&&t<13?Math.sin(t*16)*0.12:0); } },
   cam(S){ const t=S.t; if(t<5)return [odL([30,40,-22],[16,17.4,1.6],odE(odSeg(S,0,5))),[15,15.4,13],0]; if(t<9)return [[14.2,16.3,16.8],[9.8,15.2,14.4],1]; if(t<14)return [[10.5,15.12,14.62],[9.9,15.04,14.5],2];
     if(t<16.6)return [[20.6,16.9,10.4],[14,15,17.5],3]; if(t<22)return [[11.2,16.1,23.9],[16.5,15.3,21.4],4]; if(t<23.8)return [[23.5,14.7,24.4],[16,14.6,23.2],5]; if(t<25)return [[12.2,16.2,22.6],[24,15,23.4],6];
-    if(t<28.6)return [odL([49,10,10.5],[50,8,13.5],odSeg(S,25,28.6)),[52,4.8,23],7]; return [[52.3,5.9,28.7],[54.6,5.4,25.9],8]; } };
+    if(t<28.6)return [odL([49,10,10.5],[50,8,13.5],odSeg(S,25,28.6)),[52,4.8,23],7]; return [[51.4,5.85,26.2],[55,5.5,26.2],8]; } };
 
 // ---------- 2. THE AGENTS ----------
 OD_CH.mx2={secs:42,sky:'day',mood:'tense',init(S){ const f=MXC.off.f;
-    S.cour=mxPerson(S.grp,'courier',24,f,55.3,0); S.pkg=grp(S.grp,0,0,0); mb(S.pkg,0.46,0.28,0.36,mm(0xd8b070),0,0.14,0); mb(S.pkg,0.47,0.04,0.1,mm(0x5a2ad8),0,0.28,0);
+    S.cour=mxPerson(S.grp,'courier',24,f,54.85,0); S.pkg=grp(S.grp,0,0,0); mb(S.pkg,0.46,0.28,0.36,mm(0xd8b070),0,0.14,0); mb(S.pkg,0.47,0.04,0.1,mm(0x5a2ad8),0,0.28,0);
     S.ag=['smith','brown','jones'].map((k,i)=>mxAgent(S.grp,28.6,f,70.4,0,k)); S.ag.forEach(a=>a.g.visible=false);
     S.phone=mxPhone(S.grp); S.phone.visible=false; S.pspk={g:mxBit(S,model,mxGroup(0,0.62,0))}; S.hspk={g:mxBit(S,mxK.homePhone,mxGroup(0,0.5,0))};
     S.patch=mxBit(S,head,mb(new THREE.Group(),0.3,0.13,0.02,mm(heroLook().skin),0,0.075,-0.236)); S.patch.scale.set(1,0.01,1); S.patch.visible=false;
     S.bug=mxBug(S.grp); S.bug.visible=false; },
   tick(S,dt){ const K=mxK, t=S.t, f=MXC.off.f, G=MXC.G, ag=S.ag;
     // at Neo's desk
-    if(t<13.4)odHeroTo(S,[13.4,f,57.5],Math.PI/2,false);
-    if(t<9){ const k=odSeg(S,4,6.2); odMove(S.cour,[24,f,55.3],[14.6,f,55.3],k); odWalk(S.cour,dt,k>0&&k<1); if(k>=1){ S.cour.g.rotation.y=Math.PI; S.cour.R.armL.rotation.x=S.cour.R.armR.rotation.x=1.2; animRig(S.cour.R,dt,0); } }
-    else { const k=odSeg(S,9,11.5); odRest(S.cour); odMove(S.cour,[14.6,f,55.3],[24,f,55.3],k); odWalk(S.cour,dt,k<1); if(k>=1)S.cour.g.visible=false; }
-    if(t<7.4)S.pkg.position.copy(S.cour.g.position).add(new THREE.Vector3(0,1.0,0.5)); else S.pkg.position.set(11.1,f+0.81,58.6);
+    if(t<13.4)odHeroTo(S,[12.95,f,57.5],Math.PI/2,false);
+    if(t<9){ const k=odSeg(S,4,6.2), p=[[24,f,54.85],[15,f,54.85],[15,f,57.2]], u=Math.min(1.9999,k*2), j=Math.floor(u); odMove(S.cour,p[j],p[j+1],u-j); odWalk(S.cour,dt,k>0&&k<1); if(k>=1){ S.cour.g.rotation.y=Math.PI/2; S.cour.R.armL.rotation.x=S.cour.R.armR.rotation.x=1.2; animRig(S.cour.R,dt,0); } }
+    else { const k=odSeg(S,9,11.5), p=[[15,f,57.2],[15,f,54.85],[24,f,54.85]], u=Math.min(1.9999,k*2), j=Math.floor(u); odRest(S.cour); odMove(S.cour,p[j],p[j+1],u-j); odWalk(S.cour,dt,k<1); if(k>=1)S.cour.g.visible=false; }
+    if(t<7.4)S.pkg.position.set(...odLW(S.cour.g,[0,1.0,-0.5])); else S.pkg.position.set(11.1,f+0.81,58.6);
     odAt(S,6.4,'c1',()=>odSay(S,S.cour,'Package for Thomas Anderson!'));
     for(const tt of [8.3,9.0])odAt(S,tt,'r'+tt,()=>mxSfx('ring')); odAt(S,8.6,'n1',()=>odSay(S,S.hero,'...For me?'));
     odAt(S,9.4,'ph',()=>{ S.grp.remove(S.phone); head.add(S.phone); S.bits.push(S.phone); S.phone.visible=true; S.phone.position.set(0.27,0.16,-0.05); S.phone.rotation.set(0,0,0.2); });
     odAt(S,10,'m1',()=>odSay(S,S.pspk,"📞 They're coming for you, Neo."));
     odAt(S,11,'ding',()=>mxSfx('ding')); K.elev.forEach((p,i)=>p.position.x=28.75+(i?1:-1)*(0.5+0.95*odE(odSeg(S,11,11.8))));
-    if(t>=11.4&&t<25.4)ag.forEach((a,i)=>{ a.g.visible=true; const d=i*0.45, k=odSeg(S,11.4+d,17.5+d), path=[[28.75,f,70.4],[26.4,f,67],[26.4,f,55.6],[16.6+i*1.2,f,55.6]], n=path.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u);
+    if(t>=11.4&&t<25.4)ag.forEach((a,i)=>{ a.g.visible=true; const d=i*0.45, k=odSeg(S,11.4+d,17.5+d), path=[[28.75,f,70.4],[26.4,f,67],[26.4,f,54.85],[17+i*1.3,f,54.85]], n=path.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u);
       odMove(a,path[j],path[j+1],u-j); odWalk(a,dt,k<1,7); if(k>=1){ a.g.rotation.y=Math.PI/2; odRest(a); animRig(a.R,dt,0); } });
     odAt(S,12.6,'m2',()=>odSay(S,S.pspk,'📞 Go to the empty office. NOW!'));
-    if(t>=13.4&&t<17.4){ const k=odSeg(S,13.4,17.2), path=[[13.4,f,57.5],[13.6,f,55],[12.5,f,54.4],[12.5,f,51],[10.9,f,47.6]], n=path.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u); odHeroTo(S,odL(path[j],path[j+1],u-j),Math.atan2(-(path[j+1][0]-path[j][0]),-(path[j+1][2]-path[j][2])),k<1); }
+    if(t>=13.4&&t<17.4){ const k=odSeg(S,13.4,17.2), path=[[12.95,f,57.5],[15.1,f,57.5],[15.1,f,54.85],[13,f,54.85],[13,f,51],[10.9,f,47.6]], n=path.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u); odHeroTo(S,odL(path[j],path[j+1],u-j),Math.atan2(-(path[j+1][0]-path[j][0]),-(path[j+1][2]-path[j][2])),k<1); }
     // out on the ledge
     if(t>=17.4&&t<25.4){ let x=11; if(t<17.9)odHeroTo(S,odL([10.9,f,47.6],[11,f,45.5],odSeg(S,17.4,17.9)),0,true); else { x=t<22?11+6.5*odSeg(S,18.2,21.6):17.5-6.5*odSeg(S,23.2,24.8); odHeroTo(S,[x,f,45.5],0,(t>18.2&&t<21.6)||(t>23.2&&t<24.8)); } }
     odAt(S,17.6,'wind',()=>mxSfx('wind')); odAt(S,18.6,'m3',()=>odSay(S,S.pspk,'📞 Get to the roof. Use the scaffold!')); odAt(S,20.2,'n2',()=>odSay(S,S.hero,'This is crazy!'));
