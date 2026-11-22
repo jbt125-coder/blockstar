@@ -2382,7 +2382,8 @@ const DM_DEND={stop:'🪂 Stop on the lines, dance, then fly off the ramp',jet:'
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_SCENE0={act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
+const DM_MXLOOK={green:'💚 Matrix green',normal:'🎨 Normal colors'};
+const DM_SCENE0={mxlook:'green',act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2398,7 +2399,7 @@ const DEMO0={scenes:[
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY],['mxlook',DM_MXLOOK]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando|philly)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2417,6 +2418,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
+      isMx(s)?'<label>Matrix look'+sel(DM_MXLOOK,'mxlook',i,s.mxlook)+'</label>':
       isFilm(s)?'':
       s.act==='thanks'?'<label>Story'+sel(DM_MSTORY,'mstory',i,s.mstory)+'</label>':
       s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
@@ -6937,10 +6939,14 @@ function mxRainTick(dt){ mxRainA+=(mxRainWant-mxRainA)*Math.min(1,dt*3); if(mxRa
     for(let k=0;k<col.len;k++){ const yy=Math.floor(col.y/fs)*fs-k*fs; if(yy<0||yy>h+fs)continue; if(!col.g[k]||Math.random()<0.05)col.g[k]=MX_GLYPHS[Math.floor(Math.random()*MX_GLYPHS.length)];
       x.fillStyle=k===0?'rgba(220,255,225,0.95)':'rgba(40,255,100,'+(0.85*(1-k/col.len)).toFixed(3)+')'; x.fillText(col.g[k],i*fs+fs/2,yy); } }); }
 // skies: the city's green night and day, the club, the rain, and the real world's black sky
-function mxSky(k){ const S={night:[0x060c08,[0.6,0.8,0.64],24,160],day:[0x9fc0a6,[0.9,1,0.88],40,200],club:[0x020104,[0.34,0.28,0.48],10,70],rain:[0x0e1812,[0.6,0.74,0.64],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]}[k]||[0x060c08,[0.6,0.8,0.64],24,160];
+function mxGreen(){ if(!mxK)return false; if(demo)return !!demo.sc&&isMx(demo.sc)&&demo.sc.mxlook!=='normal'&&!mxK.rw.visible; return curPlace()==='matrix'; } // Matrix green, or normal colors (a choice for each scene in Demo Mode)
+function mxSky(k){ const G=demo&&demo.sc&&isMx(demo.sc)?demo.sc.mxlook!=='normal':true;
+  const S=(G?{night:[0x060c08,[0.6,0.8,0.64],24,160],day:[0x9fc0a6,[0.9,1,0.88],40,200],club:[0x020104,[0.34,0.28,0.48],10,70],rain:[0x0e1812,[0.6,0.74,0.64],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]}
+    :{night:[0x0c1220,[0.7,0.74,0.84],24,160],day:[0xa8c8e8,[1,1,1],40,200],club:[0x040208,[0.4,0.3,0.48],10,70],rain:[0x141c26,[0.68,0.72,0.8],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]})[k]||[0x060c08,[0.6,0.8,0.64],24,160];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false; scene.fog.near=S[2]; scene.fog.far=S[3];
-  if(camera.far<320){ camera.far=320; camera.updateProjectionMatrix(); } setWeather(k==='rain'?'rain':'clear'); mxGrade(k!=='real'); }
-function mxGrade(on){ canvas.style.filter=on?'sepia(0.3) hue-rotate(62deg) saturate(1.2) contrast(1.06)':''; }
+  if(camera.far<320){ camera.far=320; camera.updateProjectionMatrix(); } setWeather(k==='rain'?'rain':'clear'); mxGrade(G&&k!=='real'); }
+const MX_GRADE='sepia(0.3) hue-rotate(62deg) saturate(1.2) contrast(1.06)';
+function mxGrade(on){ if(on||canvas.style.filter===MX_GRADE)canvas.style.filter=on?MX_GRADE:''; }
 // --- sound: the same quiet-when-you-picked-a-song rule as the Odyssey
 const MX_SFX={key:v=>tone('square',1700+Math.random()*700,1500,0.03,0.025*v), knock:v=>{ for(let i=0;i<3;i++)tone('sine',150,70,0.12,0.3*v,i*0.2); }, ring:v=>{ for(let i=0;i<4;i++){ tone('square',880,880,0.08,0.035*v,i*0.17); tone('square',660,660,0.08,0.035*v,i*0.17+0.085); } },
   door:v=>tone('sawtooth',180,110,0.4,0.05*v), ding:v=>{ tone('sine',1320,1320,0.5,0.08*v); tone('sine',1050,1050,0.6,0.06*v,0.25); }, glitch:v=>{ for(let i=0;i<6;i++)tone('sawtooth',100+Math.random()*900,60+Math.random()*300,0.06,0.05*v,i*0.05); noise(3000,0.3,0.1*v,'bandpass'); },
@@ -7054,6 +7060,7 @@ function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
   K.codeT-=dt; if(K.codeT<=0){ K.codeT=0.12; mxCodeDraw(K.code); } K.neon.material.opacity=Math.random()<0.03?0.35:1;
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(K.rw.visible){ K.rwFl=(K.rwFl||0)-dt; if(K.rwFl<=0){ K.rwFl=1.5+Math.random()*3; K.rwFlash=0.25; } K.rwFlash=Math.max(0,(K.rwFlash||0)-dt); scene.background.setHex(K.rwFlash>0?0x3a1a3a:0x07050a); K.rwLight.intensity=1.1+Math.sin(t*3)*0.2; }
+  if(fxKind()==='normal'){ const want=mxGreen(); if((canvas.style.filter===MX_GRADE)!==want)mxGrade(want); }
   if(demo&&wxPts)updateWeather(dt); mxRainTick(dt); if(demo&&demo.sc&&isMx(demo.sc))mxMusicTick(dt); }
 
 // ================= THE MATRIX IN DEMO MODE =================
@@ -7185,7 +7192,7 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
     if(t>=12&&t<14.6)odHeroPath(S,[76,f,24.6],[75.6,f,20.6],12,14); if(t>=14.6&&t<27.4)odHeroPath(S,[75.6,f,20.6],[75,f,18.2],14.6,15.6);
     if(t<14.4){ M.g.position.set(75,f,10.4); M.g.rotation.y=t<12.6?0:Math.PI; odRest(M); animRig(M.R,dt,0); }
     else if(t<27.4){ const k=odSeg(S,14.4,15.6); if(k<1){ odMove(M,[75,f,10.4],[75,f,12.6],k); M.g.rotation.y=Math.PI; odWalk(M,dt,true); } else { M.g.position.set(75,f-OD_SEAT,12.6); M.g.rotation.y=Math.PI; odSit(M); if(t>20.4&&t<26){ M.R.armL.rotation.x=M.R.armR.rotation.x=1.35; M.R.armL.rotation.z=-0.25; M.R.armR.rotation.z=0.25; } animRig(M.R,dt,0); } }
-    S.thT=(S.thT||0)-dt; if(t>=12&&t<34&&S.thT<=0){ S.thT=3+Math.random()*2.5; mxSfx('thunder'); S.flash=0.18; } S.flash=Math.max(0,(S.flash||0)-dt); if(t>=12&&t<34)scene.background.setHex(S.flash>0?0xd8f0e0:0x060c08);
+    S.thT=(S.thT||0)-dt; if(t>=12&&t<34&&S.thT<=0){ S.thT=3+Math.random()*2.5; mxSfx('thunder'); S.flash=0.18; } S.flash=Math.max(0,(S.flash||0)-dt); if(t>=12&&t<34)scene.background.setHex(S.flash>0?0xd8f0e0:mxGreen()?0x060c08:0x0c1220);
     odAt(S,12.8,'m1',()=>odSay(S,M,'At last. Welcome, Neo.'));
     odAt(S,16,'m2',()=>odSay(S,M,"You've felt it your whole life. Something is wrong with the world.")); odAt(S,18.8,'n2',()=>odSay(S,S.hero,'Every day. Like nothing is real.'));
     // the pills
