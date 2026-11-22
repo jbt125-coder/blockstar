@@ -3761,7 +3761,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; }
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -5090,6 +5090,7 @@ function updatePlayer(dt){
   if(drive){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } return drive?driveUpdate(dt):{hs:0}; } // (the demo can get out of the car)
   if(riding())return rideUpdate(dt);
   if(mansionK&&mansionK.danceT>0){ $('tint').style.opacity=0; mansionK.danceT-=dt; if(mansionK.danceT<=0&&mansionK.camWas){ camMode=mansionK.camWas; mansionK.camWas=0; } if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // dancing in the pool after the slide
+  if(odyK&&odyK.ride)return odRideUpdate(dt); // sailing a ship on the Odyssey's sea
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
   if(mansionK&&mansionK.seated){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // sitting at the dinner table
@@ -6607,7 +6608,7 @@ function buildOdyLife(){ clearOdyLife(); const root=new THREE.Group(); scene.add
     K.ghosts=[]; for(let i=0;i<9;i++){ const g=odPerson(U,(Math.random()-0.5)*30,0.3,(Math.random()-0.5)*40,Math.random()*6); glowAll(g.g,0xb8e8ff,0.35); g.drift=[(Math.random()-0.5)*0.8,(Math.random()-0.5)*0.8]; K.ghosts.push(g); }
     K.tir=odPerson(U,2,0,-6,0,odLook({skin:'#e8d8c8',hair:'bald',top:'tee',topC:'#e8e4dc',bottom:'dress',bottomC:'#d8d4cc'}),{helm:false,shield:false,weapon:false}); mb(K.tir.R.head,0.5,0.5,0.1,mm(0xffffff),0,0.0,-0.28); const staff=mb(K.tir.R.armR,0.07,2,0.07,mm(0x8a6a3a),0,-0.4,-0.2);
     const tl=new THREE.PointLight(0x9ad0ff,1.5,12); tl.position.set(2,3,-6); U.add(tl); K.tirLight=tl; }
-  if(curPlace()==='odyssey')odHeroGear(true); }
+  odSeaBuild(K); if(curPlace()==='odyssey')odHeroGear(true); }
 function clearOdyLife(){ odStageClear(); const K=odyK; if(!K)return; scene.remove(K.root); K.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); odyK=null; odHeroGear(false); odHeroCloak(false); }
 // --- your hero in Odysseus's gear: a bronze helmet, a blue cape, a round shield and a sword
 let odGear=null, odCloak=null;
@@ -6625,7 +6626,7 @@ function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t;
   K.fallTex.offset.y-=dt*1.3; K.sparks.rotation.y+=dt*0.05; for(const s of K.sheep)s.position.y+=Math.sin(t*3+s.id)*0.002;
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(K.under.visible){ K.riverTex.offset.y-=dt*0.4; K.crys.forEach((c,i)=>{ c.rotation.y+=dt; c.position.y+=Math.sin(t*2+i)*0.005; }); for(const g of K.ghosts){ g.g.position.x+=g.drift[0]*dt; g.g.position.z+=g.drift[1]*dt; g.g.position.y=0.3+Math.sin(t*1.5+g.ph)*0.3; if(Math.hypot(g.g.position.x,g.g.position.z)>26){ g.drift[0]*=-1; g.drift[1]*=-1; } animRig(g.R,dt,0); } }
-  if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&demo.sc.act.slice(0,2)==='od')odMusicTick(dt); }
+  if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&demo.sc.act.slice(0,2)==='od')odMusicTick(dt); odSeaTick(dt); }
 // --- sound: everything here goes through odS, which plays quieter when you've picked your own song for the demo
 function odUserSong(){ return !!demo&&(mus.src==='mp3'||mus.src==='yt'); } // your own MP3 or YouTube song wins; otherwise the story plays its own music
 function odS(fn){ if(!AC||!sfxOn)return; try{ fn(odUserSong()?0.25:1); }catch(e){} }
@@ -6684,7 +6685,7 @@ function demoOdySetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.man
   odHeroGear(true); odHeroCloak(false); odStageClear(); odDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model}}; odyK.root.add(S.grp); odStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; odMood=ch.mood||'hero'; odSky(ch.sky); ch.init(S); demo.cam=null; }
 function odStageClear(){ if(!odStage)return; const S=odStage; odBubOff(model,S.hero); if(odyK)odyK.root.remove(S.grp); odFree(S.grp); odStage=null; if(odyK)odyK.whirlFast=false; model.rotation.x=model.rotation.z=0; }
-function odDefaults(){ const K=odyK; K.under.visible=false; K.cyc.g.visible=K.circe.g.visible=K.calypso.g.visible=true; K.cows.forEach(c=>c.g.visible=true); K.ships.forEach(s=>s.g.visible=true);
+function odDefaults(){ const K=odyK; K.ride=null; K.ships.forEach(s=>{ if(s.home){ s.x=s.home[0]; s.z=s.home[1]; s.h=0; s.vx=s.vz=0; } }); K.under.visible=false; K.cyc.g.visible=K.circe.g.visible=K.calypso.g.visible=true; K.cows.forEach(c=>c.g.visible=true); K.ships.forEach(s=>s.g.visible=true);
   K.boulder.position.set(79,OD.cave.floor+3.1,57.5); K.horse.hatch.rotation.y=0; K.gate.forEach(g=>g.rotation.y=0); const [ix,iz]=OD.ithaca; K.pen.g.position.set(ix,23,iz+5); K.pen.g.rotation.y=Math.PI; K.tel.g.position.set(ix+3,23,iz+2); K.tel.g.rotation.y=Math.PI; K.pen.g.visible=K.tel.g.visible=true; odRest(K.pen); odRest(K.tel); }
 function odFree(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(!o.material)return; for(const m of [].concat(o.material))if(m.userData.own||o.isSprite){ if(m.map)m.map.dispose(); m.dispose(); } }); } // a chapter's own faces, clothes and bubbles (the shared block textures stay)
 function odBubOff(par,who){ if(!who.bub)return; par.remove(who.bub); if(who.bub.material.map)who.bub.material.map.dispose(); who.bub.material.dispose(); who.bub=null; }
@@ -6865,6 +6866,127 @@ OD_CH.od10={secs:40,sky:'sunset',mood:'calm',init(S){ const K=odyK, [cx,cz]=OD.i
 // the ten chapters as Demo Mode scenes, and one click to line them all up
 const OD_NAMES=['The Fall of Troy','The Great Voyage','The Land of the Cyclops','Circe and the Pigs','The Sirens','The Underworld','Scylla and Charybdis','The Island of the Sun God',"Calypso's Island",'The Return to Ithaca'];
 function loadOdyssey(){ dmCfg.scenes=OD_NAMES.map((n,i)=>cleanScene({act:'od'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['od'+(i+1)].secs,cap:''})); saveDemo(); }
+
+// ================= THE ODYSSEY'S SEA LIFE =================
+// Kelp forests and seaweed around the islands, schools of fish, pufferfish, crabs on the beaches, a pod of dolphins that
+// comes to swim with you (and chases off sharks, and plays with the pufferfish), sharks, a kraken, and a whale that hunts
+// the kraken. The three ships on Troy's beach can be sailed, like the pool floats at the mansion. Kelp, seaweed and the
+// fish schools are each one instanced mesh, and anything far from the camera isn't drawn, so the sea stays fast.
+function seaFloor(x,z){ x=Math.floor(x); z=Math.floor(z); if(!inB(x,OD.SEA,z)||get(x,OD.SEA,z)!==ID.water)return -1; let y=OD.SEA; while(y>0&&get(x,y,z)===ID.water)y--; return y+1; } // the lowest water block, or -1 if not sea
+function seaSpot(minDepth,near,rad){ for(let k=0;k<60;k++){ const x=near?near[0]+(Math.random()-0.5)*2*rad:8+Math.random()*(W-16), z=near?near[1]+(Math.random()-0.5)*2*rad:8+Math.random()*(D-16), f=seaFloor(x,z); if(f>0&&OD.SEA+1-f>=minDepth)return [x,f,z]; } return null; }
+function seaOpen(x,z,need){ const f=seaFloor(x,z); return f>0&&OD.SEA+1-f>=(need||2); }
+const SEA_SFX={click:v=>{ for(let i=0;i<4;i++)tone('sine',2200+Math.random()*900,1800,0.05,0.04*v,i*0.07); }, chomp:v=>{ tone('sawtooth',90,40,0.6,0.25*v); noise(400,0.7,0.35*v,'lowpass'); }, spout:v=>noise(1400,1.1,0.12*v,'bandpass'),
+  pop:v=>tone('sine',300,900,0.15,0.08*v), snap:v=>tone('square',1400,900,0.05,0.04*v), bite:v=>{ tone('square',160,80,0.15,0.2*v); noise(900,0.15,0.2*v,'lowpass'); }};
+function seaSfx(k,p){ if(p&&Math.hypot(p[0]-camera.position.x,p[2]-camera.position.z)>30)return; odS(SEA_SFX[k]); }
+// --- the creatures' bodies (each faces -z, like everyone else)
+function seaDolphin(par){ const g=grp(par,0,0,0), c=mm(0x7890a4), w=mm(0xdce4ea); msph(g,0.42,c,0,0,0,0.85,0.8,2.5); msph(g,0.34,w,0,-0.14,-0.1,0.75,0.5,2.1); mb(g,0.16,0.12,0.55,c,0,-0.05,-1.3);
+  const fin=mb(g,0.06,0.42,0.42,c,0,0.4,0.15); fin.rotation.x=-0.55; for(const s of[-1,1]){ const p=mb(g,0.46,0.05,0.22,c,s*0.42,-0.18,-0.35); p.rotation.z=s*0.45; } for(const s of[-1,1])mb(g,0.05,0.06,0.03,mm(0x111111),s*0.27,0.06,-0.82);
+  const tail=grp(g,0,0,0.95); mb(tail,0.16,0.14,0.6,c,0,0,0.25); mb(tail,0.95,0.05,0.26,c,0,0,0.6); return {g,tail}; }
+function seaShark(par){ const g=grp(par,0,0,0), c=mm(0x5e6872), w=mm(0xe8ecee); msph(g,0.5,c,0,0,0,0.85,0.8,2.9); msph(g,0.4,w,0,-0.16,-0.2,0.75,0.45,2.4);
+  const fin=mb(g,0.07,0.75,0.6,c,0,0.62,0.05); fin.rotation.x=-0.6; for(const s of[-1,1]){ const p=mb(g,0.6,0.05,0.3,c,s*0.5,-0.2,-0.4); p.rotation.z=s*0.3; } for(const s of[-1,1])mb(g,0.06,0.06,0.03,mm(0x0a0a0a),s*0.3,0.1,-1.1);
+  for(let i=0;i<5;i++)mb(g,0.05,0.06,0.03,mm(0xffffff),-0.2+i*0.1,-0.22,-1.22); const tail=grp(g,0,0,1.25); const t1=mb(tail,0.07,0.9,0.4,c,0,0.25,0.3); t1.rotation.x=0.6; const t2=mb(tail,0.07,0.5,0.3,c,0,-0.2,0.25); t2.rotation.x=-0.6; return {g,tail}; }
+function seaWhale(par){ const g=grp(par,0,0,0), c=mm(0x3a5a86), w=mm(0xb8c8d8); msph(g,1.25,c,0,0,0,1.5,1.15,5); mb(g,2.2,0.3,5.5,w,0,-0.95,-1.2); for(let i=0;i<6;i++)mb(g,0.04,0.05,4.5,mm(0x8aa0b8),-0.8+i*0.32,-1.12,-1.2);
+  const jaw=grp(g,0,-0.6,-3.2); mb(jaw,2,0.3,3.2,c,0,-0.15,-1.4); const fin=mb(g,0.1,0.5,0.8,c,0,1.25,2.2); fin.rotation.x=-0.6; for(const s of[-1,1]){ const p=mb(g,1.6,0.1,0.6,c,s*1.6,-0.5,-1.6); p.rotation.z=s*0.35; } for(const s of[-1,1])mb(g,0.1,0.12,0.12,mm(0x0a0a0a),s*1.45,0.0,-3.6);
+  const tail=grp(g,0,0,5.2); mb(tail,0.5,0.4,2,c,0,0,0.6); mb(tail,3.6,0.12,0.9,c,0,0,1.7); return {g,tail,jaw}; }
+function seaKraken(par){ const g=grp(par,0,0,0), c=mm(0x8a2a4a), d=mm(0x5a1a32); msph(g,1.1,c,0,1.6,0,1,1.7,1); for(const s of[-1,1]){ const f=mb(g,0.8,0.9,0.1,d,s*0.95,2.8,0); f.rotation.z=s*0.5; }
+  for(const s of[-1,1]){ msph(g,0.28,mm(0xffe02a),s*0.55,0.6,-0.85); msph(g,0.12,mm(0x0a0a0a),s*0.57,0.6,-1.08); } const arms=[];
+  for(let i=0;i<10;i++){ const a=i/10*Math.PI*2, long=i===2||i===7, base=grp(g,Math.cos(a)*0.6,0.1,Math.sin(a)*0.6); base.rotation.y=-a; let cur=base; const segs=[];
+    for(let k=0;k<(long?8:5);k++){ const s=grp(cur,k?0.75:0,0,0); mb(s,0.78,0.32-k*0.03,0.32-k*0.03,k%2?d:c,0.38,0,0); cur=s; segs.push(s); } if(long)mb(cur,0.5,0.4,0.4,d,0.9,0,0); arms.push({segs,ph:i*0.7,long}); } return {g,arms}; }
+function seaCrab(par){ const g=grp(par,0,0,0), c=mm(0xd8401a), d=mm(0xa82a10); mb(g,0.5,0.2,0.36,c,0,0.2,0); for(const s of[-1,1]){ mb(g,0.04,0.14,0.04,d,s*0.1,0.36,-0.12); msph(g,0.04,mm(0x111111),s*0.1,0.44,-0.12);
+    const cl=grp(g,s*0.3,0.22,-0.22); mb(cl,0.16,0.12,0.2,c,0,0,0); mb(cl,0.05,0.05,0.14,d,s*-0.04,0.05,-0.12); mb(g,0.5,0.03,0.3,d,s*0.18,0.1,0.05); } return g; }
+function seaPuffer(par){ const m=fishMesh('puffer'); par.add(m.g); m.g.scale.setScalar(1.5); for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; const sp=mb(m.g,0.03,0.03,0.1,mm(0xe8d8a0),Math.cos(a)*0.14,Math.sin(a)*0.12,0); sp.rotation.x=Math.PI/2; } return m; }
+// --- building the sea
+function odSeaBuild(K){ const root=new THREE.Group(); K.root.add(root); const S=K.sea={root,t:0}, d=new THREE.Object3D(), isl=OD_ISLES.map(i=>[i[0],i[1]]).concat([OD.sirens]);
+  // kelp: tall swaying stalks in the shallows round each island (one instanced mesh, moved every frame)
+  const kelp=[]; for(const c of isl)for(let k=0;k<12;k++){ const p=seaSpot(3,c,34); if(!p)continue; const n=Math.max(2,Math.min(6,OD.SEA-p[1])); kelp.push({p,n,ph:Math.random()*6}); }
+  const segN=kelp.reduce((a,k)=>a+k.n,0); S.kelpM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.2,0.95,0.07),mm(0x4a7a2a),segN); root.add(S.kelpM); S.kelp=kelp;
+  const leafN=segN; S.leafM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.42,0.12,0.04),mm(0x6a9a32),leafN); root.add(S.leafM);
+  // seaweed tufts on the sea floor (they don't move)
+  const tufts=[]; for(let k=0;k<160;k++){ const p=seaSpot(1.5); if(p)tufts.push(p); } const TU=new THREE.InstancedMesh(new THREE.ConeGeometry(0.16,0.7,4),mm(0x3a6a3a),tufts.length), col=new THREE.Color();
+  tufts.forEach((p,k)=>{ d.position.set(p[0],p[1]+0.32,p[2]); d.rotation.set((Math.random()-0.5)*0.4,Math.random()*3,0); d.scale.set(1,0.7+Math.random()*0.8,1); d.updateMatrix(); TU.setMatrixAt(k,d.matrix); TU.setColorAt(k,col.setHex([0x3a6a3a,0x6a4a2a,0x2a8a5a,0x8a3a4a][k%4])); }); root.add(TU);
+  // schools of fish (one instanced body and tail for all of them)
+  S.schools=[]; const kinds=['tang','clown','snapper','tuna','tang','snapper']; for(const k of kinds){ const p=seaSpot(3); if(!p)continue; const sc={c:[p[0],OD.SEA-2,p[2]],tgt:null,fish:[],k}; for(let i=0;i<8;i++)sc.fish.push({a:Math.random()*6,r:0.6+Math.random()*1.6,y:(Math.random()-0.5)*1.2,w:0.6+Math.random()*0.6,prev:null}); S.schools.push(sc); }
+  const nF=S.schools.length*8; S.bodyM=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial(),nF); S.tailM=new THREE.InstancedMesh(new THREE.BoxGeometry(0.02,1,1),new THREE.MeshLambertMaterial(),nF); root.add(S.bodyM,S.tailM);
+  let n=0; for(const sc of S.schools)for(const f of sc.fish){ const F=FISH[sc.k]; S.bodyM.setColorAt(n,col.setHex(F.c)); S.tailM.setColorAt(n,col.setHex(F.c2)); f.i=n++; f.len=F.len*(sc.k==='tuna'?1:2.2); }
+  // pufferfish near the kelp, crabs on the beaches
+  S.puffers=[]; for(let k=0;k<5;k++){ const c=isl[k%isl.length], p=seaSpot(2.5,c,30); if(!p)continue; const m=seaPuffer(root); S.puffers.push({m,p:[p[0],OD.SEA-1.5,p[2]],home:[p[0],p[2]],puff:0,vy:0,ph:Math.random()*6}); }
+  S.crabs=[]; for(let k=0;k<200&&S.crabs.length<10;k++){ const x=8+Math.random()*(W-16), z=8+Math.random()*(D-16), s=surfaceAt(Math.floor(x),Math.floor(z)); if(s.id!==ID.sand||s.y<OD.SEA||s.y>OD.SEA+2)continue; let wet=false; for(const [a,b] of [[3,0],[-3,0],[0,3],[0,-3]])if(seaFloor(x+a,z+b)>0)wet=true; if(!wet)continue;
+    const g=seaCrab(root); S.crabs.push({g,x,z,h:Math.random()*6,dir:1,t:0,turn:2}); }
+  // the big ones
+  S.dolphins=[]; const pc=seaSpot(4)||[128,6,150]; S.pod={c:[pc[0],OD.SEA-1.5,pc[2]],tgt:null}; for(let i=0;i<4;i++){ const m=seaDolphin(root); S.dolphins.push({m,p:[pc[0]+i,OD.SEA-1.5,pc[2]],h:0,a:i*1.6,r:2+i*0.7,leap:-1,leapT:3+Math.random()*6,mode:'pod',job:null,ph:Math.random()*6}); }
+  S.sharks=[]; for(let i=0;i<3;i++){ const p=seaSpot(4)||[100+i*20,6,100]; const m=seaShark(root); S.sharks.push({m,p:[p[0],OD.SEA-1.2,p[2]],h:0,tgt:null,flee:0,bite:0,ph:Math.random()*6}); }
+  const kp=seaSpot(5)||[150,5,120]; S.kraken={...seaKraken(root),p:[kp[0],OD.SEA-3.2,kp[2]],h:0,tgt:null,gone:0,flee:false};
+  const wp=seaSpot(5)||[90,5,120]; S.whale={...seaWhale(root),p:[wp[0],OD.SEA-1.4,wp[2]],h:0,tgt:null,chase:false,eat:0,spout:0,happy:0};
+  // the ships on Troy's beach can be sailed
+  K.ships.forEach((s,i)=>{ s.x=46+i*12; s.z=157; s.h=0; s.vx=s.vz=0; s.ph=Math.random()*6; s.home=[s.x,s.z]; }); }
+// steering through the water: turn toward a target and swim, picking a new spot if the way is blocked
+function seaSteer(c,tgt,spd,dt,need,turn){ const dx=tgt[0]-c.p[0], dz=tgt[2]-c.p[2], want=Math.atan2(-dx,-dz); let dh=want-c.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; c.h+=dh*Math.min(1,dt*(turn||1.6));
+  const nx=c.p[0]-Math.sin(c.h)*spd*dt, nz=c.p[2]-Math.cos(c.h)*spd*dt; if(seaOpen(nx-Math.sin(c.h)*1.5,nz-Math.cos(c.h)*1.5,need)){ c.p[0]=nx; c.p[2]=nz; return true; } c.tgt=null; return false; }
+function seaPlace(c,g,pitch,roll){ g.position.set(c.p[0],c.p[1],c.p[2]); g.rotation.set(pitch||0,c.h,roll||0,'YXZ'); }
+function seaNear(p,R){ return Math.hypot(p[0]-camera.position.x,p[2]-camera.position.z)<(R||70); }
+function odSeaTick(dt){ const K=odyK, S=K&&K.sea; if(!S)return; S.t+=dt; const t=S.t, d=new THREE.Object3D(), SEA=OD.SEA, big=!demo;
+  const swim=!demo&&onOdyssey()&&!K.ride&&inWater(pl.p[0],pl.p[1]+0.4,pl.p[2]), sailing=!demo&&!!K.ride, me=pl.p;
+  // kelp sways
+  let n=0; for(const k of S.kelp){ let x=k.p[0], z=k.p[2], y=k.p[1]; for(let j=0;j<k.n;j++){ const sw=Math.sin(t*1.1+k.ph+j*0.55)*0.12*(j+1); d.position.set(x+sw,y+0.47,z); d.rotation.set(0,k.ph,sw*0.6); d.scale.set(1,1,1); d.updateMatrix(); S.kelpM.setMatrixAt(n,d.matrix);
+      d.position.y=y+0.7; d.rotation.set(0,k.ph+(j%2?0.9:-0.9),0.5*(j%2?1:-1)); d.updateMatrix(); S.leafM.setMatrixAt(n,d.matrix); n++; y+=0.95; } } S.kelpM.instanceMatrix.needsUpdate=S.leafM.instanceMatrix.needsUpdate=true;
+  // fish schools wander, and scatter from sharks and the whale
+  for(const sc of S.schools){ if(!sc.tgt||Math.hypot(sc.tgt[0]-sc.c[0],sc.tgt[2]-sc.c[2])<2){ const p=seaSpot(3,[sc.c[0],sc.c[2]],25); sc.tgt=p?[p[0],SEA-1.5-Math.random()*2,p[2]]:null; }
+    if(sc.tgt){ const dx=sc.tgt[0]-sc.c[0], dz=sc.tgt[2]-sc.c[2], L=Math.hypot(dx,dz)||1; let sp=1.6; for(const sh of S.sharks)if(Math.hypot(sh.p[0]-sc.c[0],sh.p[2]-sc.c[2])<5)sp=4; sc.c[0]+=dx/L*sp*dt; sc.c[2]+=dz/L*sp*dt; sc.c[1]+=(sc.tgt[1]-sc.c[1])*dt*0.5; }
+    const vis=seaNear(sc.c,55); for(const f of sc.fish){ f.a+=dt*f.w; const p=[sc.c[0]+Math.cos(f.a)*f.r,sc.c[1]+f.y+Math.sin(t*2+f.a)*0.15,sc.c[2]+Math.sin(f.a)*f.r]; const h=f.prev?Math.atan2(-(p[0]-f.prev[0]),-(p[2]-f.prev[2])):0; f.prev=p;
+      d.position.set(p[0],p[1],p[2]); d.rotation.set(0,h,0); d.scale.set(vis?f.len*0.3:0.001,f.len*0.55,f.len); d.updateMatrix(); S.bodyM.setMatrixAt(f.i,d.matrix);
+      d.translateZ(f.len*0.6); d.rotation.y=h+Math.sin(t*12+f.a)*0.5; d.scale.set(vis?1:0.001,f.len*0.4,f.len*0.35); d.updateMatrix(); S.tailM.setMatrixAt(f.i,d.matrix); } }
+  S.bodyM.instanceMatrix.needsUpdate=S.tailM.instanceMatrix.needsUpdate=true;
+  // pufferfish bob about, and puff up when a dolphin nudges them
+  for(const pf of S.puffers){ pf.ph+=dt; pf.puff=Math.max(0,pf.puff-dt*0.25); if(pf.vy){ pf.p[1]+=pf.vy*dt; pf.vy-=9*dt; if(pf.p[1]<SEA-1.5){ pf.p[1]=SEA-1.5; pf.vy=0; } }
+    else { pf.p[0]=pf.home[0]+Math.sin(pf.ph*0.3)*1.5; pf.p[2]=pf.home[1]+Math.cos(pf.ph*0.23)*1.5; } const sc=1.5*(1+Math.min(1,pf.puff)*0.9); pf.m.g.scale.setScalar(sc); pf.m.g.position.set(pf.p[0],pf.p[1]+Math.sin(pf.ph*2)*0.1,pf.p[2]); pf.m.g.rotation.y=pf.ph*0.4; pf.m.tail.rotation.y=Math.sin(pf.ph*8)*0.4; pf.m.g.visible=seaNear(pf.p,50); }
+  // crabs scuttle sideways along the beaches
+  for(const c of S.crabs){ c.t+=dt; c.turn-=dt; if(c.turn<=0){ c.turn=1.5+Math.random()*3; c.dir=Math.random()<0.5?1:-1; if(Math.random()<0.3)c.h+=(Math.random()-0.5)*2; if(Math.random()<0.2)seaSfx('snap',[c.x,0,c.z]); }
+    const nx=c.x+Math.cos(c.h)*c.dir*0.7*dt, nz=c.z-Math.sin(c.h)*c.dir*0.7*dt, s=surfaceAt(Math.floor(nx),Math.floor(nz)); if(s.id===ID.sand&&s.y>=SEA&&s.y<=SEA+2){ c.x=nx; c.z=nz; } else c.dir*=-1;
+    const y=surfaceAt(Math.floor(c.x),Math.floor(c.z)).y+1; c.g.position.set(c.x,y+Math.abs(Math.sin(c.t*14))*0.02,c.z); c.g.rotation.y=c.h; c.g.visible=seaNear([c.x,0,c.z],45); }
+  // sharks: a fin cutting the water; they come for you if you swim, unless a dolphin chases them off
+  for(const sh of S.sharks){ sh.ph+=dt; sh.flee=Math.max(0,sh.flee-dt); sh.bite=Math.max(0,sh.bite-dt); const dMe=Math.hypot(me[0]-sh.p[0],me[2]-sh.p[2]);
+    if(sh.flee>0){ if(!sh.tgt){ const a=Math.atan2(sh.p[2]-me[2],sh.p[0]-me[0]); sh.tgt=[sh.p[0]+Math.cos(a)*40,0,sh.p[2]+Math.sin(a)*40]; } seaSteer(sh,sh.tgt,5.5,dt,2.5,3); }
+    else if(swim&&dMe<16&&big){ sh.stalk=(sh.stalk||0)+dt; if(sh.stalk<4){ const a=t*0.9+sh.ph; seaSteer(sh,[me[0]+Math.cos(a)*5,0,me[2]+Math.sin(a)*5],3.2,dt,1.5,2.5); } else seaSteer(sh,me,4,dt,1.5,2.5); /* it circles you first, then comes in */ sh.p[1]+=(Math.min(SEA-1,me[1]+0.3)-sh.p[1])*dt*2; if(dMe<1.6&&sh.bite<=0&&sh.stalk>=4){ sh.bite=3; sh.stalk=0; seaSfx('bite',sh.p); hurtPlayer(1,(me[0]-sh.p[0])/(dMe||1),(me[2]-sh.p[2])/(dMe||1),'shark'); } }
+    else { sh.stalk=0; if(!sh.tgt||Math.hypot(sh.tgt[0]-sh.p[0],sh.tgt[2]-sh.p[2])<3)sh.tgt=seaSpot(4); if(sh.tgt)seaSteer(sh,sh.tgt,2.2,dt,3,1.2); sh.p[1]+=((SEA-0.9)-sh.p[1])*dt; }
+    sh.m.tail.rotation.y=Math.sin(sh.ph*(sh.flee?12:6))*0.45; seaPlace(sh,sh.m.g); sh.m.g.visible=big&&seaNear(sh.p); }
+  // dolphins: a pod that roams, leaps, comes to swim with you, guards you from sharks, and plays with the pufferfish
+  const pod=S.pod, wantMe=(swim||sailing)&&Math.hypot(me[0]-pod.c[0],me[2]-pod.c[2])<60; if(wantMe){ const s=K.ride; const ahead=s?[me[0]-Math.sin(s.h)*3,0,me[2]-Math.cos(s.h)*3]:me; pod.c[0]+=(ahead[0]-pod.c[0])*Math.min(1,dt*1.5); pod.c[2]+=(ahead[2]-pod.c[2])*Math.min(1,dt*1.5); }
+  else { if(!pod.tgt||Math.hypot(pod.tgt[0]-pod.c[0],pod.tgt[2]-pod.c[2])<3)pod.tgt=seaSpot(4); if(pod.tgt){ const dx=pod.tgt[0]-pod.c[0], dz=pod.tgt[2]-pod.c[2], L=Math.hypot(dx,dz)||1; pod.c[0]+=dx/L*3*dt; pod.c[2]+=dz/L*3*dt; } }
+  const threat=S.sharks.find(sh=>sh.flee<=0&&swim&&Math.hypot(me[0]-sh.p[0],me[2]-sh.p[2])<16);
+  S.dolphins.forEach((dp,i)=>{ dp.ph+=dt; let tgt, spd=4.2;
+    if(threat&&i<2&&Math.hypot(dp.p[0]-me[0],dp.p[2]-me[2])<40){ tgt=threat.p; spd=7; if(Math.hypot(dp.p[0]-threat.p[0],dp.p[2]-threat.p[2])<2.6){ threat.flee=9; threat.tgt=null; seaSfx('click',dp.p); } }
+    else { const pf=!wantMe&&S.puffers.find(q=>Math.hypot(q.p[0]-pod.c[0],q.p[2]-pod.c[2])<12&&q.puff<0.2&&!q.vy); if(pf&&i===3){ tgt=pf.p; if(Math.hypot(dp.p[0]-pf.p[0],dp.p[2]-pf.p[2])<1.2){ pf.puff=3; pf.vy=7; seaSfx('pop',pf.p); seaSfx('click',dp.p); } }
+      else { dp.a+=dt*(wantMe?1.4:0.8); tgt=[pod.c[0]+Math.cos(dp.a)*dp.r,0,pod.c[2]+Math.sin(dp.a)*dp.r]; } }
+    seaSteer(dp,tgt,spd,dt,1.5,3); dp.leapT-=dt; if(dp.leapT<=0&&dp.leap<0){ dp.leap=0; dp.leapT=4+Math.random()*7; } let pitch=0;
+    if(dp.leap>=0){ dp.leap+=dt/1.3; const k=dp.leap; dp.p[1]=SEA-1.2+Math.sin(Math.min(1,k)*Math.PI)*3.2; pitch=-Math.cos(Math.min(1,k)*Math.PI)*0.9; if(k>=1){ dp.leap=-1; burst(dp.p[0]-0.5,SEA+0.5,dp.p[2]-0.5,new THREE.Color(0xe0f4ff),10); seaSfx('click',dp.p); } }
+    else dp.p[1]+=((SEA-1.3+Math.sin(dp.ph*1.3)*0.3)-dp.p[1])*dt*2;
+    dp.m.tail.rotation.x=Math.sin(dp.ph*8)*0.35; seaPlace(dp,dp.m.g,pitch); dp.m.g.visible=seaNear(dp.p); });
+  // the kraken drifts in the deep, waving its arms; the whale hunts it, and gulps it down if it catches it
+  const kr=S.kraken, wh=S.whale; kr.gone=Math.max(0,kr.gone-dt);
+  if(kr.gone<=0){ if(!kr.g.visible&&kr.respawn){ const p=seaSpot(5); if(p){ kr.p=[p[0],SEA-3.2,p[2]]; kr.respawn=false; } } const dW=Math.hypot(wh.p[0]-kr.p[0],wh.p[2]-kr.p[2]); kr.flee=dW<26;
+    if(kr.flee){ const a=Math.atan2(kr.p[2]-wh.p[2],kr.p[0]-wh.p[0]); if(!seaSteer(kr,[kr.p[0]+Math.cos(a)*10,0,kr.p[2]+Math.sin(a)*10],3.0,dt,2,2.5))seaSteer(kr,seaSpot(4)||wh.p,3.0,dt,2,4); }
+    else { if(!kr.tgt||Math.hypot(kr.tgt[0]-kr.p[0],kr.tgt[2]-kr.p[2])<3)kr.tgt=seaSpot(5); if(kr.tgt)seaSteer(kr,kr.tgt,1.4,dt,4,0.8); }
+    kr.p[1]=SEA-3.2+Math.sin(t*0.4)*0.8; kr.arms.forEach((A,i)=>A.segs.forEach((s,k)=>{ s.rotation.z=-0.35+Math.sin(t*(kr.flee?4:1.8)+A.ph+k*0.6)*0.22; s.rotation.y=Math.sin(t*1.2+A.ph+k*0.4)*0.15; })); seaPlace(kr,kr.g); kr.g.visible=big&&seaNear(kr.p,80); }
+  else kr.g.visible=false;
+  wh.happy=Math.max(0,wh.happy-dt); const dK=Math.hypot(wh.p[0]-kr.p[0],wh.p[2]-kr.p[2]); wh.chase=kr.gone<=0&&dK<26&&wh.happy<=0;
+  if(wh.chase){ seaSteer(wh,kr.p,4.8,dt,1.5,2.5); wh.jaw.rotation.x=Math.min(0.5,(26-dK)/30); if(dK<4.6){ kr.gone=60; kr.respawn=true; kr.g.visible=false; wh.happy=20; wh.spout=2.5; seaSfx('chomp',wh.p); for(let k=0;k<4;k++)burst(kr.p[0]-0.5+(Math.random()-0.5)*3,SEA+0.5,kr.p[2]-0.5+(Math.random()-0.5)*3,new THREE.Color(0xe0f4ff),14); } }
+  else { wh.jaw.rotation.x*=Math.max(0,1-dt*3); if(!wh.tgt||Math.hypot(wh.tgt[0]-wh.p[0],wh.tgt[2]-wh.p[2])<4)wh.tgt=seaSpot(5); if(wh.tgt)seaSteer(wh,wh.tgt,1.8,dt,4,0.6); if(Math.random()<dt*0.04)wh.spout=2; }
+  wh.p[1]=SEA-1.5+Math.sin(t*0.3)*0.25; if(wh.spout>0){ wh.spout-=dt; if(Math.random()<dt*20){ const fx=wh.p[0]+Math.sin(wh.h)*1.5, fz=wh.p[2]+Math.cos(wh.h)*1.5; burst(fx-0.5,SEA+1.2,fz-0.5,new THREE.Color(0xe8f6ff),4); } if(wh.spout>1.9&&wh.spout-dt<=1.9)seaSfx('spout',wh.p); }
+  wh.tail.rotation.x=Math.sin(t*(wh.chase?3:1.2))*0.25; seaPlace(wh,wh.g); wh.g.visible=big&&seaNear(wh.p,90);
+  // the ships at rest bob on the water by the beach (the one you're sailing moves in odRideUpdate)
+  for(const s of K.ships){ if(s.x===undefined)continue; s.ph+=dt; if(K.ride!==s&&s.home&&!demo){ s.vx*=Math.max(0,1-dt); s.vz*=Math.max(0,1-dt); } s.g.position.set(s.x,SEA+0.6+Math.sin(s.ph*1.4)*0.08,s.z); s.g.rotation.set(Math.sin(s.ph*1.1)*0.02,s.h,Math.sin(s.ph*0.9)*0.03,'YXZ'); } }
+// --- sailing a ship, like riding a pool float: walk up to it and press E, steer where you look, jump to hop off
+function odyAction(){ const K=odyK; if(!K||!onOdyssey()||demo)return null; if(K.ride)return {label:'⛵ Hop off the ship',fn:odHopOff};
+  let best=null, bd=4.6; for(const s of K.ships){ if(s.x===undefined)continue; const d=Math.hypot(pl.p[0]-s.x,pl.p[2]-s.z); if(d<bd&&pl.p[1]<OD.SEA+4){ bd=d; best=s; } } return best?{label:'⛵ Sail the ship',fn:()=>odBoard(best)}:null; }
+function odBoard(s){ const K=odyK; K.ride=s; s.vx=s.vz=0; pl.v=[0,0,0]; yaw=s.h; odSfx('creak'); toast('⛵ You board the ship! Move to sail where you look. Jump or E to hop off.'); }
+function odHopOff(){ const K=odyK, s=K&&K.ride; if(!s)return; K.ride=null; const c=Math.cos(s.h), sn=Math.sin(s.h); pl.p=[s.x+c*2.4,OD.SEA+0.3,s.z-sn*2.4]; pl.v=[0,4,0]; odSfx('splash'); }
+function odShipFits(x,z,h){ for(const k of [-3.6,0,3.6])if(!seaOpen(x+Math.sin(h)*k,z+Math.cos(h)*k,1.2))return false; return true; }
+function odRideUpdate(dt){ const K=odyK, s=K.ride; let ix=joy.x, iz=joy.y; if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  const P=padRead(); ix+=P.lx; iz+=P.ly; const c=Math.cos(yaw), sn=Math.sin(yaw), fwd=-iz; s.vx+=((-sn*fwd+c*ix)*6-s.vx)*Math.min(1,dt*0.9); s.vz+=((-c*fwd-sn*ix)*6-s.vz)*Math.min(1,dt*0.9);
+  const sp=Math.hypot(s.vx,s.vz); if(sp>0.3){ let dh=Math.atan2(-s.vx,-s.vz)-s.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; s.h+=dh*Math.min(1,dt*1.5); }
+  const nx=s.x+s.vx*dt, nz=s.z+s.vz*dt; if(odShipFits(nx,nz,s.h)){ s.x=nx; s.z=nz; } else { s.vx*=-0.3; s.vz*=-0.3; }
+  for(const o of s.oars)o.o.rotation.x=Math.sin(performance.now()/1000*4)*0.5*Math.min(1,sp/2);
+  pl.p=[s.x+Math.sin(s.h)*0.8,OD.SEA+1.3+Math.sin(s.ph*1.4)*0.08,s.z+Math.cos(s.h)*0.8]; pl.v=[0,0,0]; $('tint').style.opacity=0; if(keys.Space||upHeld||P.a)odHopOff(); return {hs:0}; }
 
 // ================= THE MATRIX: A CITY THAT ISN'T REAL =================
 // Matrix City: a green-tinted night city with Neo's brick apartment building, a neon club, a glass office tower, the
