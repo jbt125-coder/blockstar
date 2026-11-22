@@ -412,6 +412,7 @@ makeTile('hay_top',110,(x,y,r)=>{ const v=Math.sin(x*0.9+y*1.3)+Math.sin(x*1.6-y
 makeTile('portal_matrix',138,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [20,60,30]; const c=(x*7+3)%5; return (y+c*3)%7<4&&x%2?nz([60,240,110],r,.2):nz([4,22,10],r,.2); });
 makeTile('portal_drag',139,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(x>=3&&x<=4&&y>=2)return [70,70,78]; if(x>=5&&x<=12&&y>=2&&y<=8)return ((x>>1)+(y>>1))%2?[245,245,245]:[20,20,24]; return nz([255,200,60],r,.12); });
 makeTile('portal_ranch',140,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([90,160,60],r,.12); const h=Math.abs(x-7.5); if(y>=3&&y<11&&h<(y-2)*0.9)return y<5?[245,245,250]:nz([120,110,120],r,.1); return nz([140,200,255],r,.06); });
+makeTile('portal_philly',141,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; const bell=y>=4&&y<=11&&Math.abs(x-7.5)<(y-2)*0.55, crack=x===8&&y>=8&&y<=11; if(y===3&&x>=5&&x<=10)return [90,60,30]; if(crack)return [30,20,10]; if(bell)return nz([150,110,60],r,.12); return nz([170,60,50],r,.1); });
 { const furrow=(base,dk,r,x,y)=>{ let c=y%4<2?nz(base,r,.1):nz(dk,r,.1); if(r()<.05)c=mul(c,0.8); return c; };
   makeTile('farm_dry',111,(x,y,r)=>furrow([128,90,58],[100,68,44],r,x,y)); makeTile('farm_wet',112,(x,y,r)=>furrow([84,56,36],[64,42,28],r,x,y));
   makeTile('farm_rich',113,(x,y,r)=>{ const c=furrow([92,66,44],[70,50,34],r,x,y); return r()<.12?[40,30,22]:c; }); makeTile('farm_rich_wet',114,(x,y,r)=>{ const c=furrow([62,44,30],[46,32,22],r,x,y); return r()<.12?[28,20,14]:c; }); }
@@ -506,6 +507,7 @@ addBlock('leaves_gold','Golden Fall Leaves','Plants','Golden leaves, like an asp
 addBlock('portal_matrix','Matrix City Portal','Portal','Place it and a doorway to Matrix City opens: Neo\'s apartment, the club, the office tower and the agents\' building. The Matrix came out in 1999 and made slow-motion "bullet time" famous.',{t:'portal_matrix'},{portal:'matrix'});
 addBlock('portal_drag','Car World Portal','Portal','Place it and a doorway to Car World opens: a quarter-mile drag strip at night, with a garage to build and race your own car. A drag race is a straight sprint, and the fastest dragsters cover a quarter mile in under 4 seconds.',{t:'portal_drag'},{portal:'drag'});
 addBlock('portal_ranch','Mountain Ranch Portal','Portal','Place it and a doorway to the Mountain Ranch opens: tall snowy mountains and a stable full of horses to saddle up and ride. People first tamed horses about 5,500 years ago.',{t:'portal_ranch'},{portal:'ranch'});
+addBlock('portal_philly','Philadelphia Portal','Portal','Place it and a doorway to Philadelphia opens: row houses, the Art Museum\'s famous steps, Independence Hall and the Liberty Bell. The Liberty Bell\'s famous crack showed up in the 1840s, and it hasn\'t been rung since.',{t:'portal_philly'},{portal:'philly'});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -821,7 +823,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); fishLoadList(s.fish);
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); fishLoadList(s.fish);
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1841,7 +1843,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; clearMxLife(); clearPetShopLife(); petsClear(); fishClear(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; clearMxLife(); clearRkLife(); clearPetShopLife(); petsClear(); fishClear(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -2355,7 +2357,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2423,7 +2425,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isFilm(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the Matrix (chapters 1–3 so far)</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the Matrix (chapters 1–3 so far)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load Rocky (chapters 1–3 so far)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2450,6 +2452,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
   onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
   onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the Matrix chapters (about 2 minutes so far)?'))return; loadMatrix(); redraw(); });
+  onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the Rocky chapters (about 2 minutes so far)?'))return; loadRocky(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
   onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
   box2.querySelectorAll('[data-src]').forEach(el=>onClick(el,()=>{ musicStop(); mus.src=el.dataset.src; saveMus(); redraw(); }));
@@ -2519,7 +2522,7 @@ function solidY(x,z){ for(let y=H-1;y>=0;y--){ const b=world[idx(x,y,z)]; if(b&&
 function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.y+1; }
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
-function demoSetup(sc){ if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+function demoSetup(sc){ if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2535,6 +2538,7 @@ function demoSetup(sc){ if(drive)exitVehicle(true,true); petsClear(); storyReset
   if(sc.act==='drag'){ demoDragSetup(sc,P); return; }
   if(isOdy(sc)){ demoOdySetup(sc,P); return; }
   if(isMx(sc)){ demoMxSetup(sc,P); return; }
+  if(isRk(sc)){ demoRkSetup(sc,P); return; }
   if(sc.act==='petshop'||sc.act==='petranch'){ demoPetSetup(sc,P); return; }
   if(sc.act==='thanks'){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
@@ -3983,7 +3987,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; demo.vplace=null; applyPlaceSky(); } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.rkWorld){ clearRkLife(); demo.rkWorld=false; demo.vplace=null; } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4089,9 +4093,10 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   petshop:{name:'Pet Shop',icon:'🐾',key:'blockstar_petshop',dims:[40,14,40],col:[255,150,80],petshop:true,blurb:'Make your own cat or dog. It follows you everywhere, sits and stays, and guards you from monsters.'},
   odyssey:{name:'Odyssey Sea',icon:'🏛️',key:'blockstar_odyssey',dims:[256,48,256],col:[60,150,255],odyssey:true,blurb:'The sea of Homer\'s Odyssey: Troy and its wooden horse, the Cyclops\'s cave, Circe\'s magic island, the Sirens, Scylla and the whirlpool, and Ithaca, home.'},
   matrix:{name:'Matrix City',icon:'💊',key:'blockstar_matrix',dims:[128,48,128],col:[40,220,90],matrix:true,blurb:'A green-tinted city that isn\'t real: Neo\'s apartment, a neon club, the office tower, the agents\' building, and the real world hiding far below.'},
+  philly:{name:'Philadelphia',icon:'🔔',key:'blockstar_city_phl',dims:[160,48,160],col:[200,90,70],city:'philly',blurb:'1970s row houses, the Art Museum and its famous steps, Independence Hall, the Liberty Bell, a pet shop and an old boxing gym.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
-const CITY_PLACES=['city','newyork','sanfran','orlando'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop','matrix']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const CITY_PLACES=['city','newyork','sanfran','orlando','philly'];
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop','matrix','philly']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4105,7 +4110,9 @@ const CITY_STYLES={
   sanfran:{walls:['paint_white','concrete','limestone','sandstone','brick'],trims:['concrete','limestone'],roofs:['roof','concrete'],h:[5,18],glass:0.15,park:0.12,tree:'round',hills:true,
     wx:'clear',bg:0xb4c2cc,fog:[22,95],fogC:0xc8d0d6,water:{z0:0,z1:21}},
   orlando:{walls:['paint_white','paint_yellow','quartz','sandstone','paint_blue'],trims:['paint_white','quartz','sandstone'],roofs:['roof','concrete'],h:[4,12],glass:0.1,park:0.2,tree:'palm',
-    wx:'clear',bg:0x6ec0ff,fog:[55,170]}};
+    wx:'clear',bg:0x6ec0ff,fog:[55,170]},
+  philly:{walls:['brick','brick','sandstone','limestone'],trims:['limestone','concrete','paint_white'],roofs:['concrete','slate'],h:[6,16],glass:0.05,park:0,tree:'round',noTrees:true,
+    wx:'clear',bg:0xa8b8c4,fog:[50,150]}};
 function cityKey(){ if(demo)return demo.cityKey||null; return PLACES[place]&&PLACES[place].city; }
 function cityRoad(v,c){ const d=((v-c+CITY_GRID/2)%CITY_GRID+CITY_GRID)%CITY_GRID-CITY_GRID/2; return Math.abs(d); } // how far from the middle of the nearest road
 function cityWet(S,x,z){ const w=S.water; return !!w&&((w.x1!==undefined&&x>=w.x0&&x<w.x1)||(w.z1!==undefined&&z>=w.z0&&z<w.z1)); }
@@ -4127,7 +4134,7 @@ function generateCity(s){ const ck=cityKey()||'seattle', S=CITY_STYLES[ck], rnd=
   // the blocks between the roads
   const xs=roadLines(CX,W), zs=roadLines(CZ,D), LM=CITY_LANDMARKS[ck]||{};
   const stk=()=>S.tree==='palm'?'palm':rnd()<0.25?'cherry':'round';
-  for(const x of xs)for(const z of zs)for(const off of [12,20])for(const s of [-1,1]){ // trees along the sidewalks, between the street lamps
+  if(!S.noTrees)for(const x of xs)for(const z of zs)for(const off of [12,20])for(const s of [-1,1]){ // trees along the sidewalks, between the street lamps
     const tx=x+(s>0?5:-6), tz=z+off; if(tz<D-1&&!cityWet(S,tx,tz)&&!cityWet(S,x,z+off))streetTree(P,tx,cityGround(S,tx,tz),tz,stk(),rnd);
     const ux=x+off, uz=z+(s>0?5:-6); if(ux<W-1&&!cityWet(S,ux,uz)&&!cityWet(S,x+off,z))streetTree(P,ux,cityGround(S,ux,uz),uz,stk(),rnd); }
   for(let i=0;i+1<xs.length;i++)for(let j=0;j+1<zs.length;j++){ const x0=xs[i]+6, x1=xs[i+1]-7, z0=zs[j]+6, z1=zs[j+1]-7, cx=(x0+x1)>>1, cz=(z0+z1)>>1; // the block inside its sidewalks
@@ -4324,7 +4331,7 @@ function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...P
   if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -5307,7 +5314,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); if(rkK)rkTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -6667,9 +6674,9 @@ function odDefaults(){ const K=odyK; K.under.visible=false; K.cyc.g.visible=K.ci
   K.boulder.position.set(79,OD.cave.floor+3.1,57.5); K.horse.hatch.rotation.y=0; K.gate.forEach(g=>g.rotation.y=0); const [ix,iz]=OD.ithaca; K.pen.g.position.set(ix,23,iz+5); K.pen.g.rotation.y=Math.PI; K.tel.g.position.set(ix+3,23,iz+2); K.tel.g.rotation.y=Math.PI; K.pen.g.visible=K.tel.g.visible=true; odRest(K.pen); odRest(K.tel); }
 function odFree(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(!o.material)return; for(const m of [].concat(o.material))if(m.userData.own||o.isSprite){ if(m.map)m.map.dispose(); m.dispose(); } }); } // a chapter's own faces, clothes and bubbles (the shared block textures stay)
 function odBubOff(par,who){ if(!who.bub)return; par.remove(who.bub); if(who.bub.material.map)who.bub.material.map.dispose(); who.bub.material.dispose(); who.bub=null; }
-function odyPilot(dt,P){ const S=P.S; if(!S||!(S.mx?mxK:odyK))return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
+function odyPilot(dt,P){ const S=P.S; if(!S||!(S.mx?mxK:S.rk?rkK:odyK))return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0)odBubOff(model,S.hero); } }
-function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:odyK))return; if(S.ch.pose)S.ch.pose(S); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
+function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:S.rk?rkK:odyK))return; if(S.ch.pose)S.ch.pose(S); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
   if(!demo.cam||demo.cam.k!=='od'||demo.cam.shot!==c[2])demo.cam={k:'od',p:want.clone(),l:look.clone(),shot:c[2]}; else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
   camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
 const OD_CH={};
@@ -7030,7 +7037,7 @@ function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
 // shots. Your hero plays Neo. All the chapters share Matrix City, so playing them in a row flows without reloading.
 let mxStage=null;
 const isMx=sc=>!!sc&&/^mx\d+$/.test(sc.act||'');
-const isFilm=sc=>isOdy(sc)||isMx(sc);
+const isFilm=sc=>isOdy(sc)||isMx(sc)||isRk(sc);
 function demoMxSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
   if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; } clearCityLife(); clearInteriorLife();
   demo.vplace='matrix'; demo.cityKey=null; if(!demo.mxWorld){ demo.mxWorld=true; clearApples(); setWorldSize(...PLACES.matrix.dims); generateMatrix(dmCfg.seed+57); rebuildAll(); refreshPortals(); buildMxLife(); }
@@ -7188,6 +7195,261 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
 // the chapters as Demo Mode scenes, and one click to line them all up
 const MX_NAMES=['Follow the White Rabbit','The Agents','The Red Pill'];
 function loadMatrix(){ dmCfg.scenes=MX_NAMES.map((n,i)=>cleanScene({act:'mx'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['mx'+(i+1)].secs,cap:''})); saveDemo(); }
+
+// ================= ROCKY: PHILADELPHIA =================
+// Philadelphia is the fifth city: the same kit as the others (traffic, people, the garage), with 1970s row houses on every
+// spare block and the famous sights: the Art Museum and its steps, the Rocky statue, Independence Hall and the Liberty
+// Bell. The film sets are real buildings you can walk into: Rocky's apartment, the pet shop where Adrian works, and
+// Mickey's gym. Demo Mode tells the story in chapters (rk1, rk2...), on the same film engine as the Odyssey.
+const RK={g:CITY_G, apt:{x0:60,x1:69,z0:87,z1:96}, pet:{x0:29,x1:41,z0:87,z1:97}, gym:{x0:55,x1:72,z0:55,z1:72}, mus:{x0:86,x1:105,z0:22,z1:41}, hall:{x0:118,x1:137,z0:54,z1:73}};
+function rkRows(o,skip){ const {P,x0,x1,z0,z1,g,rnd}=o, walls=[ID.brick,ID.brick,ID.brick,ID.sandstone,ID.limestone], doors=[ID.paint_red,ID.paint_blue,ID.paint_green,ID.door,ID.paint_white];
+  const house=(a,b,front,dir)=>{ const h=9+Math.floor(rnd()*3), wall=walls[Math.floor(rnd()*walls.length)], z0h=dir<0?front:front-8, z1h=dir<0?front+8:front;
+    for(let x=a;x<=b;x++)for(let z=z0h;z<=z1h;z++)for(let y=0;y<=h;y++){ const fr=z===front, ed=x===a||x===b||z===z0h||z===z1h; if(!ed&&y<h)continue; let id=wall;
+      if(y===h)id=ID.concrete; else if(fr&&(y===4||y===h-1))id=ID.limestone; else if(fr&&y%4!==0&&y%4!==3&&x!==a&&x!==b&&(x-a)%2===1)id=ID.window; P(x,g+y,z,id); }
+    const dx=a+1; P(dx,g,front,doors[Math.floor(rnd()*doors.length)]); P(dx,g+1,front,ID.door); P(dx,g,front+dir,ID.limestone); // the door and its stoop
+    if(rnd()<0.4)for(let x=a+1;x<b;x++){ P(x,g+4,front+dir,ID.iron); P(x,g+8,front+dir,ID.iron); } }; // a fire escape across the front
+  const row=(front,dir)=>{ for(let x=x0;x+3<=x1;){ const w=rnd()<0.5?4:5, b=Math.min(x1,x+w-1); if(!(skip&&skip(x,b,dir)))house(x,b,front,dir); x=b+1; } };
+  row(z0+1,-1); row(z1-1,1); for(let x=x0;x<=x1;x++)for(let z=z0+10;z<=z1-10;z++)P(x,g-1,z,ID.asphalt); } // a back alley between the two rows
+function rkBox(P,x0,y0,z0,x1,y1,z1,id){ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)P(x,y,z,id); }
+function rkShell(P,x0,z0,x1,z1,y0,y1,wall){ for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)if(x===x0||x===x1||z===z0||z===z1)P(x,y,z,wall); }
+const RK_LOTS={
+  '1,2':o=>{ const {P,g}=o, A=RK.apt; rkRows(o,(a,b,dir)=>dir<0&&b>=A.x0&&a<=A.x1); // Rocky's block: his apartment in the middle of the north row
+    rkShell(P,A.x0,A.z0,A.x1,A.z1,g,g+9,ID.brick); rkBox(P,A.x0,g+4,A.z0,A.x1,g+4,A.z1,ID.concrete); rkBox(P,A.x0,g+10,A.z0,A.x1,g+10,A.z1,ID.concrete); rkBox(P,A.x0+1,g-1,A.z0+1,A.x1-1,g-1,A.z1-1,ID.planks);
+    rkBox(P,64,g,A.z0,65,g+1,A.z0,0); for(const x of [61,62,67,68])rkBox(P,x,g+1,A.z0,x,g+2,A.z0,ID.glass); for(let x=A.x0+1;x<A.x1;x+=2)rkBox(P,x,g+6,A.z0,x,g+7,A.z0,ID.window);
+    rkBox(P,58,g,A.z0,59,g+2,A.z0+8,ID.brick); rkBox(P,70,g,A.z0,73,g+2,A.z0+8,ID.brick); rkBox(P,71,g,A.z0,72,g+1,A.z0,ID.glass); P(70,g,A.z0,0); P(70,g+1,A.z0,0); }, // filler walls, and a corner store with a window
+  '0,2':o=>{ const {P,g}=o, Q=RK.pet; rkRows(o,(a,b,dir)=>dir<0&&b>=Q.x0-1); // the pet shop on the corner
+    rkShell(P,Q.x0,Q.z0,Q.x1,Q.z1,g,g+5,ID.brick); rkBox(P,Q.x0,g+6,Q.z0,Q.x1,g+6,Q.z1,ID.concrete); rkBox(P,Q.x0+1,g-1,Q.z0+1,Q.x1-1,g-1,Q.z1-1,ID.quartz);
+    rkBox(P,Q.x0+1,g,Q.z0,Q.x1-1,g+2,Q.z0,ID.glass); rkBox(P,35,g,Q.z0,36,g+1,Q.z0,0); rkBox(P,Q.x0+1,g+4,Q.z0,Q.x1-1,g+4,Q.z0,ID.paint_yellow); },
+  '1,1':o=>{ const {P,g}=o, Y=RK.gym; rkShell(P,Y.x0,Y.z0,Y.x1,Y.z1,g,g+7,ID.brick); rkBox(P,Y.x0,g+8,Y.z0,Y.x1,g+8,Y.z1,ID.concrete); rkBox(P,Y.x0+1,g-1,Y.z0+1,Y.x1-1,g-1,Y.z1-1,ID.planks); // Mickey's gym
+    for(let k=Y.x0+2;k<Y.x1-1;k+=3){ rkBox(P,k,g+4,Y.z0,k+1,g+5,Y.z0,ID.window); rkBox(P,k,g+4,Y.z1,k+1,g+5,Y.z1,ID.window); } for(let k=Y.z0+2;k<Y.z1-1;k+=3){ rkBox(P,Y.x0,g+4,k,Y.x0,g+5,k+1,ID.window); rkBox(P,Y.x1,g+4,k,Y.x1,g+5,k+1,ID.window); }
+    rkBox(P,63,g,Y.z1,64,g+1,Y.z1,0); rkBox(P,62,g+2,Y.z1,65,g+2,Y.z1,ID.limestone); },
+  '2,0':o=>{ const {P,g}=o, M=RK.mus; // the Philadelphia Museum of Art, high on its stone base, with the famous steps down to the street
+    rkBox(P,M.x0,g,M.z0,M.x1,g+7,M.z1-8,ID.limestone); for(let n=1;n<=7;n++)rkBox(P,M.x0+2,g,M.z1-8+n,M.x1-2,g+7-n,M.z1-8+n,ID.limestone);
+    for(const x of [M.x0,M.x0+1,M.x1-1,M.x1])for(let n=1;n<=7;n++)rkBox(P,x,g,M.z1-8+n,x,g+Math.max(0,7-n),M.z1-8+n,ID.sandstone);
+    rkBox(P,M.x0+2,g+8,M.z0,M.x1-2,g+17,M.z0+6,ID.sandstone); for(let y=g+9;y<=g+15;y+=3)for(let x=M.x0+3;x<M.x1-2;x+=2)P(x,y,M.z0+6,ID.window);
+    for(let x=M.x0+3;x<=M.x1-3;x+=2)rkBox(P,x,g+8,M.z0+8,x,g+15,M.z0+8,ID.quartz); rkBox(P,M.x0+2,g+16,M.z0+7,M.x1-2,g+17,M.z0+9,ID.sandstone);
+    for(let k=0;k<4;k++)rkBox(P,M.x0+3+k*2,g+18+k,M.z0+8,M.x1-3-k*2,g+18+k,M.z0+8,ID.sandstone); rkBox(P,M.x0+2,g+18,M.z0,M.x1-2,g+18,M.z0+7,ID.paint_blue); // the pediment and the blue-tile roof
+    rkBox(P,M.x0,g,M.z1-1,M.x0+1,g+1,M.z1,ID.granite); }, // the Rocky statue's pedestal, by the bottom of the steps
+  '3,1':o=>{ const {P,g,x0,x1,z0,z1}=o, H0=RK.hall; for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)P(x,g-1,z,(x+z)%2?ID.brick:ID.grass); // Independence Hall, and the Liberty Bell in its glass pavilion
+    rkShell(P,119,56,136,63,g,g+9,ID.brick); rkBox(P,120,g,57,135,g+9,62,ID.brick); rkBox(P,119,g+10,56,136,g+10,63,ID.slate); rkBox(P,120,g+11,57,135,g+11,62,ID.slate);
+    for(let x=120;x<136;x+=2)for(const y of [g+1,g+2,g+5,g+6]){ P(x,y,63,ID.window); P(x,y,56,ID.window); } for(let x=120;x<136;x+=2)P(x,g+3,63,ID.paint_white);
+    rkBox(P,127,g,63,128,g+1,63,ID.door); rkBox(P,126,g,64,129,g+15,66,ID.brick); rkBox(P,126,g+16,64,129,g+17,66,ID.paint_white); rkBox(P,127,g+18,64,128,g+21,66,ID.paint_white);
+    rkBox(P,127,g+22,65,128,g+23,65,ID.paint_white); P(127,g+24,65,ID.gold); P(128,g+24,65,ID.gold);
+    rkShell(P,123,68,132,72,g,g+3,ID.glass); rkBox(P,123,g+4,68,132,g+4,72,ID.concrete); rkBox(P,127,g,72,128,g+1,72,0); rkBox(P,124,g-1,69,131,g-1,71,ID.slate); },
+  '0,0':o=>rkRows(o), '1,0':o=>rkRows(o), '3,0':o=>rkRows(o), '0,1':o=>rkRows(o), '2,1':o=>rkRows(o), '0,3':o=>rkRows(o), '3,3':o=>rkRows(o)};
+// --- the people of the story
+const RK_CAST={
+  adrian:{skin:'#f2d8c4',hair:'short',hairC:'#4a2a1a',eyes:'#4a3020',glasses:'round',hat:'beanie',hatC:'#7a2a2a',top:'long',topC:'#8a3a3a',bottom:'skirt',bottomC:'#3a2a24',shoes:'boots',shoeC:'#2a1a14'},
+  mickey:{skin:'#ecccb4',hair:'buzz',hairC:'#d8d8d8',eyes:'#4a4a4a',glasses:'round',hat:'cap',hatC:'#4a4a4a',top:'long',topC:'#7a7a7a',bottom:'pants',bottomC:'#3a3a3a',shoes:'shoes',shoeC:'#1a1a1a'},
+  kid:{skin:'#e8c4a0',hair:'short',hairC:'#6a3a1a',top:'stripes',topC:'#d8402a',bottom:'jeans',bottomC:'#2a4a8a',shoes:'sneakers',shoeC:'#f2f2f2'},
+  boxer:{skin:'#c8946a',hair:'buzz',hairC:'#1a1a1a',top:'tank',topC:'#f2f2f2',bottom:'shorts',bottomC:'#2a4ad8',shoes:'sneakers',shoeC:'#1a1a1a'},
+  singer:{skin:'#a8704a',hair:'short',hairC:'#1a1a1a',top:'jacket',topC:'#c8a020',bottom:'pants',bottomC:'#1a1a1a',shoes:'shoes',shoeC:'#0a0a0a'},
+  grocer:{skin:'#e8c4a0',hair:'bald',beard:'short',top:'tee',topC:'#f2f2f2',bottom:'pants',bottomC:'#3a3a3a',shoes:'shoes',shoeC:'#1a1a1a'}};
+function rkPerson(par,kind,x,y,z,ry,over){ return odPerson(par,x||0,y||0,z||0,ry||0,mxLook(Object.assign({},RK_CAST[kind],over||{}))); }
+function rkGloves(R,col){ const m=mm(col||0xc81a1a), out=[]; for(const a of [R.armL,R.armR]){ const gl=mb(a,0.3,0.3,0.34,m,0,-0.78,-0.02); out.push(gl); } return out; }
+function rkButkus(par){ const M=petMesh({kind:'dog',breed:'lab',size:1.5,col:['#8a5a30','#c89a68','#1c1c1e'],pat:'belly',coat:'short',ears:'flop',seed:11}); M.mat.userData.own=true; par.add(M.g); M.ph=0; return M; }
+function rkDogTick(M,dt,moving,sit){ M.ph+=dt*(moving?10:0); const s=moving?Math.sin(M.ph)*0.5:0; M.legs.forEach((L,i)=>L.rotation.x=(i%2?s:-s)*(i<2?1:-1)); if(M.tail)M.tail.rotation.y=Math.sin(performance.now()/120)*0.6;
+  M.body.rotation.x=sit?0.5:0; M.g.position.y+=sit?-0.12:0; }
+// your hero dressed as Rocky: his black jacket and hat on the street, the grey sweats in the gym
+function rkDress(S,kind){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,mm(col)); b.position.set(x,y,z); par.add(b); S.bits.push(b); return b; };
+  if(kind==='street'){ put(rig.torso,0.54,0.76,0.3,0x16161a,0,1.08,0); for(const a of [armL,armR])put(a,0.28,0.66,0.28,0x16161a,0,-0.3,0); put(head,0.5,0.06,0.5,0x1a1a1e,0,0.47,0); put(head,0.62,0.03,0.62,0x1a1a1e,0,0.44,0); put(head,0.48,0.14,0.48,0x1a1a1e,0,0.54,0); }
+  if(kind==='sweats'){ put(rig.torso,0.55,0.77,0.31,0x8a8a90,0,1.08,0); put(rig.torso,0.4,0.22,0.12,0x7a7a80,0,1.48,0.16); for(const a of [armL,armR])put(a,0.28,0.74,0.28,0x8a8a90,0,-0.34,0); for(const l of [legL,legR])put(l,0.28,0.7,0.28,0x7e7e84,0,-0.34,0); put(head,0.5,0.1,0.5,0x1a1a1e,0,0.47,0); }
+  if(kind==='gloves')for(const a of [armL,armR])put(a,0.3,0.3,0.34,0xc81a1a,0,-0.78,-0.02); }
+// a boxer's fists: a guard up in front of the face, and one fist at a time snapping out
+function rkFists(L,R,t,rate,ph){ const c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=1.15; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=1.15+0.45*e; else L.rotation.x=1.15+0.45*e; return {e,right:c<1}; }
+function rkSign(par,text,w,h,bg,fg,x,y,z,ry){ const c=canvasTex(256,Math.round(256*h/w)); c.x.fillStyle=bg; c.x.fillRect(0,0,256,c.c.height); c.x.fillStyle=fg; c.x.font='bold '+Math.round(c.c.height*0.5)+'px sans-serif'; c.x.textAlign='center'; c.x.textBaseline='middle'; c.x.fillText(text,128,c.c.height/2+2); c.t.needsUpdate=true;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:c.t})); m.position.set(x,y,z); m.rotation.y=ry||0; par.add(m); return m; }
+let rkK=null;
+function onPhilly(){ return curPlace()==='philly'&&!!rkK; }
+function buildRkLife(){ clearRkLife(); const root=new THREE.Group(); scene.add(root); const K=rkK={root,t:0,speak:[],bags:[],fish:[],birds:[],boxers:[]}, g=RK.g;
+  // Rocky's apartment: an old TV, the fridge, the kitchen table, his bed, the turtles Cuff and Link, the mirror with his photos
+  { const tv=grp(root,61.6,g,91.8,-Math.PI/2); mb(tv,0.8,0.5,0.5,mm(0x5a3a1a),0,0.25,0); mb(tv,0.7,0.55,0.55,mm(0x3a2a1a),0,0.78,0); K.tv=mb(tv,0.55,0.4,0.02,glowM(0x9ab8c8),0,0.8,-0.28); K.tv.material=new THREE.MeshBasicMaterial({color:0x9ab8c8}); K.tv.material.userData.own=true;
+    const fr=grp(root,67.6,g,94.9,Math.PI); mb(fr,0.9,1.9,0.8,mm(0xe8e2d0),0,0.95,0); mb(fr,0.05,0.5,0.06,mm(0xa8a8a8),0.32,1.2,-0.42);
+    mxDesk(root,64.5,g,92.4,0,1.4,1); for(const s of[-1,1])mxChair(root,64.5+s*1.1,g,92.4,s*Math.PI/2,0x6a4a2a).scale.set(0.5,0.6,0.5); for(let i=0;i<3;i++)mcyl(root,0.06,0.06,0.16,mm([0xf2f2f2,0xd8c8a0,0xc8a040][i]),64.2+i*0.3,g+0.89,92.3,8);
+    const bed=grp(root,67.2,g,89.8,Math.PI/2); mb(bed,1.4,0.45,2.4,mm(0x5a4a3a),0,0.22,0); mb(bed,1.3,0.12,2.3,mm(0xd8d0c0),0,0.5,0); mb(bed,1.3,0.1,1.4,mm(0x6a2a2a),0,0.58,0.4);
+    const sh=grp(root,61.5,g,89.2); mb(sh,0.8,0.9,0.6,mm(0x6a4a2a),0,0.45,0); mb(sh,0.7,0.35,0.45,new THREE.MeshLambertMaterial({color:0xa8d8f0,transparent:true,opacity:0.45}),0,1.08,0); mb(sh,0.68,0.08,0.43,mm(0x6a8a4a),0,0.94,0);
+    K.turtles=[0,1].map(i=>{ const t=grp(sh,-0.15+i*0.3,1.0,0); mb(t,0.16,0.07,0.2,mm(0x3a7a3a),0,0,0); mb(t,0.06,0.05,0.07,mm(0x8ab86a),0,0,-0.12); return t; });
+    const mr=grp(root,64.2,g,95.85); mb(mr,0.9,1.2,0.06,mm(0x5a3a1a),0,1.6,0); mb(mr,0.78,1.06,0.02,new THREE.MeshBasicMaterial({color:0xc8d8e0}),0,1.6,-0.04); for(const [x,y] of [[-0.25,1.95],[0.18,1.35]])mb(mr,0.2,0.26,0.02,mm(0xe8e0c0),x,y,-0.06);
+    rkSign(root,'BOXING · FRIDAY',1.2,0.8,'#d8c070','#2a1a10',62,g+1.9,95.9,Math.PI); }
+  // the pet shop: fish tanks, birds, puppies, the counter, Adrian, and Butkus
+  { const Q=RK.pet; rkSign(root,'TROPICAL FISH · PETS',8,1,'#1a5a8a','#ffe8a0',35.5,g+4.6,Q.z0-0.06,Math.PI);
+    for(let i=0;i<3;i++)for(let j=0;j<2;j++){ const tk=grp(root,30.6,g+0.8+j*1.1,89.5+i*2.2); mb(tk,0.7,0.8,1.8,new THREE.MeshBasicMaterial({color:0x3a9ad8,transparent:true,opacity:0.55,depthWrite:false}),0,0.4,0); mb(tk,0.7,0.1,1.8,mm(0x2a2a2a),0,-0.05,0);
+      for(let f=0;f<3;f++){ const fi=mb(tk,0.05,0.12,0.2,glowM([0xff8a1a,0xffe02a,0xff3a8a,0x3affd8][(i+j+f)%4]),0,0.2+f*0.2,0); K.fish.push({m:fi,ph:Math.random()*6}); } }
+    for(let i=0;i<3;i++){ const c=grp(root,40,g+2.6,89.5+i*2.4); mcyl(c,0.02,0.02,0.6,mm(0xa8a8a8),0,0.6,0,4); const cg=mcyl(c,0.4,0.4,0.8,new THREE.MeshLambertMaterial({color:0xd8c060,wireframe:true}),0,0,0,10); const b=grp(c,0,-0.2,0); mb(b,0.12,0.14,0.18,mm([0x3ad84a,0x3a8aff,0xffd82a][i]),0,0,0); K.birds.push(b); }
+    const ct=grp(root,36,g,94.3); mb(ct,5,1,0.8,mm(0x6a4a2a),0,0.5,0); mb(ct,0.5,0.35,0.4,mm(0x3a3a3a),1.6,1.18,0); mb(ct,0.4,0.5,0.3,mm(0xd8b070),-1.4,1.25,0);
+    const pen=grp(root,38.6,g,90); for(const [w,d,x,z] of [[2,0.08,0,-1],[2,0.08,0,1],[0.08,2,-1,0],[0.08,2,1,0]])mb(pen,w,0.6,d,mm(0xc8c8c8),x,0.3,z);
+    K.pups=[0,1].map(i=>{ const M=petMesh({kind:'dog',breed:'jack',size:0.55,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3',coat:'short',ears:'fold',seed:3+i}); M.mat.userData.own=true; M.g.position.set(38.2+i*0.8,g,89.7+i*0.5); root.add(M.g); M.ph=0; return M; });
+    K.adrian=rkPerson(root,'adrian',36,g,95.6,Math.PI); K.speak.push(K.adrian); K.butkus=rkButkus(root); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; }
+  // Mickey's gym: the ring, heavy bags, a speed bag, lockers, a mirror, and boxers who never stop training
+  { const Y=RK.gym; rkSign(root,"MIGHTY MICK'S BOXING",7,1,'#2a1a10','#f2d060',63.5,g+3.5,Y.z1+1.06,0);
+    const ring=grp(root,61,g,61); K.ring=ring; mb(ring,7,0.8,7,mm(0x3a3a4a),0,0.4,0); mb(ring,6.6,0.04,6.6,mm(0xd8d0c0),0,0.82,0); for(const [x,z,c] of [[-3.2,-3.2,0xc81a1a],[3.2,-3.2,0x2a4ad8],[-3.2,3.2,0xf2f2f2],[3.2,3.2,0xf2f2f2]])mb(ring,0.18,1.7,0.18,mm(c),x,1.65,z);
+    for(const y of [1.25,1.7,2.15])for(const [w,d,x,z] of [[6.4,0.05,0,-3.2],[6.4,0.05,0,3.2],[0.05,6.4,-3.2,0],[0.05,6.4,3.2,0]])mb(ring,w,0.05,d,mm(0xd81a1a),x,y,z);
+    for(const z of [58,61,64]){ const pv=grp(root,68.5,g+7.9,z); mcyl(pv,0.03,0.03,5.2,mm(0x5a5a5a),0,-2.6,0,4); const b=mcyl(pv,0.35,0.35,1.4,mm(0x8a1a1a),0,-5.9,0,12); K.bags.push({pv,a:0,v:0,va:0,vz:0}); }
+    const sp=grp(root,71.5,g,68); mb(sp,0.9,0.1,0.9,mm(0x5a3a1a),-0.45,2.35,0); mb(sp,0.1,0.8,0.8,mm(0x5a3a1a),0.0,2.0,0); K.speed=grp(sp,-0.6,2.3,0); msph(K.speed,0.14,mm(0x8a1a1a),0,-0.18,0,1,1.4,1);
+    for(let i=0;i<6;i++)mb(root,0.6,2.0,0.55,mm(0x5a6a7a),56.4,g+1,58+i*0.62);
+    mb(root,0.08,1.8,3,new THREE.MeshBasicMaterial({color:0xb8c8d0}),71.9,g+1.4,61); for(const [x,z,t] of [[56.05,64,'APOLLO CREED'],[56.05,68,'FIGHT NIGHT']])rkSign(root,t,1.6,1,'#d8c070','#8a1a1a',x,g+2.6,z,Math.PI/2);
+    mb(root,2.4,0.45,0.5,mm(0x5a3a1a),60,g+0.22,70.8); for(const x of [66,67.5])mcyl(root,0.06,0.06,1.4,mm(0x3a3a3a),x,g+0.3,70.8,6).rotation.z=Math.PI/2;
+    // the boxers: two sparring in the ring, one on a heavy bag, one skipping rope
+    const bx=[['boxer',59.8,g+0.8,61,-Math.PI/2,{}],['boxer',62.2,g+0.8,61,Math.PI/2,{skin:'#e8c4a0',topC:'#f2d060',bottomC:'#c81a1a'}],['boxer',67.4,g,64,-Math.PI/2,{skin:'#8a5a3a',bottomC:'#1a1a1a'}],['boxer',58.5,g,68.4,0,{skin:'#f0d0b0',hair:'short',hairC:'#c8a050',topC:'#2a2a2a',bottomC:'#2a8a3a'}]];
+    bx.forEach(([k,x,y,z,ry,o],i)=>{ const b=rkPerson(root,k,x,y,z,ry,o); rkGloves(b.R,i===1?0x2a4ad8:0xc81a1a); b.home=[x,y,z,ry]; b.job=['spar','spar','bag','rope'][i]; K.boxers.push(b); });
+    K.rope=new THREE.Mesh(new THREE.TorusGeometry(1.05,0.035,4,24,Math.PI),mm(0x2a2a2a)); root.add(K.rope);
+    K.mickey=rkPerson(root,'mickey',60,g,66,Math.PI*0.8); K.speak.push(K.mickey); }
+  // the landmarks: the Rocky statue, the Liberty Bell, and Independence Hall's clock
+  { const st=rkPerson(root,'boxer',86.9,g+2,40.9,Math.PI,{}); glowAll(st.g,0x8a6a3a,1); st.g.traverse(o=>{ if(o.isMesh)o.material=new THREE.MeshLambertMaterial({color:0x8a6a3a,emissive:0x2a1a08}); }); st.R.armL.rotation.z=-2.7; st.R.armR.rotation.z=2.7; rkGloves(st.R,0x8a6a3a); st.g.scale.setScalar(1.5); K.statue=st;
+    const bell=grp(root,127.5,g,70); mb(bell,2.2,0.2,0.3,mm(0x5a3a1a),0,2.5,0); for(const s of[-1,1])mb(bell,0.2,2.5,0.3,mm(0x5a3a1a),s*1.0,1.25,0); const bm=mm(0x8a6a3a,{emissive:0x201408});
+    const bp=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.7,1.1,16),bm); bp.position.y=1.8; bell.add(bp); const lip=new THREE.Mesh(new THREE.CylinderGeometry(0.74,0.74,0.12,16),bm); lip.position.y=1.22; bell.add(lip); mb(bell,0.04,0.7,0.02,mm(0x1a1a1a),0.1,1.6,-0.6); K.bell=bell;
+    const ck=new THREE.Mesh(new THREE.CircleGeometry(0.7,20),new THREE.MeshBasicMaterial({color:0xf2f2e8})); ck.position.set(127.5,g+12,66.06); root.add(ck); mb(root,0.06,0.5,0.02,mm(0x1a1a1a),127.5,g+12.2,66.08); mb(root,0.4,0.06,0.02,mm(0x1a1a1a),127.65,g+12,66.08); }
+  // the corner: three singers under the lamp, kids on a stoop, the grocer at the corner store
+  K.singers=[0,1,2].map(i=>{ const s=rkPerson(root,'singer',56.4+i*0.9,g,85.6,Math.PI,{skin:['#a8704a','#e8c4a0','#7a4a2a'][i]}); K.speak.push(s); return s; });
+  mb(root,1.8,0.5,0.6,mm(0xb8b0a0),59.55,g+0.25,85.9); K.kids=[0,1].map(i=>{ const k=rkPerson(root,'kid',59.2+i*0.7,g,85.9,Math.PI,i?{hair:'ponytail',topC:'#3a8ad8',hairC:'#2a1a10'}:{}); k.g.scale.setScalar(0.72); K.speak.push(k); return k; });
+  K.grocer=rkPerson(root,'grocer',70.6,g,85.6,Math.PI); K.speak.push(K.grocer); const hy=grp(root,44,g,85); mcyl(hy,0.18,0.2,0.7,mm(0xd8c02a),0,0.35,0,8); msph(hy,0.16,mm(0xd8c02a),0,0.72,0); K.hydrant=hy;
+  K.pigeons=[0,1,2].map(i=>{ const p=grp(root,47+i*0.6,g,84.4+(i%2)*0.4); mb(p,0.14,0.12,0.24,mm(0x8a8a9a),0,0.1,0); mb(p,0.08,0.08,0.08,mm(0x5a6a7a),0,0.2,-0.12); return p; }); }
+function clearRkLife(){ rkStageClear(); const K=rkK; if(!K)return; scene.remove(K.root); odFree(K.root); for(const b of K.boxers)undress(b.g); rkK=null; }
+function rkTick(dt){ const K=rkK; K.t+=dt; const t=K.t, S=rkStage;
+  K.tv.material.color.setHSL(0.55,0.2,0.45+Math.random()*0.15); K.turtles.forEach((tu,i)=>{ tu.position.x=-0.15+i*0.3+Math.sin(t*0.5+i*2)*0.12; tu.rotation.y=Math.sin(t*0.5+i*2)*0.8; });
+  for(const f of K.fish){ f.ph+=dt; f.m.position.z=Math.sin(f.ph*0.8)*0.6; f.m.rotation.y=Math.cos(f.ph*0.8)>0?0:Math.PI; } K.birds.forEach((b,i)=>{ b.position.y=-0.2+Math.abs(Math.sin(t*3+i))*0.05; b.rotation.y=Math.sin(t+i)*1.5; });
+  K.pups.forEach((p,i)=>{ p.g.rotation.y=Math.sin(t*0.7+i*3)*1.2; rkDogTick(p,dt,false,false); p.g.position.y=RK.g; });
+  for(const b of K.bags){ b.va+=(-b.a*9-b.va*1.2)*dt; b.a+=b.va*dt; b.vz+=(-b.pv.rotation.x*9-b.vz*1.2)*dt; b.pv.rotation.x+=b.vz*dt; b.pv.rotation.z=b.a; }
+  K.speed.rotation.z=Math.sin(t*(S&&S.speedOn?40:3))*(S&&S.speedOn?0.6:0.08);
+  // the gym's boxers keep training whatever happens in the story (unless a chapter borrows them)
+  for(const b of K.boxers){ if(b.borrowed)continue; const R=b.R; if(b.job==='spar'){ const f=rkFists(R.armL,R.armR,t+b.home[0],1.6,0); b.g.position.x=b.home[0]+Math.sin(t*1.3+b.home[0])*0.25; b.g.position.y=b.home[1]+Math.abs(Math.sin(t*5))*0.05; }
+    else if(b.job==='bag'){ const f=rkFists(R.armL,R.armR,t,2.2,0.5); if(f.e>0.95&&!b.hit){ b.hit=true; K.bags[2].va+=f.right?0.4:-0.4; K.bags[2].vz+=0.2; } if(f.e<0.5)b.hit=false; }
+    else { const hop=Math.abs(Math.sin(t*7)); b.g.position.y=b.home[1]+hop*0.25; R.armL.rotation.z=-0.5; R.armR.rotation.z=0.5; R.armL.rotation.x=R.armR.rotation.x=0.4; K.rope.position.set(b.home[0],b.home[1]+0.9,b.home[2]); K.rope.rotation.set(t*14,0,0); }
+    animRig(R,dt,0); }
+  if(!(S&&S.mickeyBusy)){ const M=K.mickey; M.R.armR.rotation.x=Math.sin(t*2)>0.6?2.2:0.4; animRig(M.R,dt,0); }
+  K.singers.forEach((s,i)=>{ s.R.armL.rotation.x=s.R.armR.rotation.x=0.3+Math.max(0,Math.sin(t*4+i))*0.4; s.g.position.y=RK.g+Math.abs(Math.sin(t*4+i))*0.04; animRig(s.R,dt,0); });
+  K.kids.forEach((k,i)=>{ if(!k.busy){ odSit(k); k.g.position.set(59.2+i*0.7,RK.g-0.02,85.9); k.g.rotation.y=Math.PI; animRig(k.R,dt,0); } });
+  for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
+  if(demo&&wxPts)updateWeather(dt); if(demo&&demo.sc&&isRk(demo.sc))rkMusicTick(dt); }
+
+CITY_LANDMARKS.philly=RK_LOTS;
+// ================= ROCKY IN DEMO MODE =================
+let rkStage=null;
+const isRk=sc=>!!sc&&/^rk\d+$/.test(sc.act||'');
+function demoRkSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
+  if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; }
+  if(!demo.rkWorld){ demo.rkWorld=true; demo.cityWorld=false; clearCityLife(); clearInteriorLife(); demo.cityPlace='philly'; demo.vplace='philly'; demo.cityKey='philly'; demo.inKind=null; demo.stack=[];
+    clearApples(); setWorldSize(...PLACES.philly.dims); generateCity(dmCfg.seed+71); cityExtras('philly'); activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); buildRkLife(); }
+  rkStageClear(); rkDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},rk:true,bits:[]}; rkK.root.add(S.grp); rkStage=S; P.S=S;
+  demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; rkMood=ch.mood||'street'; rkSky(ch.sky||'day'); ch.init(S); demo.cam=null; }
+function rkStageClear(){ const S=rkStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(rkK)rkK.root.remove(S.grp); odFree(S.grp); rkStage=null;
+  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(rkK)rkDefaults(); }
+function rkDefaults(){ const K=rkK, g=RK.g; K.adrian.g.position.set(36,g,95.6); K.adrian.g.rotation.y=Math.PI; odRest(K.adrian); K.butkus.g.position.set(32.4,g,92); K.butkus.g.rotation.y=-Math.PI/2; K.butkus.g.visible=true;
+  K.mickey.g.position.set(60,g,66); K.mickey.g.rotation.y=Math.PI*0.8; odRest(K.mickey); K.boxers.forEach(b=>{ b.borrowed=false; b.g.position.set(b.home[0],b.home[1],b.home[2]); b.g.rotation.set(0,b.home[3],0); odRest(b); });
+  K.kids.forEach(k=>k.busy=false); K.pigeons.forEach((p,i)=>{ p.position.set(47+i*0.6,g,84.4+(i%2)*0.4); p.visible=true; }); }
+// skies: a hazy 1970s day, the warm evening, and the night
+function rkSky(k){ const S={day:[0xa8b8c4,[1,1,1],50,150],dawn:[0xe8b890,[1,0.86,0.76],40,140],dusk:[0xd88a6a,[0.92,0.74,0.7],40,140],night:[0x101828,[0.5,0.54,0.68],30,120]}[k]||[0xa8b8c4,[1,1,1],50,150];
+  scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); scene.fog.near=S[2]; scene.fog.far=S[3]; setWeather('clear'); }
+function rkSkyLerp(a,b,k){ const A=new THREE.Color(a), B=new THREE.Color(b); A.lerp(B,k); scene.background.copy(A); scene.fog.color.copy(A); }
+// sound and the built-in music: a city stroll, a love song, and a training beat with a brass fanfare
+const RK_SFX={bell:v=>{ tone('sine',1760,1760,0.4,0.06*v); tone('sine',1320,1320,0.5,0.05*v,0.12); }, woof:v=>{ tone('sawtooth',220,120,0.18,0.14*v); noise(500,0.15,0.18*v,'lowpass'); }, thud:v=>{ tone('sine',90,40,0.2,0.3*v); noise(600,0.12,0.2*v,'lowpass'); },
+  tap:v=>tone('square',600,500,0.03,0.05*v), whoosh:v=>noise(900,0.25,0.08*v,'bandpass'), coo:v=>{ tone('sine',420,380,0.25,0.04*v); tone('sine',400,360,0.25,0.04*v,0.3); }, flap:v=>noise(2500,0.4,0.08*v,'bandpass'), cheer:v=>noise(1500,1.2,0.2*v,'bandpass'), heart:v=>{ tone('sine',880,880,0.2,0.05*v); tone('sine',1100,1100,0.3,0.05*v,0.15); }};
+function rkSfx(k){ odS(RK_SFX[k]); }
+const RK_MOODS={street:{bpm:96,notes:[60,64,67,69,67,64,62,64],drum:1,lead:'triangle'},love:{bpm:70,notes:[67,71,74,72,71,69,67,64],drum:0,lead:'sine'},gym:{bpm:118,notes:[60,60,64,60,67,67,65,64],drum:2,lead:'square'},night:{bpm:64,notes:[57,60,64,62,60,57,55,57],drum:0,lead:'sine'}};
+let rkMood='street';
+function rkMusicTick(dt){ if(odUserSong()||!AC||!sfxOn)return; const M=RK_MOODS[rkMood]||RK_MOODS.street, K=rkK; K.mT=(K.mT||0)-dt; if(K.mT>0)return; K.mT=60/M.bpm/2; K.mS=((K.mS||0)+1)%16; const s=K.mS;
+  try{ const f=midiF(M.notes[(s>>1)%8]); if(s%2===0)tone(M.lead,f,f,0.3,M.lead==='square'?0.022:0.05); if(s%4===0)tone('triangle',f/2,f/2,0.4,0.04);
+    if(M.drum&&s%4===0)tone('sine',100,50,0.18,0.12); if(M.drum===2&&s%4===2)tone('sine',100,50,0.15,0.08); if(M.drum&&s%4===2)noise(5000,0.04,0.03,'highpass'); if(M.drum===2&&s===8){ tone('square',midiF(72),midiF(72),0.25,0.03); tone('square',midiF(76),midiF(76),0.25,0.03,0.12); } }catch(e){} }
+function rkHearts(x,y,z){ for(let k=0;k<3;k++)burst(x-0.5+(Math.random()-0.5),y,z-0.5+(Math.random()-0.5),new THREE.Color(0xff5a9a),8); rkSfx('heart'); }
+
+// ---------- 1. ROCKY'S NEIGHBORHOOD ----------
+OD_CH.rk1={secs:36,sky:'dawn',mood:'street',init(S){ rkDress(S,'street'); S.feed=[]; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, M=K.mickey; S.mickeyBusy=t>=11&&t<19;
+    // walking down the block
+    if(t<12)odHeroPath(S,[49,g,84.2],[60.6,g,84.2],0.6,11.2);
+    odAt(S,5.6,'k1',()=>odSay(S,K.kids[0],'Yo, Rocky!')); odAt(S,6.8,'r1',()=>odSay(S,S.hero,"Yo! How ya doin'? Stay in school, huh?"));
+    odAt(S,8.6,'s1',()=>{ odSay(S,K.singers[1],'♪ Doo-wop, sha-la-la ♪'); }); odAt(S,10,'r2',()=>odSay(S,S.hero,'♪ Doo-WOP! ♪'));
+    // Mickey comes across the street
+    if(t>=11&&t<19.5){ const k=odSeg(S,11,13); odMove(M,[63.5,g,74],[61.4,g,83.6],k); if(k<1)odWalk(M,dt,true); else { M.g.rotation.y=Math.PI*0.5; odRest(M); M.R.armR.rotation.x=t>13.4&&t<15?1.6+Math.sin(t*10)*0.3:0.3; animRig(M.R,dt,0); } }
+    if(t>=19.5&&t<23){ const k=odSeg(S,19.5,22.5); odMove(M,[61.4,g,83.6],[63.5,g,74],k); odWalk(M,dt,k<1); }
+    if(t>=11.2&&t<19.4)odHeroTo(S,[60.6,g,84.2],-Math.PI/2,false);
+    odAt(S,13.4,'m1',()=>odSay(S,M,'Rocky! You got heart, kid... but you live like a BUM!')); odAt(S,15.8,'r3',()=>odSay(S,S.hero,'Aw, come on, Mick...')); odAt(S,17.4,'m2',()=>odSay(S,M,"You're wastin' your life!"));
+    // home: through the door, hello to the turtles
+    if(t>=19.4&&t<24.5){ const k=odSeg(S,19.4,22.6), p=[[60.6,g,84.2],[64.5,g,85.2],[64.5,g,88.6],[62.4,g,89.5]], n=p.length-1, u=Math.min(n-0.0001,k*n), j=Math.floor(u); odHeroTo(S,odL(p[j],p[j+1],u-j),Math.atan2(-(p[j+1][0]-p[j][0]),-(p[j+1][2]-p[j][2])),k<1); if(k>=1)odHeroTo(S,[62.4,g,89.5],Math.PI/2,false); }
+    odAt(S,22.8,'r4',()=>odSay(S,S.hero,'Yo, Cuff. Yo, Link. Breakfast!'));
+    if(t>=23.2&&t<24.4&&Math.random()<dt*14){ const f=mb(S.grp,0.04,0.04,0.04,mm(0xc8a050),61.5+(Math.random()-0.5)*0.4,g+1.5,89.2); S.feed.push(f); } for(const f of S.feed)f.position.y=Math.max(g+1.08,f.position.y-dt*1.2);
+    // the table, the TV, the mirror... and a dream
+    if(t>=24.5&&t<29.5){ odHeroPath(S,[62.4,g,89.5],[63.4,g,92.4],24.5,25.6); if(t>=25.6)odHeroTo(S,[63.4,g,92.4],-Math.PI/2,false); }
+    odAt(S,26.4,'r5',()=>odSay(S,S.hero,'Thirty years old... and what do I got?'));
+    if(t>=29.5){ odHeroPath(S,[63.4,g,92.4],[64.2,g,94.4],29.5,30.6); if(t>=30.6)odHeroTo(S,[64.2,g,94.4],Math.PI,false); }
+    odAt(S,31,'r6',()=>odSay(S,S.hero,"Someday... I'm gonna be somebody.")); odAt(S,33.4,'mus',()=>{ rkMood='gym'; }); },
+  pose(S){ const t=S.t; head.rotation.x=0; if(t>=25.6&&t<29.5){ mxSitPose(); armL.rotation.x=armR.rotation.x=0.9; } if(t>=33.4)rkFists(armL,armR,t,3,0); if(t>=23.2&&t<24.4){ armR.rotation.x=1.3; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<5)return [odL([40,30,66],[50,12.5,78],odE(odSeg(S,0,5))),[pl.p[0]+3,g+1.4,84.5],0]; if(t<11)return [[pl.p[0]+4.5,g+2.2,80.6],[pl.p[0],g+1.5,84.6],1];
+    if(t<19.4)return [[58.6,g+2.1,80.8],[61,g+1.6,84],2]; if(t<22.6)return [[66.5,g+2.6,79.5],[64.5,g+1.6,86.5],3]; if(t<24.5)return [[63.6,g+2.4,91.6],[61.6,g+1.2,89.3],4];
+    if(t<29.5)return [[66.4,g+2.4,90.2],[62.4,g+1.2,92.4],5]; return [odL([66.4,g+2,92.2],[65.9,g+1.9,92.8],odSeg(S,29.5,36)),[64.2,g+1.7,95.4],6]; } };
+
+// ---------- 2. ADRIAN AND BUTKUS ----------
+OD_CH.rk2={secs:38,sky:'day',mood:'love',init(S){ rkDress(S,'street'); const K=rkK; S.leash=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1,4),mm(0xc81a1a)); S.leash.visible=false; S.grp.add(S.leash); S.box=mb(S.grp,0.3,0.2,0.2,mm(0x3a8a4a),0,0,0); S.box.visible=false; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, A=K.adrian, B=K.butkus;
+    // into the pet shop
+    if(t<6)odHeroPath(S,[42,g,84],[35.5,g,90.6],1.6,5.6); else if(t<16.4)odHeroTo(S,[35.6,g,93],Math.PI,false);
+    if(t>=5.6&&t<6.2&&t<16.4)odHeroPath(S,[35.5,g,90.6],[35.6,g,93],5.6,6.2); odAt(S,4.4,'bell',()=>rkSfx('bell'));
+    if(t<16.4){ A.g.position.set(36,g,95.6); A.g.rotation.y=Math.PI; A.R.head.rotation.x=t<11?-0.35:0; animRig(A.R,dt,0); }
+    odAt(S,6.4,'r1',()=>odSay(S,S.hero,'Yo, Adrian!')); odAt(S,7.6,'a1',()=>odSay(S,A,'...Oh. Hi.')); odAt(S,8.8,'r2',()=>odSay(S,S.hero,'I came for some more turtle food.'));
+    odAt(S,10,'box',()=>{ S.box.visible=true; S.box.position.set(35.7,g+1.1,94.2); }); odAt(S,11,'r3',()=>odSay(S,S.hero,"Why don't turtles get lost? They take their house!"));
+    odAt(S,13.4,'a2',()=>odSay(S,A,'...Heh. That\'s silly.'));
+    odAt(S,14.4,'woof',()=>{ rkSfx('woof'); odSay(S,{g:B.g},'WOOF!'); }); odAt(S,15.4,'r4',()=>odSay(S,S.hero,'Whoa! Who\'s the big guy?')); odAt(S,16.6,'a3',()=>odSay(S,A,"That's Butkus. He needs a walk..."));
+    if(t>=14.4&&t<15)B.g.position.y=g+Math.abs(Math.sin(t*20))*0.15;
+    // walking Butkus
+    const path=[[35.6,g,93],[35.5,g,88.6],[35.5,g,84.6],[52,g,84.6]];
+    if(t>=18&&t<30.2){ S.leash.visible=true; let hp; if(t<26.5){ const W=[[18,35.6,93],[19.2,35.5,88.6],[20,35.5,84.6],[21.4,43,84.6],[22.6,43,84.6],[23.6,46.5,84.6],[25.2,46.5,84.6],[26.5,52,84.6]]; let j=0; while(j<W.length-2&&t>=W[j+1][0])j++;
+        const a=W[j], b=W[j+1], k=odSeg(S,a[0],b[0]), mv=Math.hypot(b[1]-a[1],b[2]-a[2])>0.1; hp=odL([a[1],g,a[2]],[b[1],g,b[2]],k); odHeroTo(S,hp,mv?Math.atan2(-(b[1]-a[1]),-(b[2]-a[2])):-Math.PI/2,mv&&k<1); }
+      else { hp=odL([52,g,84.6],[38.5,g,84.6],odSeg(S,26.5,30.2)); odHeroTo(S,hp,Math.PI/2,true); }
+      const dp=[hp[0]+(t<20?0:1.5*(t<26.5?1:-1)),g,hp[2]+(t<20?-1.4:0.25)]; B.g.position.set(...dp); B.g.rotation.y=t<20.8?0:t<26.5?-Math.PI/2:Math.PI/2; if(t>=21.4&&t<22.6)B.g.rotation.y=-Math.PI/2+0.4;
+      rkDogTick(B,dt,!((t>21.4&&t<22.6)||(t>23.6&&t<25.2)),t>23.6&&t<25.2);
+      const a=odLW(armR,[0,-0.7,0]), b=odLW(B.head,[0,-0.1,0.1]), mid=new THREE.Vector3((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2), len=Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]); S.leash.position.copy(mid); S.leash.scale.set(1,len,1); S.leash.lookAt(b[0],b[1],b[2]); S.leash.rotateX(Math.PI/2); }
+    else if(t>=30.2)S.leash.visible=false;
+    odAt(S,21.5,'sniff',()=>odSay(S,S.hero,"Sniffin' the hydrant, huh? Good boy.")); odAt(S,22.3,'pig',()=>{ rkSfx('woof'); rkSfx('flap'); S.fly=true; }); if(S.fly)K.pigeons.forEach((p,i)=>{ p.position.y+=dt*(3+i); p.position.x+=dt*(1.5+i*0.5); if(p.position.y>g+12)p.visible=false; });
+    odAt(S,23.8,'kid',()=>{ const k=K.kids[0]; k.busy=true; k.g.position.set(48.9,g,84.1); k.g.rotation.y=Math.PI/2; odRest(k); odSay(S,k,'Big doggy! Can I pet him?'); }); odAt(S,25,'r5',()=>odSay(S,S.hero,"Sure! He's a big softie."));
+    if(t>=24&&t<26.5){ const k=K.kids[0]; k.R.armR.rotation.x=1.2+Math.sin(t*6)*0.3; animRig(k.R,dt,0); }
+    // evening: walking Adrian home
+    odAt(S,26.5,'eve',()=>{ rkSky('dusk'); A.g.position.set(35.5,g,88.4); }); if(t>=26.5&&t<30.2){ rkSkyLerp(0xa8b8c4,0xd88a6a,odSeg(S,26.5,28)); }
+    if(t>=30.2){ const k=odSeg(S,30.2,38); const hp=odL([38.5,g,84.6],[52,g,84.6],k); odHeroTo(S,hp,-Math.PI/2,k<1); odMove(A,[hp[0]-0.1,g,83.6],[hp[0]+0.05,g,83.6],1); A.g.rotation.y=-Math.PI/2; odWalk(A,dt,k<1);
+      B.g.position.set(hp[0]+1.4,g,84.2); B.g.rotation.y=-Math.PI/2; rkDogTick(B,dt,k<1,false); }
+    else if(t>=27.5){ odMove(A,[35.5,g,88.4],[36.8,g,84],odSeg(S,27.5,29.4)); odWalk(A,dt,t<29.4); if(t>=29.4){ A.g.rotation.y=-Math.PI/2; odRest(A); animRig(A.R,dt,0); } }
+    odAt(S,28.6,'r6',()=>odSay(S,S.hero,'Hey, Adrian... wanna walk with us?')); odAt(S,30,'a4',()=>odSay(S,A,'...Okay.')); odAt(S,32.4,'a5',()=>odSay(S,A,"You're funny, Rocky."));
+    odAt(S,34.4,'r7',()=>odSay(S,S.hero,"Yo... you're pretty great, Adrian.")); odAt(S,35.6,'h',()=>rkHearts(pl.p[0],g+2.6,83.9)); },
+  pose(S){ const t=S.t; if(t>=18&&t<30.2){ armR.rotation.x=0.6; } },
+  cam(S){ const t=S.t, g=RK.g; if(t<4.4)return [odL([35.5,g+5,76],[35.5,g+3,80],odSeg(S,0,4.4)),[35.5,g+2.6,87],0]; if(t<10)return [[38.4,g+2.3,90],[35.8,g+1.5,94.6],1]; if(t<14.4)return [[32.8,g+2.6,90.4],[36,g+1.5,95],2];
+    if(t<18)return [[34.6,g+1.6,89.6],[32.4,g+0.9,92.2],3]; if(t<21.4)return [[pl.p[0]+3.5,g+2.4,80.8],[pl.p[0],g+1,84.6],4]; if(t<26.5)return [[46.4,g+1.8,80.8],[46,g+0.9,84.7],5];
+    if(t<30.2)return [[37.4,g+2.4,80.2],[36.4,g+1.4,85],6]; return [[pl.p[0]+4.6,g+2,79.8],[pl.p[0]+0.4,g+1.5,84],7]; } };
+
+// ---------- 3. MICKEY'S GYM ----------
+OD_CH.rk3={secs:38,sky:'day',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,'gloves'); S.mickeyBusy=true; const K=rkK; S.rope=new THREE.Mesh(new THREE.TorusGeometry(1.05,0.035,4,24,Math.PI),mm(0x2a2a2a)); S.rope.visible=false; S.grp.add(S.rope);
+    S.opp=K.boxers[1]; S.opp.borrowed=true; },
+  tick(S,dt){ const K=rkK, t=S.t, g=RK.g, M=K.mickey, opp=S.opp, bag=K.bags[1];
+    // in through the door
+    if(t<9)odHeroPath(S,[63.5,g,76],[66.6,g,61],2.4,8.6); odAt(S,4.6,'m1',()=>odSay(S,M,'MOVE! Keep those hands UP!')); odAt(S,7,'m2',()=>odSay(S,M,'Balboa! Hit the bag!'));
+    const mk=(p,ry)=>{ M.g.position.set(...p); M.g.rotation.y=ry; odRest(M); M.R.armR.rotation.x=Math.sin(t*3)>0.3?2.2:0.4; animRig(M.R,dt,0); };
+    // the heavy bag
+    if(t>=8.6&&t<15){ odHeroTo(S,[67.1,g,61],-Math.PI/2,false); mk([66.4,g,63.4],Math.PI*0.9); const f=rkFists(armL,armR,t,t>12.6&&t<13.4?1:2.6,0); if(f.e>0.95&&!S.hit){ S.hit=true; bag.va+=f.right?0.5:-0.5; bag.vz+=0.25; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
+    odAt(S,10.2,'m3',()=>odSay(S,M,'Harder! You punch like my grandma!')); odAt(S,12.4,'r1',()=>odSay(S,S.hero,'Like THIS?!')); odAt(S,13.1,'big',()=>{ bag.vz+=1.4; rkSfx('thud'); const p=bag.pv.position; burst(p.x-0.5,g+1.8,p.z-0.5,new THREE.Color(0xffd23a),10); });
+    // the speed bag
+    if(t>=15&&t<20.4){ odHeroTo(S,[70.4,g,68],-Math.PI/2,false); S.speedOn=true; mk([68,g,66],-Math.PI*0.25); if(Math.random()<dt*14)rkSfx('tap'); } else S.speedOn=false;
+    odAt(S,16.2,'m4',()=>odSay(S,M,'Faster! Faster!'));
+    // the jump rope
+    if(t>=20.4&&t<25.4){ odHeroTo(S,[61.6,g,68.6],0,false); S.rope.visible=true; S.rope.position.set(61.6,g+0.9,68.6); S.rope.rotation.set(t*15,0,0); mk([63.6,g,67],Math.PI*0.6); } else S.rope.visible=false;
+    odAt(S,21.6,'m5',()=>odSay(S,M,'Light on your feet! Like a dancer!'));
+    // one-arm push-ups
+    if(t>=25.4&&t<30.6){ odHeroTo(S,[64.6,g,70.4],0,false); mk([62.4,g,67.6],-Math.PI*0.3); }
+    for(const [tt,n] of [[26.4,'1...'],[27.4,'2...'],[28.4,'3...']])odAt(S,tt,'c'+n,()=>odSay(S,S.hero,n)); odAt(S,29.4,'m6',()=>odSay(S,M,"Not bad, kid. Not bad."));
+    // sparring in the ring
+    if(t>=30.6){ const hx=59.8; odHeroTo(S,[hx,g+0.8,61],-Math.PI/2,false); mk([65,g,59.4],-Math.PI*0.6); opp.g.position.set(62.2,g+0.8,61); opp.g.rotation.y=Math.PI/2; const R=opp.R;
+      if(t<33.4){ rkFists(R.armL,R.armR,t,1.6,1); } else if(t<35){ const k=odSeg(S,33.4,34.2); opp.g.position.x=62.2+k*1.2; opp.g.rotation.z=-k*0.35; R.armL.rotation.x=R.armR.rotation.x=0.2; } else { opp.g.position.x=63.4; opp.g.rotation.z=-0.35; }
+      animRig(R,dt,0); }
+    odAt(S,32,'duck',()=>rkSfx('whoosh')); odAt(S,33.3,'hook',()=>{ rkSfx('thud'); burst(62.2-0.5,g+2.4,61-0.5,new THREE.Color(0xffffff),10); odSay(S,opp,'Oof!'); });
+    odAt(S,34.4,'m7',()=>odSay(S,M,"NOW that's a punch!")); odAt(S,36,'r2',()=>odSay(S,S.hero,'Yo, Mick! I got this!')); },
+  pose(S){ const t=S.t; model.rotation.x=0;
+    if(t>=20.4&&t<25.4){ model.position.y+=Math.abs(Math.sin(t*7.5))*0.25; armL.rotation.z=-0.5; armR.rotation.z=0.5; armL.rotation.x=armR.rotation.x=0.4; }
+    if(t>=25.4&&t<30.6){ const up=0.32+0.2*(0.5+0.5*Math.sin(t*5)); model.rotation.x=-Math.PI/2+up; armR.rotation.x=Math.PI/2-up; armL.rotation.x=-0.6; armL.rotation.z=-0.3; legL.rotation.x=legR.rotation.x=0; }
+    if(t>=30.6){ if(t>=31.6&&t<32.4){ model.position.y-=0.45; armL.rotation.x=armR.rotation.x=1.4; } else if(t>=32.9&&t<33.6){ armR.rotation.x=1.6; armR.rotation.z=1.2; armL.rotation.x=1.15; } else if(t<35.6)rkFists(armL,armR,t,1.8,0); else { armL.rotation.z=-2.6; armR.rotation.z=2.6; armL.rotation.x=armR.rotation.x=0; } } },
+  cam(S){ const t=S.t, g=RK.g; if(t<3)return [[63.5,g+5,86],[63.5,g+3.6,72],0]; if(t<8.6)return [[57,g+5.4,70.6],[64,g+1.4,61],1]; if(t<12.6)return [[64.6,g+2.4,58.4],[67.6,g+1.5,61.2],2]; if(t<15)return [[68.5,g+1.9,63],[67.6,g+1.8,61],3];
+    if(t<20.4)return [[69.6,g+2.5,65.6],[70.9,g+2.1,68],4]; if(t<25.4)return [[61.6,g+2.2,65.4],[61.6,g+1.3,68.6],5]; if(t<30.6)return [[66.8,g+1.4,71.2],[64.4,g+0.5,69.6],6];
+    if(t<33.6)return [[61,g+3,57.6],[61,g+1.8,61],7]; return [[61,g+2.6,64.6],[61,g+2,61],8]; } };
+
+// the chapters as Demo Mode scenes, and one click to line them all up
+const RK_NAMES=["Rocky's Neighborhood",'Adrian and Butkus',"Mickey's Gym"];
+function loadRocky(){ dmCfg.scenes=RK_NAMES.map((n,i)=>cleanScene({act:'rk'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['rk'+(i+1)].secs,cap:''})); saveDemo(); }
 
 // ================= PETS =================
 // Make a cat or a dog at the Pet Shop and it follows you everywhere, through portals too (one at a time). Tap it to say Sit,
