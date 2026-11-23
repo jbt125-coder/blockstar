@@ -5954,6 +5954,7 @@ function dragDemoCam(dt){ const P=demo.pil, v=drive;
 // room, the dining room, the kitchen and a gym. Upstairs: bedrooms, bathrooms and a kids' room. Downstairs: a disco, a
 // game room and a movie theater. Out back: a pool, a hot tub and a fire pit. A 4-car garage on the side.
 // Floors: the basement floor is at y=6, the ground floor y=12, upstairs y=19.
+const MN_BAN_Y=19.45; // the Happy Thanksgiving banner's middle, on the front of the porch roof
 const MN={X0:28,X1:84,Z0:30,Z1:70,FB:6,F1:12,F2:19,spawn:[56.5,12,96.5],
   seat:{x:56,z:39.4}, table:{x0:44,x1:68,z0:40.6,z1:44.4,y:12.8},
   garage:{x0:85,x1:104,z0:46,z1:70}, pool:{x0:42,x1:70,z0:12,z1:24}, tub:{x0:74,x1:78,z0:14,z1:18},
@@ -6407,8 +6408,10 @@ function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof sav
   // === the foyer: a crystal chandelier, a grand piano and a welcome banner
   { const ch=grp(g1,56,F2+3.6,66); mcyl(ch,0.03,0.03,2,dk,0,1,0,6); for(let r2=0;r2<3;r2++)for(let i=0;i<8+r2*4;i++){ const a=i/(8+r2*4)*Math.PI*2, R2=0.4+r2*0.45; msph(ch,0.08,mm(0xeaf6ff,{transparent:true,opacity:0.75,emissive:0x406080}),Math.cos(a)*R2,-r2*0.35,Math.sin(a)*R2); mcyl(ch,0.04,0.04,0.12,glowM(0xfff0c0),Math.cos(a)*R2,-r2*0.35+0.12,Math.sin(a)*R2,6); }
     const pn=grp(g1,50.5,F1,67,0.4); mb(pn,1.6,0.25,2.0,dk,0,1.0,0); mb(pn,1.5,0.06,0.3,white,0,1.12,-0.9); for(let i=0;i<10;i++)mb(pn,0.06,0.07,0.12,dk,-0.7+i*0.155,1.15,-0.95); for(const [a,b] of [[-0.6,-0.8],[0.6,-0.8],[0,0.8]])mb(pn,0.12,0.9,0.12,dk,a,0.45,b); const lid=mb(pn,1.55,0.04,1.9,dk,0,1.5,0.1); lid.rotation.x=-0.5;
-    const ban=canvasTex(512,80); ban.x.fillStyle='#8a3a12'; ban.x.fillRect(0,0,512,80); ban.x.fillStyle='#ffd86a'; ban.x.font='bold 46px serif'; ban.x.textAlign='center'; ban.x.fillText('🍂 Happy Thanksgiving! 🦃',256,56); ban.t.needsUpdate=true;
-    const b=new THREE.Mesh(new THREE.PlaneGeometry(13,1.9),new THREE.MeshBasicMaterial({map:ban.t})); b.position.set(56.5,F2+0.25,78.08); G.out.add(b); K.banner=b; mb(g1,4,0.03,2.6,mm(0x8a1a1a),56,F1+0.02,67.5); } // the banner hangs on the front of the porch roof
+    const ban=canvasTex(1024,312), X=ban.x; X.fillStyle='#8a3a12'; X.fillRect(0,0,1024,312); X.strokeStyle='#ffd86a'; X.lineWidth=10; X.strokeRect(14,14,996,284); // two big lines, so it reads even on a phone held upright
+    X.textAlign='center'; X.textBaseline='middle'; X.lineJoin='round'; X.font='bold 128px Georgia, serif'; for(const [t,y] of [['🍂 Happy 🦃',96],['Thanksgiving!',222]]){ X.lineWidth=14; X.strokeStyle='#3a1404'; X.strokeText(t,512,y); X.fillStyle='#ffd86a'; X.fillText(t,512,y); }
+    ban.t.anisotropy=renderer.capabilities.getMaxAnisotropy(); ban.t.needsUpdate=true;
+    const b=new THREE.Mesh(new THREE.PlaneGeometry(10.5,3.2),new THREE.MeshBasicMaterial({map:ban.t})); b.position.set(56.5,MN_BAN_Y,78.08); G.out.add(b); K.banner=b; mb(g1,4,0.03,2.6,mm(0x8a1a1a),56,F1+0.02,67.5); } // the banner hangs on the front of the porch roof
   // === the library: armchairs, a globe, a desk, and the red book that opens the secret room
   { mb(g1,1.2,0.7,1.1,mm(0x6a2a1a),70,F1+0.35,63); mb(g1,1.2,0.9,0.3,mm(0x6a2a1a),70,F1+0.9,63.5); mb(g1,1.2,0.7,1.1,mm(0x6a2a1a),73.5,F1+0.35,63); mb(g1,1.2,0.9,0.3,mm(0x6a2a1a),73.5,F1+0.9,63.5);
     mcyl(g1,0.05,0.05,0.8,wood,68,F1+0.4,60); msph(g1,0.4,mm(0x2a6ad8),68,F1+1.2,60); msph(g1,0.25,mm(0x3a9a3a),68.2,F1+1.3,59.8,1,0.6,0.8); mb(g1,2.4,0.1,1.2,wood,71.5,F1+0.85,59); mb(g1,0.1,0.85,1.1,wood,70.4,F1+0.42,59); mb(g1,0.1,0.85,1.1,wood,72.6,F1+0.42,59);
@@ -6597,7 +6600,7 @@ const MAN_BOWL=[[0,'bstairs'],[5,'alley'],[10,'bthrow'],[18,'bturkey'],[29,'sit'
 // hanging the sign: you and your brother carry it up two ladders and nail it up, then he mows the front lawn on the riding
 // mower (grass flying out the side) while you cheer, and then it's your turn
 const MAN_MOW=[[0,'sign'],[12,'bmow'],[28,'swap'],[32,'hmow']];
-const MOW_LAD=[49.4,63.6], MOW_LZ=79.3, BRO_PATH=[[61,80],[61,99],[62.2,99],[62.2,80.5],[52.8,80.5],[52.8,99],[51.6,99],[51.6,82],[55,83.2]], HERO_PATH=[[53.6,99],[59.4,99],[59.4,81.5],[53.6,81.5],[53.6,99],[59.4,99]];
+const MOW_LAD=[50.6,62.4], MOW_LZ=79.3, BRO_PATH=[[61,80],[61,99],[62.2,99],[62.2,80.5],[52.8,80.5],[52.8,99],[51.6,99],[51.6,82],[55,83.2]], HERO_PATH=[[53.6,99],[59.4,99],[59.4,81.5],[53.6,81.5],[53.6,99],[59.4,99]];
 function ladderMesh(par,x,z){ const g=grp(par,x,MN.F1,z), w=mm(0xb8b8c0); g.rotation.x=-0.17; for(const sx of [-0.28,0.28])mb(g,0.07,6.9,0.07,w,sx,3.45,0); for(let y=0.35;y<6.8;y+=0.4)mb(g,0.56,0.05,0.06,w,0,y,0); return g; }
 function broSay(K,t){ npcSay(K.bro,t); }
 function mowScript(v,path,i,spd,dt){ const wp=path[Math.min(i,path.length-1)], dx=wp[0]-v.p[0], dz=wp[1]-v.p[2], d=Math.hypot(dx,dz); if(i>=path.length||d<0.5&&i===path.length-1){ v.spd*=0.85; vMove(v,dt); return i>=path.length?i:i+1; }
@@ -6652,7 +6655,7 @@ function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt
   if(sh==='hunt')return huntPilot(K,P,st,dt);
   if(K.bro&&K.bro.bubT>0){ K.bro.bubT-=dt; if(K.bro.bubT<=0&&K.bro.bub){ K.bro.g.remove(K.bro.bub); K.bro.bub=null; } }
   if(sh==='sign'){ const c=st<1.2?0:st<5.5?(st-1.2)/4.3:st<8?1:st<11?1-(st-8)/3:0, h=c*4.4, z=MOW_LZ+0.45-h*0.17; K.hold=[MOW_LAD[0],MN.F1+h,z]; K.bro.g.position.set(MOW_LAD[1],MN.F1+h,z);
-    if(st<8)K.banner.position.y=MN.F1+2.4+Math.min(1,st<1.2?0:(st-1.2)/4.3)*(MN.F2+0.25-MN.F1-2.4);
+    if(st<8)K.banner.position.y=MN.F1+2.4+Math.min(1,st<1.2?0:(st-1.2)/4.3)*(MN_BAN_Y-MN.F1-2.4);
     for(const k of [6,6.5,7,7.4])if(st>k&&!P.done['n'+k]){ P.done['n'+k]=1; snd(()=>{ noise(1800,0.06,0.25,'bandpass'); tone('square',420,300,0.05,0.04); }); }
     if(st>7.6&&!P.done.s1){ P.done.s1=1; manSay(K,'There! Perfect! 🔨'); } if(st>8.6&&!P.done.s2){ P.done.s2=1; broSay(K,'Happy Thanksgiving! 🦃'); } if(st>11&&!P.done.s3){ P.done.s3=1; broSay(K,'Now I\'ll mow the lawn! 🚜'); }
     const R=K.bro.R, clim=(st>1.2&&st<5.5)||(st>8&&st<11), q=Math.sin(st*9); R.armL.rotation.x=2.8+(clim?0.3*q:0); R.armR.rotation.x=st>5.5&&st<8?2.4+0.6*Math.abs(Math.sin(st*9)):2.8-(clim?0.3*q:0); R.legL.rotation.x=clim?0.5*q:0; R.legR.rotation.x=clim?-0.5*q:0; animRig(R,dt,0);
@@ -6690,13 +6693,13 @@ function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt
   if(sh==='disco'){ P.hs=0; return {ix:0,iz:0}; } return {ix:0,iz:0}; }
 function mansionDemoCam(dt){ const P=demo.pil, K=mansionK; if(!K)return; const {sh,st}=manShot(P), party=P.list===MAN_PARTY; let want, look, snap=false;
   if(sh==='walk'){ want=new THREE.Vector3(50.5-st*0.2,14.2+st*0.2,85-st*0.7); look=new THREE.Vector3(56,17,68); } // down the front walk, clear of the yard's trees
-  else if(sh==='sign'){ const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(14.5,9.2/tanH); want=new THREE.Vector3(56.5+Math.sin(st*0.25)*0.6,MN.F1+3.6,78+d); look=new THREE.Vector3(56.5,MN.F1+4.4,79);
+  else if(sh==='sign'){ const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(14.5,7.4/tanH); want=new THREE.Vector3(56.5+Math.sin(st*0.25)*0.4,MN.F1+4,78+d); look=new THREE.Vector3(56.5,MN.F1+4.4,79);
     if(st>1.2&&st<11){ const q=Math.sin(st*9), clim=st<5.5||st>8; armL.rotation.x=2.8+(clim?0.3*q:0); armR.rotation.x=st>5.5&&st<8?2.4+0.6*Math.abs(Math.sin(st*9+1)):2.8-(clim?0.3*q:0); legL.rotation.x=clim?0.5*q:0; legR.rotation.x=clim?-0.5*q:0; } }
   else if(sh==='bmow'){ const v=K.mower, f=vFwd(v.h); if(st<5){ const r=vRight(v.h); want=new THREE.Vector3(v.p[0]-f[0]*5.5+r[0]*2,MN.F1+3,v.p[2]-f[1]*5.5+r[1]*2); look=new THREE.Vector3(v.p[0]+f[0]*2,MN.F1+0.8,v.p[2]+f[1]*2); }
     else { const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(17,8.5/tanH); want=new THREE.Vector3(56.5,MN.F1+7.5,79+d+3); look=new THREE.Vector3(56.5,MN.F1+0.5,88); } }
   else if(sh==='swap'){ const v=K.mower; want=new THREE.Vector3(v.p[0]+1,MN.F1+2.6,v.p[2]+6.5); look=new THREE.Vector3(v.p[0],MN.F1+1,v.p[2]); }
   else if(sh==='hmow'){ const v=K.mower, f=vFwd(v.h), r=vRight(v.h); want=new THREE.Vector3(v.p[0]+r[0]*4.5-f[0]*3.5,MN.F1+2.6,v.p[2]+r[1]*4.5-f[1]*3.5); look=new THREE.Vector3(v.p[0]+f[0]*1.5,MN.F1+0.9,v.p[2]+f[1]*1.5); }
-  else if(sh==='hunt'){ const H=K.hunt, T=H&&H.t; if(H&&!H.shot||st>6.6||!T){ const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(14.5,7.6/tanH); want=new THREE.Vector3(56.5+Math.sin(st*0.3)*0.5,MN.F1+3.4,78+d); look=new THREE.Vector3(56.5,MN.F1+4.3,80.5); } // the whole Happy Thanksgiving sign, even on a tall screen
+  else if(sh==='hunt'){ const H=K.hunt, T=H&&H.t; if(H&&!H.shot||st>6.6||!T){ const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(14.5,6.4/tanH); want=new THREE.Vector3(56.5+Math.sin(st*0.3)*0.3,MN.F1+3.4,78+d); look=new THREE.Vector3(56.5,MN.F1+4.3,80.5); } // the whole Happy Thanksgiving sign, even on a tall screen
       else { want=new THREE.Vector3(57.6,MN.F1+1.5,84.4); look=new THREE.Vector3(Math.min(T.x,63)+0.3,MN.F1+0.5,T.z-0.4); }
     if(H&&!H.shot||st<4.6){ armL.rotation.x=1.45; armR.rotation.x=1.45; armR.rotation.z=0.35; armL.rotation.z=0; } else { armL.rotation.x=0.3; armR.rotation.x=0; armR.rotation.z=0; } }
   else if(sh==='giveup'){ want=new THREE.Vector3(pl.p[0]+1.6,MN.F1+3.2,pl.p[2]+6.5); look=new THREE.Vector3(pl.p[0],MN.F1+1.6,pl.p[2]-4); }
