@@ -6611,16 +6611,16 @@ const MAN_HUNT=[[0,'hunt'],[11,'giveup'],[18,'hstairs'],[22,'hbowl'],[45,'bturke
 const HUNT_ROLLS=[{f:7,aim:-0.45},{f:3,aim:0.6},{f:'X',aim:0.16},{f:'X',aim:0.2},{f:'X',aim:0.14}], HUNT_ROLL_T=4.6;
 function bowMesh(){ const g=new THREE.Group(), w=mm(0x6a3a1a), inner=new THREE.Group(); inner.rotation.y=Math.PI/2; g.add(inner);
   const arc=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.035,6,18,Math.PI),w); arc.rotation.z=-Math.PI/2; inner.add(arc); mb(g,0.012,1.1,0.012,mm(0xf4f2ee),0,0,0); // the bow and its string
-  const nock=huntArrowMesh(); nock.position.z=-0.35; g.add(nock); g.userData.nock=nock; return g; }
+  const nock=huntArrowMesh(); nock.rotation.y=Math.PI; nock.position.z=-0.35; g.add(nock); g.userData.nock=nock; return g; }
 function huntArrowMesh(){ const g=new THREE.Group(); const sh=mcyl(g,0.018,0.018,0.9,mm(0x8a6a3a),0,0,0,5); sh.rotation.x=Math.PI/2; const tip=new THREE.Mesh(new THREE.ConeGeometry(0.045,0.14,6),mm(0x9aa0a8)); tip.rotation.x=Math.PI/2; tip.position.z=0.5; g.add(tip);
   for(const r of [0,Math.PI/2]){ const f=mb(g,0.12,0.012,0.16,mm(0xd8302a),0,0,-0.4); f.rotation.z=r; } return g; } // the point is at +z
 function manSay(K,text){ K.hsay=K.hsay||{g:model}; npcSay(K.hsay,text); }
 function huntEnd(K){ const H=K.hunt; if(!H)return; model.remove(H.bow); if(H.t){ H.t.script=false; } K.hunt=null; armL.rotation.x=armR.rotation.x=armL.rotation.z=armR.rotation.z=0; }
 function huntPilot(K,P,st,dt){ const H=K.hunt, T=H.t;
   if(st>3.3&&!H.shot){ H.shot=1; H.bow.userData.nock.visible=false; const a=H.bow.localToWorld(new THREE.Vector3(0,0,-0.4)), toT=new THREE.Vector3(T.x-a.x,0,T.z-a.z).normalize(), side=new THREE.Vector3(-toT.z,0,toT.x);
-    const b=new THREE.Vector3(T.x,MN.F1+0.2,T.z).addScaledVector(toT,0.9).addScaledVector(side,-0.75); H.ar={m:huntArrowMesh(),a,b,t:0}; H.ar.m.scale.setScalar(1.5); K.G.out.add(H.ar.m); snd(()=>{ noise(2500,0.18,0.12,'highpass'); tone('sine',900,300,0.2,0.05); }); }
+    const b=new THREE.Vector3(T.x,MN.F1+0.2,T.z).addScaledVector(toT,0.9).addScaledVector(side,-0.75); H.ar={m:huntArrowMesh(),a,b,t:0}; H.ar.m.scale.setScalar(1.5); K.G.out.add(H.ar.m); snd(()=>{ tone('triangle',196,150,0.32,0.09); tone('sine',392,300,0.18,0.03); noise(900,0.35,0.025,'bandpass'); }); }
   const A=H.ar; if(A&&A.t<1){ A.t=Math.min(1,A.t+dt/0.45); const at=t=>new THREE.Vector3().lerpVectors(A.a,A.b,t).add(new THREE.Vector3(0,Math.sin(Math.PI*t)*0.35,0)); const p=at(A.t); A.m.position.copy(p); if(A.t<1)A.m.lookAt(at(Math.min(1,A.t+0.03)));
-    if(A.t>=1){ snd(()=>noise(300,0.15,0.2,'lowpass')); burst(p.x-0.5,p.y-0.4,p.z-0.5,new THREE.Color(0x5a8a3a),6); } }
+    if(A.t>=1){ snd(()=>noise(220,0.12,0.06,'lowpass')); burst(p.x-0.5,p.y-0.4,p.z-0.5,new THREE.Color(0x5a8a3a),6); } }
   if(st>3.8&&!H.hop){ H.hop=1; T.hop=0.45; T.st='walk'; gobble(1); } // a startled jump...
   if(st>4.5&&!H.flee){ H.flee=1; T.st='flee'; T.spd=5; T.h=Math.atan2(-(86-T.x),-(77-T.z)); gobble(1); burst(T.x-0.5,MN.F1+0.5,T.z-0.5,new THREE.Color(0x6a4428),8); }
   if(st>6.8&&T.script){ T.script=false; T.st='walk'; T.spd=0.9; }
