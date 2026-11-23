@@ -5576,7 +5576,7 @@ function standPerson(x,z,face,L){ const g=new THREE.Group(); scene.add(g); const
 const NPC_HI=['Take her for a spin!','Want to race? Hop in!','She\'s fast, but can you stop her?','Pull the chute after the finish line!','Wait for the green light!','Hold the gas and brake for a burnout!','Fastest car in the pits, I promise.','Go get \'em, champ!','Stop on the yellow lines for a perfect score!','I heard something wild happens if you never stop...'];
 const NPC_TAKE=['Take her for a spin!','Go get \'em!','Watch for the green!','Don\'t forget the chute!','Bring her back in one piece!'];
 function bubbleSprite(text){ const c=document.createElement('canvas'), x=c.getContext('2d'); x.font='bold 26px sans-serif'; const w=Math.min(900,Math.ceil(x.measureText(text).width)+36); c.width=w; c.height=56;
-  x.font='bold 26px sans-serif'; x.fillStyle='rgba(255,255,255,0.95)'; x.beginPath(); x.moveTo(14,4); x.lineTo(w-14,4); x.quadraticCurveTo(w-4,4,w-4,18); x.lineTo(w-4,36); x.quadraticCurveTo(w-4,48,w-14,48); x.lineTo(30,48); x.lineTo(18,56); x.lineTo(20,48); x.lineTo(14,48); x.quadraticCurveTo(4,48,4,36); x.lineTo(4,18); x.quadraticCurveTo(4,4,14,4); x.fill();
+  x.font='bold 26px sans-serif'; x.fillStyle='rgba(255,255,255,0.95)'; x.beginPath(); x.moveTo(14,4); x.lineTo(w-14,4); x.quadraticCurveTo(w-4,4,w-4,18); x.lineTo(w-4,36); x.quadraticCurveTo(w-4,48,w-14,48); x.lineTo(14,48); x.quadraticCurveTo(4,48,4,36); x.lineTo(4,18); x.quadraticCurveTo(4,4,14,4); x.fill();
   x.fillStyle='#222'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,w/2,27); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false})); sp.scale.set(w/56*0.55,0.55,1); sp.renderOrder=5; sp.userData.born=performance.now(); BUBS.add(sp); return sp; }
 // every frame, before drawing: older bubbles stay where they are, a newer one that would cover them moves up above them,
 // and any bubble too wide for the screen (a phone held upright, a close-up) shrinks to fit and slides back inside the edges
@@ -6692,7 +6692,7 @@ function odFree(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(!o.ma
 function odBubOff(par,who){ if(!who.bub)return; par.remove(who.bub); if(who.bub.material.map)who.bub.material.map.dispose(); who.bub.material.dispose(); who.bub=null; }
 function odyPilot(dt,P){ const S=P.S; if(!S||!(S.mx?mxK:S.rk?rkK:odyK))return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0)odBubOff(model,S.hero); } }
-function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:S.rk?rkK:odyK))return; if(S.ch.pose)S.ch.pose(S); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
+function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:S.rk?rkK:odyK))return; if(S.ch.pose)S.ch.pose(S); if(S.rk)rkMickeyLook(dt); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
   if(!demo.cam||demo.cam.k!=='od'||demo.cam.shot!==c[2])demo.cam={k:'od',p:want.clone(),l:look.clone(),shot:c[2]}; else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
   camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
 const OD_CH={};
@@ -7423,7 +7423,8 @@ function rkDress(S,kind){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,m
 // a boxer's fists: a guard up in front of the face, and one fist at a time snapping out
 function rkFists(L,R,t,rate,ph,base,reach){ const b=base||1.15, r=reach||0.45, c=((t*rate+(ph||0))%2+2)%2, k=c<1?c:c-1, e=Math.sin(Math.min(1,k*2.4)*Math.PI); L.rotation.x=R.rotation.x=b; L.rotation.z=-0.2; R.rotation.z=0.2; if(c<1)R.rotation.x=b+r*e; else L.rotation.x=b+r*e; return {e,right:c<1}; }
 function rkSpeedBag(L,R,t){ L.rotation.x=2.25+Math.sin(t*22)*0.28; R.rotation.x=2.25+Math.sin(t*22+Math.PI)*0.28; L.rotation.z=0.35; R.rotation.z=-0.35; } // fists up high, rolling in fast little circles
-function rkSign(par,text,w,h,bg,fg,x,y,z,ry){ const c=canvasTex(256,Math.round(256*h/w)); c.x.fillStyle=bg; c.x.fillRect(0,0,256,c.c.height); c.x.fillStyle=fg; c.x.font='bold '+Math.round(c.c.height*0.5)+'px sans-serif'; c.x.textAlign='center'; c.x.textBaseline='middle'; c.x.fillText(text,128,c.c.height/2+2); c.t.needsUpdate=true;
+function rkSign(par,text,w,h,bg,fg,x,y,z,ry){ const CW=512, c=canvasTex(CW,Math.max(16,Math.round(CW*h/w))), H2=c.c.height; c.x.fillStyle=bg; c.x.fillRect(0,0,CW,H2); c.x.fillStyle=fg; let fs=Math.round(H2*0.5); c.x.font='bold '+fs+'px sans-serif'; const tw=c.x.measureText(text).width; if(tw>CW*0.92){ fs=Math.floor(fs*CW*0.92/tw); c.x.font='bold '+fs+'px sans-serif'; } /* the words always fit */
+  c.x.textAlign='center'; c.x.textBaseline='middle'; c.x.fillText(text,CW/2,H2/2+2); c.t.needsUpdate=true;
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:c.t})); m.position.set(x,y,z); m.rotation.y=ry||0; par.add(m); return m; }
 let rkK=null;
 function onPhilly(){ return curPlace()==='philly'&&!!rkK; }
@@ -7673,7 +7674,9 @@ function buildRkLife2(K){ const root=K.root, g=RK.g;
   { const st=grp(root,124,g,66.6); mb(st,1,1.2,0.6,mm(0x5a3a1a),0,0.6,0); rkSign(st,'1776 · 1976',1,0.35,'#1a3aa8','#f2f2f2',0,0.8,0.31,0); mcyl(st,0.02,0.02,0.4,mm(0x2a2a2a),0,1.4,-0.1,4);
     for(const x of [120,128])for(let k=0;k<3;k++){ const fl=grp(root,x+k*0.9,g,66.4); mcyl(fl,0.04,0.04,3,mm(0xd8d8d8),0,1.5,0,6); mb(fl,0.9,0.55,0.02,mm([0xc81a1a,0xf2f2f2,0x1a3aa8][k]),0.47,2.7,0); }
     const bell=K.bell; if(bell)bell.position.set(RK.bell[0],g,RK.bell[1]); } }
-function rkTick2(dt){ const K=rkK, t=K.t, S=rkStage;
+function rkMickeyLook(dt){ const K=rkK, M=K&&K.mickey; if(!M||!M.g.visible)return; const p=M.g.position, last=M.lastP||p.clone(), moved=p.distanceTo(last)>0.002; M.lastP=p.clone(); if(moved){ M.lookY=undefined; return; } /* walking: he looks where he's going */
+  const dx=pl.p[0]-p.x, dz=pl.p[2]-p.z; if(Math.hypot(dx,dz)>(demo?40:9)){ M.lookY=undefined; return; } const want=Math.atan2(-dx,-dz); if(M.lookY===undefined)M.lookY=M.g.rotation.y; let d=want-M.lookY; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; M.lookY+=d*Math.min(1,dt*6); M.g.rotation.y=M.lookY; } // Mickey looks at Rocky (or at you) whenever he's standing still
+function rkTick2(dt){ const K=rkK, t=K.t, S=rkStage; if(!demo)rkMickeyLook(dt);
   for(const m of K.meat){ m.va+=(-m.a*7-m.va*0.6)*dt; m.a+=m.va*dt; m.vb+=(-m.b*7-m.vb*0.6)*dt; m.b+=m.vb*dt; m.pv.rotation.set(m.b,0,m.a); }
   K.bulbs.forEach((b,i)=>b.visible=((Math.floor(t*3)+i)%3)!==0);
   const C=K.crowd; if(C){ const near=Math.hypot(camera.position.x-RK.arena.cx,camera.position.z-RK.arena.cz)<16, d=new THREE.Object3D(); if(near){ const hype=S&&S.hype!==undefined?S.hype:0.3;
@@ -7779,10 +7782,10 @@ OD_CH.rk5={secs:38,sky:'day',mood:'street',init(S){ const g=RK.g; rkDress(S,'str
 OD_CH.rk6={secs:34,sky:'cold',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S,'gloves'); const K=rkK, g=RK.g; K.paulie.g.position.set(31.6,g,73.4); K.paulie.g.rotation.y=Math.PI; S.mickeyBusy=true; K.mickey.g.position.set(31.5,g,76); },
   tick(S,dt){ const K=rkK, t=S.t, g=RK.g, Pa=K.paulie, M=K.mickey, m0=K.meat[5], m1=K.meat[4];
     if(t<4)odHeroTo(S,[33,g,76.5],Math.PI,false); odAt(S,2.2,'p1',()=>odSay(S,Pa,"Come on in, Rock! It's freezin' in here!"));
-    if(t>=4&&t<8.6){ const k=odSeg(S,4,8.2); odHeroTo(S,odL([31.5,g,74.5],[31.5,g,62.4],k),0,k<1); odMove(Pa,[31.6,g,73.4],[33.8,g,64],odSeg(S,4.4,8.2)); odWalk(Pa,dt,t<8.2); S.puT=(S.puT||0)-dt; if(S.puT<=0){ S.puT=0.7; puff(pl.p[0],g+1.7,pl.p[2]-0.4,false); } }
+    if(t>=4&&t<8.6){ const k=odSeg(S,4,8.2); odHeroTo(S,odL([31.5,g,74.5],[31.5,g,61.75],k),0,k<1); odMove(Pa,[31.6,g,73.4],[33.8,g,64],odSeg(S,4.4,8.2)); odWalk(Pa,dt,t<8.2); S.puT=(S.puT||0)-dt; if(S.puT<=0){ S.puT=0.7; puff(pl.p[0],g+1.7,pl.p[2]-0.4,false); } }
     if(t>=8.2){ Pa.g.position.set(33.8,g,64.4); Pa.g.rotation.y=Math.PI*0.7; odRest(Pa); animRig(Pa.R,dt,0); }
     // punching the meat
-    const mm2=(t>=8.6&&t<23)?m0:(t>=23&&t<31)?m1:null; if(t>=8.6&&t<23)odHeroTo(S,[31.5,g,62.4],0,false); if(t>=23&&t<31)odHeroTo(S,[31.5,g,59.4],0,false);
+    const mm2=(t>=8.6&&t<23)?m0:(t>=23&&t<31)?m1:null; if(t>=8.6&&t<23)odHeroTo(S,[31.5,g,61.75],0,false); if(t>=23&&t<31)odHeroTo(S,[31.5,g,58.75],0,false);
     if(mm2){ const f=rkFists(armL,armR,t,t>18.4&&t<19.2?0.9:2.8,0,1.45,0.32); if(f.e>0.95&&!S.hit){ S.hit=true; mm2.va+=f.right?0.35:-0.35; mm2.vb+=0.35; rkSfx('thud'); } if(f.e<0.5)S.hit=false; }
     odAt(S,18.9,'big',()=>{ m0.vb+=1.2; m0.va+=0.8; rkSfx('thud'); burst(31,g+1.8,61-0.5,new THREE.Color(0xffd23a),10); });
     odAt(S,12,'p2',()=>odSay(S,Pa,"Hey! That's my meat you're punchin'!"));
@@ -7790,7 +7793,7 @@ OD_CH.rk6={secs:34,sky:'cold',mood:'gym',init(S){ rkDress(S,'sweats'); rkDress(S
     odAt(S,15.6,'m1',()=>odSay(S,M,'Body shots, kid! Work the body!')); odAt(S,18.2,'r1',()=>odSay(S,S.hero,'Like THIS?!')); odAt(S,20.4,'m2',()=>odSay(S,M,"You're gonna hit like a freight train!"));
     odAt(S,25.4,'p3',()=>odSay(S,Pa,"Man... he's really somethin'.")); odAt(S,28.4,'m3',()=>odSay(S,M,'Now go home and get some sleep, ya bum!'));
     if(t>=31){ odHeroTo(S,[31.5,g,60.2],Math.PI,false); S.puT=(S.puT||0)-dt; if(S.puT<=0){ S.puT=0.8; puff(pl.p[0],g+1.7,pl.p[2]+0.4,false); } } odAt(S,31.6,'r2',()=>odSay(S,S.hero,"Yo, Mick. I'm ready.")); },
-  pose(S){ const t=S.t; if(t>=31){ armL.rotation.x=armR.rotation.x=0.3; } },
+  pose(S){ const t=S.t; if(t>=8.6&&t<31){ rkFists(armL,armR,t,t>18.4&&t<19.2?0.9:2.8,0,1.45,0.38); if(t>=18.7&&t<19.2){ armR.rotation.x=1.7; armR.rotation.z=0.5; } } if(t>=31){ armL.rotation.x=armR.rotation.x=0.3; } },
   cam(S){ const t=S.t, g=RK.g; if(t<4)return [[31.5,g+3,84],[31.5,g+3,72],0]; if(t<8.6)return [[29,g+2.6,66],[31.5,g+1.5,72],1]; if(t<13.4)return [[33.4,g+2,63.8],[31.4,g+1.7,61],2]; if(t<18.4)return [[29.6,g+1.6,60.6],[31.5,g+1.4,62],3];
     if(t<20)return [[32.3,g+1.4,61.9],[31.5,g+1.6,61],4]; if(t<23)return [[27.4,g+2.8,66.4],[31.4,g+1.4,61.4],5]; if(t<31)return [[34,g+2.2,59.2],[31.5,g+1.5,59],6]; return [[31.5,g+1.9,57.6],[31.5,g+1.6,60.2],7]; } };
 
