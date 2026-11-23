@@ -2371,14 +2371,14 @@ const DM_WON={random:'🎲 A random wonder'}; for(const k of WON_KEYS)DM_WON[k]=
 const DM_CITY={random:'🎲 A random city'}; // filled in below, once the cities exist
 const DM_DSRC={fresh:'🆕 A fresh demo city',mine:'💾 My saved city'};
 const DM_GIANT={cycle:'🎬 Cut between them all',singer:'🎤 The singer (you!)',guitar:'🎸 Guitar player',drums:'🥁 Drummer',synth:'🎹 Synth player',dj:'💿 DJ scratching'};
-const DM_FSTAT={random:'🎲 A random statue',golem:'🗿 Giant Rock Golem',slime:'🟫 Giant Mud Slime',skull:'💀 Giant pixel skull',pick:'⛏️ Giant pickaxe',flint:'🧔 Giant Flint',pit:'🪵 Just a fire pit'};
+const DM_FSTAT={random:'🎲 A random statue',golem:'🗿 Giant Rock Golem',slime:'🟫 Giant Mud Slime',skull:'💀 Giant pixel skull',pick:'⛏️ Giant pickaxe',flint:'🧔 Giant Flint',turkey:'🦃 Giant turkey',pit:'🪵 Just a fire pit'};
 const DM_FBAND={cycle:'🔀 Switch members at random',sing:'🎤 Always the singer (you!)',gtr:'🎸 Always guitar',drm:'🥁 Always drums',sx:'🎹 Always the synth scratcher',bass:'🎸 Always bass',off:'🚫 No giant band'};
 const DM_FCROWD={mixed:'🧟🧑 People and monsters',people:'🧑 People',monsters:'🧟 Monsters',none:'🙋 Just me'};
 const DM_HORSE={random:'🎲 A random horse',bay:'🐴 Bay',black:'🐴 Black',white:'🐴 White',palomino:'🐴 Palomino',chestnut:'🐴 Chestnut',pinto:'🐴 Pinto',appaloosa:'🐴 Appaloosa',grullo:'🐴 Grullo'}; // the breeds in HORSES
 const DM_RSTORY={day:'🌄 A day on the ranch (hay, ride, farm, guitar)',ride:'🐴 Just the ride'};
 const DM_WMON={on:'🧟 Monsters attack',off:'🚫 No monsters'};
 const DM_DCAR={random:'🎲 A random car'}; // filled in once the Car World vehicles exist
-const DM_MSTORY={party:'🎉 Football, family, cars, pool party, then dinner',bowl:'🎳 Bowling mode (a turkey, black lights, then dinner)',tour:'🗝️ Dinner tour (secret room, toast, disco)'};
+const DM_MSTORY={party:'🎉 Football, family, cars, pool party, then dinner',bowl:'🎳 Bowling mode (a turkey, black lights, then dinner)',tour:'🗝️ Dinner tour (secret room, toast, disco)',hunt:'🏹 Turkey hunt (it gets away!), bowling, disco, pool float, fire pit'};
 const DM_DEND={stop:'🪂 Stop on the lines, dance, then fly off the ramp',jet:'✈️ Straight off the ramp into a jet'};
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
@@ -2448,7 +2448,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:95):sc2.act==='drag'?75:isFilm(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:sc2.mstory==='hunt'?82:95):sc2.act==='drag'?75:isFilm(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
     saveDemo(); if(el.dataset.k==='act'||el.dataset.k==='mstory'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
@@ -3143,7 +3143,7 @@ function stadiumCam(dt){ const sc=demo.sc, G=arenaK.G, B=arenaK.B, C=demo.cam||(
 const camp=new THREE.Group(); camp.visible=false; scene.add(camp);
 let campK=null;
 const CAMP_BAND=['gtr','sing','drm','sx','bass']; // in the order they first appear when switching
-const STATUE_NAME={golem:'Rock Golem',slime:'Mud Slime',skull:'pixel skull',pick:'pickaxe',flint:'Flint'};
+const STATUE_NAME={golem:'Rock Golem',slime:'Mud Slime',skull:'pixel skull',pick:'pickaxe',flint:'Flint',turkey:'turkey'};
 // the statues, as lists of blocks: [x,y,z,colour,kind] where kind is 0 burns, 1 is the wood pile, 2 is stone that never burns.
 // They stand on a pile of logs and face +z. vs is how big each block is.
 function statueVox(kind){ const V=[], R=Math.random, put=(x,y,z,c,k)=>V.push([x,y,z,c,k||0]);
@@ -3172,6 +3172,17 @@ function statueVox(kind){ const V=[], R=Math.random, put=(x,y,z,c,k)=>V.push([x,
     fill(-1,0,5,19,-1,0,vary(0x8a5a2e,0.1)); fill(-2,1,18,20,-2,1,0x4a3018); // the handle and its binding
     for(let x=-8;x<=8;x++){ const yy=21-Math.floor(x*x/18); const th=Math.abs(x)>6?1:2; for(let y=yy-th+1;y<=yy;y++)for(let z=-1;z<=0;z++)put(x,y,z,Math.abs(x)>6?0xb8fff8:vary(0x4ad8d8,0.12)()); }
     return {V,vs:1,name:'pickaxe',r:9}; }
+  if(kind==='turkey'){ logs(6); const fe=vary(0x6b4224,0.14), leg=0xd08a30, red=0xc02020;
+    fill(-2,-2,2,3,0,0,leg); fill(2,2,2,3,0,0,leg); fill(-3,-1,2,2,1,1,leg); fill(1,3,2,2,1,1,leg); // legs and toes
+    for(let y=4;y<=12;y++)for(let z=-5;z<=5;z++)for(let x=-4;x<=4;x++){ const d=(x/4.4)**2+((y-8)/4.4)**2+(z/5.4)**2; if(d>1||d<0.45)continue; // a plump hollow body
+      put(x,y,z,Math.abs(x)>=3&&y>=6&&y<=10?vary(0x4a2c16,0.1)():R()<0.12?0x9a6a34:fe()); } // darker wings on the sides
+    for(let y=6;y<=19;y++)for(let x=-11;x<=11;x++){ const r=Math.hypot(x,y-8); if(r<5.5||r>10.6||y<7)continue; // the tail fan, in bands like real feathers
+      const c=r>10?0xeadcb4:r>9?0x3a2414:r>8?vary(0xc0702a,0.1)():r>6.8?vary(0x8a5a2a,0.1)():vary(0x5a3418,0.1)(); put(x,y,-4,c); put(x,y,-5,c); }
+    fill(-1,1,11,14,3,4,fe); fill(-1,1,15,17,3,5,0xd06a5a); // neck and bare head
+    put(-1,16,6,0x111111); put(1,16,6,0x111111); put(0,15,6,0xe8a030); put(0,15,7,0xe8a030); // eyes and beak
+    fill(0,0,13,14,5,5,red); put(1,15,7,red); put(1,14,7,red); // wattle and the floppy snood
+    fill(-2,2,18,18,2,6,0x1a1a1a); fill(-1,1,19,21,3,5,0x1a1a1a); put(0,19,6,0xe0c040); // a pilgrim hat with a gold buckle
+    return {V,vs:1,name:'turkey',r:10.5}; }
   // Flint the shopkeeper, arms folded, with his hat and beard
   logs(6); const robe=vary(0x7a5230,0.1), sl=vary(0x3f7a4a,0.1), sk=0xd9a77f;
   fill(-3,3,2,12,-2,2,robe); fill(-5,-4,8,12,-1,1,sl); fill(4,5,8,12,-1,1,sl); fill(-4,4,9,10,3,3,sl); fill(-2,2,13,17,-2,2,sk);
@@ -3227,7 +3238,7 @@ function nextBand(K,sc){ if(sc.fband!=='cycle')return sc.fband; if(!K.cur)return
 function fireSetup(sc,P){ if(!campK)campK=buildCamp(); const K=campK;
   demo.bak={w:world.slice(),m:meta.slice(),lava:[...lavaSet]}; clearApples(); merchant.g.visible=false; // a round clearing for the fire (put back after the scene)
   wonderGround('grass',true); rebuildAll(); camp.position.set(CX+0.5,WGY,CZ+0.5); camp.visible=true;
-  const kind=sc.fstat==='random'?['golem','slime','skull','pick','flint'][Math.floor(Math.random()*5)]:sc.fstat; campStatue(K,kind); campTimes(K.st,sc.secs);
+  const kind=sc.fstat==='random'?['golem','slime','skull','pick','flint','turkey'][Math.floor(Math.random()*6)]:sc.fstat; campStatue(K,kind); campTimes(K.st,sc.secs);
   if(K.crowdKind!==sc.fcrowd)campCrowd(K,sc.fcrowd); K.flames.life.fill(0); K.sparks.life.fill(0); K.mosh=0;
   for(const k in K.ring){ ringShow(K,k,false); for(const M of K.ring[k]){ M.g.scale.setScalar(GS); M.g.position.y=-20; for(const [j,x] of M.jb)j.position.x=x; } } if(K.ring.sing)for(const M of K.ring.sing)dressRig(M.R,look); // the giant singers are you
   K.cur=''; K.gl=null; K.lastSw=-1; if(sc.fband!=='off'){ K.cur=nextBand(K,sc); campRing(K,K.cur); ringShow(K,K.cur,true); }
@@ -5094,6 +5105,7 @@ function updatePlayer(dt){
   if(odyK&&odyK.ride)return odRideUpdate(dt); // sailing a ship on the Odyssey's sea
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
+  if(mansionK&&mansionK.fireSit){ $('tint').style.opacity=0; if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // by the fire pit
   if(mansionK&&mansionK.seated){ if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // sitting at the dinner table
   let ix=joy.x, iz=joy.y;
   if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
@@ -5983,11 +5995,12 @@ function buildBowling(K,gb){ const F=BW.F, B={lanes:[],t:0,blk:0,people:[],neon:
   for(let i=0;i<140;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(0.05,4,3),new THREE.MeshBasicMaterial({color:[0xff2bd6,0x18e0ff,0x3dff5a,0xffffff][i%4]})); st.position.set(30+Math.random()*53,F+3.9,32+Math.random()*37); B.glow.add(st); }
   for(let i=0;i<6;i++){ const b=new THREE.Mesh(new THREE.ConeGeometry(1.4,3.6,12,1,true),new THREE.MeshBasicMaterial({color:[0xff2bd6,0x18e0ff,0x3dff5a,0xffe02a,0x8a2aff,0xff5a1a][i],transparent:true,opacity:0.2,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
     const h=grp(B.glow,46+i*2.8,F+3.8,48+(i%3)*7); b.position.y=-1.8; h.add(b); B.beams.push(h); }
+  { const A=new THREE.Group(), m=new THREE.MeshBasicMaterial({color:0xffe02a,transparent:true,opacity:0.85,depthWrite:false}); mb(A,0.1,0.02,2.6,m,0,0,-1.3); const tip=new THREE.Mesh(new THREE.ConeGeometry(0.22,0.5,3),m); tip.rotation.x=-Math.PI/2; tip.position.z=-2.8; A.add(tip); A.visible=false; gb.add(A); B.arrow=A; B.aim=0; } // your aim arrow
   B.gb=gb; }
-function drawLaneScore(L,turkey){ const x=L.scr.x; x.fillStyle=turkey?'#2a0a3a':'#0a1430'; x.fillRect(0,0,256,96); x.fillStyle='#ffd23a'; x.font='bold 18px sans-serif'; x.textAlign='center'; x.fillText('LANE '+(L.i+1)+(L.hero?' · YOU':''),128,22);
+function drawLaneScore(L,turkey){ if(!turkey&&mansionK&&mansionK.bgame&&mansionK.bgame.L===L){ drawHeroCard(L); return; } const x=L.scr.x; x.fillStyle=turkey?'#2a0a3a':'#0a1430'; x.fillRect(0,0,256,96); x.fillStyle='#ffd23a'; x.font='bold 18px sans-serif'; x.textAlign='center'; x.fillText('LANE '+(L.i+1)+(L.hero?' · YOU':''),128,22);
   x.font='bold 38px monospace'; x.fillStyle=turkey?'#3dff5a':'#fff'; x.fillText(turkey?'XXX':(L.frames.slice(-6).join(' ')||'-'),128,64); if(turkey){ x.font='bold 20px sans-serif'; x.fillStyle='#ff3ad0'; x.fillText('= TURKEY!!! 🦃',128,88); } L.scr.t.needsUpdate=true; }
 // one throw: walk up, swing, roll. A strike knocks all ten pins flying; otherwise some of them
-function bowlThrow(L,strike){ const B=mansionK.bowl; L.ball={m:msph(B.gb,0.24,mm(BOWL_COLS[Math.floor(Math.random()*6)]),L.x+0.5,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,x0:L.x+0.5,spd:9+Math.random()*2,hook:(Math.random()-0.5)*0.6,strike:strike===undefined?Math.random()<0.42:strike,hit:false};
+function bowlThrow(L,strike){ const B=mansionK.bowl; L.ball={m:msph(B.gb,0.24,mm(BOWL_COLS[Math.floor(Math.random()*6)]),L.x+0.5,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,x0:L.x+0.5,spd:9+Math.random()*2,hook:(Math.random()-0.5)*0.6,strike:strike===undefined?Math.random()<0.3:strike,hit:false};
   snd(()=>noise(300,1.6,0.08,'lowpass')); }
 function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; const F=BW.F;
   for(const L of B.lanes){ const bw=L.bowler, R=bw.R;
@@ -5995,21 +6008,91 @@ function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; const F=BW.
       else if(L.ph==='walk'){ const k=Math.min(1,L.t/1.2); bw.g.position.set(L.x+0.4,F,bw.home[1]+(BW.foul+0.9-bw.home[1])*k); bw.g.rotation.y=0; R.legL.rotation.x=Math.sin(L.t*9)*0.6; R.legR.rotation.x=-R.legL.rotation.x; R.armR.rotation.x=0.3; if(k>=1){ L.ph='swing'; L.t=0; } }
       else if(L.ph==='swing'){ R.legL.rotation.x=-0.5; R.legR.rotation.x=0.4; R.armR.rotation.x=L.t<0.5?-1.4*L.t/0.5:-1.4+3.0*(L.t-0.5)/0.3; if(L.t>0.8){ L.ph='watch'; L.t=0; bowlThrow(L); } }
       else if(L.ph==='watch'){ R.armR.rotation.x=1.6; R.legL.rotation.x=R.legR.rotation.x=0; if(L.t>4.5){ L.ph='wait'; L.t=0; L.cd=3+Math.random()*5; } } animRig(R,dt,0); }
-    const b=L.ball; if(b){ b.z-=b.spd*dt; const prog=(BW.foul-b.z)/(BW.foul-BW.head); b.m.position.set(b.x0+Math.sin(prog*2.4)*b.hook-(b.strike?(b.x0-L.x)*prog:0),F+0.24,b.z); b.m.rotation.x-=b.spd*dt/0.24;
+    const b=L.ball; if(b&&b.hero)heroBallTick(K,L,b,dt); else if(b){ b.z-=b.spd*dt; const prog=(BW.foul-b.z)/(BW.foul-BW.head); b.m.position.set(b.x0+Math.sin(prog*2.4)*b.hook-(b.strike?(b.x0-L.x)*prog:0),F+0.24,b.z); b.m.rotation.x-=b.spd*dt/0.24;
       if(!b.hit&&b.z<=BW.head+0.15){ b.hit=true; const n=b.strike?10:3+Math.floor(Math.random()*6), order=L.pins.slice().sort(()=>Math.random()-0.5);
         for(const p of (b.strike?L.pins:order.slice(0,n))){ p.down=true; p.v=[(p.x-b.m.position.x)*3+(Math.random()-0.5)*2,2+Math.random()*2.5,-3-Math.random()*3,Math.random()*8,Math.random()*8]; }
         snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); L.frames.push(b.strike?'X':String(n)); if(L.frames.length>9)L.frames.shift(); L.streak=b.strike?L.streak+1:0;
-        if(b.strike&&near)rtoast(L.hero?'🎳 STRIKE!':'🎳 Strike on lane '+(L.i+1)+'!'); if(L.streak>=3){ L.streak=0; turkeyTime(L); } else drawLaneScore(L); }
+        if(b.strike&&near&&L.hero)rtoast('🎳 STRIKE!'); if(L.hero&&L.streak>=3){ L.streak=0; turkeyTime(L); } else drawLaneScore(L); } // only your turkey starts the party
       if(b.z<BW.pitZ){ B.gb.remove(b.m); b.m.geometry.dispose(); L.ball=null; L.resetT=2.2; } }
     for(const p of L.pins)if(p.down&&p.v){ p.v[1]-=14*dt; const m=p.m; m.position.x+=p.v[0]*dt; m.position.z+=p.v[2]*dt; m.position.y=Math.max(F,m.position.y+p.v[1]*dt); m.rotation.x+=p.v[3]*dt; m.rotation.z+=p.v[4]*dt; if(m.position.y<=F){ p.v[0]*=0.9; p.v[2]*=0.9; p.v[3]*=0.9; p.v[4]*=0.9; } if(m.position.z<BW.pitZ)m.visible=false; }
-    if(L.resetT>0){ L.resetT-=dt; if(L.resetT<=0)for(const p of L.pins){ p.down=false; p.v=null; p.m.visible=true; p.m.position.set(p.x,F,p.z); p.m.rotation.set(0,0,0); } } }
+    if(L.resetT>0){ L.resetT-=dt; if(L.resetT<=0){ if(L.sweep){ for(const p of L.pins)if(p.down)p.m.visible=false; L.sweep=false; } else rackPins(L); } } } // after your first ball, only the fallen pins get swept away
+  bowlHero(K,dt);
   // the black-light party after a turkey
   if(B.blk>0){ B.blk-=dt; const s=Math.sin(B.t*9); for(const m of B.neon)m.color.setHSL((B.t*0.3+m.id*0.13)%1,1,0.55); B.beams.forEach((h,i)=>{ h.rotation.z=Math.sin(B.t*1.6+i)*0.7; h.rotation.x=Math.cos(B.t*1.2+i*2)*0.6; });
     if(near)blockMat.color.setRGB(0.22+0.08*Math.max(0,s),0.1,0.38); else blockMat.color.setRGB(1,0.9,0.8); for(const L of B.lanes)for(const p of L.pins)p.m.userData.mats[0].color.setHex(0x9affb0);
     for(const d of B.lanes.map(L=>L.bowler).concat(B.people)){ d.ph+=dt*4.4; const R=d.R, q=Math.sin(d.ph); R.armL.rotation.z=-1.5-0.6*q; R.armR.rotation.z=1.5-0.6*q; R.armL.rotation.x=R.armR.rotation.x=0; R.legL.rotation.x=0.35*q; R.legR.rotation.x=-0.35*q; d.g.rotation.y+=dt*1.2; animRig(R,dt,0); }
     if(near)discoBeat(dt,1); if(B.blk<=0)blackLights(false); }
   else for(const d of B.people){ d.ph+=dt; d.R.armR.rotation.z=Math.max(0,Math.sin(d.ph*0.7))*2.4; animRig(d.R,dt,0); } }
-function turkeyTime(L){ const B=mansionK.bowl; drawLaneScore(L,true); B.blk=16; B.glow.visible=true; for(const L2 of B.lanes)L2.laneM.material.color.setHex(0x2a1a4a); bigText('XXX = TURKEY!!! 🦃'); snd(()=>{ sfx('buy'); noise(900,1.4,0.25,'bandpass'); });
+function rackPins(L){ for(const p of L.pins){ p.down=false; p.v=null; p.m.visible=true; p.m.position.set(p.x,BW.F,p.z); p.m.rotation.set(0,0,0); } }
+// --- you can bowl too. Pick up a ball at any lane's ball return and walk up to the line: an arrow swings back and forth across
+// the lane, and you roll when it points where you want (the pocket, just off the head pin, gets the most strikes). A whole game is
+// 10 frames, scored the real way; finish it and you get a receipt. Or bowl a ball or two and walk away.
+function bowlFrames(rolls){ const F=[]; let i=0;
+  for(let f=0;f<10&&i<rolls.length;f++){ const fr={r:[],tot:null}; if(f<9){ fr.r.push(rolls[i]); if(rolls[i]===10)i++; else { if(i+1<rolls.length)fr.r.push(rolls[i+1]); i+=2; } } else { fr.r=rolls.slice(i,i+3); i+=3; } F.push(fr); }
+  let tot=0, j=0; for(let f=0;f<F.length;f++){ const r=F[f].r; let sc=null;
+    if(f<9){ if(r[0]===10){ if(rolls[j+2]!==undefined)sc=10+rolls[j+1]+rolls[j+2]; j++; } else { if(r.length===2){ if(r[0]+r[1]===10){ if(rolls[j+2]!==undefined)sc=10+rolls[j+2]; } else sc=r[0]+r[1]; } j+=2; } }
+    else if(r.length===3||(r.length===2&&r[0]+r[1]<10))sc=r.reduce((a,b)=>a+b,0);
+    if(sc===null)break; F[f].tot=(tot+=sc); }
+  return F; }
+function bowlState(rolls){ const F=bowlFrames(rolls), f=F.length-1, fr=F[f]; if(!fr)return {frame:0,ball:0,fresh:true,over:false};
+  if(f<9)return fr.r[0]===10||fr.r.length===2?{frame:f+1,ball:0,fresh:true,over:false}:{frame:f,ball:1,fresh:false,over:false};
+  const r=fr.r; if(r.length===3||(r.length===2&&r[0]+r[1]<10))return {frame:9,ball:3,fresh:true,over:true};
+  if(r.length===1)return {frame:9,ball:1,fresh:r[0]===10,over:false}; return {frame:9,ball:2,fresh:r[0]===10?r[1]===10:true,over:false}; }
+function frameMarks(fr,f){ const r=fr.r, m=v=>v===10?'X':v===0?'-':String(v);
+  if(f<9){ if(r[0]===10)return 'X'; return m(r[0])+(r.length>1?(r[0]+r[1]===10?'/':m(r[1])):''); }
+  let t=''; for(let i=0;i<r.length;i++){ const fresh=i===0||(i===1&&r[0]===10)||(i===2&&(r[1]===10||(r[0]!==10&&r[0]+r[1]===10))); t+=!fresh&&r[i-1]+r[i]===10?'/':m(r[i]); } return t; }
+function bowlTotal(rolls){ const F=bowlFrames(rolls); let t=0; for(const fr of F)if(fr.tot!==null)t=fr.tot; return t; }
+function drawHeroCard(L){ const x=L.scr.x, G=mansionK.bgame, F=bowlFrames(G.rolls); x.fillStyle='#0a1430'; x.fillRect(0,0,256,96); x.textAlign='center'; x.fillStyle='#ffd23a'; x.font='bold 15px sans-serif'; x.fillText('LANE '+(L.i+1)+' · YOU · '+bowlTotal(G.rolls),128,16);
+  for(let f=0;f<10;f++){ const X=3+f*25, fr=F[f]; x.strokeStyle='#4a6aa8'; x.lineWidth=1; x.strokeRect(X+0.5,22.5,24,70); x.fillStyle='#fff'; x.font='bold 12px monospace'; if(fr)x.fillText(frameMarks(fr,f),X+12.5,42);
+    x.fillStyle='#3dff5a'; x.font='bold 12px sans-serif'; if(fr&&fr.tot!==null)x.fillText(String(fr.tot),X+12.5,68); x.fillStyle='#7a8ab8'; x.font='9px sans-serif'; x.fillText(String(f+1),X+12.5,88); }
+  L.scr.t.needsUpdate=true; }
+let bowlHudEl=null; function bowlHud(t){ if(!bowlHudEl){ bowlHudEl=document.createElement('div'); bowlHudEl.className='ui'; bowlHudEl.style.cssText='left:50%;top:calc(56px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(10,12,20,.8);padding:6px 12px;border-radius:14px;font-weight:900;font-size:15px;white-space:nowrap;pointer-events:none;display:none'; document.body.appendChild(bowlHudEl); }
+  bowlHudEl.style.display=t?'block':'none'; if(t&&bowlHudEl.textContent!==t)bowlHudEl.textContent=t; }
+function bowlLaneAt(){ const B=mansionK.bowl; let best=null, bd=1.7; for(const L of B.lanes){ const d=Math.hypot(pl.p[0]-(L.x+2),pl.p[2]-(BW.foul+1.6)); if(d<bd){ bd=d; best=L; } } return best; }
+function startBowlGame(L){ const K=mansionK; if(K.bgame&&K.bgame.L!==L)bowlRelease(); K.bgame={L,rolls:[],streak:0,strikes:0,turkeys:0,over:false}; L.hero=true; L.sweep=false;
+  const bw=L.bowler, R=bw.R; L.ph='wait'; L.t=0; bw.g.position.set(bw.home[0],BW.F+0.45-0.72*bw.g.scale.x,bw.home[1]); bw.g.rotation.y=Math.PI; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.6; // that lane's bowler sits down to watch
+  if(!L.ball){ L.resetT=0; rackPins(L); } drawLaneScore(L); }
+function grabBall(L){ const K=mansionK, G=K.bgame; if(!G||G.L!==L||G.over)startBowlGame(L);
+  K.heldBall=msph(armR,0.24,mm(BOWL_COLS[L.i%6]),0,-0.75,-0.1); sfx('place');
+  if(!K.bowlTold){ K.bowlTold=1; rtoast(IS_TOUCH?'🎳 Walk up to the line. The arrow swings across the lane: tap 🎳 Roll when it points at the pins!':'🎳 Walk up to the line. The arrow swings across the lane: click (or E) to roll when it points at the pins!'); } }
+function bowlRelease(){ const K=mansionK, G=K.bgame; if(!G)return; const L=G.L; K.bgame=null; L.hero=false; L.sweep=false; if(!L.ball)rackPins(L); drawLaneScore(L); bowlHud(''); }
+function bowlCanRoll(){ const K=mansionK, G=K.bgame; if(!K.heldBall||!G||G.over)return null; const L=G.L; if(L.ball||L.resetT>0)return null;
+  return Math.abs(pl.p[0]-L.x)<1.3&&pl.p[2]>BW.foul-0.4&&pl.p[2]<68.6&&pl.p[1]<5?L:null; }
+function bowlRoll(){ const K=mansionK, L=bowlCanRoll(); if(!L)return; const sx=Math.max(L.x-0.9,Math.min(L.x+0.9,pl.p[0])); armR.remove(K.heldBall); K.heldBall.geometry.dispose(); K.heldBall=null; K.bthrowT=0.6; heroBall(L,sx,L.x+K.bowl.aim); }
+function heroBall(L,sx,tx,force,spd){ const B=mansionK.bowl; L.ball={hero:true,m:msph(B.gb,0.24,mm(BOWL_COLS[L.i%6]),sx,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,sx,tx,spd:spd||10,hit:false,force,gut:0}; snd(()=>noise(300,1.6,0.08,'lowpass')); }
+// which pins your ball knocks down: the ones in its path, and the ones those fly into. The pocket often takes them all
+function bowlKnock(L,off,force){ const up=L.pins.filter(p=>!p.down), rel=p=>p.x-L.x; if(force==='X')return up;
+  if(typeof force==='number')return up.slice().sort((a,b)=>Math.abs(rel(a)-off)-Math.abs(rel(b)-off)).slice(0,force);
+  const a=Math.abs(off); if(up.length===10&&((a>0.05&&a<0.36&&Math.random()<0.65)||(a<=0.05&&Math.random()<0.4)))return up;
+  const hit=up.filter(p=>Math.abs(rel(p)-off)<0.38), q=hit.slice();
+  while(q.length){ const p=q.shift(); for(const o of up){ if(hit.includes(o))continue; const dx=o.x-p.x, dz=p.z-o.z; if(dz>-0.1&&dz<0.7&&Math.abs(dx)<0.7&&Math.random()<(dz>0.2?0.7:0.35)){ hit.push(o); q.push(o); } } }
+  return hit; }
+function heroBallTick(K,L,b,dt){ const F=BW.F; b.z-=b.spd*dt; const prog=Math.min(1,(BW.foul-b.z)/(BW.foul-BW.head)); let x=b.sx+(b.tx-b.sx)*prog;
+  if(!b.gut&&Math.abs(x-L.x)>1.12){ b.gut=Math.sign(x-L.x); snd(()=>noise(200,0.5,0.1,'lowpass')); } if(b.gut)x=L.x+b.gut*1.35; // into the gutter!
+  b.m.position.set(x,F+(b.gut?0.12:0.24),b.z); b.m.rotation.x-=b.spd*dt/0.24;
+  if(!b.hit&&b.z<=BW.head+0.15){ b.hit=true; const hit=b.gut?[]:bowlKnock(L,x-L.x,b.force);
+    for(const p of hit){ p.down=true; p.v=[(p.x-x)*3+(Math.random()-0.5)*2,2+Math.random()*2.5,-3-Math.random()*3,Math.random()*8,Math.random()*8]; }
+    if(hit.length)snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); heroRolled(L,hit.length,!!b.gut); }
+  if(b.z<BW.pitZ){ K.bowl.gb.remove(b.m); b.m.geometry.dispose(); L.ball=null; L.resetT=1.6; } }
+function heroRolled(L,n,gut){ const K=mansionK, G=K.bgame; if(!G||G.L!==L)return; const before=bowlState(G.rolls); G.rolls.push(n); const st=bowlState(G.rolls);
+  if(before.fresh&&n===10){ G.strikes++; G.streak++; if(G.streak===3){ G.turkeys++; turkeyTime(L); } else rtoast(G.streak>3?'🎳 STRIKE! '+G.streak+' in a row!':'🎳 STRIKE!'); }
+  else { G.streak=0; if(!before.fresh&&L.pins.every(p=>p.down))rtoast('🎳 Spare!'); else if(!n)rtoast(gut?'🎳 Gutter ball! Oops.':'🎳 Missed them all!'); }
+  L.sweep=!st.over&&!st.fresh; if(st.over){ G.over=true; K.slipT=2.2; } if(!(K.bowl.blk>0&&G.streak===3))drawLaneScore(L); }
+function bowlReceipt(){ const K=mansionK, G=K.bgame; if(!G)return; const F=bowlFrames(G.rolls), tot=bowlTotal(G.rolls), pb=tot>(K.bowlBest||0); if(pb){ K.bowlBest=tot; queueSave(); }
+  let h='<div class="dsT">🎳 BOWL-O-RAMA</div><div class="dsH" style="margin:0 0 6px">Lane '+(G.L.i+1)+' · '+new Date().toLocaleDateString()+'</div><table>';
+  F.forEach((fr,f)=>{ h+='<tr><td>Frame '+(f+1)+'</td><td>'+frameMarks(fr,f).split('').join(' ')+'</td><td>'+fr.tot+'</td></tr>'; });
+  h+='<tr><td><b>TOTAL</b></td><td></td><td><b>'+tot+'</b></td></tr><tr><td>Strikes</td><td></td><td>'+G.strikes+'</td></tr>'+(G.turkeys?'<tr><td>Turkeys 🦃</td><td></td><td>'+G.turkeys+'</td></tr>':'')+'</table>'+
+    (pb?'<div class="dsB">⭐ New best score!</div>':'<div class="dsB">Your best: '+K.bowlBest+'</div>')+'<div class="dsH">'+(IS_TOUCH?'Tap here to close.':'Click to close.')+' Pick up a ball to play again!</div>';
+  const el=$('dragSlip'); el.innerHTML=h; el.style.display='block'; slipBtnShow(true); sfx('coin'); }
+// every frame: the aim arrow, the score at the top of the screen, the receipt, and letting go of the lane when you leave the alley
+function bowlHero(K,dt){ const B=K.bowl, G=K.bgame, piloted=demo&&!demo.user, onAlley=pl.p[1]<5.5&&inHouse(pl.p);
+  if(K.bthrowT>0){ K.bthrowT-=dt; const t=1-K.bthrowT/0.6; armR.rotation.x=t<0.4?-1.4*t/0.4:-1.4+3.0*(t-0.4)/0.6; }
+  if(!piloted&&!onAlley){ if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } if(G)bowlRelease(); B.arrow.visible=false; return; }
+  if(K.slipT>0){ K.slipT-=dt; if(K.slipT<=0)bowlReceipt(); }
+  const L=piloted?null:bowlCanRoll(); B.arrow.visible=!!L;
+  if(L){ const ph=(B.t/2.8)%1; B.aim=(Math.abs(ph*2-1)*2-1)*1.1; const sx=Math.max(L.x-0.9,Math.min(L.x+0.9,pl.p[0])), z0=BW.foul-0.5; B.arrow.position.set(sx,BW.F+0.07,z0); B.arrow.rotation.y=Math.atan2(-(L.x+B.aim-sx),-(BW.head-z0)); }
+  if(G&&!piloted){ const st=bowlState(G.rolls); bowlHud(G.over?'🎳 Game over: '+bowlTotal(G.rolls)+' points!':'🎳 Frame '+(st.frame+1)+' · Ball '+(st.ball+1)+' · Score '+bowlTotal(G.rolls)); } else bowlHud(''); }
+function turkeyTime(L){ const B=mansionK.bowl; drawLaneScore(L,true); if(B.blk>0){ B.blk=16; return; } B.blk=16; B.glow.visible=true; for(const L2 of B.lanes)L2.laneM.material.color.setHex(0x2a1a4a); bigText('XXX = TURKEY!!! 🦃'); snd(()=>{ sfx('buy'); noise(900,1.4,0.25,'bandpass'); });
   for(const L2 of B.lanes)if(L2.ph!=='wait'){ L2.ph='wait'; L2.t=0; } }
 function blackLights(on){ const B=mansionK&&mansionK.bowl; if(!B)return; if(on)return; B.blk=0; B.glow.visible=false; for(const L of B.lanes){ L.laneM.material.color.setHex(0xd8a868); for(const p of L.pins)p.m.userData.mats[0].color.setHex(0xf8f6f0); drawLaneScore(L); L.bowler.R.armL.rotation.z=L.bowler.R.armR.rotation.z=0; }
   for(const d of B.people)d.R.armL.rotation.z=d.R.armR.rotation.z=0; blockMat.color.setRGB(1,0.9,0.8); }
@@ -6060,7 +6143,9 @@ function buildResortLife(K,go){ const F1=MN.F1;
     ['donut','duck','pizza','flamingo'].forEach((k,i)=>{ const f=floatMesh(k); f.scale.setScalar(0.4); f.position.set(-1.8+i*1.2,2.3,-2.05); f.rotation.x=-1.2; s.add(f); }); }
   // the hot tub's bubbles and the fire pit
   K.bubbles=[]; for(let i=0;i<12;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(0.08,5,4),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.8})); go.add(b); K.bubbles.push({m:b,t:Math.random()}); }
-  { const fp=grp(go,87,F1,9); mcyl(fp,1.0,1.0,0.4,mm(0x7a7a7a),0,0.2,0,16); const f=flames(fp,0,0.35,0,1.2); K.fires.push(f); for(let i=0;i<4;i++){ const a=i/4*Math.PI*2+0.4; const c=grp(go,87+Math.cos(a)*2.4,F1,9+Math.sin(a)*2.4,-a-Math.PI/2); mb(c,0.7,0.45,0.7,mm(0x8a5a3a),0,0.22,0); mb(c,0.7,0.7,0.1,mm(0x8a5a3a),0,0.6,0.32); } }
+  { const fp=grp(go,87,F1,9); mcyl(fp,1.0,1.0,0.4,mm(0x7a7a7a),0,0.2,0,16); const f=flames(fp,0,0.35,0,1.2); K.fires.push(f); K.fireChairs=[]; K.fireFam=[];
+    for(let i=0;i<4;i++){ const a=i/4*Math.PI*2+0.4, x=87+Math.cos(a)*2.4, z=9+Math.sin(a)*2.4, ry=Math.PI/2-a, c=grp(go,x,F1,z,ry); mb(c,0.7,0.45,0.7,mm(0x8a5a3a),0,0.22,0); mb(c,0.7,0.7,0.1,mm(0x8a5a3a),0,0.6,0.32); // each chair faces the fire
+      const ch={x,z,ry,a}; K.fireChairs.push(ch); if(i%2){ const p=seatPerson(go,x,F1+0.47-0.72*(i===3?0.74:1),z,ry,i===3?'kid':''); p.R.armR.rotation.x=1.3; const st=mcyl(p.R.armR,0.015,0.015,1.3,mm(0x8a6a3a),0,-0.75,-0.6,5); st.rotation.x=Math.PI/2; msph(p.R.armR,0.07,mm(0xfff4e0),0,-0.75,-1.25,1,1,1.3); p.name=i===3?'Cousin Zoe':'Uncle Joe'; ch.who=p; K.fireFam.push(p); } } }
   // the pool party: cousins dancing in the shallow end
   K.party=[]; for(const [x,z] of [[39,20],[42.5,21.5],[38.5,17.5],[44,18.5],[41.2,16.6]]){ const g=grp(go,x,MN.F1-1,z,Math.random()*6), R=makeRig(g); dressRig(R,familyLook(Math.random()<0.5?'kid':'')); g.scale.setScalar(0.85); K.party.push({g,R,ph:Math.random()*6}); }
   K.floats=[]; }
@@ -6101,6 +6186,7 @@ function openFloats(){ if(document.pointerLockElement)document.exitPointerLock()
 function rideFloat(f){ const K=mansionK; K.ride=f; f.vx=f.vz=0; pl.v=[0,0,0]; sfx('flap'); rtoast('🛟 You hop onto the '+FLOATS[f.k].replace(/^\S+ /,'').toLowerCase()+'! Move to paddle around, jump or E to hop off.'); }
 function hopOff(){ const K=mansionK; if(!K.ride)return; const f=K.ride; K.ride=null; pl.p=[f.x,MN.F1-0.6,f.z]; pl.v=[0,4,0]; snd(()=>noise(1200,0.25,0.12,'bandpass')); }
 function rideUpdate2(dt){ const K=mansionK, f=K.ride; let ix=joy.x, iz=joy.y; if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  if(demo){ demoInput(dt); if(!demo.user){ const r=demoPilot(dt)||{}; ix=r.ix||0; iz=r.iz||0; if(K.ride!==f)return {hs:0}; } } // the demo paddles (and its story keeps going)
   const P=padRead(); ix+=P.lx; iz+=P.ly; const c=Math.cos(yaw), s=Math.sin(yaw), fwd=-iz; f.vx+=((-s*fwd+c*ix)*2.6-f.vx)*Math.min(1,dt*2); f.vz+=((-c*fwd-s*ix)*2.6-f.vz)*Math.min(1,dt*2);
   if(Math.hypot(ix,iz)>0.1)f.h=yaw; pl.p=[f.x,MN.F1+0.25+Math.sin(f.ph*1.6)*0.06,f.z]; pl.v=[0,0,0]; if(keys.Space||upHeld||P.a)hopOff(); return {hs:0}; }
 // riding the slide
@@ -6122,7 +6208,13 @@ function frontYard(P,r){ const spots=[]; for(const z of [82,94,105])for(const x 
     if(k==='cherry'){ for(let y=0;y<4;y++)P(x,g+y,z,ID.log); P(x+1,g+3,z,ID.log); P(x-1,g+3,z,ID.log); for(let dy=-1;dy<=1;dy++){ const R=dy===1?2:3; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.3||(r()<0.12&&Math.hypot(dx,dz)>R-1))continue; P(x+dx,g+4+dy,z+dz,ID.leaves_pink); } } return; }
     const leaf=k==='orange'?ID.leaves_orange:k==='red'?ID.leaves_red:k==='gold'?ID.leaves_gold:ID.leaves, h=k==='apple'?4:5; for(let y=0;y<h;y++)P(x,g+y,z,ID.log); const ty=g+h-1;
     for(let dy=-2;dy<=1;dy++){ const R=dy>=0?1:2; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.abs(dx)===R&&Math.abs(dz)===R&&(dy===1||r()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,ty+dy,z+dz,leaf); } }
-    if(k==='apple')MN.apples.push([x,ty,z]); }); }
+    if(k==='apple')MN.apples.push([x,ty,z]); }); yardExtras(P,r,MN.apples); }
+function yardExtras(P,r,apples){ const g=MN.F1;
+  for(const [x,z] of [[48,85],[65,85],[40,99],[73,99]]){ for(let y=0;y<4;y++)P(x,g+y,z,ID.log); const ty=g+3; // apple trees, low enough to pick from
+    for(let dy=-2;dy<=1;dy++){ const R=dy>=0?1:2; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.abs(dx)===R&&Math.abs(dz)===R&&(dy===1||r()<0.5))continue; if(!dx&&!dz&&dy<1)continue; P(x+dx,ty+dy,z+dz,ID.leaves); } } apples.push([x,ty,z]); }
+  for(const [x,z] of [[14,88],[26,99]]){ for(let y=0;y<7;y++)P(x,g+y,z,ID.quartz); for(let dy=3;dy<=7;dy++){ const R=dy===7?0:dy===3?1:dy>5?1:2; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.3||(!dx&&!dz&&dy<7))continue; P(x+dx,g+dy,z+dz,ID.leaves_gold); } } } // birches: white trunks, gold leaves
+  { const x=76, z=88; for(let y=0;y<6;y++)P(x,g+y,z,ID.log); for(let dy=3;dy<=8;dy++){ const R=dy===8?1:dy===3?2:3; for(let dx=-R;dx<=R;dx++)for(let dz=-R;dz<=R;dz++){ if(Math.hypot(dx,dz)>R+0.4||(r()<0.12&&Math.hypot(dx,dz)>R-1))continue; if(!dx&&!dz&&dy<6)continue; P(x+dx,g+dy,z+dz,r()<0.3?ID.leaves_orange:ID.leaves_red); } } } // a big red maple
+  cityTree(P,38,g,88,'pine',r); }
 // --- furniture for the upstairs rooms and the landing
 function paintingMesh(par,x,y,z,ry,w,h,seed2){ const c=canvasTex(64,48), X=c.x, r=mulberry32(seed2); const kind=seed2%3;
   if(kind===0){ X.fillStyle='#8ac8f0'; X.fillRect(0,0,64,48); X.fillStyle='#ffd24a'; X.beginPath(); X.arc(48,12,6,0,7); X.fill(); X.fillStyle='#4a8a3a'; X.beginPath(); X.moveTo(0,48); X.lineTo(0,30); X.lineTo(20,18); X.lineTo(40,32); X.lineTo(64,22); X.lineTo(64,48); X.fill(); }
@@ -6222,9 +6314,10 @@ function movieDraw(K){ const M=K.movie, x=M.x, t=K.t; const g=x.createLinearGrad
   x.fillStyle='rgba(0,0,0,0.5)'; x.fillRect(0,0,256,22); x.fillStyle='#fff'; x.font='bold 14px serif'; x.textAlign='center'; x.fillText('THE GREAT TURKEY CHASE',128,16); x.textAlign='left'; M.t.needsUpdate=true; }
 
 function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof saved==='object'?saved:{};
-  mansionK={t:0,G:{},seated:false,carved:false,phase:null,people:[],couch:[],dancers:[],dishes:[],fires:[],chest:!!sv.chest,score:[14,10],tdT:0,tdNext:14,chatT:3,leaves:null,bites:0};
+  mansionK={t:0,G:{},seated:false,carved:false,phase:null,people:[],couch:[],dancers:[],dishes:[],fires:[],chest:!!sv.chest,score:[14,10],tdT:0,tdNext:14,chatT:3,leaves:null,bites:0,bowlBest:Math.max(0,Math.min(300,+sv.bowlBest||0))};
   const K=mansionK, G=K.G; for(const k of ['base','ground','upper','out','bowl']){ G[k]=new THREE.Group(); scene.add(G[k]); }
   if(saved&&!sv.bowl){ const P2=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }; buildBowlVoxels(P2,(a,b,c,d,e,f,id)=>{ for(let x=a;x<=d;x++)for(let y=b;y<=e;y++)for(let z=c;z<=f;z++)P2(x,y,z,id); }); rebuildAll(); } // a mansion saved before the bowling alley
+  if(saved&&!sv.yard2){ const P3=(x,y,z,id)=>{ if(inB(x,y,z)&&!world[idx(x,y,z)])world[idx(x,y,z)]=id; }, ap=[]; yardExtras(P3,mulberry32(seed+77),ap); for(const [x,ty,z] of ap)makeAppleTree(x,ty,z); rebuildAll(); }
   buildBowling(K,G.bowl);
   const g1=G.ground, F1=MN.F1, F2=MN.F2, FB=MN.FB, T=MN.table, wood=mm(0x6a4428), dk=mm(0x2a2a2e), white=mm(0xf4f2ee);
   // === the dining room: the table, the chairs, the family, the feast
@@ -6317,13 +6410,14 @@ function buildMansionLife(saved){ clearMansionLife(); const sv=saved&&typeof sav
   for(const [x,z,s] of [[51,73,1],[52.2,72.6,0.7],[60.8,73,1],[61.8,72.4,0.6],[49.5,76.5,0.8],[63,76.6,0.9]]){ const p=grp(go,x,F1,z); msph(p,0.4*s,mm(0xe07020),0,0.32*s,0,1.2,0.85,1.2); mcyl(p,0.04,0.05,0.18*s,mm(0x3a5a1a),0,0.72*s,0,6); }
   for(const [x,z] of [[47.5,73],[64.5,73]]){ mb(go,1.4,0.9,0.9,mm(0xd8b04a),x,F1+0.45,z); }
   buildResortLife(K,go); const fl=Array.isArray(sv.floats)&&sv.floats.length?sv.floats.slice(0,12):['turkey']; fl.forEach((k,n)=>{ if(!FLOATS[k])return; const f=addFloat(k,n?62+(n%4)*3:47.5,n?13+(n%3)*2:17.8); if(!n)f.home=[47.5,17.8]; }); // the turkey stays close to the party
+  K.turks=[]; spawnYardTurkeys(K,12);
   K.bulbs=[]; for(let i=0;i<34;i++){ const x=38+i, z=29.4-1.2*Math.sin(Math.PI*((i%8)/8)); const m=glowM([0xffe08a,0xff8a3a,0xffd04a][i%3]); const b=new THREE.Mesh(new THREE.SphereGeometry(0.09,6,5),m); b.position.set(x,F1+5.2-0.6*Math.sin(Math.PI*((i%8)/8)),z-0.3); go.add(b); K.bulbs.push(m); }
   { const n=300, pos=new Float32Array(n*3); for(let i=0;i<n;i++){ pos[i*3]=Math.random()*W; pos[i*3+1]=F1+Math.random()*18; pos[i*3+2]=Math.random()*D; } const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
     K.leaves=new THREE.Points(g,new THREE.PointsMaterial({color:0xe07a2a,size:0.22})); go.add(K.leaves); }
   if(!mansionSkyK)mansionSkyK=buildMansionSky(); mansionSky.visible=true; }
-function clearMansionLife(){ const K=mansionK; if(!K)return; if(K.seated)standUp(true); if(K.bowl&&K.bowl.blk>0)blackLights(false); if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } if(K.camWas){ camMode=K.camWas; K.camWas=0; } K.danceT=0; K.ride=null; K.slide=null; for(const k of Object.keys(K.G)){ scene.remove(K.G[k]); K.G[k].traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.isPointLight)o.dispose&&o.dispose(); }); }
+function clearMansionLife(){ const K=mansionK; if(!K)return; if(K.seated)standUp(true); if(K.bowl&&K.bowl.blk>0)blackLights(false); if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } bowlHud(''); $('dragSlip').style.display='none'; slipBtnShow(false); if(K.camWas){ camMode=K.camWas; K.camWas=0; } K.danceT=0; K.ride=null; K.slide=null; for(const k of Object.keys(K.G)){ scene.remove(K.G[k]); K.G[k].traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.isPointLight)o.dispose&&o.dispose(); }); }
   document.body.classList.remove('dinner'); mansionK=null; mansionSky.visible=false; mansionMusic(false); }
-function mansionSave(){ return {chest:!!mansionK.chest,floats:mansionK.floats.map(f=>f.k),bowl:1}; }
+function mansionSave(){ return {chest:!!mansionK.chest,floats:mansionK.floats.map(f=>f.k),bowl:1,bowlBest:mansionK.bowlBest||0,yard2:1}; }
 // --- the sky: an autumn sunset, with hills in fall colors all around
 const mansionSky=new THREE.Group(); mansionSky.visible=false; scene.add(mansionSky); let mansionSkyK=null;
 function buildMansionSky(){ const G=mansionSky; const far=mountainRing(300,120,40,90,0x8a4a3a,0xb86a3a,0xd89a4a,17), near=mountainRing(200,100,18,45,0x6a3a1a,0xc8601a,0xe0a030,23); far.position.set(W/2,MN.F1-1,D/2); near.position.set(W/2,MN.F1-1,D/2); G.add(far,near);
@@ -6333,6 +6427,24 @@ function buildMansionSky(){ const G=mansionSky; const far=mountainRing(300,120,4
 function applyMansionSky(){ scene.background.setHex(0xf0a070); scene.fog.color.setHex(0xe8a07a); scene.fog.near=70; scene.fog.far=320; if(camera.far<700){ camera.far=700; camera.updateProjectionMatrix(); }
   for(const c of clouds)c.visible=false; blockMat.color.setRGB(1,0.9,0.8); waterMat.color.setRGB(1,0.9,0.8); setWeather('clear'); }
 
+// --- wild turkeys wander all round the grounds: they peck, gobble, fan their tails, and run off if you get too close
+function turkeyWalkable(x,z,free){ const fx=Math.floor(x), fz=Math.floor(z), ng=mansionK&&mansionK.noGo; if(fx<2||fz<2||fx>W-3||fz>D-3)return false; if(ng&&!free&&x>ng[0]&&x<ng[1]&&z>ng[2]&&z<ng[3])return false; if(x>MN.X0-1&&x<MN.X1+1&&z>MN.Z0-1&&z<MN.Z1+1)return false;
+  const Gr=MN.garage; if(x>Gr.x0-1&&x<Gr.x1+1&&z>Gr.z0-1&&z<Gr.z1+1)return false; const g=get(fx,MN.F1-1,fz); return !!g&&!B[g].fluid&&!get(fx,MN.F1,fz)&&!get(fx,MN.F1+1,fz); }
+function addYardTurkey(K,x,z,breed){ const M=animalModel('turkey',breed||(Math.random()<0.5?'tom':'hen')); K.G.out.add(M.g); const t={M,x,z,h:Math.random()*6.28,st:'walk',t:Math.random()*3,spd:0.9,ph:Math.random()*6,gob:3+Math.random()*10}; K.turks.push(t); M.g.position.set(x,MN.F1,z); return t; }
+function spawnYardTurkeys(K,n,box){ let tries=0; while(K.turks.length<n&&tries++<600){ const x=box?box[0]+Math.random()*(box[1]-box[0]):4+Math.random()*(W-8), z=box?box[2]+Math.random()*(box[3]-box[2]):4+Math.random()*(D-8); if(turkeyWalkable(x,z))addYardTurkey(K,x,z); } }
+function yardTurkeyTick(K,dt){ const hero=pl.p;
+  for(const t of K.turks){ const dx=t.x-hero[0], dz=t.z-hero[2], d=Math.hypot(dx,dz), M=t.M; t.t-=dt;
+    if(!t.script){ if(d<4.5&&Math.abs(hero[1]-MN.F1)<2.5){ if(t.st!=='flee'&&d<25)gobble(Math.max(0,1-d/25)); t.st='flee'; t.t=1.6; t.spd=4.5; t.h=Math.atan2(-dx,-dz); } // run away from you
+      else if(t.t<=0){ if(t.st==='walk'&&Math.random()<0.5){ t.st='peck'; t.spd=0; t.t=1+Math.random()*2.5; } else { t.st='walk'; t.spd=0.9; t.h+=(Math.random()-0.5)*2.4; t.t=2+Math.random()*4; } } }
+    if(t.spd>0){ const nx=t.x-Math.sin(t.h)*t.spd*dt, nz=t.z-Math.cos(t.h)*t.spd*dt; if(turkeyWalkable(nx,nz,t.script)){ t.x=nx; t.z=nz; } else t.h+=1.2+Math.random(); }
+    t.ph+=dt*(t.spd>0?6+t.spd*2:0); const sw=t.spd>0?Math.sin(t.ph)*0.7:0; M.legs[0].rotation.x=sw; M.legs[1].rotation.x=-sw;
+    M.neck.rotation.x=t.st==='peck'?0.7+0.5*Math.sin(K.t*13+t.ph):Math.sin(t.ph)*0.12; if(M.tail)M.tail.rotation.x=t.st==='peck'?Math.sin(K.t*2+t.ph)*0.08:0;
+    if(t.hop>0)t.hop-=dt; M.g.position.set(t.x,MN.F1+(t.st==='flee'?Math.abs(Math.sin(t.ph))*0.12:0)+(t.hop>0?Math.sin(Math.PI*t.hop/0.45)*0.6:0),t.z); M.g.rotation.y=t.h;
+    t.gob-=dt; if(t.gob<=0){ t.gob=6+Math.random()*12; if(d<25)gobble(Math.max(0,1-d/25)*0.8); } } }
+// --- sit by the fire pit
+function fireSit(c){ const K=mansionK; K.fireSit=c; pl.p=[c.x,MN.F1-0.05,c.z]; pl.v=[0,0,0]; yaw=c.ry; pitch=-0.2; sfx('place'); rtoast('🔥 Cozy! The fire crackles. E (or 🚪) to stand up.'); }
+function fireStand(quiet){ const K=mansionK, c=K.fireSit; if(!c)return; K.fireSit=null; pl.p=[c.x+Math.cos(c.a)*1.1,MN.F1,c.z+Math.sin(c.a)*1.1]; pl.v=[0,0,0]; if(!quiet)sfx('place'); }
+const FIRE_CHAT=['This fire is so cozy.','Who wants a s\'more?','Look at all the stars!','Happy Thanksgiving!','I\'m sooo full...','My marshmallow caught fire!','Best. Thanksgiving. Ever.'];
 // --- life in the mansion: the family eats and chats, the fires flicker, football on TV, the disco, the movie, falling leaves
 function inHouse(p){ return p[0]>MN.X0&&p[0]<MN.X1&&p[2]>MN.Z0&&p[2]<MN.Z1; }
 function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!demo.user&&demo.cam&&demo.cam.k==='man'?[camera.position.x,camera.position.y-1.6,camera.position.z]:pl.p, inH=inHouse(eye)||(eye[0]>MN.garage.x0&&eye[0]<MN.garage.x1&&eye[2]>MN.garage.z0&&eye[2]<MN.garage.z1);
@@ -6355,7 +6467,8 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
     K.ball.rotation.y+=dt*0.8; K.beams.forEach((h,i)=>{ h.rotation.z=Math.sin(K.t*1.2+i)*0.6; h.rotation.x=Math.cos(K.t*0.9+i*2)*0.5; });
     for(const d of K.dancers){ d.ph+=dt*4.4; const R=d.R, s=Math.sin(d.ph); R.armL.rotation.z=-1.2-0.6*s; R.armR.rotation.z=1.2-0.6*s; R.legL.rotation.x=0.4*s; R.legR.rotation.x=-0.4*s; d.g.position.y=MN.FB+Math.abs(s)*0.15; d.g.rotation.y+=dt*0.8; animRig(R,dt,0); }
     K.mvT=(K.mvT||0)-dt; if(K.mvT<=0){ K.mvT=0.08; movieDraw(K); } }
-  if(G.out.visible)resortTick(K,dt);
+  if(G.out.visible){ resortTick(K,dt); yardTurkeyTick(K,dt); for(const p of K.fireFam){ p.R.head.rotation.y=Math.sin(K.t*0.5+p.ph)*0.3; p.R.armR.rotation.x=1.3+Math.sin(K.t*0.8+p.ph)*0.08; animRig(p.R,dt,0); if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } } }
+    K.fcT=(K.fcT||3)-dt; if(K.fcT<=0){ K.fcT=4+Math.random()*4; if(Math.hypot(pl.p[0]-87,pl.p[2]-9)<9&&K.fireFam.length)npcSay(K.fireFam[Math.floor(Math.random()*K.fireFam.length)],FIRE_CHAT[Math.floor(Math.random()*FIRE_CHAT.length)]); } }
   { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
     let any=false; (K.gcars||[]).forEach((v,i)=>{ if(v.driver||v.jet){ return; } v.gb=(v.gb||0)+((K.gB?1:0)-(v.gb||0))*Math.min(1,dt*3); if(v.gb<0.01){ if(v.gbOn){ v.gbOn=false; vehPlace(v); } return; } any=true; v.gbOn=true;
       const ph=K.t*6.5+i*1.3, y=v.gb*0.35*Math.abs(Math.sin(ph)); v.m.position.y=v.p[1]+y; v.m.rotation.set(v.gb*0.08*Math.sin(ph*0.5),v.h,v.gb*0.06*Math.sin(ph*0.25+i),'YXZ'); });
@@ -6366,7 +6479,7 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
     K.bulbs.forEach((m,i)=>m.color.setHSL(0.1+0.03*Math.sin(K.t*2+i),1,0.6+0.1*Math.sin(K.t*3+i))); }
   K.stT=(K.stT||0)-dt; if(K.stT<=0&&lvl===1&&Math.hypot(eye[0]-80,eye[2]-34)<18){ K.stT=0.6; puff(79.5+Math.random(),MN.F1+1.5,31.6,false); }
   // you, sitting at the table
-  if(K.ride){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.4; }
+  if(K.ride||K.fireSit){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.4; }
   if(K.danceT>0)heroDance(K.t);
   if(K.seated){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=0.9; armR.rotation.x=0.9+(K.myBite>0?Math.sin(K.myBite*Math.PI)*1.3:0); if(K.myBite>0){ K.myBite+=dt*1.6; if(K.myBite>=1)K.myBite=0; } if(P2&&P2.k==='toast'&&P2.t<8)armR.rotation.x=2.6; } }
 // --- the dinner: sit down, grandpa carves the turkey, eat, a toast, the wishbone
@@ -6398,12 +6511,14 @@ function eatDish(d){ const K=mansionK; if(!d){ const s=K.mySeat; d=K.dishes.slic
   d.scale.multiplyScalar(0.93); if(d.scale.x<0.45)d.scale.setScalar(0.45); burst(d.position.x-0.5,d.position.y-0.3,d.position.z-0.5,new THREE.Color(0xe8c898),6); for(let k=0;k<3;k++)snd(()=>noise(700,0.06,0.12,'lowpass'));
   setTimeout(()=>{ for(let k=0;k<2;k++)snd(()=>noise(600,0.06,0.1,'lowpass')); },180);
   const p=K.people.slice().sort((a,b)=>a.g.position.distanceTo(d.position)-b.g.position.distanceTo(d.position))[Math.floor(Math.random()*3)]; if(p)npcSay(p,info[2]); rtoast('😋 '+info[1]+'. Yum! ❤️+1'); }
-function mansionHit(){ const K=mansionK; if(!onMansion())return false; const d=mansionAim(); if(d){ eatDish(d); return true; } return K.seated; }
-function mansionAction(){ const K=mansionK; if(!onMansion())return null; if(K.seated)return {label:'🚪 Stand up',fn:()=>standUp()}; if(K.ride)return {label:'🛟 Hop off',fn:hopOff}; if(K.slide)return null;
+function mansionHit(){ const K=mansionK; if(!onMansion())return false; if(bowlCanRoll()){ bowlRoll(); return true; } const d=mansionAim(); if(d){ eatDish(d); return true; } return K.seated; }
+function mansionAction(){ const K=mansionK; if(!onMansion())return null; if(K.seated)return {label:'🚪 Stand up',fn:()=>standUp()}; if(K.fireSit)return {label:'🚪 Stand up',fn:()=>fireStand()}; if(K.ride)return {label:'🛟 Hop off',fn:hopOff}; if(K.slide)return null;
+  if(pl.p[1]<5&&inHouse(pl.p)){ if(bowlCanRoll())return {label:'🎳 Roll!',fn:bowlRoll}; if(!K.heldBall){ const L=bowlLaneAt(); if(L&&!(L.ball&&!L.hero))return {label:'🎳 Pick up a ball',fn:()=>grabBall(L)}; } }
   const sp=SLIDE_PTS[0]; if(Math.hypot(pl.p[0]-sp[0]+1,pl.p[2]-sp[2])<2.2&&pl.p[1]>MN.F1+5)return {label:'🛝 Ride the water slide!',fn:slideGo};
   if(Math.hypot(pl.p[0]-SHACK.x,pl.p[2]-(SHACK.z-2.4))<2.2&&Math.abs(pl.p[1]-MN.F1)<1)return {label:'🛟 Get a pool float',fn:openFloats};
   if(pl.p[1]<MN.F1+1&&!inHouse(pl.p)){ let best=null, bd=2.4; for(const f of K.floats){ const d=Math.hypot(pl.p[0]-f.x,pl.p[2]-f.z); if(d<bd){ bd=d; best=f; } } if(best)return {label:'🛟 Ride the '+FLOATS[best.k].replace(/^\S+ /,'').toLowerCase(),fn:()=>rideFloat(best)}; }
   const s=K.mySeat; if(Math.hypot(pl.p[0]-s[0],pl.p[2]-s[1])<1.6&&Math.abs(pl.p[1]-MN.F1)<1)return {label:'🪑 Sit down for dinner',fn:sitDown};
+  if(Math.abs(pl.p[1]-MN.F1)<1){ const c=(K.fireChairs||[]).find(c=>!c.who&&Math.hypot(pl.p[0]-c.x,pl.p[2]-c.z)<1.4); if(c)return {label:'🔥 Sit by the fire',fn:()=>fireSit(c)}; }
   const S=MN.secret; if(Math.abs(pl.p[1]-MN.F1)<1&&Math.hypot(pl.p[0]-(S.x-0.6),pl.p[2]-59.5)<1.8){ const open=get(S.x,MN.F1,S.z0)!==ID.bookshelf; return {label:open?'📕 Push the book back':'📕 Pull the red book',fn:()=>secretDoor(!open)}; }
   if(!K.chest&&Math.hypot(pl.p[0]-81,pl.p[2]-60.5)<1.8&&Math.abs(pl.p[1]-MN.F1)<1)return {label:'💰 Open the treasure chest',fn:openChest};
   return null; }
@@ -6420,17 +6535,55 @@ function discoBeat(dt,vol){ const K=mansionK, v=vol===undefined?1:vol; if(!AC||!
 const MAN_SHOTS=[[0,'walk'],[7,'foyer'],[12,'tv'],[17,'library'],[23,'sit'],[46,'wish'],[51,'disco']];
 const MAN_PARTY=[[0,'walk'],[6,'tv'],[15,'family'],[22,'garage'],[33,'food'],[39,'pool'],[46,'slide'],[56,'sit'],[79,'wish']];
 const MAN_BOWL=[[0,'bstairs'],[5,'alley'],[10,'bthrow'],[18,'bturkey'],[29,'sit'],[52,'wish']];
+// the turkey hunt: a bow and arrow on the front lawn (the arrow misses and the turkey runs off), then give up and go bowling
+// until you get a turkey of a different kind, dance in the disco, float on the giant turkey, and sit round the fire pit
+const MAN_HUNT=[[0,'hunt'],[11,'giveup'],[18,'hstairs'],[22,'hbowl'],[45,'bturkey'],[52,'disco'],[60,'float'],[70,'fire']];
+const HUNT_ROLLS=[{f:7,aim:-0.45},{f:3,aim:0.6},{f:'X',aim:0.16},{f:'X',aim:0.2},{f:'X',aim:0.14}], HUNT_ROLL_T=4.6;
+function bowMesh(){ const g=new THREE.Group(), w=mm(0x6a3a1a), inner=new THREE.Group(); inner.rotation.y=Math.PI/2; g.add(inner);
+  const arc=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.035,6,18,Math.PI),w); arc.rotation.z=-Math.PI/2; inner.add(arc); mb(g,0.012,1.1,0.012,mm(0xf4f2ee),0,0,0); // the bow and its string
+  const nock=huntArrowMesh(); nock.position.z=-0.35; g.add(nock); g.userData.nock=nock; return g; }
+function huntArrowMesh(){ const g=new THREE.Group(); const sh=mcyl(g,0.018,0.018,0.9,mm(0x8a6a3a),0,0,0,5); sh.rotation.x=Math.PI/2; const tip=new THREE.Mesh(new THREE.ConeGeometry(0.045,0.14,6),mm(0x9aa0a8)); tip.rotation.x=Math.PI/2; tip.position.z=0.5; g.add(tip);
+  for(const r of [0,Math.PI/2]){ const f=mb(g,0.12,0.012,0.16,mm(0xd8302a),0,0,-0.4); f.rotation.z=r; } return g; } // the point is at +z
+function manSay(K,text){ K.hsay=K.hsay||{g:model}; npcSay(K.hsay,text); }
+function huntEnd(K){ const H=K.hunt; if(!H)return; model.remove(H.bow); if(H.t){ H.t.script=false; } K.hunt=null; armL.rotation.x=armR.rotation.x=armL.rotation.z=armR.rotation.z=0; }
+function huntPilot(K,P,st,dt){ const H=K.hunt, T=H.t;
+  if(st>3.3&&!H.shot){ H.shot=1; H.bow.userData.nock.visible=false; const a=H.bow.localToWorld(new THREE.Vector3(0,0,-0.4)), toT=new THREE.Vector3(T.x-a.x,0,T.z-a.z).normalize(), side=new THREE.Vector3(-toT.z,0,toT.x);
+    const b=new THREE.Vector3(T.x,MN.F1+0.2,T.z).addScaledVector(toT,0.9).addScaledVector(side,-0.75); H.ar={m:huntArrowMesh(),a,b,t:0}; H.ar.m.scale.setScalar(1.5); K.G.out.add(H.ar.m); snd(()=>{ noise(2500,0.18,0.12,'highpass'); tone('sine',900,300,0.2,0.05); }); }
+  const A=H.ar; if(A&&A.t<1){ A.t=Math.min(1,A.t+dt/0.45); const at=t=>new THREE.Vector3().lerpVectors(A.a,A.b,t).add(new THREE.Vector3(0,Math.sin(Math.PI*t)*0.35,0)); const p=at(A.t); A.m.position.copy(p); if(A.t<1)A.m.lookAt(at(Math.min(1,A.t+0.03)));
+    if(A.t>=1){ snd(()=>noise(300,0.15,0.2,'lowpass')); burst(p.x-0.5,p.y-0.4,p.z-0.5,new THREE.Color(0x5a8a3a),6); } }
+  if(st>3.8&&!H.hop){ H.hop=1; T.hop=0.45; T.st='walk'; gobble(1); } // a startled jump...
+  if(st>4.5&&!H.flee){ H.flee=1; T.st='flee'; T.spd=5; T.h=Math.atan2(-(86-T.x),-(77-T.z)); gobble(1); burst(T.x-0.5,MN.F1+0.5,T.z-0.5,new THREE.Color(0x6a4428),8); }
+  if(st>6.8&&T.script){ T.script=false; T.st='walk'; T.spd=0.9; }
+  if(st>4.2&&!P.done.s1){ P.done.s1=1; manSay(K,'Aww, I missed! 😩'); } if(st>5.5&&!P.done.s2&&K.turks[1]){ P.done.s2=1; gobble(0.7); }
+  if(st>7.6&&!P.done.s3){ P.done.s3=1; manSay(K,'I give up... let\'s go bowling! 🎳'); }
+  if(st>4.6)yaw+=(Math.atan2(-(56.5-pl.p[0]),-(78-pl.p[2]))-yaw)*Math.min(1,dt*2); // turn to the house
+  return {ix:0,iz:0}; }
 const HI_LINES=['Hi sweetie!','Happy Thanksgiving!','Look who\'s here!','Come sit with us!','You made it!','Hi! Grab a plate!'];
 function demoMansionSetup(sc,P){ demo.vplace='mansion'; demo.mansionWorld=true; demo.cityKey=null; clearCityLife(); clearInteriorLife(); clearApples(); setWorldSize(...PLACES.mansion.dims); generateMansion(dmCfg.seed+31); rebuildAll(); refreshPortals(); buildMansionLife(null); applyPlaceSky();
-  pl.p=[56.5,MN.F1,92]; yaw=0; pitch=-0.05; Object.assign(P,{t:0,shot:-1,hs:0,list:sc.mstory==='tour'?MAN_SHOTS:sc.mstory==='bowl'?MAN_BOWL:MAN_PARTY}); demo.cam={k:'man',p:new THREE.Vector3(48,15,84),l:new THREE.Vector3(56,15,70)}; }
+  pl.p=[56.5,MN.F1,92]; yaw=0; pitch=-0.05; Object.assign(P,{t:0,shot:-1,hs:0,list:sc.mstory==='tour'?MAN_SHOTS:sc.mstory==='bowl'?MAN_BOWL:sc.mstory==='hunt'?MAN_HUNT:MAN_PARTY}); demo.cam={k:'man',p:new THREE.Vector3(48,15,84),l:new THREE.Vector3(56,15,70)}; }
 function manShot(P){ const L=P.list||MAN_SHOTS; let i=0; for(let k=0;k<L.length;k++)if(P.t>=L[k][0])i=k; return {i,sh:L[i][1],st:P.t-L[i][0]}; }
 function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt; const {i,sh,st}=manShot(P), party=P.list===MAN_PARTY;
-  if(i!==P.shot){ P.shot=i; P.done={}; P.wave=0; if(K.seated&&sh!=='wish')standUp(true);
+  if(K.hsay&&K.hsay.bubT>0){ K.hsay.bubT-=dt; if(K.hsay.bubT<=0&&K.hsay.bub){ model.remove(K.hsay.bub); K.hsay.bub=null; } }
+  if(i!==P.shot){ P.shot=i; P.done={}; P.wave=0; if(K.seated&&sh!=='wish')standUp(true); if(K.ride&&sh!=='float')K.ride=null; if(K.fireSit&&sh!=='fire')fireStand(true); if(K.hunt&&sh!=='hunt')huntEnd(K); if(sh!=='hunt'&&sh!=='giveup')K.noGo=null;
+    if(sh==='hunt'){ pl.p=[55,MN.F1,86]; const t=addYardTurkey(K,60.5,81,'tom'); t.script=true; t.st='peck'; t.spd=0; t.h=-Math.PI/2; spawnYardTurkeys(K,K.turks.length+6,[14,100,76,108]); spawnYardTurkeys(K,K.turks.length+6,[24,94,20,31]); spawnYardTurkeys(K,K.turks.length+3,[80,96,2,18]); K.noGo=[47,66,75,101]; for(const o of K.turks)if(o!==t&&o.x>46&&o.x<67&&o.z>74&&o.z<102){ o.x=o.x<56.5?42:71; } // the rest keep out of the shot
+      const bow=bowMesh(); bow.position.set(-0.05,1.3,-0.55); model.add(bow); K.hunt={t,bow}; yaw=Math.atan2(-(t.x-pl.p[0]),-(t.z-pl.p[2])); }
+    if(sh==='hstairs'){ pl.p=[63.5,MN.FB,63.4]; yaw=Math.PI; } if(sh==='hbowl'){ startBowlGame(K.bowl.lanes[1]); }
+    if(sh==='float'){ const f=K.floats[0]; f.x=47.5; f.z=17.8; f.vx=f.vz=0; pl.p=[f.x,MN.F1,f.z]; yaw=0; rideFloat(f); }
+    if(sh==='fire'){ fireSit(K.fireChairs[0]); if(K.fireFam[0])npcSay(K.fireFam[0],'Pull up a chair! 🔥'); }
     if(sh==='foyer'){ pl.p=[56.5,MN.F1,69]; yaw=0; } if(sh==='tv'){ pl.p=party?[56.5,MN.F1,68]:[40.5,MN.F1,66]; yaw=0; K.tdNext=party?5:1.5; } if(sh==='library'){ pl.p=[74,MN.F1,62]; yaw=Math.PI/2; } if(sh==='sit'){ blackLights(false); pl.p=[58,MN.F1,47]; sitDown(); } if(sh==='bstairs'){ pl.p=[63.5,MN.FB,63.4]; yaw=Math.PI; const L=K.bowl.lanes[1]; L.hero=true; L.frames=['X','X']; L.streak=2; drawLaneScore(L); L.ph='wait'; } if(sh==='bthrow'){ pl.p=[50.9,BW.F,64.4]; yaw=0; } if(sh==='disco'){ pl.p=[38,MN.FB,47]; yaw=0; }
     if(sh==='family'){ pl.p=[46,MN.F1,47.3]; yaw=-Math.PI/2; } if(sh==='garage'){ pl.p=[86.5,MN.F1,49]; yaw=-Math.PI/2; } if(sh==='food'){ pl.p=[68.5,MN.F1,38.1]; yaw=Math.PI/2; } if(sh==='pool'){ pl.p=[44.5,MN.F1,29.4]; yaw=Math.PI; }
     if(sh==='slide'){ pl.p=[32.6,MN.F1+6,7.5]; yaw=-Math.PI/2; } }
   const walk=(tx,tz,sp)=>{ const dx=tx-pl.p[0], dz=tz-pl.p[2]; if(Math.hypot(dx,dz)<0.4)return {ix:0,iz:0}; yaw=Math.atan2(-dx,-dz); return {ix:0,iz:-(sp||0.7)}; };
   if(sh==='walk')return walk(56.5,74);
+  if(sh==='hunt')return huntPilot(K,P,st,dt);
+  if(sh==='giveup')return pl.p[2]>76.5?walk(56.5,76,0.8):walk(56.5,64,0.8);
+  if(sh==='hstairs')return st<3.4?walk(63.5,68.6,0.6):walk(58,66.5,0.6);
+  if(sh==='hbowl'){ const L=K.bowl.lanes[1], k=Math.floor(st/HUNT_ROLL_T), s2=st-k*HUNT_ROLL_T, R=HUNT_ROLLS[k]; yaw=0;
+    if(R&&!P.done['b'+k]){ P.done['b'+k]=1; pl.p=[L.x+0.3,BW.F,64.9]; pl.v=[0,0,0]; if(!K.heldBall)K.heldBall=msph(armR,0.24,mm(BOWL_COLS[L.i%6]),0,-0.75,-0.1); }
+    if(R&&s2>1&&!P.done['r'+k]&&!L.ball&&!(L.resetT>0)){ P.done['r'+k]=1; if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } K.bthrowT=0.6; heroBall(L,L.x+0.3,L.x+R.aim,R.f,12); }
+    return {ix:0,iz:0}; }
+  if(sh==='float'){ yaw+=dt*0.3; return {ix:0,iz:-0.3}; }
+  if(sh==='fire')return {ix:0,iz:0};
   if(sh==='bstairs')return st<3.4?walk(63.5,68.6,0.6):walk(58,66.5,0.6);
   if(sh==='alley')return walk(50.9,65.2,0.5);
   if(sh==='bthrow'){ const L=K.bowl.lanes[1]; if(st>1.1&&!P.done.throw){ P.done.throw=1; if(K.heldBall){ armR.remove(K.heldBall); K.heldBall=null; } bowlThrow(L,true); L.ball.x0=50.9; } yaw=0; return st<1.0?{ix:0,iz:-0.35}:{ix:0,iz:0}; }
@@ -6450,7 +6603,15 @@ function mansionPilot(dt,P){ const K=mansionK; if(!K)return {ix:0,iz:0}; P.t+=dt
   if(sh==='disco'){ P.hs=0; return {ix:0,iz:0}; } return {ix:0,iz:0}; }
 function mansionDemoCam(dt){ const P=demo.pil, K=mansionK; if(!K)return; const {sh,st}=manShot(P), party=P.list===MAN_PARTY; let want, look, snap=false;
   if(sh==='walk'){ want=new THREE.Vector3(50.5-st*0.2,14.2+st*0.2,85-st*0.7); look=new THREE.Vector3(56,17,68); } // down the front walk, clear of the yard's trees
-  else if(sh==='bstairs'){ want=new THREE.Vector3(58.2,3.7,61.5); look=new THREE.Vector3(63,Math.min(pl.p[1]+1,4),Math.max(pl.p[2],65)); } // from the alley, up at the stairs
+  else if(sh==='hunt'){ const H=K.hunt, T=H&&H.t; if(H&&!H.shot||st>6.6||!T){ const tanH=Math.tan(camera.fov*Math.PI/360)*camera.aspect, d=Math.max(14.5,7.6/tanH); want=new THREE.Vector3(56.5+Math.sin(st*0.3)*0.5,MN.F1+3.4,78+d); look=new THREE.Vector3(56.5,MN.F1+4.3,80.5); } // the whole Happy Thanksgiving sign, even on a tall screen
+      else { want=new THREE.Vector3(57.6,MN.F1+1.5,84.4); look=new THREE.Vector3(Math.min(T.x,63)+0.3,MN.F1+0.5,T.z-0.4); }
+    if(H&&!H.shot||st<4.6){ armL.rotation.x=1.45; armR.rotation.x=1.45; armR.rotation.z=0.35; armL.rotation.z=0; } else { armL.rotation.x=0.3; armR.rotation.x=0; armR.rotation.z=0; } }
+  else if(sh==='giveup'){ want=new THREE.Vector3(pl.p[0]+1.6,MN.F1+3.2,pl.p[2]+6.5); look=new THREE.Vector3(pl.p[0],MN.F1+1.6,pl.p[2]-4); }
+  else if(sh==='hbowl'){ const L=K.bowl.lanes[1], b=L.ball, s2=st%HUNT_ROLL_T; if(b&&!b.hit){ want=new THREE.Vector3(b.m.position.x,BW.F+1.6,b.m.position.z+3.4); look=new THREE.Vector3(b.m.position.x,BW.F+0.4,b.m.position.z-4); snap=true; }
+      else if(s2<1.05&&!b){ want=new THREE.Vector3(pl.p[0]+1.5,BW.F+2.3,pl.p[2]+3); look=new THREE.Vector3(L.x,BW.F+0.6,52); } else { want=new THREE.Vector3(L.x,BW.F+2.2,48.5); look=new THREE.Vector3(L.x,BW.F+0.5,43); } }
+  else if(sh==='float'){ const f=K.ride||K.floats[0], a=st*0.28; want=new THREE.Vector3(f.x+Math.sin(a)*5.5,MN.F1+2.4,f.z+Math.cos(a)*5.5); look=new THREE.Vector3(f.x,MN.F1+0.7,f.z); }
+  else if(sh==='fire'){ const a=0.4+Math.PI+0.5+st*0.1; want=new THREE.Vector3(87+Math.cos(a)*5.4,MN.F1+2.3,9+Math.sin(a)*5.4); look=new THREE.Vector3(87,MN.F1+0.8,9); }
+  else if(sh==='bstairs'||sh==='hstairs'){ want=new THREE.Vector3(58.2,3.7,61.5); look=new THREE.Vector3(63,Math.min(pl.p[1]+1,4),Math.max(pl.p[2],65)); } // from the alley, up at the stairs
   else if(sh==='alley'){ want=new THREE.Vector3(53,4.2,69); look=new THREE.Vector3(52.5,1,46); }
   else if(sh==='bthrow'){ const L=K.bowl.lanes[1], b=L.ball; if(!K.heldBall&&!P.done.throw){ K.heldBall=msph(armR,0.24,mm(0x7a2ad8),0,-0.75,-0.1); } if(!P.done.throw){ armR.rotation.x=st<0.6?-1.6*st/0.6:-1.6+3.2*Math.min(1,(st-0.6)/0.5); }
     if(b){ want=new THREE.Vector3(b.m.position.x,BW.F+1.6,b.m.position.z+3.4); look=new THREE.Vector3(b.m.position.x,BW.F+0.4,b.m.position.z-4); snap=true; } else if(P.done.throw){ want=new THREE.Vector3(L.x,BW.F+2.2,48.5); look=new THREE.Vector3(L.x,BW.F+0.5,43); } else { want=new THREE.Vector3(pl.p[0]+1.4,BW.F+2.4,pl.p[2]+3.2); look=new THREE.Vector3(L.x,BW.F+0.6,52); } }
