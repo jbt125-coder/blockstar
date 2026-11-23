@@ -2529,7 +2529,7 @@ function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOn
   if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
+  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'||sc.act==='thanks'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
@@ -6055,8 +6055,8 @@ function drawLaneScore(L,turkey){ if(!turkey&&mansionK&&mansionK.bgame&&mansionK
   x.font='bold 38px monospace'; x.fillStyle=turkey?'#3dff5a':'#fff'; x.fillText(turkey?'XXX':(L.frames.slice(-6).join(' ')||'-'),128,64); if(turkey){ x.font='bold 20px sans-serif'; x.fillStyle='#ff3ad0'; x.fillText('= TURKEY!!! 🦃',128,88); } L.scr.t.needsUpdate=true; }
 // one throw: walk up, swing, roll. A strike knocks all ten pins flying; otherwise some of them
 function bowlThrow(L,strike){ const B=mansionK.bowl; L.ball={m:msph(B.gb,0.24,mm(BOWL_COLS[Math.floor(Math.random()*6)]),L.x+0.5,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,x0:L.x+0.5,spd:9+Math.random()*2,hook:(Math.random()-0.5)*0.6,strike:strike===undefined?Math.random()<0.3:strike,hit:false};
-  snd(()=>noise(300,1.6,0.08,'lowpass')); }
-function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; const F=BW.F;
+  if(B.near)snd(()=>noise(300,1.6,0.08,'lowpass')); } // (the alley's sounds only play when you're down there)
+function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; B.near=near; const F=BW.F;
   for(const L of B.lanes){ const bw=L.bowler, R=bw.R;
     if(!L.hero){ L.t+=dt; if(L.ph==='wait'){ bw.g.position.set(bw.home[0],F+0.45-0.72*(bw.g.scale.x),bw.home[1]); bw.g.rotation.y=Math.PI; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=R.armR.rotation.x=0.6; if(B.blk<=0&&L.t>L.cd&&!L.ball&&L.pins.every(p=>!p.down)){ L.ph='walk'; L.t=0; } }
       else if(L.ph==='walk'){ const k=Math.min(1,L.t/1.2); bw.g.position.set(L.x+0.4,F,bw.home[1]+(BW.foul+0.9-bw.home[1])*k); bw.g.rotation.y=0; R.legL.rotation.x=Math.sin(L.t*9)*0.6; R.legR.rotation.x=-R.legL.rotation.x; R.armR.rotation.x=0.3; if(k>=1){ L.ph='swing'; L.t=0; } }
@@ -6065,7 +6065,7 @@ function bowlTick(K,dt,near){ const B=K.bowl; if(!B)return; B.t+=dt; const F=BW.
     const b=L.ball; if(b&&b.hero)heroBallTick(K,L,b,dt); else if(b){ b.z-=b.spd*dt; const prog=(BW.foul-b.z)/(BW.foul-BW.head); b.m.position.set(b.x0+Math.sin(prog*2.4)*b.hook-(b.strike?(b.x0-L.x)*prog:0),F+0.24,b.z); b.m.rotation.x-=b.spd*dt/0.24;
       if(!b.hit&&b.z<=BW.head+0.15){ b.hit=true; const n=b.strike?10:3+Math.floor(Math.random()*6), order=L.pins.slice().sort(()=>Math.random()-0.5);
         for(const p of (b.strike?L.pins:order.slice(0,n))){ p.down=true; p.v=[(p.x-b.m.position.x)*3+(Math.random()-0.5)*2,2+Math.random()*2.5,-3-Math.random()*3,Math.random()*8,Math.random()*8]; }
-        snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); L.frames.push(b.strike?'X':String(n)); if(L.frames.length>9)L.frames.shift(); L.streak=b.strike?L.streak+1:0;
+        if(near)snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); L.frames.push(b.strike?'X':String(n)); if(L.frames.length>9)L.frames.shift(); L.streak=b.strike?L.streak+1:0;
         if(b.strike&&near&&L.hero)rtoast('🎳 STRIKE!'); if(L.hero&&L.streak>=3){ L.streak=0; turkeyTime(L); } else drawLaneScore(L); } // only your turkey starts the party
       if(b.z<BW.pitZ){ B.gb.remove(b.m); b.m.geometry.dispose(); L.ball=null; L.resetT=2.2; } }
     for(const p of L.pins)if(p.down&&p.v){ p.v[1]-=14*dt; const m=p.m; m.position.x+=p.v[0]*dt; m.position.z+=p.v[2]*dt; m.position.y=Math.max(F,m.position.y+p.v[1]*dt); m.rotation.x+=p.v[3]*dt; m.rotation.z+=p.v[4]*dt; if(m.position.y<=F){ p.v[0]*=0.9; p.v[2]*=0.9; p.v[3]*=0.9; p.v[4]*=0.9; } if(m.position.z<BW.pitZ)m.visible=false; }
@@ -6113,7 +6113,7 @@ function bowlRelease(){ const K=mansionK, G=K.bgame; if(!G)return; const L=G.L; 
 function bowlCanRoll(){ const K=mansionK, G=K.bgame; if(!K.heldBall||!G||G.over)return null; const L=G.L; if(L.ball||L.resetT>0)return null;
   return Math.abs(pl.p[0]-L.x)<1.3&&pl.p[2]>BW.foul-0.4&&pl.p[2]<68.6&&pl.p[1]<5?L:null; }
 function bowlRoll(){ const K=mansionK, L=bowlCanRoll(); if(!L)return; const sx=Math.max(L.x-0.9,Math.min(L.x+0.9,pl.p[0])); armR.remove(K.heldBall); K.heldBall.geometry.dispose(); K.heldBall=null; K.bthrowT=0.6; heroBall(L,sx,L.x+K.bowl.aim); }
-function heroBall(L,sx,tx,force,spd){ const B=mansionK.bowl; L.ball={hero:true,m:msph(B.gb,0.24,mm(BOWL_COLS[L.i%6]),sx,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,sx,tx,spd:spd||10,hit:false,force,gut:0}; snd(()=>noise(300,1.6,0.08,'lowpass')); }
+function heroBall(L,sx,tx,force,spd){ const B=mansionK.bowl; L.ball={hero:true,m:msph(B.gb,0.24,mm(BOWL_COLS[L.i%6]),sx,BW.F+0.24,BW.foul-0.3),z:BW.foul-0.3,sx,tx,spd:spd||10,hit:false,force,gut:0}; if(B.near)snd(()=>noise(300,1.6,0.08,'lowpass')); }
 // which pins your ball knocks down: the ones in its path, and the ones those fly into. The pocket often takes them all
 function bowlKnock(L,off,force){ const up=L.pins.filter(p=>!p.down), rel=p=>p.x-L.x; if(force==='X')return up;
   if(typeof force==='number')return up.slice().sort((a,b)=>Math.abs(rel(a)-off)-Math.abs(rel(b)-off)).slice(0,force);
@@ -6126,7 +6126,7 @@ function heroBallTick(K,L,b,dt){ const F=BW.F; b.z-=b.spd*dt; const prog=Math.mi
   b.m.position.set(x,F+(b.gut?0.12:0.24),b.z); b.m.rotation.x-=b.spd*dt/0.24;
   if(!b.hit&&b.z<=BW.head+0.15){ b.hit=true; const hit=b.gut?[]:bowlKnock(L,x-L.x,b.force);
     for(const p of hit){ p.down=true; p.v=[(p.x-x)*3+(Math.random()-0.5)*2,2+Math.random()*2.5,-3-Math.random()*3,Math.random()*8,Math.random()*8]; }
-    if(hit.length)snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); heroRolled(L,hit.length,!!b.gut); }
+    if(hit.length&&K.bowl.near)snd(()=>{ noise(1400,0.5,0.35,'bandpass'); noise(400,0.4,0.25,'lowpass'); }); heroRolled(L,hit.length,!!b.gut); }
   if(b.z<BW.pitZ){ K.bowl.gb.remove(b.m); b.m.geometry.dispose(); L.ball=null; L.resetT=1.6; } }
 function heroRolled(L,n,gut){ const K=mansionK, G=K.bgame; if(!G||G.L!==L)return; const before=bowlState(G.rolls); G.rolls.push(n); const st=bowlState(G.rolls);
   if(before.fresh&&n===10){ G.strikes++; G.streak++; if(G.streak===3){ G.turkeys++; turkeyTime(L); } else rtoast(G.streak>3?'🎳 STRIKE! '+G.streak+' in a row!':'🎳 STRIKE!'); }
