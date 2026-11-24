@@ -1043,6 +1043,7 @@ function weaponMesh(id,fp){
   const M=c=>{ const m=new THREE.MeshLambertMaterial({color:c}); if(fp){m.depthTest=false;} return m; };
   const add=(w,h,d,c,y,x)=>{ const m=box(w,h,d,M(c)); m.position.set(x||0,y,0); if(fp)m.renderOrder=999; g.add(m); return m; };
   add(0.06,0.3,0.06,0x6b4a2a,0.05);
+  if(id==='blaster'){ g.children[0].visible=false; add(0.12,0.16,0.44,0x2a2a30,0.2).position.z=-0.06; add(0.08,0.08,0.24,0x3a3a44,0.24).position.z=-0.36; add(0.09,0.09,0.06,0xff8a1a,0.24).position.z=-0.5; add(0.08,0.2,0.1,0x1a1a1e,0.04).position.z=0.06; }
   if(id==='ball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,8),M(0xd8304a)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='boomerang'){ g.children[0].visible=false; boomerangShape(g,M,fp); }
   if(id==='laser'){ g.children[0].visible=false; add(0.12,0.14,0.42,0xe8ecf2,0.2).position.z=-0.05; add(0.07,0.07,0.22,0x2a2e36,0.22).position.z=-0.34; add(0.08,0.08,0.05,0x40e0ff,0.22).position.z=-0.46; add(0.07,0.2,0.09,0x2a2e36,0.06).position.z=0.06; g.scale.setScalar(0.55); }
@@ -1382,7 +1383,7 @@ function updateTarget(){
 // ================= ACTIONS =================
 let atkCd=0;
 function hitAction(){
-  if(drive)return; if(petTapAim())return; if(weapon==='pole'&&!(ranchK&&onRanch())){ fishingHit(); return; } if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; if(odyK&&odyHit())return; if(weapon==='ball'){ rkBallThrow(); return; } if(weapon==='fists'&&rkK&&onPhilly()&&!demo&&rkPunch())return; // Rocky's rubber ball, and boxing in Philadelphia // on the ranch, hitting throws your lasso at a steer or wild horse
+  if(drive)return; if(petTapAim())return; if(weapon==='pole'&&!(ranchK&&onRanch())){ fishingHit(); return; } if(ranchK&&ranchHit())return; if(mansionK&&mansionHit())return; if(odyK&&odyHit())return; if(weapon==='ball'){ rkBallThrow(); return; } if(weapon==='blaster'){ if(atkCd<=0)shoot(WP.blaster); return; } if(weapon==='fists'&&rkK&&onPhilly()&&!demo&&rkPunch())return; // Rocky's rubber ball, and boxing in Philadelphia // on the ranch, hitting throws your lasso at a steer or wild horse
   swingT=0.25;
   if(aimFruit){ pickFruit(aimFruit); return; }
   if(!aimMob&&target&&isCoral(target.b)&&!demo){ coralAsk(target); return; } // coral: take some to transplant
@@ -1410,7 +1411,7 @@ function laserMesh(kind){ const g=new THREE.Group(), mine=kind==='laser'; g.add(
 function blobMesh(kind){ const g=new THREE.Group(), f=kind==='fireball', pz=kind==='plasma'; const a=box(f?0.5:0.38,f?0.5:0.38,f?0.5:0.38,new THREE.MeshBasicMaterial({color:f?0xff6a10:pz?0x40ff60:0x6fb8ff,transparent:!f,opacity:0.85})); g.add(a);
   const c=box(f?0.3:0.2,f?0.3:0.2,f?0.3:0.2,new THREE.MeshBasicMaterial({color:f?0xffe24a:0xdff2ff})); c.position.set(0.05,0.05,-0.05); g.add(c); g.traverse(o=>{ if(o.geometry)o.userData.own=true; }); return g; }
 function addShot(o,d,spd,grav,dmg,kind,fromMob){
-  const mesh=kind==='web'?webMesh():kind==='spear'?spearMesh():kind==='rock'?rockMesh():kind==='fireball'||kind==='splash'||kind==='plasma'?blobMesh(kind):kind==='laser'||kind==='rlaser'?laserMesh(kind):arrowMesh(fromMob); scene.add(mesh);
+  const mesh=kind==='dart'?mxDartMesh():kind==='bullet'?mxBulletMesh():kind==='web'?webMesh():kind==='spear'?spearMesh():kind==='rock'?rockMesh():kind==='fireball'||kind==='splash'||kind==='plasma'?blobMesh(kind):kind==='laser'||kind==='rlaser'?laserMesh(kind):arrowMesh(fromMob); scene.add(mesh);
   const sh={p:[o.x,o.y,o.z],v:[d.x*spd,d.y*spd,d.z*spd],grav,dmg,kind,fromMob,mesh,life:3}; shots.push(sh); return sh; }
 function shoot(w){
   atkCd=w.cd; const d=lookDir(), o=camera.position.clone().addScaledVector(d,0.4);
@@ -1420,6 +1421,7 @@ function shoot(w){
     d.copy(aim.sub(o).normalize()); }
   if(w.boomer){ throwBoomerang(o,d,w); return; }
   if(weapon==='bow'&&arrowSel!=='normal'&&arrows[arrowSel]>0){ fireSpecial(arrowSel,o,d,w); return; }
+  if(weapon==='blaster'){ const nerf=mxShotMode()==='nerf'; addShot(o,d,w.spd,w.grav,w.dmg,nerf?'dart':'bullet',false); snd(()=>nerf?tone('square',900,300,0.06,0.05):noise(2500,0.1,0.18,'highpass')); return; }
   addShot(o,d,w.spd,w.grav,w.dmg,'arrow',false);
   sfx('bow');
 }
@@ -2365,7 +2367,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2390,8 +2392,8 @@ const DM_DEND={stop:'🪂 Stop on the lines, dance, then fly off the ramp',jet:'
 const DM_FX={normal:'🎨 Normal',bw:'⚫ Black and white',sepia:'🟤 Sepia',film:'📼 Old home video',funky:'🌈 Funky colors',glitch:'⚡ Glitchy stutter'};
 function isConc(sc){ return !!sc&&(sc.act==='concert'||sc.act==='stadium'||sc.act==='fire'); } // both concerts sing with any button
 const DM_FXS=Object.assign({auto:'🎬 Same as the whole demo'},DM_FX);
-const DM_MXLOOK={green:'💚 Matrix green',normal:'🎨 Normal colors'};
-const DM_SCENE0={mxlook:'green',act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
+const DM_MXLOOK={green:'💚 Matrix green',normal:'🎨 Normal colors'}, DM_MXSHOT={real:'🔫 Real bullets',nerf:'🎯 Nerf darts'};
+const DM_SCENE0={mxlook:'green',mxshot:'real',act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:12,cap:'',dcity:'random',dsrc:'fresh',singers:2,crowd:'mixed',pyro:'on',mouth:'auto',wonder:'random',wmon:'on',giant:'cycle',fx:'auto',fstat:'random',fband:'cycle',fcrowd:'mixed',horse:'random',rstory:'day',dcar:'random',dend:'stop',mstory:'party'};
 const DEMO0={scenes:[
   {act:'showcase',time:'day',wx:'clear',land:'normal',cam:'cine',secs:10,cap:'Meet my hero!'},
   {act:'explore',time:'day',wx:'clear',land:'normal',cam:'cine',secs:14,cap:''},
@@ -2407,7 +2409,7 @@ const DEMO0={scenes:[
   {act:'fly',time:'day',wx:'snow',land:'snowy',cam:'wide',secs:14,cap:''},
   {act:'side',time:'day',wx:'clear',land:'desert',cam:'cine',secs:12,cap:'A Game from Earth'}],loop:true,fades:true,world:'demo',seed:2026};
 function cleanScene(o){ const s=Object.assign({},DM_SCENE0); if(!o||typeof o!=='object')return s;
-  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY],['mxlook',DM_MXLOOK]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando|philly)$/.test(o[k])))s[k]=o[k];
+  for(const [k,T] of [['act',DM_ACT],['time',DM_TIME],['wx',DM_WX],['land',DM_LAND],['cam',DM_CAM],['crowd',DM_CROWD],['pyro',DM_PYRO],['mouth',DM_MOUTH],['wonder',DM_WON],['dcity',DM_CITY],['dsrc',DM_DSRC],['giant',DM_GIANT],['wmon',DM_WMON],['fx',DM_FXS],['fstat',DM_FSTAT],['fband',DM_FBAND],['fcrowd',DM_FCROWD],['horse',DM_HORSE],['rstory',DM_RSTORY],['dcar',DM_DCAR],['dend',DM_DEND],['mstory',DM_MSTORY],['mxlook',DM_MXLOOK],['mxshot',DM_MXSHOT]])if(T[o[k]]||(k==='dcity'&&typeof o[k]==='string'&&/^(city|newyork|sanfran|orlando|philly)$/.test(o[k])))s[k]=o[k];
   if(o.singers!==undefined&&isFinite(+o.singers))s.singers=Math.max(0,Math.min(3,Math.round(+o.singers)));
   s.secs=Math.max(3,Math.min(300,Math.round(+o.secs||s.secs))); s.cap=typeof o.cap==='string'?o.cap.slice(0,80):''; return s; }
 function readDemo(){ let c=null; try{ c=JSON.parse(localStorage.getItem(DEMO_KEY)||'null'); }catch(e){} if(!c||!Array.isArray(c.scenes))c=JSON.parse(JSON.stringify(DEMO0));
@@ -2426,7 +2428,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
       '<label>Backup singers'+sel(DM_SING,'singers',i,String(s.singers))+'</label><label>Crowd'+sel(DM_CROWD,'crowd',i,s.crowd)+'</label><label>Pyrotechnics'+sel(DM_PYRO,'pyro',i,s.pyro)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':
-      isMx(s)?'<label>Matrix look'+sel(DM_MXLOOK,'mxlook',i,s.mxlook)+'</label>':
+      isMx(s)?'<label>Matrix look'+sel(DM_MXLOOK,'mxlook',i,s.mxlook)+'</label><label>Shots'+sel(DM_MXSHOT,'mxshot',i,s.mxshot)+'</label>':
       isFilm(s)?'':
       s.act==='thanks'?'<label>Story'+sel(DM_MSTORY,'mstory',i,s.mstory)+'</label>':
       s.act==='drag'?'<label>Car'+sel(DM_DCAR,'dcar',i,s.dcar)+'</label><label>Ending'+sel(DM_DEND,'dend',i,s.dend)+'</label>':
@@ -2435,7 +2437,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isFilm(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the Matrix (chapters 1–3 so far)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the whole Matrix (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2461,7 +2463,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
   onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
-  onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the Matrix chapters (about 2 minutes so far)?'))return; loadMatrix(); redraw(); });
+  onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Matrix (about 7 minutes)?'))return; loadMatrix(); redraw(); });
   onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of Rocky (about 6½ minutes)?'))return; loadRocky(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
   onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
@@ -3553,6 +3555,7 @@ function streetTree(P,x,g,z,kind,rnd){ if(kind==='palm'){ cityTree(P,x,g,z,'palm
 // Arcade driving: W/S (or the joystick, or RT/LT) to go and stop, A/D (or the stick) to steer. Cars can't flip over, they
 // climb one-block steps, and they stop at walls. The front of every vehicle is its local -z, like the hero.
 const VEH={
+  agentcar:{name:'Agent Sedan',icon:'🚘',len:4.6,wid:1.9,hgt:1.5,spd:22,acc:10,col:0x141418,kind:'car'},
   sports:{name:'Sports Car',icon:'🏎️',len:4.2,wid:1.9,hgt:1.15,spd:26,acc:13,col:0xd8202a,kind:'sports'},
   family:{name:'Family Car',icon:'🚗',len:4.4,wid:1.9,hgt:1.55,spd:18,acc:8,col:0x2f6ae0,kind:'car'},
   pickup:{name:'Pickup Truck',icon:'🛻',len:5.0,wid:2.0,hgt:1.8,spd:17,acc:7,col:0x3fa34d,kind:'pickup'},
@@ -3780,7 +3783,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; }
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; } if(mxK){ const r=mxAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -5110,6 +5113,7 @@ function updatePlayer(dt){
   if(riding())return rideUpdate(dt);
   if(mansionK&&mansionK.danceT>0){ $('tint').style.opacity=0; mansionK.danceT-=dt; if(mansionK.danceT<=0&&mansionK.camWas){ camMode=mansionK.camWas; mansionK.camWas=0; } if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // dancing in the pool after the slide
   if(odyK&&odyK.ride)return odRideUpdate(dt); // sailing a ship on the Odyssey's sea
+  if(mxK&&mxK.heli&&mxK.heli.ride)return mxHeliUpdate(dt); // flying the helicopter over Matrix City
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
   if(mansionK&&mansionK.hold){ $('tint').style.opacity=0; if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } if(mansionK.hold)pl.p=mansionK.hold.slice(); pl.v=[0,0,0]; return {hs:0}; } // up a ladder (in a demo)
@@ -5205,7 +5209,7 @@ function updateMobs(dt){
       if(t.archer&&chase){ g.armL.rotation.x=1.5; g.armR.rotation.x=m.atk>0?1.2:1.5; }
       else if(m.type==='zombie'){ const l=m.atk>0?0.4:0; g.armL.rotation.x=1.45+a*0.12+l; g.armR.rotation.x=1.45-a*0.12+l; }
       else { const raise=m.atk>0?1.8:0; g.armL.rotation.x=-a*0.6+raise; g.armR.rotation.x=a*0.6+raise; } }
-    m.flash=Math.max(0,m.flash-dt); for(const mt of g.mats) mt.emissive.setHex(m.flash>0?0xaa0000:mt.userData.e);
+    m.flash=Math.max(0,m.flash-dt); for(const mt of g.mats) mt.emissive.setHex(m.flash>0?(m.flashC||0xaa0000):mt.userData.e);
     if(g.bar.visible){ g.bar.quaternion.copy(camera.quaternion); g.fg.scale.x=Math.max(0.001,m.hp/t.hp); }
   }
   // spawning
@@ -7400,7 +7404,9 @@ function generateMatrix(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array
   // the agents' building, with the interrogation room
   { const V=MXC.gov; shell(V.x0,V.z0,V.x1,V.z1,G,G+16,ID.concrete); for(const y of [9,14])F(V.x0+1,y,V.z0+1,V.x1-1,y,V.z1-1,ID.concrete); F(V.x0,G+17,V.z0,V.x1,G+17,V.z1,ID.steel);
     for(const y0 of [10,15])for(const y of [y0,y0+1])wins(V.x0,V.z0,V.x1,V.z1,y,ID.window,2); F(51,G,V.z0,53,G+2,V.z0,0);
-    shell(46,50,56,60,G,G+4,ID.concrete); F(49,G+1,50,53,G+2,50,ID.obsidian); F(47,G-1,51,55,G-1,59,ID.slate); }
+    shell(46,50,56,60,G+6,G+9,ID.concrete); F(49,G+7,50,53,G+8,50,ID.obsidian); F(47,G+5,51,55,G+5,59,ID.slate); F(V.x0+1,G-1,V.z0+1,V.x1-1,G-1,V.z1-1,ID.marble);
+    for(const x of [46,49,55,58])for(const z of [50,54,58,62])F(x,G,z,x,G+4,z,ID.marble); F(50,G+11,V.z0,52,G+12,V.z0,ID.glass);
+    for(let k=0;k<=17;k++)F(63,G,47+k,64,G+k,47+k,ID.concrete); }
   // the rest of the skyline
   const tower=(x0,z0,x1,z1,h,id)=>{ F(x0,G,z0,x1,G+h,z1,id); for(let y=G+1;y<G+h;y++)if((y-G)%3)wins(x0,z0,x1,z1,y,ID.window,2); F(x0+2,G+h+1,z0+2,x1-2,G+h+2,z1-2,ID.steel); };
   for(const [x0,z0,x1,z1] of [[92,8,108,30],[112,10,124,28],[66,46,84,70],[88,48,104,72],[108,46,124,70],[8,86,30,110],[36,84,56,104],[60,86,80,112],[84,84,100,106],[104,86,124,114]])
@@ -7449,7 +7455,7 @@ function mxRainTick(dt){ mxRainA+=(mxRainWant-mxRainA)*Math.min(1,dt*3); if(mxRa
     for(let k=0;k<col.len;k++){ const yy=Math.floor(col.y/fs)*fs-k*fs; if(yy<0||yy>h+fs)continue; if(!col.g[k]||Math.random()<0.05)col.g[k]=MX_GLYPHS[Math.floor(Math.random()*MX_GLYPHS.length)];
       x.fillStyle=k===0?'rgba(220,255,225,0.95)':'rgba(40,255,100,'+(0.85*(1-k/col.len)).toFixed(3)+')'; x.fillText(col.g[k],i*fs+fs/2,yy); } }); }
 // skies: the city's green night and day, the club, the rain, and the real world's black sky
-function mxGreen(){ if(!mxK)return false; if(demo)return !!demo.sc&&isMx(demo.sc)&&demo.sc.mxlook!=='normal'&&!mxK.rw.visible; return curPlace()==='matrix'; } // Matrix green, or normal colors (a choice for each scene in Demo Mode)
+function mxGreen(){ if(!mxK)return false; if(demo)return !!demo.sc&&isMx(demo.sc)&&demo.sc.mxlook!=='normal'&&!mxK.rw.visible&&!(mxStage&&mxStage.real); return curPlace()==='matrix'; } // Matrix green, or normal colors (a choice for each scene in Demo Mode)
 function mxSky(k){ const G=demo&&demo.sc&&isMx(demo.sc)?demo.sc.mxlook!=='normal':true;
   const S=(G?{night:[0x060c08,[0.6,0.8,0.64],24,160],day:[0x9fc0a6,[0.9,1,0.88],40,200],club:[0x020104,[0.34,0.28,0.48],10,70],rain:[0x0e1812,[0.6,0.74,0.64],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]}
     :{night:[0x0c1220,[0.7,0.74,0.84],24,160],day:[0xa8c8e8,[1,1,1],40,200],club:[0x040208,[0.4,0.3,0.48],10,70],rain:[0x141c26,[0.68,0.72,0.8],14,100],real:[0x07050a,[0.3,0.25,0.35],12,130]})[k]||[0x060c08,[0.6,0.8,0.64],24,160];
@@ -7526,7 +7532,7 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
     K.bunny=mxBunny(root); K.bunny.position.set(56.2,G0+1.15,13.2); K.bunny.rotation.y=Math.PI/2; K.bunny.visible=false; }
   // the street: lamps and parked cars
   for(const x of [12,26,40,54,68,82,96,110])for(const [z,s] of [[32.6,1],[43.4,-1]]){ const p=grp(root,x,G,z); mcyl(p,0.08,0.1,5,mm(0x2a2e2a),0,2.5,0,6); mb(p,0.1,0.1,1.2,mm(0x2a2e2a),0,5,s*0.55); mb(p,0.4,0.15,0.5,glowM(0xe8ffd0),0,4.92,s*1.1); }
-  for(const [x,z,ry,c] of [[16,35.3,-Math.PI/2,0x1a1a20],[86,35.3,-Math.PI/2,0x3a4a3a],[30,40.7,Math.PI/2,0x5a1a1a],[100,40.7,Math.PI/2,0x2a2a3a],[72,40.7,Math.PI/2,0xd8d0b0]]){ const car=mxCar(root,c); car.position.set(x,G,z); car.rotation.y=ry; }
+  for(const [x,z,ry,c,ty] of [[16,35.3,-Math.PI/2,0x1a1a20,'agentcar'],[86,35.3,-Math.PI/2,0x3a4a3a,'family'],[30,40.7,Math.PI/2,0x5a1a1a,'sports'],[100,40.7,Math.PI/2,0x2a2a3a,'agentcar'],[72,40.7,Math.PI/2,0xd8d0b0,'taxi']]){ if(!demo&&VEH[ty]){ const v=makeVehicle(ty,x,G,z,ry); freeVehicles.push(v); continue; } const car=mxCar(root,c); car.position.set(x,G,z); car.rotation.y=ry; }
   // the office floor: rows of cubicles, Neo's desk, the elevator, and the empty office
   { const f=MXC.off.f, wall=mm(0x8a9aa8), dsk=mm(0xb8b0a0); for(const cx of [12.5,17.5,22.5])for(const cz of [57.5,62.5,67.5]){ const g=grp(root,cx,f,cz); mb(g,0.08,1.3,3.6,wall,-2,0.65,0); mb(g,4,1.3,0.08,wall,0,0.65,1.8); mb(g,4,1.3,0.08,wall,0,0.65,-1.8);
       mb(g,0.9,0.06,3.2,dsk,-1.5,0.78,0); const mn=grp(g,-1.65,0.81,0.2); mb(mn,0.12,0.36,0.46,mm(0x2a2a2e),0,0.2,0); const s=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.28),cx===12.5&&cz===57.5?scrMat(K.code):glowM(0x8ab8a0)); s.position.set(0.07,0.2,0); s.rotation.y=Math.PI/2; mn.add(s);
@@ -7535,7 +7541,7 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
     K.elev=[]; for(const s of[-1,1]){ const p=mb(root,1,2.6,0.1,mm(0xa8b0b8),28.75+s*0.5,f+1.3,70.9); K.elev.push(p); }
     mxDesk(root,12.5,f,48.5,0,2,1); mxChair(root,12.5,f,49.6,0,0x3a3a40).scale.set(0.6,0.7,0.6); }
   // the interrogation room
-  { const G0=G; mxDesk(root,51,G0,55,0,2.6,1.4); for(const [z,ry] of [[53.3,Math.PI],[56.8,0]])mxChair(root,51,G0,z,ry,0x3a3a40).scale.set(0.6,0.7,0.6);
+  { const G0=G+6; mxDesk(root,51,G0,55,0,2.6,1.4); for(const [z,ry] of [[53.3,Math.PI],[56.8,0]])mxChair(root,51,G0,z,ry,0x3a3a40).scale.set(0.6,0.7,0.6);
     const lp=grp(root,51,G0+4.95,55); mcyl(lp,0.02,0.02,1,mm(0x1a1a1a),0,-0.5,0,4); mcyl(lp,0.1,0.4,0.3,mm(0x2a2a2a),0,-1.1,0,10); msph(lp,0.12,glowM(0xfff4d0),0,-1.25,0);
     K.folder=mb(root,0.5,0.04,0.36,mm(0xd8c890),50.8,G0+0.83,54.4); mb(root,0.25,0.2,0.3,mm(0x1a1a1e),55.6,G0+4.6,59.6); }
   // Morpheus's room: two red armchairs, a little table, a tall mirror, and the crew's machines
@@ -7558,10 +7564,10 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
     K.goo=mcyl(pod,0.74,0.74,1.5,new THREE.MeshBasicMaterial({color:0xd83a6a,transparent:true,opacity:0.35,depthWrite:false}),0,0.8,0,14);
     K.cables=[]; for(const [y,z] of [[1.8,0],[1.3,0.25],[1.0,-0.25]]){ const c=mb(pod,1.8,0.08,0.08,mm(0x101014),-1.5,y,z); K.cables.push(c); } K.neck=mb(pod,0.6,0.07,0.07,mm(0x101014),-0.45,1.72,0);
     const dr=grp(RW,9,34,6); K.drone=dr; msph(dr,0.9,mm(0x141418),0,0,0,1.3,0.8,1); for(let i=0;i<5;i++)mb(dr,0.1,0.1,0.05,glowM(0xff2020),-0.6+i*0.3,0.1,-0.95); for(let i=0;i<6;i++){ const l=mb(dr,0.12,2.2,0.12,mm(0x1a1a1e),Math.cos(i)*0.8,-1.2,Math.sin(i)*0.8); l.rotation.z=Math.cos(i)*0.4; l.rotation.x=Math.sin(i)*0.4; } dr.visible=false;
-    K.rwLight=new THREE.PointLight(0xff6a9a,1.2,14); K.rwLight.position.set(6,31,2); RW.add(K.rwLight); } }
+    K.rwLight=new THREE.PointLight(0xff6a9a,1.2,14); K.rwLight.position.set(6,31,2); RW.add(K.rwLight); } mxBuildSets(K); }
 function mxMirror(K,k){ const x=K.mir.x; const g=x.createLinearGradient(0,0,64,128); g.addColorStop(0,'#e8f0f4'); g.addColorStop(0.5,'#8a9aa4'); g.addColorStop(1,'#d8e0e8'); x.fillStyle=g; x.fillRect(0,0,64,128);
   if(k>0){ x.strokeStyle='rgba(255,255,255,0.8)'; x.lineWidth=2; for(let i=0;i<6;i++){ x.beginPath(); x.arc(20,60,(i*12+k*40)%70,0,Math.PI*2); x.stroke(); } } K.mir.t.needsUpdate=true; }
-function clearMxLife(){ mxStageClear(); const K=mxK; if(!K){ mxGrade(false); return; } scene.remove(K.root); odFree(K.root); mxK=null; mxRainOff(); mxGrade(false); }
+function clearMxLife(){ mxStageClear(); mxShotButton(false); const K=mxK; if(!K){ mxGrade(false); return; } scene.remove(K.root); odFree(K.root); mxK=null; mxRainOff(); mxGrade(false); }
 function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
   K.tiles.forEach((m,i)=>{ const on=((Math.floor(t*2.2)+i*5)%7)<3; m.material.color.setHSL(((i*0.13+Math.floor(t*2.2)*0.17)%1),1,on?0.55:0.08); });
   K.lasers.forEach((l,i)=>{ l.rotation.z=Math.sin(t*0.9+i)*0.7; l.rotation.x=Math.cos(t*0.7+i*1.3)*0.5; });
@@ -7570,7 +7576,8 @@ function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
   K.codeT-=dt; if(K.codeT<=0){ K.codeT=0.12; mxCodeDraw(K.code); } K.neon.material.opacity=Math.random()<0.03?0.35:1;
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(K.rw.visible){ K.rwFl=(K.rwFl||0)-dt; if(K.rwFl<=0){ K.rwFl=1.5+Math.random()*3; K.rwFlash=0.25; } K.rwFlash=Math.max(0,(K.rwFlash||0)-dt); scene.background.setHex(K.rwFlash>0?0x3a1a3a:0x07050a); K.rwLight.intensity=1.1+Math.sin(t*3)*0.2; }
-  if(fxKind()==='normal'){ const want=mxGreen(); if((canvas.style.filter===MX_GRADE)!==want)mxGrade(want); }
+  mxAgentsTick(dt); mxGhostTick(dt); mxHeliTick(dt); mxShotButton(!demo&&onMatrix()); if(!demo&&onMatrix()&&owned&&!owned.includes('blaster'))mxGiveBlaster();
+  if(fxKind()==='normal'&&!(mxStage&&mxStage.t>=37.4&&mxStage.t<46&&demo&&demo.sc.act==='mx9')){ const want=mxGreen(); if((canvas.style.filter===MX_GRADE)!==want)mxGrade(want); }
   if(demo&&wxPts)updateWeather(dt); mxRainTick(dt); if(demo&&demo.sc&&isMx(demo.sc))mxMusicTick(dt); }
 
 // ================= THE MATRIX IN DEMO MODE =================
@@ -7586,9 +7593,12 @@ function demoMxSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mans
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; mxMood=ch.mood||'hack'; mxSky(ch.sky||'night'); ch.init(S); demo.cam=null; }
 // leaving a chapter: its cast goes, your hero gets their own look back, the screen goes back to normal
 function mxStageClear(){ const S=mxStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(mxK)mxK.root.remove(S.grp); odFree(S.grp); mxStage=null;
-  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(S.silver)dressHero(); canvas.style.transform=''; mxRain(0); $('dmFade').style.background=''; }
+  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(S.silver)dressHero(); canvas.style.transform=''; mxRain(0); $('dmFade').style.background=''; rkTitle('',false); }
 function mxDefaults(){ const K=mxK; K.door.rotation.y=0; K.mdoor.rotation.y=0; K.elev.forEach((p,i)=>p.position.x=28.75+(i?0.5:-0.5)); K.rw.visible=false; K.drone.visible=false; K.podShell.visible=true; K.podShell.material.opacity=0.45; K.neck.visible=true;
-  K.bunny.visible=false; mxMirror(K,0); mxScreen(K,'',false); K.homePhone.rotation.set(0,0,0); K.folder.visible=true; }
+  K.bunny.visible=false; mxMirror(K,0); mxScreen(K,'',false); K.homePhone.rotation.set(0,0,0); K.folder.visible=true;
+  for(const k in K.sets)K.sets[k].visible=false; const H=K.heli; H.film=false; H.ride=false; [H.x,H.y,H.z]=MXC.pad; H.h=Math.PI; H.spin=0; K.ship.position.set(0,8,0); K.claw.position.set(0,30,0); K.emp.visible=false; K.emp.scale.setScalar(1); K.sentinels.forEach(s=>s.g.visible=false);
+  K.bricks.forEach(b=>b.visible=false); K.wallHole.visible=false; K.vase.visible=true; K.vase.position.set(23.4,MXS.oracle+0.9,18.6); K.vase.rotation.set(0,0,0); K.street.scale.y=1; K.street.position.y=-30; K.train.position.x=-60; K.deckLight.intensity=0; K.cables.forEach(c=>c.visible=true); K.drone.position.set(9,34,6);
+  for(let x=50;x<=52;x++)for(let y=MXC.G+11;y<=MXC.G+12;y++)if(get(x,y,MXC.gov.z0)!==ID.glass)setBlock(x,y,MXC.gov.z0,ID.glass); }
 function mxBit(S,par,obj){ par.add(obj); S.bits.push(obj); return obj; } // something stuck onto your hero for this chapter only
 function mxGroup(x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z); return g; }
 function mxFade(a){ const f=$('dmFade'); f.style.transition='none'; f.style.background='#000'; f.style.opacity=a; }
@@ -7654,13 +7664,13 @@ OD_CH.mx2={secs:42,sky:'day',mood:'tense',init(S){ const f=MXC.off.f;
     odAt(S,23,'n3',()=>odSay(S,S.hero,"I can't do this..."));
     if(t>=24&&t<25.4){ const a=ag[0]; a.g.position.set(11.2,f,47.4); a.g.rotation.y=0; a.R.armR.rotation.x=1.4; animRig(a.R,dt,0); } odAt(S,24.3,'s1',()=>odSay(S,ag[0],'Hello, Mr. Anderson.'));
     // the interrogation
-    odAt(S,25.4,'cut',()=>{ odFlash(500); mxSky('night'); mxMood='tense'; ag[0].g.position.set(51,G,53.3); ag[0].g.rotation.y=Math.PI; ag[1].g.position.set(48.3,G,55.6); ag[1].g.rotation.y=-Math.PI/2; ag[2].g.position.set(53.7,G,55.6); ag[2].g.rotation.y=Math.PI/2; ag.forEach(a=>{ odRest(a); a.g.visible=true; }); S.phone.visible=false; });
-    if(t>=25.4&&t<37.4){ odHeroTo(S,[51,G,56.8],0,false); odSit(ag[0]); ag[0].g.position.y=G-OD_SEAT; ag.forEach(a=>animRig(a.R,dt,0)); }
+    odAt(S,25.4,'cut',()=>{ odFlash(500); mxSky('night'); mxMood='tense'; ag[0].g.position.set(51,G+6,53.3); ag[0].g.rotation.y=Math.PI; ag[1].g.position.set(48.3,G+6,55.6); ag[1].g.rotation.y=-Math.PI/2; ag[2].g.position.set(53.7,G+6,55.6); ag[2].g.rotation.y=Math.PI/2; ag.forEach(a=>{ odRest(a); a.g.visible=true; }); S.phone.visible=false; });
+    if(t>=25.4&&t<37.4){ odHeroTo(S,[51,G+6,56.8],0,false); odSit(ag[0]); ag[0].g.position.y=G+6-OD_SEAT; ag.forEach(a=>animRig(a.R,dt,0)); }
     odAt(S,26,'s2',()=>odSay(S,ag[0],"Mr. Anderson. You've been living two lives.")); odAt(S,28.3,'s3',()=>odSay(S,ag[0],'One of those lives has no future.'));
     odAt(S,30.1,'n4',()=>odSay(S,S.hero,'I want my phone call!')); odAt(S,31.7,'s4',()=>odSay(S,ag[0],'And how will you talk... with no mouth?'));
     if(t>=33&&t<37.4){ S.patch.visible=true; S.patch.scale.y=Math.max(0.01,odE(odSeg(S,33,34))); } odAt(S,33,'gl',()=>mxSfx('glitch')); odAt(S,34.1,'mm',()=>{ odSay(S,S.hero,'MMMPH!! MMMMPH!!'); mxSfx('muffle'); });
     odAt(S,35,'s5',()=>odSay(S,ag[0],'Now hold still.'));
-    if(t>=35.2&&t<37.2){ S.bug.visible=true; const k=odSeg(S,35.2,36.6); if(k<1){ S.bug.position.set(51,G+0.84,53.9+2.3*k); S.bug.rotation.y=Math.PI; S.bug.position.y+=Math.abs(Math.sin(t*30))*0.02; } else { const k2=odSeg(S,36.6,37); S.bug.position.set(51,G+0.84+0.2*Math.sin(k2*Math.PI),56.2+0.4*k2); S.bug.scale.setScalar(1-k2*0.7); } } else S.bug.visible=false;
+    if(t>=35.2&&t<37.2){ S.bug.visible=true; const k=odSeg(S,35.2,36.6); if(k<1){ S.bug.position.set(51,G+6.84,53.9+2.3*k); S.bug.rotation.y=Math.PI; S.bug.position.y+=Math.abs(Math.sin(t*30))*0.02; } else { const k2=odSeg(S,36.6,37); S.bug.position.set(51,G+6.84+0.2*Math.sin(k2*Math.PI),56.2+0.4*k2); S.bug.scale.setScalar(1-k2*0.7); } } else S.bug.visible=false;
     odAt(S,36.6,'sq',()=>mxSfx('squeal')); odAt(S,37,'in',()=>{ const p=S.bug.getWorldPosition(new THREE.Vector3()); burst(p.x-0.5,p.y,p.z-0.5,new THREE.Color(0xffffff),10); });
     // ...and Neo wakes up in his own bed
     odAt(S,37.4,'wake',()=>{ odFlash(700); S.patch.visible=false; mxSky('night'); mxMood='hack'; ag.forEach(a=>a.g.visible=false); mxSfx('gasp'); });
@@ -7676,8 +7686,8 @@ OD_CH.mx2={secs:42,sky:'day',mood:'tense',init(S){ const f=MXC.off.f;
     if(t>=37.4){ if(t<37.9)model.rotation.x=Math.PI/2; else { mxSitPose(); if(t>40.2){ armR.rotation.x=2.5; armR.rotation.z=-0.25; } } } },
   cam(S){ const t=S.t; if(t<4)return [odL([46,6,36],[40,10,38],odE(odSeg(S,0,4))),[21,28,50],0]; if(t<8.6)return [[16.2,26.3,60],[12.3,25,57.4],1]; if(t<11)return [[12,25.75,57.6],[13.4,25.6,57.5],2];
     if(t<13.4)return [[23.6,26.6,60],[28,25,70],3]; if(t<17.4)return [[30,27.6,49],[14,24.6,55],4]; if(t<21.4)return [[13.5,22.6,40.5],[14.5,25,45.5],5]; if(t<23.4)return [[20.5,26.2,44.6],[13,12,41],6];
-    if(t<25.4)return [[11,25.6,41.5],[11,25.2,47],7]; if(t<30.1)return [[52,6.4,51.4],[51,5.3,57],8]; if(t<33)return [[51.3,5.8,55.4],[51,5.5,53.3],9]; if(t<35.2)return [[51,5.8,54.6],[51,5.6,57.2],10];
-    if(t<37.4)return [[49.2,5.5,55.8],[51,5,56.2],11]; return [[16.4,16.4,13.4],[19.6,15.2,16.9],12]; } };
+    if(t<25.4)return [[11,25.6,41.5],[11,25.2,47],7]; if(t<30.1)return [[52,12.4,51.4],[51,11.3,57],8]; if(t<33)return [[51.3,11.8,55.4],[51,11.5,53.3],9]; if(t<35.2)return [[51,11.8,54.6],[51,11.6,57.2],10];
+    if(t<37.4)return [[49.2,11.5,55.8],[51,11,56.2],11]; return [[16.4,16.4,13.4],[19.6,15.2,16.9],12]; } };
 
 // ---------- 3. THE RED PILL ----------
 OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
@@ -7736,6 +7746,351 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
 // the chapters as Demo Mode scenes, and one click to line them all up
 const MX_NAMES=['Follow the White Rabbit','The Agents','The Red Pill'];
 function loadMatrix(){ dmCfg.scenes=MX_NAMES.map((n,i)=>cleanScene({act:'mx'+(i+1),time:'day',wx:'clear',land:'normal',cam:'cine',secs:OD_CH['mx'+(i+1)].secs,cap:''})); saveDemo(); }
+
+// ================= MATRIX CITY: AGENTS, THE BLASTER, CARS AND A HELICOPTER =================
+// The bullet switch: real bullets, or Nerf darts. Each Matrix chapter in Demo Mode has its own choice; playing in Matrix
+// City, the 🎯/🔫 button by your coins flips it. Nerf darts make agents glow green and poof into coins; real bullets
+// knock them down, and they glitch away into green code. No blood either way.
+const MX_SHOT_KEY='blockstar_mxshot';
+function mxShotMode(){ if(demo&&demo.sc&&isMx(demo.sc))return demo.sc.mxshot==='nerf'?'nerf':'real'; try{ return localStorage.getItem(MX_SHOT_KEY)==='real'?'real':'nerf'; }catch(e){ return 'nerf'; } }
+let mxShotBtn=null;
+function mxShotButton(show){ if(!mxShotBtn){ mxShotBtn=document.createElement('button'); mxShotBtn.className='ui'; mxShotBtn.style.cssText='position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(92px + env(safe-area-inset-top));z-index:6;font:800 14px sans-serif;padding:8px 12px;border-radius:12px;border:2px solid #fff;background:rgba(20,60,30,.85);color:#fff;display:none';
+    const flip=e=>{ e.preventDefault(); e.stopPropagation(); const m=mxShotMode()==='nerf'?'real':'nerf'; try{ localStorage.setItem(MX_SHOT_KEY,m); }catch(er){} mxShotLabel(); toast(m==='nerf'?'🎯 Nerf darts: agents glow green and poof into coins!':'🔫 Real bullets: agents get knocked down and glitch away.'); };
+    mxShotBtn.addEventListener('pointerdown',flip); document.body.appendChild(mxShotBtn); }
+  mxShotLabel(); mxShotBtn.style.display=show?'block':'none'; }
+function mxShotLabel(){ if(mxShotBtn)mxShotBtn.textContent=mxShotMode()==='nerf'?'🎯 Nerf darts':'🔫 Real bullets'; }
+// the blaster: fires darts or bullets
+WP.blaster={id:'blaster',name:'Matrix Blaster',icon:'🔫',dmg:2,cd:0.24,ranged:true,spd:55,grav:0,range:60,fact:'In the 1999 film, the "bullet time" shots used 120 still cameras in a ring, fired one after another around the actors.'}; WEAPON_IDS.push('blaster');
+function mxGiveBlaster(){ if(demo||!owned||owned.includes('blaster'))return; owned.push('blaster'); weapon='blaster'; refreshWeapon(); toast('🔫 You picked up a blaster! Agents are on patrol. Tap the 🎯/🔫 button to switch Nerf darts or real bullets.'); queueSave(); }
+function mxDartMesh(){ const g=new THREE.Group(); const b=box(0.07,0.07,0.36,new THREE.MeshLambertMaterial({color:0xff8a1a})); g.add(b); const t=box(0.08,0.08,0.08,new THREE.MeshLambertMaterial({color:0x2a6ad8})); t.position.z=-0.2; g.add(t); g.traverse(o=>{ if(o.geometry)o.userData.own=true; }); return g; }
+function mxBulletMesh(){ const g=new THREE.Group(); g.add(box(0.035,0.035,0.14,new THREE.MeshBasicMaterial({color:0xffe08a}))); const tr=box(0.02,0.02,1.1,new THREE.MeshBasicMaterial({color:0xfff2c0,transparent:true,opacity:0.45})); tr.position.z=0.6; g.add(tr); g.traverse(o=>{ if(o.geometry)o.userData.own=true; }); return g; }
+// --- agents: men in black suits who chase you
+MOBT.agent={name:'Agent',hp:6,dmg:1,spd:3.2,coins:[3,6],hw:0.3,h:1.95};
+function agentModel(){ const root=new THREE.Group(), body=new THREE.Group(); root.add(body); const mats=[], r={root,body,mats};
+  const L=c=>{ const m=new THREE.MeshLambertMaterial({color:c}); m.userData.e=0; mats.push(m); return m; }, suit=L(0x202128), sk=L(0xe6c4a2), wh=L(0xf4f0e6), blk=L(0x0a0a0a), hr=L(0x2a1e14);
+  r.legL=limbOn(body,-0.13,0.75,0.22,0.75,suit,blk); r.legR=limbOn(body,0.13,0.75,0.22,0.75,suit,blk);
+  const t=box(0.5,0.72,0.28,suit); t.position.y=1.1; body.add(t); const sh=box(0.14,0.6,0.02,wh); sh.position.set(0,1.12,-0.145); body.add(sh); const ti=box(0.06,0.5,0.02,blk); ti.position.set(0,1.1,-0.155); body.add(ti);
+  const hd=box(0.46,0.46,0.46,sk); hd.position.y=1.69; body.add(hd); const h2=box(0.48,0.12,0.48,hr); h2.position.y=1.9; body.add(h2);
+  for(const s of[-1,1]){ const gl=box(0.16,0.09,0.03,blk); gl.position.set(s*0.11,1.72,-0.235); body.add(gl); } const br=box(0.46,0.03,0.03,blk); br.position.set(0,1.76,-0.235); body.add(br); const ear=box(0.04,0.04,0.04,L(0xe8e8e8)); ear.position.set(0.245,1.7,0.02); body.add(ear);
+  r.armL=limbOn(body,-0.37,1.42,0.22,0.7,suit,sk); r.armR=limbOn(body,0.37,1.42,0.22,0.7,suit,sk);
+  const bar=new THREE.Group(), bg=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.11),bm(0x111111)), fgG=new THREE.PlaneGeometry(0.76,0.07); fgG.translate(0.38,0,0); const fg=new THREE.Mesh(fgG,bm(0x3aff6a)); fg.position.set(-0.38,0,0.002);
+  bar.add(bg,fg); bar.position.y=2.3; bar.visible=false; root.add(bar); r.bar=bar; r.fg=fg; return r; }
+const mobModel0=mobModel; mobModel=function(type){ return type==='agent'?agentModel():mobModel0(type); };
+// agents dodge sometimes (bullet time!); a Nerf hit flashes them green
+const damageMob0=damageMob; damageMob=function(m,dmg,dx,dz,kb){ if(m.type==='agent'){ if(Math.random()<0.22&&!(m.dodgeT>0)){ m.dodgeT=1.2; m.g.body.rotation.x=0.7; snd(()=>noise(1800,0.2,0.08,'bandpass')); return; } m.flashC=mxShotMode()==='nerf'?0x22ff55:0xaa0000; }
+  damageMob0(m,dmg,dx,dz,kb); };
+const killMob0=killMob; killMob=function(m){ if(m.type!=='agent'){ killMob0(m); return; } const nerf=mxShotMode()==='nerf', p=m.p.slice(), yaw=m.g.root.rotation.y;
+  if(nerf){ for(let k=0;k<4;k++)burst(p[0]-0.5+(Math.random()-0.5),p[1]+0.5+Math.random()*1.4,p[2]-0.5+(Math.random()-0.5),new THREE.Color(k%2?0x3aff6a:0xffd23a),10); snd(()=>{ tone('sine',600,1400,0.25,0.08); noise(2500,0.25,0.1,'bandpass'); }); killMob0(m); return; }
+  // real bullets: he falls, flickers, and glitches away into green code (the coins drop as he goes)
+  const ghost=agentModel(); ghost.root.position.set(p[0],p[1],p[2]); ghost.root.rotation.y=yaw; scene.add(ghost.root); mxGhosts.push({g:ghost,t:0,p}); killMob0(m); ghost.root.visible=true; };
+const mxGhosts=[];
+function mxGhostTick(dt){ for(const q of mxGhosts.slice()){ q.t+=dt; const k=Math.min(1,q.t/0.5); q.g.body.rotation.x=-k*Math.PI/2; q.g.root.visible=q.t<0.9||Math.random()<0.55; if(q.t>0.9&&Math.random()<dt*20)burst(q.p[0]-0.5+(Math.random()-0.5),q.p[1]+0.2,q.p[2]-0.5+(Math.random()-0.5),new THREE.Color(0x3aff6a),4);
+    if(q.t>1.8){ scene.remove(q.g.root); q.g.root.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); mxGhosts.splice(mxGhosts.indexOf(q),1); } } }
+function mxAgentsTick(dt){ const K=mxK; for(const m of mobs)if(m.type==='agent'){ if(m.dodgeT>0){ m.dodgeT-=dt; m.g.body.rotation.x=Math.max(0,m.dodgeT-0.6)*1.1; } }
+  if(demo||!onMatrix()||!mobsOn||dead)return; K.agT=(K.agT||0)-dt; if(K.agT>0)return; K.agT=4; if(mobs.filter(m=>m.type==='agent').length>=3)return;
+  for(let a=0;a<10;a++){ const ang=Math.random()*6.28, r=18+Math.random()*14, x=Math.floor(pl.p[0]+Math.sin(ang)*r), z=Math.floor(pl.p[2]+Math.cos(ang)*r); if(x<2||z<2||x>=W-2||z>=D-2)continue;
+    const s=surfaceAt(x,z); if(s.id!==ID.asphalt&&s.id!==ID.concrete&&s.id!==ID.quartz)continue; if(s.y!==MXC.G-1)continue; spawnMob('agent',x+0.5,MXC.G,z+0.5); break; } }
+// --- the helicopter on the agents' building: walk up the outside stairs, climb in, and fly
+MXC.pad=[52,MXC.G+18,56];
+function mxHeli(par){ const g=grp(par,0,0,0), c=mm(0x2a3038), d=mm(0x1a1e24), gl=new THREE.MeshLambertMaterial({color:0x8ac8e8,transparent:true,opacity:0.45,depthWrite:false});
+  mb(g,1.7,1.5,3.2,c,0,1.1,0); mb(g,1.6,1.1,1.3,gl,0,1.3,-1.9); mb(g,0.5,0.5,4.2,c,0,1.45,3.6); mb(g,0.12,1.1,0.7,c,0,2,5.5); mb(g,1.6,0.12,0.4,c,0,1.5,5.5);
+  for(const s of[-1,1]){ mb(g,0.1,0.1,3.6,d,s*0.85,0.08,0); for(const z of [-1,1])mb(g,0.08,0.5,0.08,d,s*0.85,0.32,z); } mb(g,0.3,0.4,0.3,d,0,2.05,0);
+  const rotor=grp(g,0,2.3,0); for(let i=0;i<2;i++){ const b=mb(rotor,8,0.06,0.3,d,0,0,0); b.rotation.y=i*Math.PI/2; } const tail=grp(g,0.12,2,5.5); for(let i=0;i<2;i++){ const b=mb(tail,0.04,1.4,0.18,d,0,0,0); b.rotation.x=i*Math.PI/2; }
+  mb(g,0.3,0.15,0.02,glowM(0xff2a2a),0,2.6,-0.2); return {g,rotor,tail}; }
+function mxHeliTick(dt){ const H=mxK&&mxK.heli; if(!H)return; H.spin=Math.max(H.ride||H.film?1:0,H.spin-(H.ride||H.film?0:dt*0.25)); H.rotor.rotation.y+=dt*28*H.spin; H.tail.rotation.x+=dt*40*H.spin;
+  if(!H.film)H.g.position.set(H.x,H.y,H.z), H.g.rotation.set(H.tilt||0,H.h,H.roll||0,'YXZ'); if(H.ride&&Math.random()<dt*6)snd(()=>noise(220,0.12,0.05,'lowpass')); }
+function mxHeliGround(x,z){ return standY(Math.floor(x),Math.floor(z)); }
+function mxHeliUpdate(dt){ const H=mxK.heli; let ix=joy.x, iz=joy.y; if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  const P=padRead(); ix+=P.lx; iz+=P.ly; const up=(keys.Space||upHeld||P.a)?1:0, down=(keys.ShiftLeft||keys.ShiftRight||demoDown||P.b)?1:0, c=Math.cos(yaw), sn=Math.sin(yaw), fwd=-iz;
+  H.vx+=((-sn*fwd+c*ix)*11-H.vx)*Math.min(1,dt*1.2); H.vz+=((-c*fwd-sn*ix)*11-H.vz)*Math.min(1,dt*1.2); H.vy+=((up-down)*5-H.vy)*Math.min(1,dt*2);
+  const sp=Math.hypot(H.vx,H.vz); if(sp>0.4){ let dh=Math.atan2(-H.vx,-H.vz)-H.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; H.h+=dh*Math.min(1,dt*2); } H.tilt=Math.min(0.3,sp/40); H.roll=-ix*0.12;
+  const nx=Math.max(2,Math.min(W-2,H.x+H.vx*dt)), nz=Math.max(2,Math.min(D-2,H.z+H.vz*dt)); if(mxHeliGround(nx,nz)<=H.y+0.3){ H.x=nx; H.z=nz; } else { H.vx*=-0.3; H.vz*=-0.3; } // a building in the way: bump off it
+  const gr=mxHeliGround(H.x,H.z); H.y=Math.min(62,H.y+H.vy*dt); if(H.y<gr){ H.y=gr; H.vy=Math.max(0,H.vy); }
+  const f=[-Math.sin(H.h),-Math.cos(H.h)]; pl.p=[H.x+f[0]*1.1,H.y+0.75,H.z+f[1]*1.1]; pl.v=[0,0,0]; $('tint').style.opacity=0; return {hs:0}; }
+function mxHeliBoard(){ const H=mxK.heli; H.ride=true; H.vx=H.vz=H.vy=0; yaw=H.h; if(camMode===1)camMode=3; toast('🚁 You climb into the helicopter! Move to fly where you look, Space to go up, Shift to go down. E to get out once you land.'); }
+function mxHeliOff(){ const H=mxK.heli; if(H.y-mxHeliGround(H.x,H.z)>1.3){ toast('🚁 Land first! Hold Shift to go down.'); return; } H.ride=false; const c=Math.cos(H.h), s=Math.sin(H.h); pl.p=[H.x+c*2.2,H.y+0.2,H.z-s*2.2]; pl.v=[0,0,0]; unstick(pl); }
+function mxAction(){ const K=mxK; if(!K||!onMatrix()||demo)return null; const H=K.heli; if(H&&H.ride)return {label:'🚁 Get out',fn:mxHeliOff};
+  if(H&&Math.hypot(pl.p[0]-H.x,pl.p[2]-H.z)<3.2&&Math.abs(pl.p[1]-H.y)<2)return {label:'🚁 Fly the helicopter',fn:mxHeliBoard}; return null; }
+
+// --- the movie sets for chapters 4 to 10. Rooms of their own (far below the city, out of sight), plus props in the city's
+// buildings: the Oracle's apartment, the restaurant, the lobby, the room where Morpheus is held, the phone booth.
+const MXS={tun:[64,-140,64],deck:[64,-170,64],dojo:[64,-200,64],cons:[64,-230,64],roofs:[64,-262,64],sub:[100,-30,100],oracle:MXC.apt.f+5,room3:[51,MXC.G+11,48.6]};
+function mxRoom(par,w,h,d,col,floorC){ const g=grp(par,0,0,0); const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col,side:THREE.BackSide})); b.position.y=h/2; g.add(b);
+  if(floorC!==undefined){ const f=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mm(floorC)); f.rotation.x=-Math.PI/2; f.position.y=0.01; g.add(f); } return g; }
+function mxCanvasTex(w,h,draw){ const c=canvasTex(w,h); draw(c.x,w,h); c.t.needsUpdate=true; return c.t; }
+function mxSentinel(par){ const g=grp(par,0,0,0), m=mm(0x2a2e36), d=mm(0x15181e); msph(g,0.9,m,0,0,0,1,0.8,1.2); for(let i=0;i<6;i++)msph(g,0.14,glowM(0xff2020),-0.55+i*0.22,0.15,-1.0); const arms=[];
+  for(let i=0;i<8;i++){ const a=i/8*Math.PI*2, base=grp(g,Math.cos(a)*0.5,-0.2,Math.sin(a)*0.5+0.4); base.rotation.y=-a; let cur=base; const segs=[]; for(let k=0;k<6;k++){ const s=grp(cur,k?0.55:0,0,0); mb(s,0.58,0.12,0.12,k%2?m:d,0.28,0,0); cur=s; segs.push(s); } arms.push({segs,ph:i}); } return {g,arms}; }
+function mxCatMesh(par){ const M=petMesh({kind:'cat',breed:'mixed',size:1,col:['#141416','#2a2a2e','#0a0a0a'],pat:'solid',coat:'short',seed:5}); M.mat.userData.own=true; par.add(M.g); M.ph=0; return M; }
+function mxJackChair(par,x,y,z,ry){ const g=grp(par,x,y,z,ry), m=mm(0x5a5048), d=mm(0x2a2620); mb(g,0.8,0.5,0.8,m,0,0.25,0); mb(g,0.8,1.3,0.2,m,0,0.95,0.4); mb(g,0.5,0.4,0.15,d,0,1.75,0.42); for(const s of[-1,1])mb(g,0.12,0.4,0.7,d,s*0.45,0.6,0); mcyl(g,0.04,0.04,1.4,d,0,1.5,0.9,6).rotation.x=0.6; return g; }
+function mxBuildSets(K){ const root=K.root, sets=K.sets={};
+  // the hovercraft in its sewer tunnel, and the Sentinels that hunt it
+  { const T=grp(root,...MXS.tun); sets.tun=T; const tube=new THREE.Mesh(new THREE.CylinderGeometry(11,11,120,20,1,true),new THREE.MeshLambertMaterial({color:0x2a2620,side:THREE.BackSide})); tube.rotation.z=Math.PI/2; tube.position.y=8; T.add(tube);
+    const wt=new THREE.Mesh(new THREE.PlaneGeometry(120,14),new THREE.MeshLambertMaterial({color:0x1a2a22,emissive:0x061008})); wt.rotation.x=-Math.PI/2; wt.position.y=0; T.add(wt); for(let i=0;i<12;i++)mb(T,0.4,22,0.4,mm(0x3a3228),-55+i*10,8,-8.5);
+    const ship=grp(T,0,8,0); K.ship=ship; const hm=mm(0x5a5a60), hd=mm(0x3a3a40); mb(ship,3.2,2.4,14,hm,0,0,0); mb(ship,2.6,1.6,4,hd,0,0.6,-8.2); mb(ship,4.6,0.6,10,hd,0,-0.9,0.6); for(const s of[-1,1]){ mb(ship,1.2,1.2,6,hd,s*2.4,-0.3,1.6); for(let k=0;k<3;k++)mb(ship,0.9,0.9,0.1,glowM(0x5ad8ff),s*2.4,-0.3,-1.4+k*2.2+1.6); }
+    mb(ship,1.6,0.5,0.1,glowM(0xffe08a),0,0.7,-10.21); for(let k=0;k<4;k++)mb(ship,3.3,0.06,0.3,mm(0x8a8a90),0,1.2,-5+k*3.4); rkSign(ship,'NEBUCHADNEZZAR',3,0.4,'#3a3a40','#c8c8d0',1.62,0.4,0,Math.PI/2);
+    K.sentinels=[]; for(let i=0;i<6;i++){ const s=mxSentinel(T); s.g.visible=false; K.sentinels.push(s); } K.emp=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xd8f0ff,transparent:true,opacity:0.7,side:THREE.DoubleSide,depthWrite:false})); K.emp.visible=false; T.add(K.emp);
+    K.claw=grp(T,0,30,0); mcyl(K.claw,0.08,0.08,20,mm(0x2a2a2a),0,10,0,6); for(let i=0;i<4;i++){ const f=mb(K.claw,0.15,1.4,0.15,mm(0x5a5a60),Math.cos(i*Math.PI/2)*0.5,-0.6,Math.sin(i*Math.PI/2)*0.5); f.rotation.z=Math.cos(i*Math.PI/2)*0.4; f.rotation.x=-Math.sin(i*Math.PI/2)*0.4; } K.clawLight=new THREE.SpotLight(0xffffff,1.2,40,0.5); K.claw.add(K.clawLight); K.clawLight.target.position.set(0,-20,0); K.claw.add(K.clawLight.target); }
+  // the hovercraft's main deck: the chairs you jack in from, the screens of falling code, a medical bed
+  { const Dk=grp(root,...MXS.deck); sets.deck=Dk; Dk.add(mxRoom(Dk,12,4,9,0x4a4a50,0x3a3a3e)); for(let x=-5;x<=5;x+=2.5)mb(Dk,0.15,4,0.15,mm(0x2a2a30),x,2,-4.4);
+    K.chairs=[]; for(let i=0;i<4;i++)K.chairs.push(mxJackChair(Dk,-3.6+i*2.4,0,1.6,Math.PI)); const cons=grp(Dk,0,0,-3.6); mb(cons,6,0.9,1,mm(0x2a2a30),0,0.45,0); for(let i=0;i<5;i++){ const c=mxCRT(cons,-2.4+i*1.2,0.9,0,0,new THREE.MeshBasicMaterial({map:K.code.t})); c.scale.setScalar(1.3); }
+    const bed=grp(Dk,4.2,0,-1.2,0.0001); K.medbed=bed; mb(bed,0.9,0.6,2.2,mm(0x8a8a90),0,0.3,0); mb(bed,0.85,0.08,2.1,mm(0xd8d8d0),0,0.64,0); K.deckLight=new THREE.PointLight(0xff2020,0,12); K.deckLight.position.set(0,3.5,0); Dk.add(K.deckLight);
+    K.load=canvasTex(256,96); }
+  // the dojo: a wooden floor, paper walls, red pillars
+  { const Dj=grp(root,...MXS.dojo); sets.dojo=Dj; const paper=mxCanvasTex(128,128,(x,w,h)=>{ x.fillStyle='#f2ead8'; x.fillRect(0,0,w,h); x.strokeStyle='#3a2a1a'; x.lineWidth=4; for(let i=0;i<=4;i++){ x.beginPath(); x.moveTo(i*32,0); x.lineTo(i*32,h); x.stroke(); x.beginPath(); x.moveTo(0,i*32); x.lineTo(w,i*32); x.stroke(); } });
+    paper.wrapS=paper.wrapT=THREE.RepeatWrapping; paper.repeat.set(4,1); const room=new THREE.Mesh(new THREE.BoxGeometry(18,6,18),new THREE.MeshLambertMaterial({map:paper,side:THREE.BackSide})); room.position.y=3; Dj.add(room);
+    const wood=mxCanvasTex(64,64,(x,w,h)=>{ for(let i=0;i<8;i++){ x.fillStyle=i%2?'#8a5a2a':'#7a4a22'; x.fillRect(0,i*8,w,8); } }); wood.wrapS=wood.wrapT=THREE.RepeatWrapping; wood.repeat.set(6,6); const fl=new THREE.Mesh(new THREE.PlaneGeometry(18,18),new THREE.MeshLambertMaterial({map:wood})); fl.rotation.x=-Math.PI/2; fl.position.y=0.01; Dj.add(fl);
+    for(const [x,z] of [[-6,-6],[6,-6],[-6,6],[6,6]])mb(Dj,0.5,6,0.5,mm(0xa81a1a),x,3,z); mb(Dj,8,0.04,8,mm(0x3a6a3a),0,0.03,0); mb(Dj,18,0.4,0.4,mm(0x5a3a1a),0,5.8,-8.8); }
+  // the white loading program, with a TV and two red chairs
+  { const Cn=grp(root,...MXS.cons); sets.cons=Cn; const w=new THREE.Mesh(new THREE.BoxGeometry(80,40,80),new THREE.MeshBasicMaterial({color:0xf8f8f8,side:THREE.BackSide})); w.position.y=19; Cn.add(w); const fl=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshLambertMaterial({color:0xffffff,emissive:0x8a8a8a})); fl.rotation.x=-Math.PI/2; fl.position.y=0.01; Cn.add(fl);
+    mxChair(Cn,-1.4,0,0,-Math.PI/2*0+Math.PI*0.15,0x8a1a1a); mxChair(Cn,1.4,0,0,-Math.PI*0.15,0x8a1a1a); const tv=grp(Cn,0,0,-2.4); mb(tv,1.1,0.9,0.8,mm(0x5a3a1a),0,0.45,0); mb(tv,1,0.8,0.7,mm(0x3a2a1a),0,1.3,0); K.consTV=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.6),new THREE.MeshBasicMaterial({map:K.code.t})); K.consTV.position.set(0,1.32,0.36); tv.add(K.consTV); }
+  // the jump program: two rooftops with a long gap, a green night skyline, and a street far below
+  { const Rf=grp(root,...MXS.roofs); sets.roofs=Rf; Rf.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(120,20,14),new THREE.MeshBasicMaterial({color:0x06140a,side:THREE.BackSide,fog:false})),{}));
+    for(const [x,w] of [[-10,12],[12,12]]){ mb(Rf,w,40,12,mm(0x5a6a5e),x,-20,0); mb(Rf,w,0.3,12,mm(0x3a4a3e),x,0.15,0); } K.street=mb(Rf,60,0.5,40,mm(0x2a2e2a),0,-30,0);
+    for(let i=0;i<30;i++){ const a=i/30*Math.PI*2, d=40+(i%3)*12, h=20+(i*7)%30; mb(Rf,6,h,6,mm(0x1a2a1e),Math.cos(a)*d,-30+h/2,Math.sin(a)*d); for(let k=0;k<4;k++)mb(Rf,0.6,0.4,0.05,glowM(0x6aff8a),Math.cos(a)*d+(k-1.5)*1.2,-28+h*0.7,Math.sin(a)*d-3.03); } }
+  // the subway station: tiled walls, a platform, the tracks, and a train
+  { const Sb=grp(root,...MXS.sub); sets.sub=Sb; const tile=mxCanvasTex(64,64,(x,w,h)=>{ x.fillStyle='#d8dcc8'; x.fillRect(0,0,w,h); x.strokeStyle='#8a9a7a'; x.lineWidth=2; for(let i=0;i<=8;i++){ x.beginPath(); x.moveTo(i*8,0); x.lineTo(i*8,h); x.stroke(); x.beginPath(); x.moveTo(0,i*8); x.lineTo(w,i*8); x.stroke(); } });
+    tile.wrapS=tile.wrapT=THREE.RepeatWrapping; tile.repeat.set(10,2); const room=new THREE.Mesh(new THREE.BoxGeometry(40,6,14),new THREE.MeshLambertMaterial({map:tile,side:THREE.BackSide})); room.position.y=3; Sb.add(room);
+    mb(Sb,40,1,7,mm(0x8a8a80),0,0.5,-3.5); mb(Sb,40,0.08,0.5,mm(0xd8c02a),0,1.02,-0.3); for(const z of [2,4.5])mb(Sb,40,0.12,0.12,mm(0x6a6a6a),0,0.06,z); for(let x=-18;x<=18;x+=6)mb(Sb,0.5,5,0.5,mm(0x3a5a3a),x,3.5,-1.4);
+    rkSign(Sb,'ADAMS STREET',4,0.6,'#1a3a1a','#f2f2f2',0,4.2,-6.9,0); for(let x=-15;x<=15;x+=10)mb(Sb,2,0.4,0.5,mm(0x5a3a1a),x,1.2,-6); for(let x=-16;x<=16;x+=8)mb(Sb,1.2,0.1,0.3,glowM(0xf2f8d8),x,5.9,-2);
+    const tr=grp(Sb,-60,0,3.2); K.train=tr; mb(tr,30,3,2.8,mm(0x8a9aa8),15,1.7,0); for(let k=0;k<8;k++)mb(tr,1.4,0.9,0.05,glowM(0xfff2c0),2+k*3.6,2.3,-1.42); mb(tr,0.1,1,2,glowM(0xffffff),0.02,1.6,0); }
+  // the Oracle's kitchen and waiting room, the restaurant, the lobby, Morpheus's cell, the phone booth, the helipad
+  { const f=MXS.oracle; const kt=grp(root,28,f,14); mb(kt,4,0.9,0.7,mm(0xe8e0c8),0,0.45,0); mb(kt,0.9,0.9,0.7,mm(0x8a8a90),2.4,0.45,0); K.oven=mb(kt,0.7,0.4,0.05,glowM(0xff8a3a),2.4,0.5,-0.36);
+    K.cookies=grp(kt,-1,0.92,0); mb(K.cookies,0.6,0.03,0.4,mm(0x8a8a90),0,0,0); for(let i=0;i<6;i++)mcyl(K.cookies,0.07,0.07,0.03,mm(0xc89050),-0.2+(i%3)*0.2,0.03,-0.1+Math.floor(i/3)*0.2,8);
+    K.vase=grp(root,23.4,f+0.9,18.6); mcyl(K.vase,0.14,0.1,0.4,mm(0x3a6ad8),0,0.2,0,10); mb(root,0.6,0.9,0.5,mm(0x6a4a2a),23.4,f+0.45,18.6);
+    const sofa=grp(root,13,f,24,Math.PI/2); mb(sofa,3,0.45,0.9,mm(0x6a5a3a),0,0.25,0); mb(sofa,3,0.6,0.25,mm(0x6a5a3a),0,0.75,0.35); K.spoon=grp(root,12.6,f+1,22.8); mb(K.spoon,0.04,0.3,0.02,mm(0xd8d8e0),0,0.15,0); msph(K.spoon,0.05,mm(0xd8d8e0),0,0.32,0,1,1.4,0.4);
+    K.blocks=[0,1,2].map(i=>mb(root,0.18,0.18,0.18,mm([0xd82a2a,0x2a8ad8,0xf2c02a][i]),16+i*0.4,f+0.5,25)); }
+  { const G=MXC.G; for(const [x,z] of [[69,13],[73,19],[80,14],[84,22],[70,24]]){ const t=grp(root,x,G,z); mcyl(t,0.8,0.8,0.08,mm(0xf2f2f2),0,0.78,0,14); mcyl(t,0.1,0.1,0.78,mm(0x3a2a1a),0,0.39,0,6); mcyl(t,0.04,0.04,0.2,glowM(0xffe08a),0.2,0.92,0,6); } // the restaurant on the hotel's ground floor
+    K.steak=grp(root,73,G+0.82,19); mcyl(K.steak,0.3,0.3,0.03,mm(0xf2f2f2),0,0,0,12); mb(K.steak,0.3,0.06,0.2,mm(0x7a3a1a),0,0.04,0); const pi=grp(root,86,G,12); mb(pi,1.6,1,0.8,mm(0x0a0a0a),0,0.5,0); mb(pi,1.4,0.05,0.3,mm(0xf2f2f2),0,1.02,-0.3);
+    K.bricks=[]; for(let x=66;x<=83;x++)if(x%4){ const b=mb(root,1,3,0.12,mm(0x8a3a2a),x+0.5,MXC.mor.f+2.5,MXC.mor.z0+1.08); b.visible=false; K.bricks.push(b); } // the windows bricked up
+    K.wallHole=mb(root,2.6,2.4,0.3,mm(0xd8d0c0),70,MXC.mor.f+1.2,MXC.mor.z0+14.9); K.wallHole.visible=false;
+    const desk=grp(root,52,G,49.4); mb(desk,5,1.1,0.9,mm(0x5a5a60),0,0.55,0); const det=grp(root,52,G,52.5); for(const s of[-1,1])mb(det,0.2,2.2,0.5,mm(0x8a8a90),s*0.8,1.1,0); mb(det,1.8,0.2,0.5,mm(0x8a8a90),0,2.2,0);
+    const R3=MXS.room3; const cell=grp(root,R3[0],R3[1],R3[2]); K.cell=cell; mxChair(cell,0,0,0.4,0,0x3a3a40).scale.set(0.6,0.7,0.6); for(const s of[-1,1])mb(cell,0.06,0.06,0.6,mm(0x8a8a8a),s*0.35,1.1,0.3);
+    const pb=grp(root,60,G,44.2,Math.PI); K.booth=pb; const gl=new THREE.MeshLambertMaterial({color:0x9ad0e8,transparent:true,opacity:0.35,depthWrite:false}); mb(pb,1.2,2.4,0.06,gl,0,1.2,-0.6); for(const s of[-1,1])mb(pb,0.06,2.4,1.2,gl,s*0.6,1.2,0); mb(pb,1.3,0.2,1.3,mm(0x2a5ad8),0,2.5,0); for(const [x,z] of [[-0.6,-0.6],[0.6,-0.6],[-0.6,0.6],[0.6,0.6]])mb(pb,0.08,2.5,0.08,mm(0x8a8a90),x,1.25,z);
+    K.boothPhone=grp(pb,0,1.4,-0.5); mb(K.boothPhone,0.3,0.45,0.12,mm(0x3a3a40),0,0,0); mb(K.boothPhone,0.08,0.3,0.08,mm(0x111111),0.2,0.05,0.05); rkSign(pb,'PHONE',1,0.25,'#2a5ad8','#ffffff',0,2.5,0.66,0);
+    const P=MXC.pad; const pad=new THREE.Mesh(new THREE.CircleGeometry(3,24),mm(0xf2c02a)); pad.rotation.x=-Math.PI/2; pad.position.set(P[0],P[1]+0.02,P[2]); root.add(pad); const inner=new THREE.Mesh(new THREE.CircleGeometry(2.6,24),mm(0x2a2e34)); inner.rotation.x=-Math.PI/2; inner.position.set(P[0],P[1]+0.03,P[2]); root.add(inner);
+    for(const [w,d,x,z] of [[0.35,1.8,-0.6,0],[0.35,1.8,0.6,0],[0.9,0.3,0,0]])mb(root,w,0.02,d,mm(0xf2f2f2),P[0]+x,P[1]+0.05,P[2]+z);
+    const H=mxHeli(root); K.heli=Object.assign(H,{x:P[0],y:P[1],z:P[2],h:Math.PI,vx:0,vy:0,vz:0,spin:0,ride:false,film:false}); }
+  for(const k in sets)sets[k].visible=false; }
+
+// ================= THE MATRIX, CHAPTERS 4 TO 10 =================
+// shots in the story: darts or bullets (each chapter's own switch), and what happens to whoever they hit
+function mxFire(S,from,to,spd,onHit,slow){ const nerf=mxShotMode()==='nerf', m=nerf?mxDartMesh():mxBulletMesh(); S.grp.add(m); m.position.set(...from); m.lookAt(to[0],to[1],to[2]); m.rotateY(Math.PI);
+  const sh={m,p:from.slice(),to:to.slice(),spd:spd||40,onHit,ring:null}; if(slow){ sh.ring=new THREE.Mesh(new THREE.TorusGeometry(0.18,0.02,4,16),new THREE.MeshBasicMaterial({color:0xdff8ff,transparent:true,opacity:0.6})); S.grp.add(sh.ring); }
+  (S.shots||(S.shots=[])).push(sh); snd(()=>nerf?tone('square',900,300,0.06,0.05):noise(2500,0.1,0.18,'highpass')); return sh; }
+function mxShotsTick(S,dt){ for(const sh of (S.shots||[]).slice()){ if(sh.frozen)continue; const d=[sh.to[0]-sh.p[0],sh.to[1]-sh.p[1],sh.to[2]-sh.p[2]], L=Math.hypot(...d), step=sh.spd*dt;
+    if(L<=step){ S.grp.remove(sh.m); if(sh.ring)S.grp.remove(sh.ring); S.shots.splice(S.shots.indexOf(sh),1); if(sh.onHit)sh.onHit(); continue; } for(let k=0;k<3;k++)sh.p[k]+=d[k]/L*step; sh.m.position.set(...sh.p);
+    if(sh.ring){ sh.ring.position.set(...sh.p); sh.ring.lookAt(sh.to[0],sh.to[1],sh.to[2]); sh.ring.scale.setScalar(1+((S.t*3)%1)*1.5); sh.ring.material.opacity=0.6*(1-((S.t*3)%1)); } } }
+function mxHitNpc(S,a,dx,dz){ if(a.down)return; a.down={t:0,nerf:mxShotMode()==='nerf',dx:dx||0,dz:dz||1}; const p=a.g.position;
+  if(a.down.nerf){ glowAll(a.g,0x3aff6a,1); snd(()=>{ tone('sine',600,1400,0.2,0.07); }); } else { burst(p.x-0.5,p.y+1.4,p.z-0.5,new THREE.Color(0xffffff),6); snd(()=>noise(600,0.15,0.2,'lowpass')); } (S.downs||(S.downs=[])).push(a); }
+function mxDownTick(S,dt){ for(const a of (S.downs||[]).slice()){ const D=a.down; D.t+=dt; const p=a.g.position;
+    if(D.nerf){ if(D.t>0.35&&!D.done){ D.done=true; for(let k=0;k<4;k++)burst(p.x-0.5+(Math.random()-0.5),p.y+0.5+Math.random()*1.4,p.z-0.5+(Math.random()-0.5),new THREE.Color(k%2?0x3aff6a:0xffd23a),10); snd(()=>noise(2500,0.25,0.1,'bandpass')); a.g.visible=false; } }
+    else { const k=Math.min(1,D.t/0.45); a.g.rotation.x=-k*Math.PI/2*Math.sign(D.dz||1); if(D.t>0.8)a.g.visible=Math.random()<0.5; if(D.t>0.9&&Math.random()<dt*20)burst(p.x-0.5+(Math.random()-0.5),p.y+0.3,p.z-0.5,new THREE.Color(0x3aff6a),4); if(D.t>1.6)a.g.visible=false; } } }
+// Neo's clothes: the long black coat and shades in the Matrix, a worn sweater in the real world, black for the dojo
+function mxNeo(S,kind){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,mm(col)); b.position.set(x,y,z); par.add(b); S.bits.push(b); return b; };
+  if(kind==='coat'){ put(rig.torso,0.56,1.16,0.05,0x0e0e10,0,0.88,0.155); for(const s of[-1,1])put(rig.torso,0.19,1.16,0.04,0x0e0e10,s*0.17,0.88,-0.15); put(rig.torso,0.54,0.76,0.3,0x16161a,0,1.08,0); for(const a of [armL,armR])put(a,0.28,0.68,0.28,0x16161a,0,-0.3,0); }
+  if(kind==='coat'||kind==='shades'){ for(const s of[-1,1])put(head,0.16,0.09,0.02,0x0a0a0a,s*0.115,0.2,-0.24); put(head,0.46,0.025,0.02,0x0a0a0a,0,0.24,-0.24); }
+  if(kind==='rw'){ put(rig.torso,0.55,0.77,0.31,0x6a6058,0,1.08,0); for(const a of [armL,armR])put(a,0.28,0.7,0.28,0x6a6058,0,-0.32,0); }
+  if(kind==='gi'){ put(rig.torso,0.55,0.77,0.31,0x1a1a1e,0,1.08,0); for(const a of [armL,armR])put(a,0.28,0.7,0.28,0x1a1a1e,0,-0.32,0); for(const l of [legL,legR])put(l,0.28,0.72,0.28,0x1a1a1e,0,-0.34,0); } }
+function mxRW(par,kind,x,y,z,ry,o){ const c=Object.assign({},MX_CAST[kind]||{},{topC:'#6a6058',glasses:'none',hat:'none'},o||{}); return odPerson(par,x||0,y||0,z||0,ry||0,mxLook(c)); }
+Object.assign(MX_CAST,{tank:{skin:'#4a3020',hair:'buzz',hairC:'#141414',top:'long',topC:'#6a5a4a',bottom:'pants',bottomC:'#3a3430',shoes:'boots',shoeC:'#1a1a1a'},
+  mouse:{skin:'#f0d0b0',hair:'short',hairC:'#d8b060',top:'tee',topC:'#8a7a6a',bottom:'pants',bottomC:'#3a3430',shoes:'boots',shoeC:'#1a1a1a'},
+  oracle:{skin:'#6a4028',hair:'curly',hairC:'#2a2a2a',top:'long',topC:'#d8c8a0',bottom:'skirt',bottomC:'#5a4a3a',shoes:'shoes',shoeC:'#3a2a1a'},
+  spoon:{skin:'#f0d0b8',hair:'bald',top:'long',topC:'#e8dcc0',bottom:'pants',bottomC:'#e8dcc0',shoes:'shoes',shoeC:'#8a7a6a'},
+  guard:{skin:'#c8946a',hair:'short',hairC:'#1a1a1a',top:'long',topC:'#2a3a5a',bottom:'pants',bottomC:'#1a2030',shoes:'shoes',shoeC:'#0a0a0a',hat:'cap',hatC:'#2a3a5a'},
+  waiter:{skin:'#e8c4a0',hair:'short',hairC:'#2a1a10',top:'jacket',topC:'#f2f2f2',bottom:'pants',bottomC:'#111111',shoes:'shoes',shoeC:'#0a0a0a'}});
+function mxShow(...names){ const K=mxK; for(const k in K.sets)K.sets[k].visible=names.includes(k); }
+const RWP=(x,y,z)=>[MXC.real[0]+x,MXC.real[1]+y,MXC.real[2]+z], TUN=(x,y,z)=>[MXS.tun[0]+x,MXS.tun[1]+y,MXS.tun[2]+z], DECK=(x,y,z)=>[MXS.deck[0]+x,MXS.deck[1]+y,MXS.deck[2]+z],
+  DOJO=(x,y,z)=>[MXS.dojo[0]+x,MXS.dojo[1]+y,MXS.dojo[2]+z], ROOF=(x,y,z)=>[MXS.roofs[0]+x,MXS.roofs[1]+y,MXS.roofs[2]+z], SUB=(x,y,z)=>[MXS.sub[0]+x,MXS.sub[1]+y,MXS.sub[2]+z];
+function mxCrew(S,on){ const K=mxK; S.cm=mxRW(S.grp,'morpheus',...DECK(0.8,0,-0.6),Math.PI); S.ct=mxRW(S.grp,'trinity',...DECK(-1.4,0,-1),Math.PI*0.8); S.tk=odPerson(S.grp,...DECK(-0.6,0,-2.8),0,mxLook(MX_CAST.tank)); S.cy=mxRW(S.grp,'cypher',...DECK(2.6,0,-2.8),0); S.mo=odPerson(S.grp,...DECK(-3,0,0.4),Math.PI*0.6,mxLook(MX_CAST.mouse)); return [S.cm,S.ct,S.tk,S.cy,S.mo]; }
+
+// ---------- 4. THE REAL WORLD ----------
+OD_CH.mx4={secs:38,sky:'real',mood:'real',init(S){ const K=mxK; mxShow('tun','deck'); K.rw.visible=true; K.podShell.material.opacity=0; K.neck.visible=false; K.drone.visible=true; mxCrew(S); K.medbed.rotation.y=0; },
+  tick(S,dt){ const K=mxK, t=S.t, R=MXC.real; mxShotsTick(S,dt); S.real=true;
+    // the pod: a machine comes, unplugs him, and he's flushed away
+    if(t<5){ const k=odE(odSeg(S,0,1.6)); K.drone.position.set(7-3*k,34-2.5*k,4-3.4*k); K.drone.rotation.y=Math.sin(t)*0.2; odHeroTo(S,RWP(2.6,28.55,0),-Math.PI/2,false); }
+    odAt(S,1.8,'grab',()=>{ K.cables.forEach(c=>c.visible=false); mxSfx('pop'); burst(R[0]+3,R[1]+30.5,R[2]-0.5,new THREE.Color(0xff3a6a),10); }); odAt(S,2.6,'flush',()=>{ mxSfx('whoosh'); });
+    if(t>=2.6&&t<5){ const k=odSeg(S,2.6,5); odHeroTo(S,RWP(2.6+k*14,28.55-k*27,k*12),-Math.PI/2,false); }
+    // the sewer: a splash, then the ship's claw lifts him out
+    odAt(S,5,'tun',()=>{ K.rw.visible=false; mxSky('real'); scene.background.setHex(0x0a0806); mxSfx('splat'); const p=TUN(0,0.3,2); burst(p[0]-0.5,p[1]+0.5,p[2]-0.5,new THREE.Color(0xa8c8b0),16); });
+    if(t>=5&&t<11){ const cy=t<8?30-22*odE(odSeg(S,6,8)):t<8.6?8:8+0*1; const lift=t>=8.6?odE(odSeg(S,8.6,10.6)):0; K.claw.position.set(0,(t<8.6?cy:1.4)+lift*5.2,2); if(t<8)K.claw.position.y=Math.max(1.4,cy);
+      odHeroTo(S,TUN(0,t<8.6?0.15+Math.sin(t*3)*0.08:0.2+lift*5.2,2),0,false); }
+    if(t>=11&&t<13.6){ K.ship.position.x=-(t-11)*6; odHeroTo(S,DECK(4.2,0.77,-2.3),0,false); }
+    // aboard the Nebuchadnezzar
+    odAt(S,13.6,'deck',()=>{ K.ship.position.x=0; scene.background.setHex(0x1a1a20); });
+    if(t>=13.6&&t<17.6)odHeroTo(S,DECK(4.2,0.77,-2.3),0,false); if(t>=17.6){ const k=odSeg(S,17.6,19); odHeroTo(S,odL(DECK(3.4,0,-0.4),DECK(2.6,0,0.6),k),Math.PI*0.75,k>0&&k<1); }
+    odAt(S,15,'n1',()=>odSay(S,S.hero,'Why do my eyes hurt?')); odAt(S,16.4,'m1',()=>odSay(S,S.cm,'Because this is the first time you ever opened them, Neo.'));
+    odAt(S,19.4,'tk',()=>odSay(S,S.tk,"Hi! I'm Tank. I'm your operator!")); odAt(S,21,'mo',()=>odSay(S,S.mo,'Welcome aboard, newbie!')); odAt(S,22.6,'tr',()=>odSay(S,S.ct,"Hi, Neo. It's good to see you."));
+    odAt(S,24.6,'m2',()=>odSay(S,S.cm,'This is the real world. The machines grow people in fields... like crops.')); odAt(S,27.8,'cy',()=>odSay(S,S.cy,'After a while, the code just looks like... people.'));
+    odAt(S,30.6,'n2',()=>odSay(S,S.hero,"No... NO! I don't believe it!")); odAt(S,33.6,'m3',()=>odSay(S,S.cm,"...He'll be fine. They always do that."));
+    [S.cm,S.ct,S.tk,S.cy,S.mo].forEach(a=>animRig(a.R,dt,0)); S.cm.R.armR.rotation.x=t>24.6&&t<27.6?1.4:0.2; },
+  pose(S){ const t=S.t; model.rotation.x=0; if(t<2.6)head.rotation.x=t<1.8?0:-0.6; else head.rotation.x=0; if(t>=2.6&&t<5)model.rotation.x=-1.2;
+    if(t>=5&&t<11){ armL.rotation.z=-1.2-Math.sin(t*6)*0.4; armR.rotation.z=1.2+Math.sin(t*6)*0.4; } if(t>=11&&t<17.6)model.rotation.x=Math.PI/2; if(t>=32.4){ const k=Math.min(1,(t-32.4)/0.6); model.rotation.x=k*Math.PI/2; } },
+  cam(S){ const t=S.t, R=MXC.real; if(t<2.6)return [RWP(6.4,30.3,0.8),RWP(2.6,30,0),0]; if(t<5)return [[pl.p[0]-4,pl.p[1]+3,pl.p[2]-4],[pl.p[0],pl.p[1],pl.p[2]],1];
+    if(t<11)return [TUN(7,4,8),TUN(0,1.5+(t>8.6?(t-8.6)*2.2:0),2),2]; if(t<13.6)return [TUN(-2-(t-11)*6+10,4,14),TUN(-(t-11)*6,8,0),3]; if(t<19)return [DECK(1.6,2.4,-4),DECK(4.2,0.9,-1.4),4];
+    if(t<24.6)return [DECK(-1,2.2,3.4),DECK(1,1.2,-1),5]; if(t<30.6)return [DECK(4.4,2.2,2.6),DECK(0.6,1.4,-1.6),6]; return [DECK(0.4,2,3),DECK(2.6,1,0.6),7]; } };
+
+// ---------- 5. TRAINING ----------
+OD_CH.mx5={secs:40,sky:'real',mood:'myst',init(S){ const K=mxK; mxShow('deck','dojo','roofs'); mxCrew(S); S.mor=mxRW(S.grp,'morpheus',...DOJO(0,0,-2),0,{topC:'#1a1a1e',bottomC:'#1a1a1e'}); S.mr2=mxPerson(S.grp,'morpheus',...ROOF(-12,0.3,0)); S.load=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.5),new THREE.MeshBasicMaterial({map:K.load.t})); S.load.position.set(...DECK(0,1.9,-3.1)); S.grp.add(S.load); },
+  tick(S,dt){ const K=mxK, t=S.t, M=S.mor; S.real=true; [S.cm,S.ct,S.tk,S.cy,S.mo].forEach(a=>animRig(a.R,dt,0));
+    // jacking in, and loading kung fu
+    if(t<6.4){ odHeroTo(S,DECK(-1.2,0,1.6),Math.PI,false); const L=K.load, x=L.x, k=Math.min(1,odSeg(S,1,4)); x.fillStyle='#020802'; x.fillRect(0,0,256,96); x.fillStyle='#3aff6a'; x.font='bold 22px monospace'; x.fillText(k<1?'LOADING: KUNG FU':'KUNG FU: DONE!',12,34); x.strokeStyle='#3aff6a'; x.strokeRect(12,52,232,24); x.fillRect(14,54,228*k,20); L.t.needsUpdate=true; }
+    odAt(S,0.8,'tk',()=>odSay(S,S.tk,'Kung fu... coming right up!')); odAt(S,4.4,'n1',()=>odSay(S,S.hero,'Whoa. I know kung fu!')); odAt(S,5.6,'m1',()=>odSay(S,S.cm,'Show me.'));
+    // the dojo
+    odAt(S,6.4,'dojo',()=>{ mxSky('real'); scene.background.setHex(0xf2ead8); rkMood='gym'; mxMood='tense'; });
+    if(t>=6.4&&t<22){ let nx=0, nz=1.6; if(t>=13&&t<14.4)nz=1.6+odE(odSeg(S,13,13.6))*2.4; else if(t>=14.4)nz=4-odE(odSeg(S,14.4,15.4))*2.4; odHeroTo(S,DOJO(nx,0,nz),0,false); M.g.position.set(...DOJO(0,0,-0.4)); M.g.rotation.set(0,Math.PI,0);
+      rkFists(M.R.armL,M.R.armR,t,t<12?3:t<17?4.5:2,0.5,1.3,0.5); if(t>=12.6&&t<13.2){ M.R.legR.rotation.x=1.6; } animRig(M.R,dt,0); if(t>=20.4&&t<21.4){ M.R.armL.rotation.x=1.6; M.R.armL.rotation.z=0.2; } }
+    S.hitT=(S.hitT||0)-dt; if(t>=7&&t<20&&S.hitT<=0){ S.hitT=0.22; snd(()=>tone('square',220+Math.random()*120,120,0.05,0.06)); }
+    odAt(S,12.8,'kick',()=>{ rkSfx('thud'); odSay(S,M,'Hah!'); }); odAt(S,15.6,'m2',()=>odSay(S,M,"Stop TRYING to be fast. BE fast.")); odAt(S,20.6,'m3',()=>odSay(S,M,'...Good.'));
+    // the jump program
+    odAt(S,22,'roofs',()=>{ scene.background.setHex(0x06140a); mxMood='hack'; }); const M2=S.mr2;
+    if(t>=22){ if(t<26){ const k=odSeg(S,23,25.4); M2.g.position.set(...ROOF(-12+k*24,0.3+Math.sin(k*Math.PI)*6,0)); M2.g.rotation.y=-Math.PI/2; if(k>0&&k<1){ M2.R.legL.rotation.x=0.8; M2.R.legR.rotation.x=-0.6; } else odRest(M2); animRig(M2.R,dt,0); } }
+    odAt(S,26,'m4',()=>odSay(S,M2,'Free your mind, Neo. Jump!'));
+    if(t>=22){ if(t<28)odHeroTo(S,ROOF(-14,0.3,0),-Math.PI/2,false); else if(t<29.2)odHeroTo(S,ROOF(-14+odSeg(S,28,29.2)*9.5,0.3,0),-Math.PI/2,true); else if(t<33.6){ const k=odSeg(S,29.2,31.6); let y=0.3+Math.sin(Math.min(1,k*3)*Math.PI*0.5)*2-Math.max(0,k*3-1)/2*30.05; if(t>=31.6){ const b=odSeg(S,31.6,33.6); y=-29.75+Math.sin(b*Math.PI)*9*(1-b*0.5); } odHeroTo(S,ROOF(-4.5+Math.min(1,k)*4,Math.max(-29.75,y),0),-Math.PI/2,false); } else odHeroTo(S,ROOF(-0.5,-29.75,0),-Math.PI/2,false); }
+    if(t>=31.6&&t<33){ const b=odSeg(S,31.6,32.4); K.street.scale.y=1-Math.sin(b*Math.PI)*0.8; K.street.position.y=-30-Math.sin(b*Math.PI)*1.2; } odAt(S,31.6,'boing',()=>snd(()=>tone('sine',120,520,0.5,0.25)));
+    odAt(S,29.8,'n2',()=>odSay(S,S.hero,'Whoaaaa!')); odAt(S,34.4,'mo',()=>odSay(S,S.mo,'📞 Nobody makes the first jump!')); odAt(S,36.6,'n3',()=>odSay(S,S.hero,'...Ow.')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t<6.4){ mxSitPose(); if(t>3.8&&t<4.2)head.rotation.x=0.3; }
+    if(t>=6.4&&t<22){ rkFists(armL,armR,t,t<12?3.2:t<17?4.2:5,0,1.3,0.5); if(t>=13&&t<14.4)model.rotation.x=0.3; if(t>=17&&t<18){ model.rotation.z=Math.sin((t-17)*Math.PI*2)*Math.PI; } }
+    if(t>=29.2&&t<31.6){ armL.rotation.z=-2.2-Math.sin(t*14)*0.5; armR.rotation.z=2.2+Math.sin(t*14)*0.5; } if(t>=33.6){ model.rotation.x=Math.PI/2; } },
+  cam(S){ const t=S.t; if(t<6.4)return [DECK(-1.2,2.2,-1),DECK(-1.2,1.3,1.6),0]; if(t<12)return [DOJO(4.4,1.8,0.6),DOJO(0,1.3,0.6),1]; if(t<17){ const a=(t-12)*0.4; return [DOJO(Math.sin(a)*4.6,1.7,0.6+Math.cos(a)*4.6),DOJO(0,1.3,0.6),2]; } if(t<22)return [DOJO(-3.4,1.6,3.6),DOJO(0,1.4,0.6),3];
+    if(t<28)return [ROOF(0,9,26),ROOF(0,1,0),4]; if(t<31.6)return [ROOF(-1,6,24),[pl.p[0],pl.p[1]+1,pl.p[2]],5]; if(t<34)return [ROOF(2,-26,10),ROOF(-0.5,-28,0),6]; return [ROOF(1.8,-28.6,3.4),ROOF(-0.6,-29.4,0),7]; } };
+
+// ---------- 6. THE ORACLE ----------
+OD_CH.mx6={secs:36,sky:'day',mood:'myst',init(S){ const f=MXS.oracle; mxNeo(S,'coat'); S.mor=mxPerson(S.grp,'morpheus',33,f,27,Math.PI/2); S.boy=odPerson(S.grp,12.6,f,23.6,Math.PI,mxLook(MX_CAST.spoon)); S.boy.g.scale.setScalar(0.72); S.girl=odPerson(S.grp,16.4,f,26,Math.PI,mxLook({skin:'#c8946a',hair:'braids',hairC:'#1a1a1a',top:'long',topC:'#e8dcc0',bottom:'skirt',bottomC:'#e8dcc0'})); S.girl.g.scale.setScalar(0.72);
+    S.or=odPerson(S.grp,27.4,f,15,Math.PI,mxLook(MX_CAST.oracle)); S.cookie=mcyl(S.grp,0.07,0.07,0.03,mm(0xc89050),0,0,0,8); S.cookie.visible=false; },
+  tick(S,dt){ const K=mxK, t=S.t, f=MXS.oracle, M=S.mor, O=S.or;
+    if(t<4){ const k=odSeg(S,0.4,3.6); odHeroTo(S,odL([34,f,25.4],[19,f,24.6],k),Math.PI/2,k>0&&k<1); odMove(M,[34.4,f,26.6],[20.4,f,26.2],k); odWalk(M,dt,k>0&&k<1); }
+    if(t>=3.6&&t<12)M.g.rotation.y=Math.PI/2; odAt(S,3.8,'m1',()=>odSay(S,M,'Wait here. The Oracle will see you soon.'));
+    // the waiting room: a boy bending a spoon, a girl floating blocks
+    S.boy.R.armR.rotation.x=1.2; animRig(S.boy.R,dt,0); odSit(S.girl); S.girl.g.position.y=f-0.1; animRig(S.girl.R,dt,0); K.blocks.forEach((b,i)=>{ const a=t*1.2+i*2.1; b.position.set(16.4+Math.cos(a)*0.6,f+1.3+Math.sin(t*2+i)*0.2,25.4+Math.sin(a)*0.6); b.rotation.set(t,t*1.3,0); });
+    if(t<12)odHeroTo(S,[13.6,f,23.8],Math.PI/2,false); if(t>=4&&t<12){ const k=odSeg(S,4.2,5.4); if(k<1)odHeroTo(S,odL([19,f,24.6],[13.6,f,23.8],k),Math.PI/2,true); }
+    K.spoon.rotation.z=t>7&&t<12?Math.min(1.3,(t-7)*0.5):0; K.spoon.position.set(12.6,f+1+Math.sin(t*2)*0.03,23);
+    odAt(S,7.6,'b1',()=>odSay(S,S.boy,"Psst. The trick is... there's no spoon.")); odAt(S,10,'n1',()=>odSay(S,S.hero,'...No spoon?'));
+    // the kitchen
+    if(t>=12&&t<34){ const k=odSeg(S,12,14); odHeroTo(S,odL([13.6,f,23.8],[24.4,f,17.4],k),k<1?-1.0:Math.PI*0.75,k<1); if(t>=14.6&&t<15.6){ odHeroTo(S,[24.4,f,17.4],0.6,false); } }
+    O.g.position.set(27.4,f,15); O.g.rotation.y=t<16.8?0:Math.PI*0.8; O.R.armR.rotation.x=t<16?0.9+Math.sin(t*4)*0.3:0.3; animRig(O.R,dt,0); K.oven.material.color.setHSL(0.07,1,0.5+Math.sin(t*4)*0.1);
+    odAt(S,13.2,'o1',()=>odSay(S,O,"I know. You're Neo. Be right with you.")); odAt(S,14.2,'o2',()=>odSay(S,O,'Mind the vase.'));
+    if(t>=15&&t<17){ const k=odSeg(S,15,15.6); K.vase.rotation.z=k*1.6; K.vase.position.set(23.4+k*0.6,f+0.9-k*0.9,18.6); } odAt(S,15.6,'crash',()=>{ mxSfx('splat'); snd(()=>noise(4000,0.4,0.25,'highpass')); burst(23.5,f+0.2,18.1,new THREE.Color(0x3a6ad8),12); K.vase.visible=false; });
+    odAt(S,16.6,'o3',()=>odSay(S,O,"Would you still have broken it if I hadn't said anything?")); odAt(S,20,'o4',()=>odSay(S,O,"Let's have a look at you."));
+    odAt(S,22.6,'o5',()=>odSay(S,O,"Sorry, kiddo. You've got the gift...")); odAt(S,25.2,'o6',()=>odSay(S,O,"...but it looks like you're waiting for something."));
+    if(t>=27.4&&t<31.6){ S.cookie.visible=true; S.cookie.position.set(...odLW(t<29?O.R.armR:armR,[0,-0.8,0])); } else S.cookie.visible=false; odAt(S,27.4,'o7',()=>odSay(S,O,"Here, have a cookie. You'll feel better by the time it's gone."));
+    odAt(S,31.8,'n2',()=>odSay(S,S.hero,'...So I\'m not the One.')); odAt(S,33.8,'o8',()=>odSay(S,O,'Mm-hmm. Off you go now.')); },
+  pose(S){ const t=S.t; if(t>=27.4&&t<29)armR.rotation.x=0.3; if(t>=29&&t<31.6){ armR.rotation.x=t<30.6?1.3:2.4; armR.rotation.z=t<30.6?0:-0.3; } },
+  cam(S){ const t=S.t, f=MXS.oracle; if(t<4)return [[17,f+2.4,28.6],[26,f+1.4,25],0]; if(t<7.4)return [[16.6,f+2,21.2],[13.4,f+1.2,24],1]; if(t<12)return [[14.4,f+1.6,21.8],[12.8,f+1.1,23.4],2];
+    if(t<15)return [[21,f+2.4,20.6],[26,f+1.3,15.6],3]; if(t<17)return [[22,f+1.6,19.6],[23.8,f+0.6,18.4],4]; if(t<27.4)return [[23,f+2,14.4],[25.6,f+1.6,16.4],5]; return [[26.4,f+2,19.6],[25.6,f+1.4,16],6]; } };
+
+// ---------- 7. THE TRAP ----------
+OD_CH.mx7={secs:38,sky:'night',mood:'tense',init(S){ const G=MXC.G, f=MXC.mor.f; mxNeo(S,'coat'); S.cy=mxPerson(S.grp,'cypher',73,G,20.3,0); S.sm=mxAgent(S.grp,73,G,17.7,Math.PI,'smith'); S.wt=odPerson(S.grp,76,G,16,-Math.PI/2,mxLook(MX_CAST.waiter));
+    S.mor=mxPerson(S.grp,'morpheus',78,f,26.6,Math.PI/2); S.tri=mxPerson(S.grp,'trinity',79.4,f,27,Math.PI/2); S.cy2=mxPerson(S.grp,'cypher',81,f,26.6,Math.PI/2); S.ag=[mxAgent(S.grp,70,f,20,0,'brown'),mxAgent(S.grp,71.4,f,21,0,'jones')]; S.ag.forEach(a=>a.g.visible=false); S.cat=mxCatMesh(S.grp); S.cat.g.scale.setScalar(1.6); S.cat.g.visible=false; },
+  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, f=MXC.mor.f, M=S.mor, Sm=S.sm; mxShotsTick(S,dt); mxDownTick(S,dt);
+    // dinner with Agent Smith
+    if(t<12){ odHeroTo(S,[88,G,28],0,false); odSit(S.cy); S.cy.g.position.y=G-OD_SEAT; odSit(Sm); Sm.g.position.y=G-OD_SEAT; S.cy.R.armR.rotation.x=0.9+Math.max(0,Math.sin(t*3))*0.4; animRig(S.cy.R,dt,0); animRig(Sm.R,dt,0); S.wt.R.armR.rotation.x=1.2; animRig(S.wt.R,dt,0); }
+    odAt(S,1.4,'c1',()=>odSay(S,S.cy,"I know this steak isn't real...")); odAt(S,3.4,'c2',()=>odSay(S,S.cy,'...but it sure tastes good.')); odAt(S,5.6,'s1',()=>odSay(S,Sm,'Then we have a deal, Mr. Reagan?'));
+    odAt(S,7.8,'c3',()=>odSay(S,S.cy,"Make me rich and famous... and you'll get Morpheus.")); odAt(S,10.2,'s2',()=>odSay(S,Sm,'...Deal.'));
+    // déjà vu: a black cat walks by... twice
+    odAt(S,12,'hall',()=>{ S.cy.g.visible=Sm.g.visible=S.wt.g.visible=false; });
+    if(t>=12&&t<20){ const k=odSeg(S,12,13.6); odHeroTo(S,odL([86,f,26.4],[83.4,f,26.4],k),Math.PI/2,k<1); [[M,78],[S.tri,79.4],[S.cy2,81]].forEach(([a,x])=>{ odMove(a,[x+3,f,a.g.position.z],[x,f,a.g.position.z],k); odWalk(a,dt,k<1); if(k>=1){ a.g.rotation.y=-Math.PI/2; odRest(a); animRig(a.R,dt,0); } }); }
+    for(const [a,b] of [[13.4,15],[15.4,17]])if(t>=a&&t<b){ S.cat.g.visible=true; const k=odSeg(S,a,b); S.cat.g.position.set(78-k*8,f,28.2); S.cat.g.rotation.y=Math.PI/2; rkDogTick(S.cat,dt,true,false); } if(t>=17&&t<20)S.cat.g.visible=false;
+    odAt(S,15.6,'n1',()=>odSay(S,S.hero,'Whoa... déjà vu.')); odAt(S,17.2,'t1',()=>odSay(S,S.tri,'What did you just see?!')); odAt(S,18.4,'n2',()=>odSay(S,S.hero,'A black cat... twice.')); odAt(S,19.4,'t2',()=>odSay(S,S.tri,"It's a glitch! It's a TRAP!"));
+    // the agents come through the wall
+    odAt(S,20,'room',()=>{ K.bricks.forEach(b=>b.visible=true); mxSfx('glitch'); M.g.position.set(74,f,16); M.g.rotation.y=Math.PI; S.tri.g.position.set(77,f,18); S.cy2.g.position.set(80,f,20.6); S.cy2.g.rotation.y=Math.PI*0.75; });
+    if(t>=20)odHeroTo(S,[76,f,18.6],Math.PI*0.8,false); odAt(S,21.6,'wall',()=>{ K.wallHole.visible=true; mxSfx('slam'); burst(70,f+1.4,22.4,new THREE.Color(0xd8d0c0),20); S.ag.forEach(a=>a.g.visible=true); Sm.g.visible=true; Sm.g.position.set(71,f,21); Sm.g.rotation.set(0,0,0); odRest(Sm); });
+    odAt(S,22.8,'m1',()=>odSay(S,M,"Neo! Trinity! Get out! I'll hold them off!"));
+    if(t>=21.6&&t<30){ const k=odSeg(S,22,23.4); Sm.g.position.set(...odL([71,f,21],[73.4,f,17.4],k)); Sm.g.rotation.y=Math.atan2(-(74-73.4),-(16-17.4)); if(t>23.4&&t<28.6){ rkFists(Sm.R.armL,Sm.R.armR,t,2.4,0,1.3,0.45); rkFists(M.R.armL,M.R.armR,t,2,1,1.3,0.45); M.g.rotation.y=Math.atan2(-(73.4-74),-(17.4-16)); } animRig(Sm.R,dt,0); animRig(M.R,dt,0);
+      S.ag.forEach((a,i)=>{ a.R.armR.rotation.x=1.5; animRig(a.R,dt,0); a.g.rotation.y=Math.atan2(-(76-a.g.position.x),-(18.6-a.g.position.z)); }); }
+    for(const tt of [24.2,25.6,26.8])odAt(S,tt,'p'+tt,()=>rkSfx('thud')); for(const tt of [23.8,25,26.4]){ odAt(S,tt,'sh'+tt,()=>{ const a=S.ag[Math.floor(tt)%2]; const p=a.g.position; mxFire(S,[p.x,p.y+1.4,p.z],[77+Math.random()*2,f+1+Math.random()*1.5,8.2],40,()=>burst(77.5,f+1.6,8.6,new THREE.Color(0xd8d0c0),6)); }); }
+    odAt(S,28.6,'grab',()=>{ odSay(S,Sm,'Got you, Morpheus.'); M.g.rotation.x=0.4; rkSfx('thud'); }); if(t>=28.6){ M.g.position.set(73.6,f,15.4); S.ag[0].g.position.set(72.8,f,15.8); S.ag[1].g.position.set(74.4,f,15.6); }
+    odAt(S,30.6,'cy',()=>odSay(S,S.cy2,'Sorry, Morpheus. I was tired of the real world.')); odAt(S,33.6,'n3',()=>odSay(S,S.hero,'MORPHEUS!!')); odAt(S,35.4,'t3',()=>odSay(S,S.tri,"Neo, come on! We'll get him back!")); },
+  pose(S){ const t=S.t; if(t>=33.4){ armR.rotation.x=1.6; } },
+  cam(S){ const t=S.t, G=MXC.G, f=MXC.mor.f; if(t<5.4)return [[75.6,G+2,22.2],[73,G+1.3,19],0]; if(t<10)return [[73.3,G+1.6,22],[73,G+1.5,17.8],1]; if(t<12)return [[73.2,G+1.7,15.4],[73,G+1.2,20.2],2];
+    if(t<20)return [[84.6,f+1.2,27.4],[76,f+0.5,28],3]; if(t<24)return [[78.6,f+2.6,21.6],[72,f+1.6,19],4]; if(t<30.6)return [[76.8,f+2.3,13.4],[73.6,f+1.4,17],5]; return [[78.4,f+2.4,20.6],[74,f+1.4,16],6]; } };
+
+// ---------- 8. THE RESCUE ----------
+OD_CH.mx8={secs:48,sky:'day',mood:'tense',init(S){ const K=mxK, G=MXC.G; mxNeo(S,'coat'); S.tri=mxPerson(S.grp,'trinity',53.2,G,39,0); S.gd=[[50,G,49.9,0],[54,G,49.9,0],[46.5,G,56,-Math.PI/2],[57.5,G,56,Math.PI/2],[52,G,60,0]].map(([x,y,z,r])=>odPerson(S.grp,x,y,z,r,mxLook(MX_CAST.guard)));
+    S.ag=mxAgent(S.grp,52,G+18,63,0,'jones'); S.mor=mxPerson(S.grp,'morpheus',...MXS.room3,Math.PI); S.cg=[mxAgent(S.grp,49.4,G+11,50.4,0,'brown'),mxAgent(S.grp,52.8,G+11,50.6,0,'smith')]; const H=K.heli; H.film=true; H.g.position.set(...MXC.pad); H.g.rotation.set(0,Math.PI,0); },
+  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, H=K.heli, T=S.tri, P=MXC.pad; mxShotsTick(S,dt); mxDownTick(S,dt);
+    // into the lobby
+    if(t<8.6){ const k=odSeg(S,0.4,4.6); odHeroTo(S,odL([51,G,39],[51.6,G,51.6],k),0,k>0&&k<1); odMove(T,[53.2,G,39],[53.2,G,51.4],k); odWalk(T,dt,k>0&&k<1); }
+    odAt(S,5,'g1',()=>odSay(S,S.gd[0],'Please remove any metal objects.')); odAt(S,6.4,'beep',()=>{ for(let i=0;i<3;i++)tone&&snd(()=>tone('square',1200,1200,0.12,0.06,i*0.18)); }); odAt(S,7.2,'g2',()=>odSay(S,S.gd[1],'...Uh oh.'));
+    S.gd.forEach((g,i)=>{ if(!g.down){ g.R.armR.rotation.x=t>7.4?1.5:0.3; animRig(g.R,dt,0); } });
+    // the shootout
+    if(t>=8.6&&t<20){ odHeroTo(S,[t<12?51.6:48.6,G,t<12?51.6:54],t<12?0:-Math.PI*0.2,t>=12&&t<12.6); T.g.position.set(t<12?53.2:55.4,G,t<12?51.4:54.4); T.g.rotation.y=t<12?0:Math.PI*0.2; T.R.armR.rotation.x=1.5; animRig(T.R,dt,0); }
+    const targets=[[9.2,0],[9.8,1],[13.2,2],[14.6,3],[16.4,4]]; for(const [tt,i] of targets)odAt(S,tt,'f'+i,()=>{ const g=S.gd[i], p=g.g.position, from=i%2?[T.g.position.x,G+1.4,T.g.position.z]:[pl.p[0],G+1.4,pl.p[2]]; mxFire(S,from,[p.x,G+1.3,p.z],45,()=>mxHitNpc(S,g,p.x-from[0],p.z-from[2])); });
+    S.pT=(S.pT||0)-dt; if(t>=9&&t<18&&S.pT<=0){ S.pT=0.35; const px=[46,49,55,58][Math.floor(Math.random()*4)], pz=[50,54,58,62][Math.floor(Math.random()*4)]; burst(px,G+1+Math.random()*2.5,pz,new THREE.Color(0xf2f2f2),6); snd(()=>noise(1800,0.12,0.12,'highpass')); }
+    odAt(S,18.6,'n1',()=>odSay(S,S.hero,"That's all of them.")); odAt(S,19.4,'t1',()=>odSay(S,T,'The roof. Now!'));
+    // the roof: an agent fires, and Neo bends back in bullet time
+    odAt(S,20,'roof',()=>{ T.g.position.set(54,G+18,58); T.g.rotation.y=0; odRest(T); });
+    if(t>=20&&t<31){ odHeroTo(S,[52.4,G+18,59.6],Math.PI,false); const A=S.ag; if(!A.down){ A.R.armR.rotation.x=1.5; animRig(A.R,dt,0); A.g.rotation.y=Math.PI; } }
+    for(const [tt,dy] of [[20.6,1.5],[21.4,1.2],[22.2,1.6]])odAt(S,tt,'b'+tt,()=>mxFire(S,[52.2,G+18+1.5,62.6],[52.6,G+18+dy,56.4],1.9,null,true));
+    odAt(S,25.6,'t2',()=>{ T.g.position.set(53.6,G+18,61.6); odSay(S,T,'Gotcha.'); const p=S.ag.g.position; mxFire(S,[52.6,G+19.4,61.8],[p.x,p.y+1.6,p.z],30,()=>mxHitNpc(S,S.ag,0,1)); });
+    odAt(S,27.2,'t3',()=>odSay(S,T,'How did you move like that?')); odAt(S,28.8,'n2',()=>odSay(S,S.hero,"I... don't know."));
+    // the helicopter: up, over to the window, and Morpheus jumps for it
+    if(t>=31){ const k=odSeg(S,31.6,35.4), a=[P[0],P[1],P[2]], b=[51,G+11.4,42.2], up=[P[0],P[1]+6,P[2]-4]; const pos=k<0.5?odL(a,up,k*2):odL(up,b,(k-0.5)*2); H.g.position.set(...pos); H.g.rotation.set(0,Math.PI-(k<0.5?0:Math.PI*0.5*Math.min(1,(k-0.5)*3)),0,'YXZ'); H.spin=1;
+      if(t>=33.4)H.g.position.y+=Math.sin(t*2)*0.08; const f=odLW(H.g,[0,0.8,0]); odHeroTo(S,f,H.g.rotation.y+(t>=35.4?Math.PI/2:0),false); T.g.position.set(...odLW(H.g,[0.4,0.75,-1.6])); T.g.rotation.y=H.g.rotation.y; }
+    S.mor.g.position.set(...MXS.room3); if(t<39.6){ odSit(S.mor); S.mor.g.position.y=MXS.room3[1]-OD_SEAT; } animRig(S.mor.R,dt,0); S.cg.forEach(a=>{ if(!a.down){ a.g.rotation.y=Math.PI; a.R.armR.rotation.x=t>35?1.5:0.3; animRig(a.R,dt,0); } });
+    for(const [tt,i] of [[36,0],[37.2,1]])odAt(S,tt,'c'+i,()=>{ const a=S.cg[i], p=a.g.position; mxFire(S,[pl.p[0],pl.p[1]+1.3,pl.p[2]],[p.x,p.y+1.3,p.z],40,()=>mxHitNpc(S,a,0,1)); });
+    odAt(S,38.4,'m1',()=>{ odSay(S,S.mor,'Neo!'); }); odAt(S,39.6,'break',()=>{ rkSfx('thud'); odRest(S.mor); for(let x=50;x<=52;x++)for(let y=G+11;y<=G+12;y++)setBlock(x,y,MXC.gov.z0,0); burst(51,G+12,46,new THREE.Color(0xc8e8ff),16); snd(()=>noise(4000,0.5,0.3,'highpass')); });
+    if(t>=39.6){ const k=odSeg(S,39.8,42.2); const a=[51,G+11,48.6], b=odLW(H.g,[1.6,-0.6,0.4]); const p=odL(a,b,odE(k)); p[1]+=Math.sin(k*Math.PI)*1.6; S.mor.g.position.set(...p); S.mor.g.rotation.set(0,0,0); if(k>0&&k<1){ S.mor.R.armL.rotation.z=-2.4; S.mor.R.armR.rotation.z=2.4; } }
+    odAt(S,42.4,'m2',()=>odSay(S,S.mor,'I knew it, Neo! I KNEW it!')); if(t>=43.4){ const k=odSeg(S,43.4,48); const p=odL([51,G+11.4,42.2],[51,G+24,20],k); H.g.position.set(...p); S.mor.g.position.set(...odLW(H.g,[1.6,-0.6,0.4])); odHeroTo(S,odLW(H.g,[0,0.8,0]),H.g.rotation.y+Math.PI/2,false); T.g.position.set(...odLW(H.g,[0.4,0.75,-1.6])); } },
+  pose(S){ const t=S.t; model.rotation.x=0; if(t>=8.6&&t<18.4){ armR.rotation.x=1.55; armL.rotation.x=t>=12?1.55:0.3; }
+    if(t>=20.6&&t<24.6){ const k=t<21?odSeg(S,20.6,21):t<24.2?1:1-odSeg(S,24.2,24.6); model.rotation.x=k*1.05; legL.rotation.x=legR.rotation.x=-k*0.6; armL.rotation.z=-1.2*k-Math.sin(t*9)*0.6*k; armR.rotation.z=1.2*k+Math.sin(t*9+1)*0.6*k; } // bending back under the bullets
+    if(t>=35.6&&t<38){ armR.rotation.x=1.55; armL.rotation.x=1.55; } if(t>=41.6&&t<44){ armR.rotation.x=1.7; armR.rotation.z=-0.5; } },
+  cam(S){ const t=S.t, G=MXC.G; if(t<4.6)return [[55,G+2.4,36.4],[52,G+1.6,44],0]; if(t<8.6)return [[48.6,G+2.6,57.6],[52,G+1.2,51],1]; if(t<14)return [[44.6,G+2.4,58.8],[52,G+1.2,52.6],2]; if(t<20)return [[56.6,G+2.8,59.6],[49.6,G+1.2,52],3];
+    if(t<24.6){ const a=-0.6+(t-20.6)*0.55; return [[52.4+Math.sin(a)*3.4,G+18+1.6,59.6+Math.cos(a)*3.4],[52.4,G+18+1,59.6],4]; } if(t<31)return [[48.6,G+20.6,57.6],[52.8,G+18.8,60.8],5];
+    if(t<35.6)return [[44,G+22,42],[pl.p[0],pl.p[1],pl.p[2]],6]; if(t<39.6)return [[53.6,G+12.6,47.6],[51,G+12,50],7]; if(t<43.4)return [[44.6,G+12.8,40.6],[51,G+11.6,45],8]; return [[40,G+16,34],[pl.p[0],pl.p[1],pl.p[2]],9]; } };
+
+// ---------- 9. THE ONE ----------
+OD_CH.mx9={secs:50,sky:'night',mood:'tense',init(S){ const K=mxK, f=MXC.mor.f; mxNeo(S,'coat'); mxShow('sub','tun','deck'); S.sm=mxAgent(S.grp,...SUB(4,1,-3.4),Math.PI/2,'smith'); S.sm2=mxAgent(S.grp,86.6,f,26.6,Math.PI/2,'smith'); S.sm2.g.visible=false;
+    S.ag2=[mxAgent(S.grp,87.4,f,25.4,Math.PI/2,'brown'),mxAgent(S.grp,87.6,f,27.8,Math.PI/2,'jones')]; S.ag2.forEach(a=>a.g.visible=false); S.tri=mxRW(S.grp,'trinity',...DECK(-0.4,0,2.4),Math.PI); S.tk=odPerson(S.grp,...DECK(-0.6,0,-2.8),0,mxLook(MX_CAST.tank));
+    K.sentinels.forEach((s,i)=>{ s.g.visible=true; s.g.position.set(-8+i*3.2,14+Math.sin(i)*2,(i%2?7:-7)); }); },
+  tick(S,dt){ const K=mxK, t=S.t, f=MXC.mor.f, Sm=S.sm; mxShotsTick(S,dt); mxDownTick(S,dt); S.real=(t>=20&&t<32)||t>=46;
+    // the subway: Neo stands and fights
+    if(t<12.4){ const nx=t<4?-2:t<10?-2+Math.sin(t*2)*0.4:-2; odHeroTo(S,SUB(nx,1,-3.4),-Math.PI/2,false); Sm.g.position.set(...SUB(0.4,1,-3.4)); Sm.g.rotation.set(0,Math.PI/2,0); if(t>2.6&&t<9.4)rkFists(Sm.R.armL,Sm.R.armR,t,2.6,0.5,1.3,0.45); animRig(Sm.R,dt,0); }
+    odAt(S,1,'s1',()=>odSay(S,Sm,'Mr. Anderson. You can not win.')); odAt(S,2.4,'n1',()=>odSay(S,S.hero,'My name... is NEO.'));
+    S.hT=(S.hT||0)-dt; if(t>=3&&t<9.4&&S.hT<=0){ S.hT=0.4; rkSfx('thud'); }
+    odAt(S,9.4,'push',()=>{ rkSfx('thud'); odSay(S,S.hero,'HAH!'); }); if(t>=9.4&&t<12.4){ const k=odSeg(S,9.4,9.9); Sm.g.position.set(...SUB(0.4+k*2,1-k*0.7,-3.4+k*6.4)); Sm.g.rotation.x=-k*0.6; }
+    if(t>=9.6&&t<12.4){ K.train.position.x=-60+odSeg(S,9.6,11.6)*120; } odAt(S,10.2,'tr',()=>snd(()=>{ noise(300,1.6,0.35,'lowpass'); tone('sawtooth',80,60,1.5,0.08); })); odAt(S,10.6,'hit',()=>{ Sm.g.visible=false; burst(...SUB(2.4,2,3),new THREE.Color(0x3aff6a),20); });
+    // the hallway: Smith is waiting
+    odAt(S,12.4,'hall',()=>{ mxShow('tun','deck'); });
+    if(t>=12.4&&t<20){ const k=odSeg(S,12.6,15.4); odHeroTo(S,odL([68,f,26.6],[80,f,26.6],k),-Math.PI/2,k<1); } odAt(S,15.2,'sm',()=>{ S.sm2.g.visible=true; odSay(S,S.sm2,'Goodbye, Mr. Anderson.'); });
+    S.sm2.R.armR.rotation.x=t>15&&t<44?1.5:0.3; animRig(S.sm2.R,dt,0); for(const tt of [16.4,16.8,17.2,17.6])odAt(S,tt,'z'+tt,()=>mxFire(S,[86,f+1.4,26.6],[80.4,f+1.2,26.6],60,()=>{ burst(80,f+1.2,26.1,new THREE.Color(mxShotMode()==='nerf'?0xff8a1a:0xffffff),6); S.neoHit=(S.neoHit||0)+1; }));
+    if(t>=17.8&&t<32)odHeroTo(S,[80,f,26.6],-Math.PI/2,false);
+    // aboard the ship: Sentinels break in. Trinity talks to Neo
+    if(t>=20&&t<33){ odHeroTo(S,t<32?(t<24?[80,f,26.6]:DECK(-1.2,0,1.6)):[80,f,26.6],t<24?-Math.PI/2:Math.PI,false); } if(t>=24&&t<32){ K.deckLight.intensity=Math.sin(t*8)>0?2:0.2; S.tri.g.position.set(...DECK(-1.2,0,2.6)); S.tri.g.rotation.y=Math.PI; S.tri.R.armR.rotation.x=1.1; animRig(S.tri.R,dt,0); animRig(S.tk.R,dt,0); }
+    K.sentinels.forEach((s,i)=>{ if(t<44.4){ s.g.position.x+=Math.sin(t+i)*dt*2; s.g.position.y=11+Math.sin(t*1.4+i)*1.2; s.g.lookAt(...TUN(0,8,0)); s.arms.forEach(A=>A.segs.forEach((g2,k)=>{ g2.rotation.z=-0.3+Math.sin(t*4+A.ph+k*0.7)*0.25; })); } });
+    odAt(S,21,'alarm',()=>{ mxSfx('glitch'); snd(()=>{ for(let i=0;i<6;i++)tone('square',800,800,0.18,0.05,i*0.35); }); }); odAt(S,22.2,'tk',()=>odSay(S,S.tk,"Sentinels! They're cutting through the hull!"));
+    odAt(S,25,'t1',()=>odSay(S,S.tri,"The Oracle said I'd fall in love with the One...")); odAt(S,27.6,'t2',()=>odSay(S,S.tri,"...so you can't be gone. I love you, Neo.")); odAt(S,30,'t3',()=>odSay(S,S.tri,'Now GET UP!'));
+    // he gets up. He stops the bullets. He sees the code
+    if(t>=32){ odHeroTo(S,[80,f,26.6],-Math.PI/2,false); S.ag2.forEach(a=>{ a.g.visible=true; a.R.armR.rotation.x=1.5; animRig(a.R,dt,0); }); }
+    odAt(S,34.4,'fire',()=>{ S.stops=[]; for(let i=0;i<6;i++){ const sh=mxFire(S,[87,f+1.2+Math.random()*0.6,25.4+Math.random()*2.4],[80,f+1.4,26.6],30); S.stops.push(sh); } }); odAt(S,35,'no',()=>{ odSay(S,S.hero,'No.'); (S.stops||[]).forEach(sh=>{ sh.frozen=true; }); });
+    if(t>=35.2&&t<36.6)(S.stops||[]).forEach((sh,i)=>{ sh.m.rotation.y+=dt*(1+i); }); odAt(S,36.6,'drop',()=>{ (S.stops||[]).forEach(sh=>{ sh.frozen=false; sh.to=[sh.p[0]+(Math.random()-0.5),f+0.05,sh.p[2]]; sh.spd=6; }); snd(()=>{ for(let i=0;i<6;i++)tone('sine',2400,2200,0.05,0.05,i*0.08); }); });
+    odAt(S,37.4,'code',()=>{ mxRain(1); mxGrade(true); scene.background.setHex(0x001a06); blockMat.color.setRGB(0.3,1,0.4); [S.sm2,...S.ag2].forEach(a=>glowAll(a.g,0x3aff6a,0.85)); });
+    if(t>=38.4&&t<42.6){ const k=odSeg(S,38.4,39.4); S.sm2.g.position.set(86.6-k*5.4,f,26.6); if(t>39.6)rkFists(S.sm2.R.armL,S.sm2.R.armR,t,3,0,1.3,0.45); }
+    odAt(S,42.6,'dive',()=>{ mxSfx('whoosh'); }); if(t>=42.6&&t<43.6){ const k=odSeg(S,42.6,43.4); odHeroTo(S,[80+k*1.2,f,26.6],-Math.PI/2,false); }
+    odAt(S,43.4,'boom',()=>{ S.sm2.g.visible=false; for(let k=0;k<6;k++)burst(81.2-0.5+(Math.random()-0.5),f+1+Math.random()*1.6,26.6-0.5+(Math.random()-0.5),new THREE.Color(0xd8ffd8),16); snd(()=>{ noise(800,0.8,0.4,'lowpass'); tone('sine',1600,200,0.8,0.12); }); });
+    if(t>=44){ S.ag2.forEach((a,i)=>{ const k=odSeg(S,44,46); a.g.position.x=87.4+k*6; a.g.rotation.y=-Math.PI/2; odWalk(a,dt,k<1,14); }); }
+    // the EMP: a flash of light, and the Sentinels drop
+    odAt(S,46,'emp',()=>{ mxRain(0); mxGrade(false); K.emp.visible=true; K.emp.position.set(0,8,0); snd(()=>{ tone('sine',60,30,1.5,0.3); noise(500,1.2,0.3,'lowpass'); }); });
+    if(t>=46){ const k=odSeg(S,46,47.4); K.emp.scale.setScalar(1+k*40); K.emp.material.opacity=0.7*(1-k); K.sentinels.forEach((s,i)=>{ s.g.position.y=Math.max(0.6,s.g.position.y-dt*(4+i)); }); } },
+  pose(S){ const t=S.t; model.rotation.x=0; if(t<12.4)rkFists(armL,armR,t,3,0.2,1.3,0.45); if(t>=12.6&&t<15.4){ armL.rotation.x=armR.rotation.x=0.4; }
+    if(t>=16.4&&t<32){ const k=Math.min(1,(t-17.6)/0.5); if(t>=17.6)model.rotation.x=Math.max(0,k)*Math.PI/2; } if(t>=24&&t<32){ model.rotation.x=0; mxSitPose(); } if(t>=32&&t<33.4){ model.rotation.x=(1-odSeg(S,32,33.4))*Math.PI/2; }
+    if(t>=35&&t<37){ armR.rotation.x=1.6; armR.rotation.z=0.1; } if(t>=39.6&&t<42.6){ armR.rotation.x=1.3+Math.sin(t*12)*0.2; } if(t>=42.6&&t<43.6){ armL.rotation.x=armR.rotation.x=2.9; } },
+  cam(S){ const t=S.t, f=MXC.mor.f; if(t<9.6)return [SUB(-0.8,2.6,0.8),SUB(-0.8,1.9,-3.4),0]; if(t<12.4)return [SUB(-8,2.4,-5.4),SUB(2,1.8,1),1]; if(t<16)return [[66.6,f+2.4,27.6],[pl.p[0],f+1.4,26.6],2]; if(t<20)return [[77.4,f+1.8,25.4],[83,f+1.2,26.6],3];
+    if(t<24)return [TUN(-14,12,16),TUN(0,9,0),4]; if(t<32)return [DECK(-0.2,2,4),DECK(-1.2,1.2,1.6),5]; if(t<37.4)return [[77.4,f+2,25.6],[86,f+1.4,26.4],6]; if(t<42.6)return [[78.6,f+1.9,27.8],[82,f+1.3,26.4],7]; if(t<46)return [[76.8,f+2.2,25],[82,f+1.4,26.6],8]; return [TUN(-16,10,18),TUN(0,8,0),9]; } };
+
+// ---------- 10. FREE YOUR MIND ----------
+OD_CH.mx10={secs:36,sky:'night',mood:'myst',init(S){ mxNeo(S,'coat'); S.sh=[]; },
+  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, B=K.booth.position;
+    if(t<18){ odHeroTo(S,[B.x,G,B.z-0.1],Math.PI,false); } odAt(S,0.6,'ring',()=>mxSfx('ring'));
+    odAt(S,4.4,'n1',()=>odSay(S,S.hero,"I know you're out there. I can feel you now.")); odAt(S,7.8,'n2',()=>odSay(S,S.hero,"You're afraid of us. Afraid of change."));
+    odAt(S,11.2,'n3',()=>odSay(S,S.hero,"I'm going to show these people a world without you...")); odAt(S,14.6,'n4',()=>odSay(S,S.hero,'...a world where anything is possible.'));
+    odAt(S,17.4,'hang',()=>{ snd(()=>tone('square',400,400,0.12,0.05)); }); if(t>=18&&t<22){ const k=odSeg(S,18,19.6); odHeroTo(S,[B.x,G,B.z-0.1-k*2.2],k<1?0:0,k<1); }
+    odAt(S,20.4,'look',()=>{ mxMood='hack'; K.mS=0; });
+    if(t>=22){ const k=odSeg(S,22,30); odHeroTo(S,[B.x,G+Math.pow(k,1.6)*70,B.z-2.3],0,false); if(Math.random()<dt*10)burst(B.x-0.5,G+0.3,B.z-2.8,new THREE.Color(0x3aff6a),4); } odAt(S,22,'lift',()=>{ mxSfx('whoosh'); mxRain(0.5); });
+    odAt(S,29,'title',()=>{ mxRain(1.2); rkTitle('THE MATRIX<div style="font-size:.42em;letter-spacing:.2em;margin-top:.3em">A BLOCKSTAR ADVENTURE</div><div style="font-size:.36em;margin-top:1.2em;color:#7aff9a">FREE YOUR MIND.</div>',true); }); },
+  pose(S){ const t=S.t; if(t<17.4){ armR.rotation.x=2.5; armR.rotation.z=-0.25; } if(t>=19.6&&t<22)head.rotation.x=0.5; else head.rotation.x=0; if(t>=22){ armR.rotation.z=0.25; armL.rotation.z=-0.25; legL.rotation.x=legR.rotation.x=0; } },
+  cam(S){ const t=S.t, G=MXC.G, B=mxK.booth.position; if(t<4)return [[B.x+6,G+3,B.z-7],[B.x,G+1.4,B.z],0]; if(t<18)return [[B.x+2.2,G+1.9,B.z+0.2],[B.x,G+1.7,B.z],1]; if(t<22)return [[B.x+2.6,G+1.4,B.z-5.4],[B.x,G+1.6,B.z-2],2];
+    if(t<26)return [[B.x+1.5,G+0.6,B.z-6],[pl.p[0],pl.p[1]+1,pl.p[2]],3]; return [[B.x+4,G+30,B.z-18],[pl.p[0],pl.p[1],pl.p[2]],4]; } };
+MX_NAMES.push('The Real World','Training','The Oracle','The Trap','The Rescue','The One','Free Your Mind');
 
 // ================= ROCKY: PHILADELPHIA =================
 // Philadelphia is the fifth city: the same kit as the others (traffic, people, the garage), with 1970s row houses on every
@@ -8595,7 +8950,7 @@ petsLoad(); fishBagLoad(); hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},get mxK(){return mxK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
