@@ -75,6 +75,7 @@
   #bHorn{right:20px;bottom:0;display:none} #bSiren{right:88px;top:0;display:none} body.drive #bHorn{display:flex} body.drive.dsiren #bSiren{display:flex}
   body.drive #bBreak,body.drive #bPlace,body.drive #bJump,body.drive #bDown,body.drive #bSwap,body.drive #cross,body.drive #hotwrap{display:none!important}
   .fly #bDown,.flyveh #bDown{display:flex}
+  body.drive.jettrick #bJump,body.drive.jettrick #bDown{display:flex!important}
   #bTalk{right:calc(20px + env(safe-area-inset-right));bottom:calc(214px + env(safe-area-inset-bottom));height:46px;padding:0 16px;border-radius:23px;
     background:#ffcf4a;color:#222;font-weight:900;font-size:16px;display:none;align-items:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
   #prompt{left:50%;top:calc(50% + 34px);transform:translateX(-50%);background:rgba(15,18,26,.75);padding:5px 12px;border-radius:9px;
@@ -806,7 +807,7 @@ function surfaceAt(x,z){ for(let y=H-1;y>=0;y--){ const id=world[idx(x,y,z)]; if
 // ================= PLAYER STATE =================
 const pl={p:[CX+0.5,SPAWN_H,CZ+2.5],v:[0,0,0],kb:[0,0,0],hw:0.3,h:1.8,onGround:false,wall:false};
 let yaw=0, pitch=-0.2, fly=false, camMode=1, sel=ID.granite;
-const WEAPON_IDS=['fists','boomerang','obsidian','bow','granite','quartz','diamond'];
+const WEAPON_IDS=['fists','boomerang','obsidian','bow','granite','quartz','diamond','lasso'];
 const MAXHP=10; let hp=MAXHP, coins=0, owned=['fists'], weapon='fists', mobsOn=true;
 let webbed=0, invuln=0, sinceHurt=99, regenT=0, burning=0, burnT=0, envT=0, dead=false, paused=false;
 const EYE=1.62;
@@ -1042,6 +1043,7 @@ let walkPhase=0;
 const WEAPONS=[
  {id:'fists',name:'Fists',icon:'✊',dmg:1,cd:0.45,price:0,fact:'Better than nothing!'},
  {id:'boomerang',name:'Boomerang',icon:'🪃',dmg:2,cd:0.3,price:5,ranged:true,boomer:true,range:12,fact:'Throw it and it flies out, curves around and comes back! It can hit a monster going out AND coming back. Aboriginal Australians carved returning boomerangs from naturally curved tree roots.'},
+ {id:'lasso',name:'Lasso',icon:'🪢',dmg:1,cd:0.5,price:20,fact:'For the ranch: cowhands use a lasso, a rope with a sliding loop, to catch cattle and wild horses. A good throw opens the loop wide in the air and drops it right over a horn.'},
  {id:'obsidian',name:'Obsidian Dagger',icon:'🗡️',dmg:3,cd:0.32,price:15,fact:'A fresh obsidian edge can be sharper than a steel scalpel. Some surgeons have used obsidian blades.'},
  {id:'granite',name:'Granite Hammer',icon:'🔨',dmg:6,cd:0.85,price:30,fact:'Granite is dense (about 2.7 g/cm³) and tough, which is why it is used for monuments and countertops. Slow but heavy!'},
  {id:'bow',name:'Bow & Arrow',icon:'🏹',dmg:5,cd:0.7,price:45,ranged:true,spd:42,grav:7,fact:'Ancient arrowheads were knapped from flint and obsidian. The glassy rock breaks in smooth, curved flakes that leave a razor edge.'},
@@ -1059,6 +1061,7 @@ function weaponMesh(id,fp){
   if(id==='snowball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,8),M(0xffffff)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='ball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,8),M(0xd8304a)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='boomerang'){ g.children[0].visible=false; boomerangShape(g,M,fp); }
+  if(id==='lasso'){ g.children[0].visible=false; const r=new THREE.Mesh(new THREE.TorusGeometry(0.12,0.025,6,14),M(0xc8a060)); r.position.y=0.06; if(fp)r.renderOrder=999; g.add(r); }
   if(id==='laser'){ g.children[0].visible=false; add(0.12,0.14,0.42,0xe8ecf2,0.2).position.z=-0.05; add(0.07,0.07,0.22,0x2a2e36,0.22).position.z=-0.34; add(0.08,0.08,0.05,0x40e0ff,0.22).position.z=-0.46; add(0.07,0.2,0.09,0x2a2e36,0.06).position.z=0.06; g.scale.setScalar(0.55); }
   if(id==='pole'){ g.children[0].visible=false; const r=add(0.035,1.6,0.035,0x6b4a2a,0.75); r.rotation.x=-0.5; r.position.z=-0.36; const reel=add(0.12,0.12,0.06,0x9aa0a8,0.12); reel.position.set(0.07,0.12,-0.02); add(0.03,0.15,0.03,0xd82a2a,0.0); }
   if(id==='bow'){ g.children[0].visible=false; const W=0x8a5a2a;
@@ -1487,7 +1490,7 @@ function updateShots2(dt){
       if(s.fromMob){ if(!dead&&boxHit(pl,x,y,z,0.15)){ hit=true;
         if(s.kind==='web') addWeb(); else { const l=Math.hypot(s.v[0],s.v[2])||1; hurtPlayer(s.dmg,s.v[0]/l*0.6,s.v[2]/l*0.6,s.kind==='spear'?'An Orc\'s spear':s.kind==='rock'?'A Troll\'s rock':'A Skeleton\'s arrow'); } } }
       else for(const m of mobs){ if(boxHit(m,x,y,z,0.12)){ hit=true; damageMob(m,s.dmg,s.v[0],s.v[2],4); if(s.sp)specialImpact(s,m,x,y,z,px0,py0,pz0); break; } }
-      if(!hit&&!s.fromMob&&odyK&&onOdyssey()&&!demo){ const c=odyAt(x,y,z); if(c){ hit=true; odyHurt(c,s.dmg,s.v[0],s.v[2]); } } // a sea creature, a sheep, the Cyclops...
+      if(!hit&&!s.fromMob&&odyK&&onOdyssey()&&!demo){ const c=odyAt(x,y,z); if(c){ hit=true; odyHurt(c,s.dmg,s.v[0],s.v[2],true); } } // a sea creature, a sheep, the Cyclops...
       if(!hit&&!s.fromMob&&s.kind==='snow'&&elK){ const k=elKidAt(x,y,z); if(k){ hit=true; elKidHit(k); } } // a kid in the snowball fight
       if(!hit&&!s.fromMob&&ranchK)for(const a of ranchK.animals){ if(a.game&&boxHit(a,x,y,z,0.15)){ hit=true; huntHit(a); break; } } // a deer or bunny on the ranch
     }
@@ -1648,7 +1651,7 @@ window.addEventListener('keydown',e=>{
     else if(e.code==='KeyE'||e.code==='Enter'){ const a=demo.user?nearAction():null; if(a){ if(!e.repeat)a.fn(); } else demoHit(); } else demoPoke();
     e.preventDefault(); return; }
   if(paused)return; keys[e.code]=true;
-  if(drive){ if(!e.repeat){ if(e.code==='KeyH')honk(drive); if(e.code==='KeyL')toggleSiren(); if(e.code==='KeyE')exitVehicle(); if(e.code==='KeyC')dragChute(drive); if(e.code==='KeyB')lowHop(drive); if(e.code==='KeyR'&&dragK){ const a=dragDriveAction(); if(a)a.fn(); } } if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault(); return; } // driving: the keys drive
+  if(drive){ if(!e.repeat){ if(e.code==='KeyH')honk(drive); if(e.code==='KeyL')toggleSiren(); if(e.code==='KeyE'){ const a=nearAction(); if(a)a.fn(); else exitVehicle(); } if(e.code==='KeyC')dragChute(drive); if(e.code==='KeyB')lowHop(drive); if(e.code==='KeyR'&&dragK){ const a=dragDriveAction(); if(a)a.fn(); } } if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault(); return; } // driving: the keys drive
   if(e.code==='KeyV')toggleCam(); if(e.code==='KeyF')toggleFly(); if(e.code==='KeyI')showCard(sel,true);
   if(mansionK&&mansionK.seated&&!e.repeat){ if(e.code==='KeyT')startPhase('toast'); if(e.code==='KeyY')startPhase('wish'); }
   if(e.code==='KeyQ')cycleWeapon(); if(e.code==='KeyR'&&arrowsAllowed())openArrows(false); if(e.code==='KeyE'){ const a=nearAction(); if(a)a.fn(); }
@@ -3623,7 +3626,7 @@ function vehicleMesh(type){ if(VEH[type].custom)return customVehMesh(type); if(V
 // a simple person shape for NPC drivers
 function driverMesh(L){ const g=new THREE.Group(); const s=box(0.4,0.42,0.4,cm(L.skin)); s.position.y=1.3; g.add(s); const hr=box(0.42,0.12,0.42,cm(L.hairC)); hr.position.y=1.55; g.add(hr); const t=box(0.5,0.6,0.3,cm(L.topC)); t.position.y=0.82; g.add(t); return g; }
 function makeVehicle(type,x,y,z,h){ const vm=vehicleMesh(type), v={type,V:VEH[type],p:[x,y,z],h,spd:0,vy:0,pitch:0,vm,m:vm.g,driver:null,npc:null,siren:false,sirenT:0,wheel:0}; scene.add(v.m); vehPlace(v); return v; }
-function vehPlace(v){ v.m.position.set(v.p[0],v.p[1],v.p[2]); v.m.rotation.set(0,v.h,0); v.m.rotateX(v.pitch); }
+function vehPlace(v){ v.m.position.set(v.p[0],v.p[1],v.p[2]); v.m.rotation.set(0,v.h,0); v.m.rotateX(v.pitch); if(v.flip||v.spin){ v.m.rotateY(v.spin||0); v.m.rotateX(v.flip||0); } }
 function removeVehicle(v){ scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); if(v.drv){ v.m.remove(v.drv); } for(const L of [cityK&&cityK.vehicles,intK&&intK.vehicles,freeVehicles])if(L){ const i=L.indexOf(v); if(i>=0)L.splice(i,1); } if(v.siren)sirenStop(v); }
 const vFwd=h=>[-Math.sin(h),-Math.cos(h)], vRight=h=>[Math.cos(h),-Math.sin(h)];
 function vSolid(x,y,z){ const xi=Math.floor(x), zi=Math.floor(z); if(xi<1||zi<1||xi>=W-1||zi>=D-1)return true; const b=get(xi,Math.floor(y),zi); return !!b&&B[b].solid&&b!==ID.pframe; } // vehicles squeeze through portal frames
@@ -3651,11 +3654,12 @@ function vBlocked(v,x,z,dir){ const V=v.V, f=vFwd(v.h), r=vRight(v.h), hl=V.len/
     for(const s of[-1,0,1]){ const px=x+f[0]*hl+r[0]*hw*s-o.p[0], pz=z+f[1]*hl+r[1]*hw*s-o.p[2]; const lz=px*of[0]+pz*of[1], lx=px*orr[0]+pz*orr[1];
       if(Math.abs(lz)<o.V.len/2+0.15&&Math.abs(lx)<o.V.wid/2+0.15&&Math.abs(o.p[1]-y)<2.5)return o; } }
   return null; }
-function vMove(v,dt){ const f=vFwd(v.h), nx=v.p[0]+f[0]*v.spd*dt, nz=v.p[2]+f[1]*v.spd*dt;
+function vMove(v,dt){ const f=vFwd(v.h), nx=v.p[0]+f[0]*v.spd*dt, nz=v.p[2]+f[1]*v.spd*dt; const ramp=v.type==='mower'&&odyK?odRampHook(v):null;
   if(Math.abs(v.spd)>0.01){ const hit=vBlocked(v,nx,nz,v.spd>0?1:-1); if(hit){ if(dragK&&v.driver==='player'&&dragScrape(v,hit))return hit; if(Math.abs(v.spd)>Math.max(7,v.V.spd*0.5)&&v.driver==='player'&&hit!=='water'&&v.type!=='mower')vehCrash(v,hit,nx,nz); else if(Math.abs(v.spd)>5&&v.driver==='player')sfx('thunk'); v.spd=hit&&hit.p?0:-v.spd*0.15; return hit; } v.p[0]=nx; v.p[2]=nz; }
-  const gd=vGround(v.p[0],v.p[2],v.p[1]); if(gd.y>v.p[1]){ v.p[1]+=Math.min(gd.y-v.p[1],dt*8); v.vy=0; } else if(gd.y<v.p[1]-0.01){ v.vy-=22*dt; v.p[1]=Math.max(gd.y,v.p[1]+v.vy*dt); } else v.vy=0;
+  let gd=vGround(v.p[0],v.p[2],v.p[1]); if(v.type==='mower'&&odyK)gd=odRampGround(v,gd); if(gd.y>v.p[1]){ v.p[1]+=Math.min(gd.y-v.p[1],dt*8); v.vy=0; } else if(gd.y<v.p[1]-0.01){ v.vy-=(v.jump?13:22)*dt; v.p[1]=Math.max(gd.y,v.p[1]+v.vy*dt); } else v.vy=0;
   const bf=vGround(v.p[0]+f[0]*v.V.len*0.4,v.p[2]+f[1]*v.V.len*0.4,v.p[1]).y, bb=vGround(v.p[0]-f[0]*v.V.len*0.4,v.p[2]-f[1]*v.V.len*0.4,v.p[1]).y;
   v.pitch+=(Math.max(-0.35,Math.min(0.35,Math.atan2(bf-bb,v.V.len*0.8)))-v.pitch)*Math.min(1,dt*6);
+  if(v.type==='mower'&&odyK)odRampAfter(v,gd,dt);
   v.wheel+=v.spd*dt/v.vm.wr; for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); return null; }
 // --- sirens, the ice cream tune and the horn (Web Audio, so they follow the Sound effects switch)
 function sirenStart(v){ if(!AC||!sfxOn||v.sirenNode)return; try{ const o=AC.createOscillator(), g=AC.createGain(); o.type=v.V.siren==='fire'?'sawtooth':'square'; g.gain.value=v.V.siren==='icecream'?0.05:0.035; o.connect(g); g.connect(AC.destination); o.start(); v.sirenNode={o,g}; }catch(e){} }
@@ -3692,11 +3696,11 @@ function driveUpdate(dt){ const v=drive, V=v.V, top=V.spd*(1-0.55*(v.dmg||0)); l
   if(demo&&!demo.user&&demo.sc&&demo.sc.act==='drag'){ gas=dragAuto.gas; brk=dragAuto.brk; str=dragAuto.str; thr=gas-brk; }
   v.ui={gas,brk,str};
   if(!(dragK&&!v.wrecked&&dragDrive(v,dt,gas,brk,str,brake))){
-  if(brake)v.spd*=Math.max(0,1-dt*4);
+  if(brake&&!v.jump)v.spd*=Math.max(0,1-dt*4);
   if(thr>0.05){ if(v.spd<0)v.spd=Math.min(0,v.spd+V.acc*3*dt); else v.spd=Math.min(top*thr,v.spd+V.acc*thr*dt); }
   else if(thr<-0.05){ if(v.spd>0)v.spd=Math.max(0,v.spd-V.acc*2.5*dt); else v.spd=Math.max(-top*0.35,v.spd+V.acc*0.6*thr*dt); }
   else v.spd*=Math.max(0,1-dt*0.9);
-  const grip=Math.min(1,Math.abs(v.spd)/4), rate=(V.kind==='bus'||V.kind==='fire'?0.9:V.kind==='moto'||V.moto?2.0:1.5)*grip; v.h-=str*rate*Math.sign(v.spd||1)*dt;
+  const grip=Math.min(1,Math.abs(v.spd)/4), rate=(V.kind==='bus'||V.kind==='fire'?0.9:V.kind==='moto'||V.moto?2.0:1.5)*grip; if(v.jump){ v.spin=(v.spin||0)+str*7*dt; const fu=(keys.Space||upHeld||P.a)?1:0, fd=(keys.ShiftLeft||keys.ShiftRight||downHeld||P.b)?1:0; v.flip=(v.flip||0)+(fd-fu)*7*dt; } else v.h-=str*rate*Math.sign(v.spd||1)*dt;
   vMove(v,dt); }
   if(v.air||v.jet){ pl.p=v.p.slice(); return {hs:0}; }
   pl.p=[v.p[0],v.p[1],v.p[2]]; pl.v=[0,0,0];
@@ -3714,6 +3718,7 @@ function chaseCam(dt){ if(chaseShake>0){ chaseShake=Math.max(0,chaseShake-dt); }
   camera.position.copy(chase.p); if(chaseShake>0)camera.position.add(new THREE.Vector3((rand()-.5)*chaseShake,(rand()-.5)*chaseShake,(rand()-.5)*chaseShake)); camera.lookAt(chase.l); }
 // sit the hero in the driver's seat
 function seatHero(){ const v=drive, s=v.vm.seat, c=Math.cos(v.h), sn=Math.sin(v.h); if(v.jet||(v.air&&v.air.tf>0.3)){ model.visible=false; return; }
+  if(v.flip||v.spin){ v.m.updateMatrixWorld(true); model.position.copy(v.m.localToWorld(new THREE.Vector3(s[0],s[1]+(v.vm.by||0),s[2]))); model.quaternion.copy(v.m.quaternion); model.visible=true; legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=1.15; return; }
   model.position.set(v.p[0]+s[0]*c+s[2]*sn,v.p[1]+s[1]+(v.vm.by||0),v.p[2]-s[0]*sn+s[2]*c); model.rotation.set(0,v.h,0); model.rotateX(v.pitch||0); model.visible=true;
   const moto=v.V.kind==='moto'||!!v.V.moto; legL.rotation.x=legR.rotation.x=moto?0.9:1.45; legL.rotation.z=moto?-0.25:0; legR.rotation.z=moto?0.25:0; armL.rotation.x=armR.rotation.x=1.15; armL.rotation.z=armR.rotation.z=0; head.rotation.x=0; }
 
@@ -3806,7 +3811,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(!demo&&merchant.g.visible&&(merchant.here||place==='survival')&&Math.hypot(pl.p[0]-merchant.p[0],pl.p[2]-merchant.p[2])<2.6&&Math.abs(pl.p[1]-merchant.p[1])<2)return {label:'🛍️ Flint\'s Shop',fn:openShop}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; } if(mxK){ const r=mxAction(); if(r)return r; } if(brK){ const r=brAction(); if(r)return r; } if(elK){ const r=elAction(); if(r)return r; }
+function nearAction(){ if(drive&&odyK){ const r=odLassoAction(); if(r)return r; } if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; if(!demo&&merchant.g.visible&&(merchant.here||place==='survival')&&Math.hypot(pl.p[0]-merchant.p[0],pl.p[2]-merchant.p[2])<2.6&&Math.abs(pl.p[1]-merchant.p[1])<2)return {label:'🛍️ Flint\'s Shop',fn:openShop}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; } if(mxK){ const r=mxAction(); if(r)return r; } if(brK){ const r=brAction(); if(r)return r; } if(elK){ const r=elAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -6903,7 +6908,7 @@ function odyTargets(){ const K=odyK, S=K.sea, T=[]; if(!S)return T;
   if(!(S.whale.dead>0))T.push({k:'whale',o:S.whale,p:S.whale.p,r:3.2});
   for(const pf of S.puffers)T.push({k:'puffer',o:pf,p:pf.p,r:0.6});
   for(const c of S.crabs)T.push({k:'crab',o:c,p:[c.x,c.g.position.y+0.2,c.z],r:0.5});
-  for(const sc of S.schools)T.push({k:'fish',o:sc,p:sc.c,r:1.8});
+  for(const sc of S.schools)if(sc.fish.some(f=>!f.dead))T.push({k:'fish',o:sc,p:sc.c,r:1.8});
   for(const sh of K.sheep)T.push({k:'sheep',o:sh,p:[sh.position.x,sh.position.y+0.7,sh.position.z],r:0.9});
   for(const c of K.cows)T.push({k:'cow',o:c,p:[c.g.position.x,c.g.position.y+0.8,c.g.position.z],r:1.2});
   const C=K.cy; if(C&&!C.down){ T.push({k:'cyclops',o:C,p:[C.x,C.y+1.6,C.z],r:1.4}); T.push({k:'cyclops',o:C,p:[C.x,C.y+4.6,C.z],r:2.2}); }
@@ -6913,7 +6918,7 @@ function odyAt(x,y,z){ for(const c of odyTargets())if(Math.hypot(x-c.p[0],y-c.p[
 function odyHit(){ if(!onOdyssey()||demo||WP[weapon].ranged||odyK.ride)return false; const o=camera.position, d=lookDir(), reach=3.6+(camMode===1?0:camDist); let best=null, bt=1e9;
   for(const c of odyTargets()){ const vx=c.p[0]-o.x, vy=c.p[1]-o.y, vz=c.p[2]-o.z, tc=vx*d.x+vy*d.y+vz*d.z; if(tc<0)continue; const d2=vx*vx+vy*vy+vz*vz-tc*tc; if(d2>c.r*c.r)continue; const th=tc-Math.sqrt(c.r*c.r-d2); if(th<reach&&th<bt){ bt=th; best=c; } }
   if(!best||(target&&target.t<bt))return false; if(atkCd>0)return true; const w=WP[weapon]; atkCd=w.cd; odyHurt(best,w.dmg,best.p[0]-pl.p[0],best.p[2]-pl.p[2]); return true; }
-function odyHurt(c,dmg,dx,dz){ const K=odyK, S=K.sea, o=c.o, l=Math.hypot(dx,dz)||1, ux=dx/l, uz=dz/l, at=c.p;
+function odyHurt(c,dmg,dx,dz,shot){ const K=odyK, S=K.sea, o=c.o, l=Math.hypot(dx,dz)||1, ux=dx/l, uz=dz/l, at=c.p;
   const ouch=()=>{ sfx('hit'); burst(at[0]-0.5,at[1]-0.5,at[2]-0.5,new THREE.Color(1,0.3,0.3),6); }, beaten=(n,msg)=>{ dropCoins(at[0],Math.max(at[1],OD.SEA+0.6),at[2],n[0]+Math.floor(Math.random()*(n[1]-n[0]+1))); sfx('die'); burst(at[0]-0.5,at[1]-0.5,at[2]-0.5,new THREE.Color(0.9,0.9,1),16); toast(msg); };
   if(c.k==='shark'){ ouch(); o.hp=(o.hp===undefined?8:o.hp)-dmg; o.angry=12; o.flee=0; o.stalk=4; if(o.hp<=0){ o.dead=60; beaten([4,7],'🦈 You beat the shark! (Sharks have been around for over 400 million years: older than trees.)'); } }
   else if(c.k==='kraken'){ ouch(); o.hp=(o.hp===undefined?20:o.hp)-dmg; o.angry=15; if(o.hp<=0){ o.gone=90; o.respawn=true; o.g.visible=false; o.hp=20; o.angry=0; beaten([12,18],'🦑 You beat the kraken! It sinks back into the deep...'); } }
@@ -6921,11 +6926,74 @@ function odyHurt(c,dmg,dx,dz){ const K=odyK, S=K.sea, o=c.o, l=Math.hypot(dx,dz)
   else if(c.k==='dolphin'){ if(o.leap<0)o.leap=0; S.pod.tgt=seaSpot(4); seaSfx('click',o.p); if(!K.toldDol){ K.toldDol=1; toast('🐬 The dolphins swim away! Dolphins are your friends: they chase sharks away from you.'); } }
   else if(c.k==='puffer'){ o.puff=3; o.vy=6; seaSfx('pop',o.p); }
   else if(c.k==='crab'){ o.dir*=-1; o.scare=2.5; seaSfx('snap',[o.x,0,o.z]); }
-  else if(c.k==='fish'){ o.scare=2.5; o.tgt=[o.c[0]+ux*18,o.c[1],o.c[2]+uz*18]; }
+  else if(c.k==='fish'){ o.scare=2.5; o.tgt=[o.c[0]+ux*18,o.c[1],o.c[2]+uz*18]; const f=o.fish.find(q=>!q.dead); if(f){ f.hp=(f.hp===undefined?2:f.hp)-dmg; sfx('hit'); burst(at[0]-0.5,at[1]-0.5,at[2]-0.5,new THREE.Color(1,0.4,0.4),5);
+    if(f.hp<=0){ f.dead=true; dropCoins(o.c[0],OD.SEA+0.6,o.c[2],1+(Math.random()<0.4?1:0)); burst(at[0]-0.5,at[1]-0.5,at[2]-0.5,new THREE.Color(0.8,0.95,1),10); if(!o.fish.some(q=>!q.dead))o.respawn=45; } } }
+  else if(c.k==='sheep'&&o.userData.d&&o.userData.d.rider){ if(shot)odSheepKnock(o); }
   else if(c.k==='sheep'){ const d=o.userData.d; if(d){ d.flee=2.5; d.h=Math.atan2(-ux,-uz); } snd(()=>{ tone('sawtooth',420,330,0.35,0.06); tone('sawtooth',400,320,0.3,0.05,0.12); }); if(K.cy&&!K.cy.down)cyAnger(K.cy,'LEAVE MY SHEEP ALONE!'); }
   else if(c.k==='cow')heliosStrike();
   else if(c.k==='cyclops'){ ouch(); o.hp-=dmg; cyAnger(o,o.hp>20?['OUCH!','Who hit me?!','Nobody hurts me!'][Math.floor(Math.random()*3)]:'Grr... I\'m getting tired...'); if(o.hp<=0){ o.down=1; o.st='down'; o.t=0; beaten([25,35],'👁️ You beat the Cyclops! He\'ll be back for his sheep, though...'); npcSay(o.a,'Nobody... beat me...'); } }
   else if(c.k==='mermaid')npcSay(o,'Hey! That\'s not nice! 🧜‍♀️'); }
+// ================= A SECRET: WAVE RUNNER STUNTS =================
+// Three jump ramps float hidden behind the Cyclops's mountain. Ride the wave runner (the mansion's mower, on the water) up one and
+// you fly: steer to spin, Up to flip forward, Down to flip backward. Land straight for a big splash; land crooked and you wipe out.
+// With a lasso from Flint's shop you can hook a ramp and tow it somewhere new. Lasso a sheep, though, and it yanks you off, steals
+// the wave runner and puts on its own show through your ramps until you knock it off with an arrow; then it swims home.
+const RAMP={L:6,W:3.2,H:2.2};
+function odRampMesh(par){ const g=grp(par,0,0,0), th=Math.atan2(RAMP.H,RAMP.L), hyp=Math.hypot(RAMP.H,RAMP.L);
+  for(let i=0;i<6;i++){ const u=(i+0.5)/6, sl=mb(g,RAMP.W,0.16,hyp/6+0.02,mm(i%2?0xf6f6f6:0xd81a2a),0,u*RAMP.H+0.08,RAMP.L/2-u*RAMP.L); sl.rotation.x=th; }
+  for(const s of[-1,1]){ mb(g,0.18,RAMP.H,0.18,mm(0x6a4a2a),s*(RAMP.W/2-0.1),RAMP.H/2,-RAMP.L/2+0.1); const fl=mcyl(g,0.35,0.35,RAMP.L,mm(0xf2c230),s*(RAMP.W/2-0.3),0.05,0,10); fl.rotation.x=Math.PI/2; }
+  mb(g,RAMP.W,0.2,0.2,mm(0xf2c230),0,RAMP.H,-RAMP.L/2+0.1); return g; }
+function odBuildRamps(K){ K.ramps=[]; const c=OD.cyc, wet=(x,z)=>get(Math.floor(x),OD.SEA-1,Math.floor(z))===ID.water&&!solidAt(Math.floor(x),OD.SEA,Math.floor(z));
+  for(const a of [Math.PI-0.5,Math.PI,Math.PI+0.5]){ for(let r=16;r<50;r++){ const x=c[0]+Math.cos(a)*r, z=c[1]+Math.sin(a)*r; let ok=true; for(let k=0;k<6&&ok;k++)ok=wet(c[0]+Math.cos(a)*(r+k),c[1]+Math.sin(a)*(r+k))&&wet(x+Math.sin(a)*(k-3),z-Math.cos(a)*(k-3));
+      if(ok){ const rx=c[0]+Math.cos(a)*(r+3), rz=c[1]+Math.sin(a)*(r+3), g=odRampMesh(K.root); const R={g,x:rx,z:rz,h:Math.PI-a,tow:false}; K.ramps.push(R); odRampPlace(R); break; } } }
+  K.rope=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xd8b060})); K.rope.frustumCulled=false; K.rope.visible=false; K.root.add(K.rope); }
+function odRampPlace(R){ R.g.position.set(R.x,OD.SEA,R.z); R.g.rotation.y=R.h; }
+// where a point sits on a ramp: u runs from the low end (-L/2) to the high end (+L/2); null when it's not on one
+function odRampAt(x,z){ const K=odyK; if(!K||!K.ramps)return null; for(const R of K.ramps){ if(R.tow)continue; const f=vFwd(R.h), r=vRight(R.h), dx=x-R.x, dz=z-R.z, u=dx*f[0]+dz*f[1], w=dx*r[0]+dz*r[1];
+    if(Math.abs(w)<RAMP.W/2&&u>-RAMP.L/2&&u<RAMP.L/2)return {R,u,y:OD.SEA+(u+RAMP.L/2)/RAMP.L*RAMP.H}; } return null; }
+function odRampHook(v){ return null; }
+function odRampGround(v,gd){ const a=odRampAt(v.p[0],v.p[2]); v.onRamp=null; if(a&&a.y>=v.p[1]-0.6&&!(v.jump&&v.vy>0)){ v.onRamp=a; if(a.y>gd.y)return {y:a.y,wet:false}; } return gd; }
+function odRampAfter(v,gd,dt){ const a=v.onRamp;
+  if(a){ const dir=vFwd(v.h), rf=vFwd(a.R.h), along=dir[0]*rf[0]+dir[1]*rf[1]; v.pitch=Math.atan2(RAMP.H,RAMP.L)*Math.sign(along)*Math.sign(v.spd||1); v.lastRamp={u:a.u,along}; v.p[1]=Math.max(v.p[1],a.y-0.05); return; }
+  if(v.lastRamp&&!v.jump){ const L=v.lastRamp; v.lastRamp=null; if(L.u>RAMP.L/2-1.3&&L.along>0.5&&v.spd>5&&v.p[1]>OD.SEA+1){ v.jump=true; v.vy=5+v.spd*0.45; v.flip=0; v.spin=0; snd(()=>{ noise(1200,0.4,0.15,'bandpass'); tone('sine',300,600,0.3,0.06); }); if(v.sheep)odSheepTrick(v); } }
+  if(v.jump){ v.pitch*=Math.max(0,1-dt*2); if(v.p[1]<=gd.y+0.02&&v.vy<=0)odJetLand(v); } }
+function odJetLand(v){ const T=Math.PI*2, nf=Math.round((v.flip||0)/T), ns=Math.round((v.spin||0)/T), clean=Math.abs((v.flip||0)-nf*T)<0.85&&Math.abs((v.spin||0)-ns*T)<0.85;
+  v.jump=false; v.vy=0; v.flip=0; v.spin=0; v.pitch=0; for(let k=0;k<16;k++)mowSpray(v.p[0],v.p[1]+0.2,v.p[2],(Math.random()-0.5)*7,3+Math.random()*4,(Math.random()-0.5)*7,Math.random()<0.5?0xffffff:0x9ad8ff); snd(()=>{ noise(700,0.6,0.3,'lowpass'); noise(2500,0.4,0.12,'bandpass'); });
+  if(v.driver!=='player')return; if(!clean){ v.spd=0; exitVehicle(); const r=vRight(v.h); pl.p=[v.p[0]+r[0]*2.4,v.p[1],v.p[2]+r[1]*2.4]; pl.v=[0,2,0]; toast('💦 WIPEOUT! Land straight next time. Swim back to your wave runner!'); return; }
+  const tr=[]; if(nf<0)tr.push(Math.abs(nf)>1?Math.abs(nf)+'x front flip':'Front flip'); if(nf>0)tr.push(nf>1?nf+'x backflip':'Backflip'); if(ns)tr.push(Math.abs(ns)*360+' spin'); toast(tr.length?'🌊 '+tr.join(' + ')+'! SPLASH!':'🌊 SPLASH!'); }
+// the lasso, while you ride the wave runner: hook a ramp to tow it, let go of it, or (oh no) lasso a sheep
+function odLassoAction(){ const K=odyK, v=drive; if(!K||!v||v.type!=='mower'||demo||!onOdyssey()||!owned||!owned.includes('lasso')||v.look!=='jet'||v.jump)return null;
+  if(K.tow)return {label:'🪢 Let go of the ramp',fn:()=>{ K.tow.tow=false; odRampPlace(K.tow); K.tow=null; K.rope.visible=false; snd(()=>noise(3000,0.15,0.08,'highpass')); }};
+  let best=null, bd=8; for(const R of K.ramps){ const d=Math.hypot(R.x-v.p[0],R.z-v.p[2]); if(d<bd){ bd=d; best=R; } } if(best)return {label:'🪢 Lasso the ramp',fn:()=>{ best.tow=true; K.tow=best; K.rope.visible=true; snd(()=>{ noise(3000,0.25,0.1,'highpass'); tone('sine',500,900,0.2,0.05); }); }};
+  let sh=null; bd=12; for(const s of K.sheep){ const d=s.userData.d; if(!d||d.rider||d.swim)continue; const dd=Math.hypot(s.position.x-v.p[0],s.position.z-v.p[2]); if(dd<bd){ bd=dd; sh=s; } } if(sh)return {label:'🪢 Lasso the sheep',fn:()=>odSheepSteal(sh)}; return null; }
+function odSheepSteal(sh){ const K=odyK, v=drive; if(!v)return; if(K.tow){ K.tow.tow=false; odRampPlace(K.tow); K.tow=null; } K.rope.visible=false; exitVehicle(); const r=vRight(v.h); pl.p=[v.p[0]+r[0]*2.6,v.p[1],v.p[2]+r[1]*2.6]; pl.v=[0,3,0];
+  const d=sh.userData.d; d.rider=true; v.driver='sheep'; v.sheep=sh; v.spd=6; v.idle=0; K.jetSheep={v,sh,say:{g:sh},sayT:1,wp:0}; snd(()=>{ tone('sawtooth',420,330,0.35,0.07); tone('sawtooth',500,380,0.3,0.06,0.15); });
+  npcSay(K.jetSheep.say,'BAAA! My turn!'); toast('🐑 Whoa! The sheep yanked you off and stole your wave runner!'); }
+function odSheepTrick(v){ const air=2*v.vy/13, T=Math.PI*2, pick=Math.floor(Math.random()*4); v.auto={fv:pick===0?-T/air:pick===1?T/air:pick===3?-T/air:0,sv:pick>=2?T/air*(Math.random()<0.5?1:-1):0}; }
+function odSheepKnock(sh){ const K=odyK, J=K.jetSheep; if(!J||J.sh!==sh)return; const v=J.v, d=sh.userData.d; d.rider=false; d.swim=true; v.driver=null; v.sheep=null; v.spd=0; v.jump=false; v.flip=v.spin=0; v.auto=null; v.idle=0;
+  const r=vRight(v.h); sh.position.set(v.p[0]+r[0]*1.6,OD.SEA-0.3,v.p[2]+r[1]*1.6); sh.quaternion.identity(); sh.rotation.set(0,v.h,0); odBubOff(sh,J.say); K.jetSheep=null; dropCoins(v.p[0],OD.SEA+0.6,v.p[2],6+Math.floor(Math.random()*4)); sfx('hit');
+  for(let k=0;k<10;k++)mowSpray(sh.position.x,OD.SEA+0.2,sh.position.z,(Math.random()-0.5)*5,3+Math.random()*3,(Math.random()-0.5)*5,0xffffff); npcSay(J.say,'Baaa! No fair!'); J.say.bubT=3; K.swimSay=J.say;
+  toast('🎯 You knocked the sheep off! It swims home to the Cyclops, and your wave runner is free.'); }
+function odSheepSwim(sh,d,dt){ const c=OD.cyc, dx=c[0]-sh.position.x, dz=c[1]-sh.position.z, L=Math.hypot(dx,dz)||1, nx=sh.position.x+dx/L*2.6*dt, nz=sh.position.z+dz/L*2.6*dt, ny=gy(nx,nz); d.h=Math.atan2(-dx,-dz); sh.rotation.y=d.h;
+  if(ny>OD.SEA+0.5){ if(ny-OD.SEA<3){ sh.position.set(nx,ny,nz); d.swim=false; } else { sh.position.x=nx; sh.position.z=nz; } } else { sh.position.set(nx,OD.SEA-0.35+Math.sin(odyK.t*4)*0.08,nz); }
+  const S2=odyK.swimSay; if(S2&&S2.bubT>0){ S2.bubT-=dt; if(S2.bubT<=0)odBubOff(S2.g,S2); } }
+function odJetTick(dt){ const K=odyK; if(!K.ramps)odBuildRamps(K); const v=drive;
+  const trick=!demo&&!!v&&v.type==='mower'&&v.look==='jet'&&onOdyssey(); if(document.body.classList.contains('jettrick')!==trick){ document.body.classList.toggle('jettrick',trick); $('bJump').innerHTML=trick?'<span>⤴</span>Flip':'<span>⬆</span>Jump'; $('bDown').innerHTML=trick?'<span>⤵</span>Back':'<span>⬇</span>Down'; if(!trick){ upHeld=downHeld=false; } }
+  // towing a ramp behind you
+  if(K.tow){ if(!v||v.type!=='mower'){ K.tow.tow=false; odRampPlace(K.tow); K.tow=null; K.rope.visible=false; }
+    else { const R=K.tow, f=vFwd(v.h), tx=v.p[0]-f[0]*(RAMP.L/2+3.4), tz=v.p[2]-f[1]*(RAMP.L/2+3.4); if(get(Math.floor(tx),OD.SEA-1,Math.floor(tz))===ID.water){ R.x+=(tx-R.x)*Math.min(1,dt*3); R.z+=(tz-R.z)*Math.min(1,dt*3); let dh=v.h-R.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; R.h+=dh*Math.min(1,dt*2); }
+      odRampPlace(R); R.g.position.y=OD.SEA+Math.sin(K.t*3)*0.05; const hf=vFwd(R.h), a=new THREE.Vector3(v.p[0]-f[0]*1.3,v.p[1]+0.9,v.p[2]-f[1]*1.3), b=new THREE.Vector3(R.x+hf[0]*RAMP.L/2,OD.SEA+RAMP.H,R.z+hf[1]*RAMP.L/2); K.rope.geometry.setFromPoints([a,b]); } }
+  // the show-off sheep drives a loop through your ramps, jumping and flipping
+  const J=K.jetSheep; if(J){ const w=J.v, sh=J.sh; if(drive===w){ K.jetSheep=null; return; } const ramps=K.ramps.filter(R=>!R.tow); let pts=[];
+    // one ramp per lap: a long run-up behind it, a line-up point right before it, over the jump, then a wide turn to the next ramp
+    if(ramps.length){ J.ri=(J.ri||0)%ramps.length; const R=ramps[J.ri], f=vFwd(R.h), r=vRight(R.h), at=(a,b)=>[R.x+f[0]*a+r[0]*b,R.z+f[1]*a+r[1]*b]; pts=[at(-RAMP.L/2-18,0),at(-RAMP.L/2-5,0),at(RAMP.L/2+8,0),at(RAMP.L/2+4,14)]; }
+    else for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; pts.push([w.p[0]+Math.cos(a)*14,w.p[2]+Math.sin(a)*14]); }
+    J.wp%=pts.length; const tgt=pts[J.wp]; if(Math.hypot(tgt[0]-w.p[0],tgt[1]-w.p[2])<(J.wp===1?2.2:3.5)){ J.wp++; if(J.wp>=pts.length){ J.wp=0; J.ri=(J.ri||0)+1; } }
+    if(!w.jump){ let dh=Math.atan2(-(tgt[0]-w.p[0]),-(tgt[1]-w.p[2]))-w.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; w.h+=Math.max(-2.4,Math.min(2.4,dh*4))*dt; w.spd+=((J.wp===0||J.wp===3?9:13)-w.spd)*Math.min(1,dt); }
+    else if(w.auto){ const T=Math.PI*2; w.flip=Math.max(-T,Math.min(T,(w.flip||0)+w.auto.fv*dt)); w.spin=Math.max(-T,Math.min(T,(w.spin||0)+w.auto.sv*dt)); }
+    const hit=vMove(w,dt); if(hit){ w.h+=1.4; w.spd=4; J.wp++; if(J.wp>=pts.length){ J.wp=0; J.ri=(J.ri||0)+1; } } w.idle=0;
+    w.m.updateMatrixWorld(true); const s2=w.vm.seat; sh.position.copy(w.m.localToWorld(new THREE.Vector3(s2[0],s2[1]+(w.vm.by||0)-0.3,s2[2]))); sh.quaternion.copy(w.m.quaternion);
+    J.sayT-=dt; if(J.sayT<=0){ J.sayT=4+Math.random()*3; npcSay(J.say,['Baaa-ha-ha!','Watch THIS!','Wheee! Baaa!','Sheep can ride too!','Bet you can\'t do that!'][Math.floor(Math.random()*5)]); } if(J.say.bubT>0){ J.say.bubT-=dt; if(J.say.bubT<=0)odBubOff(J.say.g,J.say); } } }
 // Helios guards his golden cattle: touch one and lightning takes you down to one heart
 function heliosStrike(){ const K=odyK; if((K.boltCd||0)>0)return; K.boltCd=3; odBolt(pl.p[0],pl.p[2],60); odFlash(500); if(hp>1)hp=1; invuln=1.2; hurtFlash=0.5; updateHUD(); sfx('hurt');
   toast('⚡ ZAP! Helios the Sun God strikes you down to ONE heart! Never touch the golden cattle!'); }
@@ -6941,7 +7009,7 @@ function odLandTick(dt){ const K=odyK, t=K.t;
   if(sd<8&&!dead){ K.drainT=(K.drainT||0)-dt; if(K.drainT<=0){ K.drainT=1.5; snd(()=>{ tone('sine',880,660,0.6,0.05); tone('sine',1100,880,0.5,0.03,0.15); }); hurtPlayer(1,undefined,undefined,'The Sirens\' song');
       if(!K.toldSir){ K.toldSir=1; toast('🎶 The Sirens\' song is draining your hearts! Get away, fast! (Odysseus\'s crew plugged their ears with beeswax.)'); } } } else K.drainT=0.6;
   // the sheep graze, follow their shepherd, and run if you scare them
-  const C=K.cy; for(const sh of K.sheep){ const d=sh.userData.d; if(!d)continue; let spd=0; d.t-=dt; d.flee=Math.max(0,d.flee-dt);
+  const C=K.cy; for(const sh of K.sheep){ const d=sh.userData.d; if(!d)continue; if(d.rider)continue; if(d.swim){ odSheepSwim(sh,d,dt); continue; } let spd=0; d.t-=dt; d.flee=Math.max(0,d.flee-dt);
     if(d.flee>0)spd=4; else if(C&&!C.down&&Math.hypot(C.x-sh.position.x,C.z-sh.position.z)>9){ d.h=Math.atan2(-(C.x-sh.position.x),-(C.z-sh.position.z)); spd=1.4; } else if(d.t<=0){ d.t=2+Math.random()*4; d.h+=(Math.random()-0.5)*2; d.walk=Math.random()<0.5; }
     if(!spd&&d.walk)spd=0.5; if(spd){ const nx=sh.position.x-Math.sin(d.h)*spd*dt, nz=sh.position.z-Math.cos(d.h)*spd*dt, ny=gy(nx,nz); if(ny>OD.SEA+1&&Math.abs(ny-sh.position.y)<1.6){ sh.position.x=nx; sh.position.z=nz; sh.position.y+=(ny-sh.position.y)*Math.min(1,dt*8); } else d.h+=1.5; }
     sh.rotation.y=d.h; }
@@ -7025,7 +7093,7 @@ function odHeroGear(on){ if(on&&!odGear)odGear=gearUp(rig,{crest:0x2a6ad8,cape:0
 function odHeroCloak(on){ if(on&&!odCloak){ odCloak=[]; const c=box(0.75,1.55,0.55,mm(0x6a4a2a)); c.position.set(0,0.95,0); rig.torso.add(c); odCloak.push(c); const h=box(0.62,0.5,0.62,mm(0x5a3a1a)); h.position.set(0,0.3,0.05); rig.head.add(h); odCloak.push(h); if(odGear)for(const m of odGear)m.visible=false; }
   if(!on&&odCloak){ for(const m of odCloak)m.parent&&m.parent.remove(m); odCloak=null; if(odGear)for(const m of odGear)m.visible=true; } }
 // --- the sea world ticking along: fires, the whirlpool, Scylla's heads, the Sirens' songs, waterfalls, ghosts
-function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t;
+function odyTick(dt){ const K=odyK; K.t+=dt; const t=K.t; odJetTick(dt);
   for(const f of K.fires){ for(const c of f.fl){ c.scale.y=0.75+Math.random()*0.5; } } K.smT=(K.smT||0)-dt; if(K.smT<=0){ K.smT=0.25; const f=K.fires[Math.floor(Math.random()*K.fires.length)]; puff(f.g.position.x,f.g.position.y+2.5,f.g.position.z,true); }
   K.whirl.rotation.z+=dt*(K.whirlFast?4:1.6); for(const T of K.tent){ T.segs.forEach((s,k)=>{ s.rotation.z=Math.sin(t*1.5+T.ph+k*0.5)*0.25*(K.whirlFast?1.6:1); s.rotation.x=Math.cos(t*1.2+T.ph+k*0.4)*0.18; }); }
   for(const h of K.heads){ const lunge=h.lunge>0?Math.sin((1-h.lunge)*Math.PI):0; if(h.lunge>0)h.lunge-=dt*1.4; h.ch.forEach((s,k)=>{ s.rotation.z=(k<3?0.25:-0.12)+Math.sin(t*1.3+h.ph+k*0.6)*0.12-lunge*(k<3?0.25:0.05); s.rotation.y=Math.sin(t*0.8+h.ph+k*0.3)*0.12; }); h.jaw.rotation.z=Math.max(0,Math.sin(t*4+h.ph))*0.35+lunge*0.5; }
@@ -7339,11 +7407,12 @@ function odSeaTick(dt){ const K=odyK, S=K&&K.sea; if(!S)return; S.t+=dt; const t
   let n=0; for(const k of S.kelp){ let x=k.p[0], z=k.p[2], y=k.p[1]; for(let j=0;j<k.n;j++){ const sw=Math.sin(t*1.1+k.ph+j*0.55)*0.12*(j+1); d.position.set(x+sw,y+0.47,z); d.rotation.set(0,k.ph,sw*0.6); d.scale.set(1,1,1); d.updateMatrix(); S.kelpM.setMatrixAt(n,d.matrix);
       d.position.y=y+0.7; d.rotation.set(0,k.ph+(j%2?0.9:-0.9),0.5*(j%2?1:-1)); d.updateMatrix(); S.leafM.setMatrixAt(n,d.matrix); n++; y+=0.95; } } S.kelpM.instanceMatrix.needsUpdate=S.leafM.instanceMatrix.needsUpdate=true;
   // fish schools wander, and scatter from sharks and the whale
-  for(const sc of S.schools){ if(!sc.tgt||Math.hypot(sc.tgt[0]-sc.c[0],sc.tgt[2]-sc.c[2])<2){ const p=seaSpot(3,[sc.c[0],sc.c[2]],25); sc.tgt=p?[p[0],SEA-1.5-Math.random()*2,p[2]]:null; }
+  for(const sc of S.schools){ if(sc.respawn>0){ sc.respawn-=dt; if(sc.respawn<=0)sc.fish.forEach(f=>{ f.dead=false; f.hp=2; }); }
+    if(!sc.tgt||Math.hypot(sc.tgt[0]-sc.c[0],sc.tgt[2]-sc.c[2])<2){ const p=seaSpot(3,[sc.c[0],sc.c[2]],25); sc.tgt=p?[p[0],SEA-1.5-Math.random()*2,p[2]]:null; }
     if(sc.tgt){ const dx=sc.tgt[0]-sc.c[0], dz=sc.tgt[2]-sc.c[2], L=Math.hypot(dx,dz)||1; let sp=sc.scare>0?5:1.6; if(sc.scare>0)sc.scare-=dt; for(const sh of S.sharks)if(Math.hypot(sh.p[0]-sc.c[0],sh.p[2]-sc.c[2])<5)sp=4; sc.c[0]+=dx/L*sp*dt; sc.c[2]+=dz/L*sp*dt; sc.c[1]+=(sc.tgt[1]-sc.c[1])*dt*0.5; }
     const vis=seaNear(sc.c,55); for(const f of sc.fish){ f.a+=dt*f.w; const p=[sc.c[0]+Math.cos(f.a)*f.r,sc.c[1]+f.y+Math.sin(t*2+f.a)*0.15,sc.c[2]+Math.sin(f.a)*f.r]; const h=f.prev?Math.atan2(-(p[0]-f.prev[0]),-(p[2]-f.prev[2])):0; f.prev=p;
-      d.position.set(p[0],p[1],p[2]); d.rotation.set(0,h,0); d.scale.set(vis?f.len*0.3:0.001,f.len*0.55,f.len); d.updateMatrix(); S.bodyM.setMatrixAt(f.i,d.matrix);
-      d.translateZ(f.len*0.6); d.rotation.y=h+Math.sin(t*12+f.a)*0.5; d.scale.set(vis?1:0.001,f.len*0.4,f.len*0.35); d.updateMatrix(); S.tailM.setMatrixAt(f.i,d.matrix); } }
+      d.position.set(p[0],p[1],p[2]); d.rotation.set(0,h,0); d.scale.set(vis&&!f.dead?f.len*0.3:0.001,f.len*0.55,f.len); d.updateMatrix(); S.bodyM.setMatrixAt(f.i,d.matrix);
+      d.translateZ(f.len*0.6); d.rotation.y=h+Math.sin(t*12+f.a)*0.5; d.scale.set(vis&&!f.dead?1:0.001,f.len*0.4,f.len*0.35); d.updateMatrix(); S.tailM.setMatrixAt(f.i,d.matrix); } }
   S.bodyM.instanceMatrix.needsUpdate=S.tailM.instanceMatrix.needsUpdate=true;
   // pufferfish bob about, and puff up when a dolphin nudges them
   for(const pf of S.puffers){ pf.ph+=dt; pf.puff=Math.max(0,pf.puff-dt*0.25); if(pf.vy){ pf.p[1]+=pf.vy*dt; pf.vy-=9*dt; if(pf.p[1]<SEA-1.5){ pf.p[1]=SEA-1.5; pf.vy=0; } }
@@ -10144,7 +10213,7 @@ petsLoad(); fishBagLoad(); hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},get mxK(){return mxK;},get brK(){return brK;},get elK(){return elK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get freeVehicles(){return freeVehicles;},enterVehicle:v=>enterVehicle(v),exitVehicle:()=>exitVehicle(),get owned(){return owned;},odyHurt:(c,d,x,z,sh)=>odyHurt(c,d,x,z,sh),odyTargets:()=>odyTargets(),nearAction:()=>nearAction(),get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},get mxK(){return mxK;},get brK(){return brK;},get elK(){return elK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
