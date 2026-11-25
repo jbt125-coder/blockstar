@@ -2376,7 +2376,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',el1:'🎄 Elf 1: The North Pole and the Mysterious Baby',el2:'🎄 Elf 2: Buddy Discovers the Truth',el3:'🎄 Elf 3: The Journey to New York',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',br4:'🌃 Blade Runner 4: The Hunt Through the City',br5:'🌃 Blade Runner 5: The Artificial Human',br6:'🌃 Blade Runner 6: The Strange World of J.F. Sebastian',br7:'🌃 Blade Runner 7: The Creator and His Creation',br8:'🌃 Blade Runner 8: The Final Hunt at the Bradbury',br9:'🌃 Blade Runner 9: The Rooftop and the Last Moments',br10:'🌃 Blade Runner 10: The Final Escape',el1:'🎄 Elf 1: The North Pole and the Mysterious Baby',el2:'🎄 Elf 2: Buddy Discovers the Truth',el3:'🎄 Elf 3: The Journey to New York',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2446,7 +2446,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isFilm(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the whole Matrix (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmBlade">🌃 Load Blade Runner (chapters 1 to 3)</button></div><div class="row"><button class="mbtn gold" id="dmElf">🎄 Load Elf (chapters 1 to 3)</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the whole Matrix (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmBlade">🌃 Load the whole Blade Runner (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmElf">🎄 Load Elf (chapters 1 to 3)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2474,7 +2474,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
   onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Matrix (about 7 minutes)?'))return; loadMatrix(); redraw(); });
   onClick($('dmElf'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with Elf chapters 1 to 3 (about 2 minutes)?'))return; loadElf(); redraw(); });
-  onClick($('dmBlade'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with Blade Runner chapters 1 to 3 (about 2¼ minutes)?'))return; loadBlade(); redraw(); });
+  onClick($('dmBlade'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of Blade Runner (about 7 minutes)?'))return; loadBlade(); redraw(); });
   onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of Rocky (about 6½ minutes)?'))return; loadRocky(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
   onClick($('dmReset'),()=>{ if(!confirm('Replace your scenes with the example scenes?'))return; const s=JSON.parse(JSON.stringify(DEMO0)); dmCfg.scenes=s.scenes.map(cleanScene); saveDemo(); redraw(); });
@@ -8484,8 +8484,8 @@ const BR_CAST={
   tyrell:{eyes:'#4a6a8a',skin:'#f0d0b8',hair:'short',hairC:'#f2f2f2',glasses:'round',top:'jacket',topC:'#8a7a5a',bottom:'pants',bottomC:'#6a5a42',shoes:'shoes',shoeC:'#3a2a1a'},
   rachael:{skin:'#f2d8c4',hair:'bun',hairC:'#1a1210',eyes:'#3a2a1a',top:'jacket',topC:'#3a3230',bottom:'skirt',bottomC:'#3a3230',shoes:'shoes',shoeC:'#111111'},
   roy:{skin:'#f4e4d8',hair:'buzz',hairC:'#f4e8b0',eyes:'#4a7ab8',top:'long',topC:'#2a2a2a',bottom:'pants',bottomC:'#2a2a2a',shoes:'boots',shoeC:'#111111'},
-  pris:{skin:'#f8ece4',hair:'spiky',hairC:'#f0e8d0',top:'tank',topC:'#4a4a4a',bottom:'skirt',bottomC:'#2a2a2a',shoes:'boots',shoeC:'#111111'},
-  zhora:{skin:'#e8c8a8',hair:'short',hairC:'#1a1a1a',top:'tank',topC:'#d8d8e8',bottom:'pants',bottomC:'#3a3a4a',shoes:'boots',shoeC:'#111111'}};
+  pris:{eyes:'#3a5a8a',skin:'#f8ece4',hair:'spiky',hairC:'#f0e8d0',top:'tank',topC:'#4a4a4a',bottom:'skirt',bottomC:'#2a2a2a',shoes:'boots',shoeC:'#111111'},
+  zhora:{eyes:'#2a3a2a',skin:'#e8c8a8',hair:'short',hairC:'#1a1a1a',top:'tank',topC:'#d8d8e8',bottom:'pants',bottomC:'#3a3a4a',shoes:'boots',shoeC:'#111111'}};
 function brPerson(par,kind,x,y,z,ry,o){ const a=odPerson(par,x||0,y||0,z||0,ry||0,mxLook(Object.assign({},BR_CAST[kind]||{},o||{}))); a.kind=kind;
   if(kind==='bryant')a.g.scale.set(1.12,1.02,1.12); if(kind==='leon')a.g.scale.setScalar(1.1);
   if(kind==='gaff'){ const c=grp(a.R.armR,0,-0.68,-0.05); mcyl(c,0.03,0.03,1.0,mm(0x1a1a1a),0,-0.3,0,6); msph(c,0.05,mm(0xc8a040),0,0.2,0); a.cane=c; }
@@ -8571,7 +8571,7 @@ function buildBrLife(){ clearBrLife(); const root=new THREE.Group(); scene.add(r
     K.suspect=odPerson(d,0,0,-1.05,0,odLook()); K.suspect.R.legL.rotation.x=K.suspect.R.legR.rotation.x=1.45; K.suspect.g.position.y=-0.2; }
   // Gaff's paper figures, hidden around the city
   BR_ORIG.forEach((o,i)=>{ const g=brOrigami(root,o.k); g.position.set(...o.p); K.orig.push({g,o,i}); g.visible=!brOrigGot().includes(o.k); });
-  brBuildSets(K); }
+  brBuildSets(K); brBuildSets2(K); }
 const BR_ORIG=[{k:'chicken',name:'paper chicken',p:[29.5,BRC.G+1.13,53.6]},{k:'man',name:'paper stick man',p:[19,BRC.G+31.1,22]},{k:'unicorn',name:'paper unicorn',p:[22,BRC.G+9.1,89.5]}];
 function brOrigGot(){ try{ return JSON.parse(localStorage.getItem('blockstar_br_orig')||'[]'); }catch(e){ return []; } }
 function brOrigami(par,k){ const g=grp(par,0,0,0), m=new THREE.MeshLambertMaterial({color:0xf2eee0,side:THREE.DoubleSide}), tri=(pts,x,y,z,rx,ry,rz)=>{ const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); geo.computeVertexNormals(); const t=new THREE.Mesh(geo,m); t.position.set(x,y,z); t.rotation.set(rx||0,ry||0,rz||0); g.add(t); return t; };
@@ -8581,7 +8581,7 @@ function brOrigami(par,k){ const g=grp(par,0,0,0), m=new THREE.MeshLambertMateri
   g.traverse(o=>{ if(o.geometry)o.userData.own=true; }); m.userData.own=true; return g; }
 function clearBrLife(){ brStageClear(); const K=brK; if(!K)return; scene.remove(K.root); odFree(K.root); brK=null; brVkClose(); if(mxShotBtn&&!mxK)mxShotButton(false); }
 // skies: the rainy night, the inside of rooms, and the golden glow inside the pyramid
-function brSky(k){ const S={rain:[0x0a0c16,[0.62,0.62,0.78],22,150],high:[0x0e101e,[0.66,0.64,0.8],60,260],in:[0x0a0a0e,[0.7,0.68,0.7],30,120],gold:[0x2a1a08,[1,0.86,0.66],40,160]}[k]||[0x0a0c16,[0.62,0.62,0.78],22,150];
+function brSky(k){ const S={rain:[0x0a0c16,[0.62,0.62,0.78],22,150],high:[0x0e101e,[0.66,0.64,0.8],60,260],in:[0x0a0a0e,[0.7,0.68,0.7],30,120],dark:[0x050508,[0.34,0.32,0.4],16,70],gold:[0x2a1a08,[1,0.86,0.66],40,160]}[k]||[0x0a0c16,[0.62,0.62,0.78],22,150];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false; scene.fog.near=S[2]; scene.fog.far=S[3];
   if(camera.far<340){ camera.far=340; camera.updateProjectionMatrix(); } setWeather(k==='rain'||k==='high'?'rain':'clear'); }
 function brTick(dt){ const K=brK; K.t+=dt; const t=K.t, G=BRC.G;
@@ -8755,10 +8755,10 @@ function demoBrSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mans
   brStageClear(); brDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},br:true,bits:[]}; brK.root.add(S.grp); brStage=S; P.S=S;
   demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; brMood=ch.mood||'city'; brSky(ch.sky||'rain'); ch.init(S); demo.cam=null; }
 function brStageClear(){ const S=brStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(brK)brK.root.remove(S.grp); odFree(S.grp); brStage=null;
-  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=head.rotation.y=0; $('dmFade').style.background=''; rkTitle('',false); if(brK)brDefaults(); }
+  model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=head.rotation.y=0; $('dmFade').style.background=''; $('dmFade').style.opacity=0; rkTitle('',false); if(brK)brDefaults(); }
 function brDefaults(){ const K=brK; for(const k in K.sets)K.sets[k].visible=false; K.orig.forEach(o=>o.g.visible=!demo&&!brOrigGot().includes(o.o.k)); K.traffic.forEach(c=>c.film=false); K.spin.g.visible=!demo; K.suspect.g.visible=true;
   K.intTable.position.set(0,0,0); K.intTable.rotation.set(0,0,0); K.chH.position.set(-1.2,0,0); K.chH.rotation.set(0,-Math.PI/2,0); K.stars.visible=false; K.intDoor.rotation.y=0; brMugs(K.mugs,-1); K.owl.g.position.set(-5,2.03,-6); K.owl.g.rotation.set(0,0,0); K.owl.hd.rotation.set(0,0,0);
-  K.hands.forEach(h=>h.rotation.z=0); brView(K.view,0,0); }
+  K.hands.forEach(h=>h.rotation.z=0); brView(K.view,0,0); brDefaults2(); }
 // Deckard: a long brown coat over your hero
 function brDeckard(S){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,mm(col)); b.position.set(x,y,z); par.add(b); S.bits.push(b); return b; };
   put(rig.torso,0.56,1.2,0.05,0x6a4a2a,0,0.86,0.155); for(const s of[-1,1])put(rig.torso,0.19,1.2,0.04,0x6a4a2a,s*0.17,0.86,-0.15); put(rig.torso,0.54,0.76,0.3,0x7a5632,0,1.08,0); put(rig.torso,0.6,0.12,0.34,0x5a3a20,0,1.42,0);
@@ -8866,6 +8866,244 @@ OD_CH.br3={secs:45,sky:'high',mood:'gold',init(S){ const K=brK; brDeckard(S); S.
     return [TYR(-2,2,-4.6),TYR(-1.6,3.4,-10),12]; } };
 const BR_NAMES=['The Eye of the Future','The Blade Runner Returns','The Tyrell Corporation'];
 function loadBlade(){ dmCfg.scenes=BR_NAMES.map((n,i)=>cleanScene({act:'br'+(i+1),time:'night',wx:'rain',land:'normal',cam:'cine',secs:OD_CH['br'+(i+1)].secs,cap:''})); saveDemo(); }
+
+// --- more rooms for chapters 4 to 10: Deckard's apartment and hallway, Leon's room, the nightclub, Tyrell's bedroom and
+// the rooftops; plus Sebastian's toys inside the Bradbury (those stay there for players to find, too)
+Object.assign(BRS,{dapt:[64,-160,64],lapt:[64,-190,64],club:[64,-220,64],bed:[64,-250,64],roof:[64,-290,64],hall:[64,-320,64]});
+const DAP=(x,y,z)=>[BRS.dapt[0]+x,BRS.dapt[1]+y,BRS.dapt[2]+z], LAP=(x,y,z)=>[BRS.lapt[0]+x,BRS.lapt[1]+y,BRS.lapt[2]+z], CLB=(x,y,z)=>[BRS.club[0]+x,BRS.club[1]+y,BRS.club[2]+z],
+  BED=(x,y,z)=>[BRS.bed[0]+x,BRS.bed[1]+y,BRS.bed[2]+z], RF=(x,y,z)=>[BRS.roof[0]+x,BRS.roof[1]+y,BRS.roof[2]+z], HAL=(x,y,z)=>[BRS.hall[0]+x,BRS.hall[1]+y,BRS.hall[2]+z];
+Object.assign(BR_CAST,{sebastian:{eyes:'#4a5a3a',skin:'#ecd6c4',hair:'short',hairC:'#7a5a3a',top:'long',topC:'#5a4a3a',bottom:'pants',bottomC:'#3a3430',shoes:'shoes',shoeC:'#2a1a10'},
+  keeper:{eyes:'#2a1a10',skin:'#e0b080',hair:'bald',beard:'long',top:'long',topC:'#3a6a5a',bottom:'pants',bottomC:'#2a2a2a',shoes:'shoes',shoeC:'#111111',glasses:'round'}});
+function brNightView(c,t){ const x=c.x, w=c.c.width, h=c.c.height; const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#04040c'); g.addColorStop(0.7,'#1a1030'); g.addColorStop(1,'#3a1a2a'); x.fillStyle=g; x.fillRect(0,0,w,h);
+  for(let i=0;i<46;i++){ const bx=(i*53)%w, bh=h*0.2+((i*37)%Math.round(h*0.5)); x.fillStyle='#08060e'; x.fillRect(bx,h-bh,14+((i*13)%22),bh); for(let k=0;k<8;k++)if((i+k)%3){ x.fillStyle=['#ffd890','#ff6ab8','#6ad8ff'][(i+k)%3]; x.fillRect(bx+3+(k%3)*5,h-bh+6+k*8,2,2); } }
+  for(let i=0;i<4;i++){ const fx=(i*137+40)%w; x.fillStyle='rgba(255,140,40,'+(0.4+0.4*Math.abs(Math.sin((t||0)*2+i)))+')'; x.beginPath(); x.arc(fx,h*0.55,6,0,7); x.fill(); } c.t.needsUpdate=true; }
+function brPiano(par){ const g=grp(par,0,0,0), b=mm(0x1a1210); mb(g,2.2,1.0,0.9,b,0,0.5,0); mb(g,2.2,0.08,0.3,mm(0xf2eee0),0,0.78,0.5); for(let i=0;i<14;i++)mb(g,0.06,0.05,0.18,b,-0.98+i*0.15,0.84,0.45); mb(g,2.2,0.45,0.25,b,0,1.15,-0.32); return g; }
+function brPhoto(par,draw,w,h){ const c=canvasTex(64,Math.round(64*h/w)); draw(c.x,64,c.c.height); c.t.needsUpdate=true; const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:c.t})); par.add(m); return m; }
+function brOldPhoto(seed){ return (x,w,h)=>{ x.fillStyle='#e8d8b0'; x.fillRect(0,0,w,h); x.fillStyle='#b8986a'; x.fillRect(4,4,w-8,h-8); x.fillStyle='#6a4a2a'; for(let i=0;i<2+seed%2;i++){ const px=14+i*20+seed%5; x.fillRect(px,h*0.35,10,h*0.45); x.fillRect(px+1,h*0.22,8,8); } x.fillStyle='rgba(255,255,255,0.15)'; x.fillRect(4,4,w-8,10); }; }
+function brToy(par,kind){ const g=grp(par,0,0,0), o={g,kind,legs:[],arms:[]};
+  if(kind==='soldier'){ const red=mm(0xc81a2a); for(const s of[-1,1]){ const l=grp(g,s*0.09,0.4,0); mb(l,0.12,0.4,0.12,mm(0xf2f2f2),0,-0.2,0); o.legs.push(l); } mb(g,0.34,0.42,0.22,red,0,0.62,0); mb(g,0.24,0.22,0.22,mm(0xf2d0b8),0,0.95,0); mb(g,0.22,0.36,0.22,mm(0x111111),0,1.24,0); for(const s of[-1,1]){ const a=grp(g,s*0.22,0.8,0); mb(a,0.1,0.36,0.1,red,0,-0.18,0); o.arms.push(a); } msph(g,0.03,mm(0x111111),0.06,0.97,-0.12); msph(g,0.03,mm(0x111111),-0.06,0.97,-0.12); }
+  else if(kind==='bear'){ const b=mm(0x8a5a2a); msph(g,0.3,b,0,0.42,0); msph(g,0.2,b,0,0.85,0); for(const s of[-1,1]){ msph(g,0.07,b,s*0.14,1.02,0); const a=grp(g,s*0.26,0.55,-0.1); mb(a,0.1,0.3,0.1,b,0,-0.12,-0.06); o.arms.push(a); } mcyl(g,0.2,0.2,0.18,mm(0xd8a020),0,0.38,-0.32,12).rotation.x=Math.PI/2; msph(g,0.03,mm(0x111111),0.07,0.88,-0.18); msph(g,0.03,mm(0x111111),-0.07,0.88,-0.18); }
+  else { const c=mm([0xf2e8f0,0xd8e8f8,0xf8e0c8][Math.floor(Math.random()*3)]); mb(g,0.4,0.6,0.3,c,0,0.4,0); mb(g,0.26,0.28,0.26,mm(0xf6eee8),0,0.86,0); mb(g,0.3,0.1,0.3,mm(0x6a3a2a),0,1.02,0); for(const s of[-1,1]){ const a=grp(g,s*0.24,0.66,0); mb(a,0.08,0.34,0.08,mm(0xf6eee8),0,-0.16,0); o.arms.push(a); } msph(g,0.025,mm(0x2a4a8a),0.06,0.88,-0.13); msph(g,0.025,mm(0x2a4a8a),-0.06,0.88,-0.13); }
+  return o; }
+function brDove(par){ const g=grp(par,0,0,0), w=mm(0xf6f6f6); msph(g,0.14,w,0,0,0,1,0.9,1.5); msph(g,0.08,w,0,0.08,-0.18); mb(g,0.04,0.03,0.06,mm(0xe8a030),0,0.07,-0.27); const wings=[]; for(const s of[-1,1]){ const p=grp(g,s*0.1,0.04,0); mb(p,0.34,0.03,0.2,w,s*0.17,0,0); wings.push(p); } return {g,wings}; }
+function brSnake(par){ const g=grp(par,0,0,0), segs=[]; for(let i=0;i<14;i++)segs.push(msph(g,0.055,mm(i%3?0x3a8a3a:0xd8c040),0,0,0)); return {g,segs}; }
+function brBuildSets2(K){ const root=K.root, sets=K.sets, G=BRC.G;
+  { const s=sets.dapt=grp(root,...BRS.dapt); mxRoom(s,10,3.2,8,0x3a3240,0x2a2026); K.piano=brPiano(s); K.piano.position.set(-3,0,-3.4);
+    K.pianoPics=[]; for(let i=0;i<5;i++){ const p=brPhoto(s,brOldPhoto(i),0.32,0.4); p.position.set(-3.8+i*0.4,1.35,-3.45+(i%2)*0.04); K.pianoPics.push(p); }
+    K.dOrig=[brOrigami(s,'chicken'),brOrigami(s,'man')]; K.dOrig[0].position.set(-2.2,1.25,-3.3); K.dOrig[1].position.set(-1.9,1.25,-3.3);
+    const bl=canvasTex(64,128); for(let y=0;y<128;y+=8){ bl.x.fillStyle='#6a8ab8'; bl.x.fillRect(0,y,64,5); bl.x.fillStyle='#0a0a14'; bl.x.fillRect(0,y+5,64,3); } bl.t.needsUpdate=true; const win=new THREE.Mesh(new THREE.PlaneGeometry(4,2.2),new THREE.MeshBasicMaterial({map:bl.t})); win.position.set(4.95,1.7,0); win.rotation.y=-Math.PI/2; s.add(win);
+    K.sweep=new THREE.Mesh(new THREE.BoxGeometry(9,0.4,1.2),new THREE.MeshBasicMaterial({color:0xd8e8ff,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false})); K.sweep.position.set(0,1.2,0); s.add(K.sweep);
+    const couch=grp(s,1.6,0,1.6); mb(couch,2.4,0.45,0.9,mm(0x4a3a2a),0,0.25,0); mb(couch,2.4,0.6,0.25,mm(0x4a3a2a),0,0.7,0.35); K.couch=couch;
+    mxDesk(s,3,0,-3.1,0,1.6,0.8); K.esper=canvasTex(256,160); const sc=new THREE.Mesh(new THREE.PlaneGeometry(1.1,0.7),new THREE.MeshBasicMaterial({map:K.esper.t})); sc.position.set(3,1.25,-3.35); s.add(sc); mb(s,1.2,0.8,0.12,mm(0x1a1a1e),3,1.25,-3.43); mxChair(s,3,0,-2.2,0,0x2a2a30).scale.set(0.6,0.7,0.6);
+    K.dDoor=grp(s,-3,0,3.95); mb(K.dDoor,1.2,2.2,0.1,mm(0x3a3a40),0.6,1.1,0); const dl=new THREE.PointLight(0xffd8a0,1,12); dl.position.set(0,2.6,0); s.add(dl); K.blanket=mb(s,1.8,0.12,0.8,mm(0x8a6a8a),1.6,0.55,1.5); K.blanket.visible=false; K.uni=brOrigami(s,'unicorn'); K.uni.position.set(-2.4,0.02,3.2); K.uni.visible=false; }
+  { const s=sets.hall=grp(root,...BRS.hall); mxRoom(s,3,3,14,0x3a3a42,0x2a2a2e); for(let z=-5;z<=5;z+=2.5)msph(s,0.15,glowM(0xd8e0ff),0,2.9,z); const hl=new THREE.PointLight(0xd8e0ff,0.9,14); hl.position.set(0,2.6,0); s.add(hl);
+    const car=grp(s,0,0,-7.2); mb(car,2.2,0.1,1.8,mm(0x8a7a5a),0,0.05,0); mb(car,2.2,2.6,0.1,mm(0x6a5a3a),0,1.3,-0.9); msph(car,0.12,glowM(0xfff0c0),0,2.5,0); K.eDoors=[]; for(const s2 of[-1,1]){ const d=mb(s,0.75,2.4,0.08,mm(0x9a9aa0),s2*0.37,1.2,-6.15); K.eDoors.push(d); } mb(s,3,0.4,0.2,mm(0x5a5a60),0,2.6,-6.1); }
+  { const s=sets.lapt=grp(root,...BRS.lapt); mxRoom(s,7,3,6,0x4a4234,0x3a3024); const bed=grp(s,-2,0,-1.6); mb(bed,1.6,0.4,2.2,mm(0x5a4a3a),0,0.2,0); mb(bed,1.5,0.12,2.1,mm(0xc8c0a8),0,0.46,0).rotation.y=0.08;
+    K.tub=grp(s,2.2,0,-1.6); mb(K.tub,1.0,0.6,1.8,mm(0xe8e8e0),0,0.3,0); mb(K.tub,0.8,0.04,1.6,mm(0x5a7a8a),0,0.56,0); K.scale=msph(K.tub,0.05,glowM(0xc8ff9a),0.1,0.6,0.4);
+    const dr=grp(s,0,0,-2.6); mb(dr,1.4,0.9,0.5,mm(0x6a4a2a),0,0.45,0); K.drawer=mb(dr,1.2,0.25,0.45,mm(0x7a5a3a),0,0.6,0.05); K.leonPic=brPhoto(s,(x,w,h)=>{ x.fillStyle='#d8c8a0'; x.fillRect(0,0,w,h); x.fillStyle='#7a6a4a'; x.fillRect(4,4,w-8,h-8); x.fillStyle='#4a3a2a'; x.fillRect(10,10,20,30); x.fillStyle='#a8b8c8'; x.fillRect(38,10,16,22); },0.3,0.24); K.leonPic.position.set(0,0.94,-2.4); K.leonPic.rotation.x=-Math.PI/2;
+    for(let i=0;i<9;i++)mb(s,0.3+Math.random()*0.3,0.2+Math.random()*0.3,0.3,mm([0x6a5a4a,0x4a4a3a,0x8a7a5a][i%3]),-3+Math.random()*6,0.15,1+Math.random()*1.8); const ll=new THREE.PointLight(0xffe0a0,0.9,10); ll.position.set(0,2.6,0); s.add(ll);
+    for(let i=0;i<6;i++){ const p=brPhoto(s,brOldPhoto(i+3),0.2,0.16); p.position.set(-0.6+i*0.25,0.92,-2.5+(i%2)*0.1); p.rotation.x=-Math.PI/2; p.rotation.z=i*0.3; } }
+  { const s=sets.club=grp(root,...BRS.club); mxRoom(s,16,6,14,0x1a0a20,0x120812); mb(s,7,0.6,3.2,mm(0x2a1a2a),0,0.3,-4.8); for(let i=0;i<8;i++){ const c=mb(s,0.9,5,0.1,mm(i%2?0x8a0a2a:0x6a0a1a),-3.6+i*1.03,2.8,-6.4); }
+    K.spots=[]; for(let i=0;i<4;i++){ const sp=new THREE.Mesh(new THREE.ConeGeometry(1.2,5.6,12,1,true),new THREE.MeshBasicMaterial({color:[0xff3a8a,0x3affd8,0xffd23a,0x8a5aff][i],transparent:true,opacity:0.14,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); sp.position.set(-3+i*2,3.2,-4.4); s.add(sp); K.spots.push(sp); }
+    K.crowd=[]; for(let i=0;i<10;i++){ const a=odPerson(s,-4+(i%5)*2+Math.random()*0.6,0,-0.6+Math.floor(i/5)*1.6+Math.random()*0.4,0,mxLook({top:['jacket','long','tank'][i%3],topC:['#1a1a2a','#3a0a2a','#0a2a3a'][i%3],bottom:'pants',bottomC:'#111111',hair:['short','long','mohawk','spiky','bun'][i%5],hairC:['#1a1a1a','#e85aa8','#4a8ae8','#d8a850'][i%4]})); K.crowd.push(a); }
+    const bar=grp(s,6.4,0,1); mb(bar,1.2,1.1,6,mm(0x1a1a22),0,0.55,0); mb(bar,1.3,0.06,6.1,glowM(0x3affd8),0,1.12,0); const cl=new THREE.PointLight(0xff6ab8,1.1,16); cl.position.set(0,4,-2); s.add(cl); }
+  { const s=sets.bed=grp(root,...BRS.bed); mxRoom(s,16,7,12,0x2a1a0e,0x1a120a); K.bedView=canvasTex(512,256); brNightView(K.bedView,0); const v=new THREE.Mesh(new THREE.PlaneGeometry(15,6),new THREE.MeshBasicMaterial({map:K.bedView.t,fog:false})); v.position.set(0,3.4,-5.94); s.add(v);
+    for(let i=-7;i<=7;i++)mb(s,0.12,6,0.12,mm(0x3a2410),i,3.4,-5.88); const bed=grp(s,0,0,-2.6); mb(bed,3,0.7,3.4,mm(0x3a2410),0,0.35,0); mb(bed,2.9,0.2,3.3,mm(0xf2eee0),0,0.8,0); K.sheet=mb(bed,2.9,0.16,2.2,mm(0x8a1a1a),0,0.92,0.5); for(const [x,z] of [[-1.4,-1.6],[1.4,-1.6],[-1.4,1.6],[1.4,1.6]])mb(bed,0.12,3.2,0.12,mm(0x2a1a08),x,1.6,z);
+    K.candles=[]; for(let i=0;i<24;i++){ const a=i/24*Math.PI*2, r=4+(i%3)*0.6, x=Math.cos(a)*r, z=-1+Math.sin(a)*r*0.7; if(z>4.5)continue; mcyl(s,0.05,0.05,0.3+(i%4)*0.1,mm(0xf2eee0),x,0.15+(i%4)*0.05,z,6); const f=msph(s,0.04,glowM(0xffc84a),x,0.36+(i%4)*0.1,z); K.candles.push(f); }
+    K.bedLight=new THREE.PointLight(0xffb060,1.4,14); K.bedLight.position.set(0,2.2,-1); s.add(K.bedLight); K.bedDoors=[]; for(const s2 of[-1,1]){ const d=mb(s,0.9,2.6,0.1,mm(0xc8a060),s2*0.45,1.3,5.9); K.bedDoors.push(d); } }
+  { const s=sets.roof=grp(root,...BRS.roof); const bd=canvasTex(1024,256); brNightView(bd,0); const cyl=new THREE.Mesh(new THREE.CylinderGeometry(70,70,70,32,1,true),new THREE.MeshBasicMaterial({map:bd.t,side:THREE.BackSide,fog:false})); cyl.position.y=-10; s.add(cyl); K.roofSky=cyl;
+    const top=new THREE.Mesh(new THREE.CircleGeometry(70,32),new THREE.MeshBasicMaterial({color:0x06060c,fog:false})); top.rotation.x=Math.PI/2; top.position.y=25; s.add(top);
+    mb(s,14.5,20,12,mm(0x3a3234),-8.75,-10,0); mb(s,14,20,12,mm(0x34303a),9,-11,0); mb(s,0.4,0.3,12,mm(0x5a5a60),2.1,-1.15,0); for(const [x,y,z] of [[-12,0,-4],[-5,0,4],[10,-1,-4],[12,-1,3]])mb(s,1.4,1.2,1.4,mm(0x4a4a50),x,y+0.6,z);
+    for(let i=0;i<5;i++){ const n=brPhoto(s,(x,w,h)=>{ x.fillStyle='#000'; x.fillRect(0,0,w,h); x.fillStyle=['#ff3a8a','#3affd8','#ffd23a','#ff7a2a','#7a8aff'][i]; x.fillRect(4,4,w-8,h-8); },4,1.2); n.position.set(-20+i*10,4+i%2*3,-30); }
+    K.roofLight=new THREE.PointLight(0xd8e0ff,0,60); K.roofLight.position.set(0,15,0); s.add(K.roofLight); const rl=new THREE.PointLight(0xff6ab8,0.7,30); rl.position.set(0,6,-10); s.add(rl); }
+  // Sebastian's home inside the Bradbury: his toys, old furniture, flickering lamps, an elevator cage and dusty light from the glass roof
+  { const B=grp(root,0,0,0); K.bradProps=B; K.toys=[]; for(const [k,x,z,ry] of [['soldier',22,79,0],['bear',25,79,0],['soldier',19,80,0.4],['doll',27.4,84.6,Math.PI],['doll',28.6,84.6,Math.PI],['doll',26.2,84.6,Math.PI],['bear',29.4,80,-0.5]]){ const o=brToy(B,k); o.g.position.set(x,G,z); o.g.rotation.y=ry; o.home=[x,z,ry]; K.toys.push(o); }
+    const sofa=grp(B,20,G,84.6); mb(sofa,2.6,0.45,1,mm(0x6a2a3a),0,0.25,0); mb(sofa,2.6,0.7,0.25,mm(0x6a2a3a),0,0.75,0.4); mxDesk(B,24,G,82,0,1.4,1); const wd=mb(B,1.4,2.6,0.7,mm(0x4a3020),17.2,G+1.3,86.4);
+    K.lamps=[]; for(const [x,z] of [[18,77],[28,77],[23,86]]){ const l=grp(B,x,G,z); mcyl(l,0.04,0.04,1.8,mm(0x2a2a2a),0,0.9,0,6); const b=msph(l,0.18,glowM(0xffe0a0),0,1.9,0); K.lamps.push(b); }
+    K.cageCar=grp(B,30,G,72); for(const [x,z] of [[-0.9,-0.9],[0.9,-0.9],[-0.9,0.9],[0.9,0.9]])mb(K.cageCar,0.08,2.4,0.08,mm(0x2a2a2a),x,1.2,z); mb(K.cageCar,1.9,0.08,1.9,mm(0x2a2a2a),0,2.4,0); mb(K.cageCar,1.9,0.08,1.9,mm(0x4a3a2a),0,0.04,0);
+    for(const [x,z] of [[29,71],[31,71],[29,73],[31,73]])mb(B,0.1,14,0.1,mm(0x1a1a1a),x,G+7,z);
+    for(let i=0;i<3;i++){ const sh=new THREE.Mesh(new THREE.BoxGeometry(1.6,16,1.6),new THREE.MeshBasicMaterial({color:0xc8d8ff,transparent:true,opacity:0.06,blending:THREE.AdditiveBlending,depthWrite:false})); sh.position.set(19+i*5,G+8,76+i*3); sh.rotation.z=0.25; B.add(sh); }
+    K.trash=[]; for(let i=0;i<4;i++)K.trash.push(msph(B,0.4,mm(0x111114),19.6+i*0.7,G+0.35,62.6-(i%2)*0.5,1,0.8,1)); K.glass=[]; }
+  for(const k of ['dapt','hall','lapt','club','bed','roof'])sets[k].visible=false; }
+function brDefaults2(){ const K=brK; K.toys.forEach(o=>{ o.g.position.set(o.home[0],BRC.G,o.home[1]); o.g.rotation.set(0,o.home[2],0); o.g.visible=true; }); K.cageCar.position.y=BRC.G; K.blanket.visible=false; K.uni.visible=false; K.dDoor.rotation.y=0; K.eDoors.forEach((d,i)=>d.position.x=(i?1:-1)*0.37); K.bedDoors.forEach((d,i)=>d.position.x=(i?1:-1)*0.45); K.drawer.position.z=0.05; K.leonPic.visible=true; K.scale.visible=true;
+  K.glass.forEach(p=>{ p.parent&&p.parent.remove(p); }); K.glass=[]; K.roofLight.intensity=0; K.candles.forEach(c=>c.visible=true); }
+// little film helpers: a gun for Deckard, a flashlight, a laser shot, glass that shatters, and a replicant glitching away
+function brGun(S){ const g=grp(armR,0,-0.68,-0.06); S.bits.push(g); const m=mm(0x2a2a30); mb(g,0.08,0.18,0.1,m,0,-0.02,0); mb(g,0.07,0.08,0.3,m,0,0.06,-0.14); mb(g,0.04,0.04,0.04,glowM(0x6ab8ff),0,0.08,-0.3); return g; }
+function brTorch(S){ const g=grp(armL,0,-0.7,-0.1); S.bits.push(g); mb(g,0.07,0.07,0.22,mm(0x1a1a1a),0,0,-0.05); const beam=new THREE.Mesh(new THREE.ConeGeometry(0.9,6,14,1,true),new THREE.MeshBasicMaterial({color:0xfff6d0,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); beam.rotation.x=Math.PI/2; beam.position.z=-3.1; g.add(beam); return g; }
+function brZap(S,a,b){ const v=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]), L=v.length(), m=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,L,6),new THREE.MeshBasicMaterial({color:0x8ad8ff})); m.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize()); S.grp.add(m); S.zaps=S.zaps||[]; S.zaps.push({m,t:0.18}); brSfx('zap'); burst(b[0]-0.5,b[1]-0.5,b[2]-0.5,new THREE.Color(0x8ad8ff),8); }
+function brZapTick(S,dt){ for(const z of (S.zaps||[]).slice()){ z.t-=dt; if(z.t<=0){ z.m.visible=false; S.zaps.splice(S.zaps.indexOf(z),1); } } }
+function brPane(S,x,z){ const m=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.6),new THREE.MeshLambertMaterial({color:0xbfe0ff,transparent:true,opacity:0.35,side:THREE.DoubleSide,depthWrite:false})); m.position.set(x,BRC.G+1.3,z); m.rotation.y=Math.PI/2; S.grp.add(m); const fr=mb(S.grp,0.12,2.8,3.4,mm(0x2a2a30),x,BRC.G+1.4,z); fr.material.transparent=true; fr.material.opacity=0.6; return {m,fr,x,z,broken:false,sh:[]}; }
+function brShatter(S,P){ P.broken=true; P.m.visible=false; brSfx('crash'); for(let i=0;i<14;i++){ const s=mb(S.grp,0.25,0.25,0.02,new THREE.MeshBasicMaterial({color:0xd8f0ff,transparent:true,opacity:0.7}),P.x,BRC.G+0.4+Math.random()*2.2,P.z-1.3+Math.random()*2.6); P.sh.push({s,v:[2+Math.random()*4,Math.random()*3,(Math.random()-0.5)*4]}); } }
+function brShardTick(P,dt){ for(const q of P.sh){ q.v[1]-=9.8*dt; q.s.position.x+=q.v[0]*dt; q.s.position.y=Math.max(BRC.G+0.02,q.s.position.y+q.v[1]*dt); q.s.position.z+=q.v[2]*dt; q.s.rotation.x+=dt*8; if(q.s.position.y<=BRC.G+0.03){ q.v[0]*=0.8; q.v[2]*=0.8; } } }
+function brGlitch(a,k,t){ if(k<=0)return; a.g.visible=k<1&&(k<0.25||Math.random()<1.1-k); a.g.rotation.z=Math.sin(t*45)*0.15*k; if(Math.random()<0.6){ const p=a.g.getWorldPosition(new THREE.Vector3()); burst(p.x-0.5+(Math.random()-0.5),p.y+Math.random()*1.6,p.z-0.5+(Math.random()-0.5),new THREE.Color(Math.random()<0.5?0xff8a1a:0x6ab8ff),3); } }
+function brFadeTo(a){ const f=$('dmFade'); f.style.transition='none'; f.style.opacity=a; }
+
+// ---------- 4. THE HUNT THROUGH THE CITY ----------
+OD_CH.br4={secs:45,sky:'in',mood:'tense',init(S){ const K=brK, G=BRC.G; brDeckard(S); S.gun=brGun(S); S.torch=brTorch(S); brShow('lapt'); S.kp=brPerson(S.grp,'keeper',14,G,55.1,0); S.zh=brPerson(S.grp,'zhora',...CLB(0,0.6,-4.8),0); S.sn=brSnake(S.zh.R.torso);
+    S.panes=[brPane(S,34,49),brPane(S,44,49),brPane(S,52,49)]; S.panes.forEach(p=>{ p.m.visible=p.fr.visible=false; }); },
+  tick(S,dt){ const K=brK, t=S.t, G=BRC.G, Z=S.zh; brZapTick(S,dt);
+    // Leon's room: a drawer full of photographs, and a strange scale in the bathtub
+    if(t<9){ S.torch.visible=true; if(t<3)odHeroPath(S,LAP(-2.6,0,2.2),LAP(0,0,-1.4),0,2.6); else if(t<5.6)odHeroTo(S,LAP(0,0,-1.4),0,false); else odHeroPath(S,LAP(0,0,-1.4),LAP(1.6,0,-0.2),5.6,6.6); if(t>=6.6)odHeroTo(S,LAP(1.6,0,-0.2),Math.atan2(-(2.3-1.6),-(-1.2+0.2)),false);
+      K.drawer.position.z=t>2.8?0.4:0.05; K.scale.material.color.setHex(Math.sin(t*12)>0?0xeaffd0:0x6a9a5a); }
+    odAt(S,0.6,'d1',()=>odSay(S,S.hero,"Leon's room. Let's see what he left behind.")); odAt(S,3.6,'d2',()=>odSay(S,S.hero,'Photographs... of empty rooms?')); odAt(S,6.8,'d3',()=>odSay(S,S.hero,'And this... a tiny scale. From a snake?'));
+    // the market: who made the snake?
+    odAt(S,9,'mk',()=>{ brShow(); brSky('rain'); brMood='city'; S.torch.visible=false; }); if(t>=9&&t<16){ odHeroTo(S,[14,G,52.3],Math.PI,false); S.kp.R.armR.rotation.x=t>11.4&&t<13.6?1.1:0.3; animRig(S.kp.R,dt,0); }
+    odAt(S,9.6,'d4',()=>odSay(S,S.hero,'Who made this scale?')); odAt(S,11.6,'k1',()=>odSay(S,S.kp,'Ahh, very fine work! Mine! I sold that snake to a dancer at the club down the street.')); odAt(S,14.4,'d5',()=>odSay(S,S.hero,'Thanks.'));
+    // the nightclub: Zhora dances with her snake... and spots the Blade Runner
+    odAt(S,16,'club',()=>{ brShow('club'); brSky('in'); scene.background.setHex(0x05020a); brMood='tense'; });
+    if(t>=16&&t<25){ odHeroTo(S,CLB(0.4,0,2.6),0,false); K.spots.forEach((sp,i)=>{ sp.rotation.z=Math.sin(t*1.3+i)*0.4; }); K.crowd.forEach((a,i)=>{ a.ph+=dt*6; a.g.position.y=BRS.club[1]+Math.abs(Math.sin(a.ph))*0.1; a.g.rotation.y=Math.sin(a.ph*0.3)*0.4; a.R.armL.rotation.z=-1-Math.sin(a.ph)*0.5; animRig(a.R,dt,0); });
+      if(t<21.4){ Z.g.position.set(...CLB(Math.sin(t*0.8)*1.2,0.6,-4.8)); Z.g.rotation.y=Math.sin(t*1.6)*0.6; Z.R.armL.rotation.z=-2.2-Math.sin(t*3)*0.4; Z.R.armR.rotation.z=2.2+Math.sin(t*3+1)*0.4; } else { Z.g.rotation.y=0; Z.R.armL.rotation.z=Z.R.armR.rotation.z=0; odMove(Z,CLB(0,0.6,-4.8),CLB(-6,0.6,-5.6),odSeg(S,22.4,24.4)); odWalk(Z,dt,t>22.4,12); } animRig(Z.R,dt,0); }
+    S.sn.segs.forEach((s,i)=>{ const a=i/13*Math.PI*1.6-0.8+Math.sin(t*3+i*0.5)*0.12; s.position.set(Math.sin(a)*0.34,1.45+Math.cos(a*2)*0.06,Math.cos(a)*0.2); }); S.sn.g.visible=t<22.4;
+    odAt(S,21.4,'z1',()=>odSay(S,Z,'...A Blade Runner!',1.1)); odAt(S,22.6,'d6',()=>odSay(S,S.hero,'Zhora! Stop!'));
+    // the chase through the rain: crash, crash, crash
+    odAt(S,25,'st',()=>{ brShow(); brSky('rain'); brMood='tense'; S.panes.forEach(p=>{ p.m.visible=p.fr.visible=true; }); });
+    if(t>=25&&t<42){ const zk=odSeg(S,25.6,38.4), zx=18+zk*35.4; S.zx=zx; if(t<38.4){ Z.g.visible=true; Z.g.position.set(zx,G,49); Z.g.rotation.set(0,-Math.PI/2,0); odWalk(Z,dt,true,14); } S.panes.forEach(p=>{ if(!p.broken&&zx>=p.x-0.4)brShatter(S,p); brShardTick(p,dt); });
+      const dx=Math.min(zx-5.5,46.8); if(t<37.6)odHeroTo(S,[t<25.8?14:dx,G,48.2],-Math.PI/2,t>25.8); else odHeroTo(S,[46.8,G,48.2],-Math.PI/2,false);
+      odAt(S,37.9,'fire',()=>brZap(S,[47.4,G+1.4,48.2],[Z.g.position.x,G+1.2,49])); if(t>=38.4){ const k=odSeg(S,38.4,40.6); Z.g.position.set(53.4+Math.min(1,k*2)*1.6,G,49); Z.g.rotation.x=-Math.min(1,k*1.6)*0.5; brGlitch(Z,k,t); }
+      K.walkers.forEach(w=>{ if(Math.abs(w.x-(S.zx||0))<4&&w.z>42)w.x+=dt*3; }); }
+    odAt(S,26,'z2',()=>odSay(S,Z,'You will never catch me!')); odAt(S,42,'d7',()=>{ odSay(S,S.hero,'...I\'m sorry.'); brMood='sad'; }); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; S.gun.visible=t>=25; S.torch.visible=t<9; if(t<9){ armL.rotation.x=1.3; } if(t>=3&&t<5.6){ armR.rotation.x=1.2; head.rotation.x=0.4; } else head.rotation.x=0; if(t>=6.6&&t<9){ armR.rotation.x=1; head.rotation.x=0.5; } if(t>=37.4&&t<40){ armR.rotation.x=1.55; } if(t>=40)head.rotation.x=0.35; },
+  cam(S){ const t=S.t, G=BRC.G; if(t<3.4)return [LAP(-2.8,2.4,2.6),LAP(0,0.8,-1.6),0]; if(t<5.6)return [LAP(-0.7,1.6,-1.6),LAP(0,0.95,-2.45),1]; if(t<9)return [LAP(3.2,1.6,-0.2),LAP(2.2,0.6,-1.4),2];
+    if(t<12.6)return [[11.6,G+2,50.8],[14.4,G+1.4,54],3]; if(t<16)return [[15.4,G+1.8,51.6],[14,G+1.6,55],4]; if(t<21.2)return [CLB(1.6,2.2,4),CLB(0,1.6,-4.8),5]; if(t<22.6)return [CLB(0,1.9,-2.4),CLB(0,1.9,-4.8),6]; if(t<25)return [CLB(-2.4,2.2,2),CLB(-3,1.2,-4),7];
+    if(t<33){ const zx=S.zx||18; return [[zx+5,G+2.6,44.4],[zx-1,G+1.2,49],8]; } if(t<38.4){ const zx=S.zx||50; return [[zx-1.6,G+1.7,52.6],[zx+1,G+1.2,49],9]; } if(t<42)return [[51.6,G+1.5,45.6],[54,G+1,49],10]; return [[47.4,G+2.2,46],[46.8,G+1.6,48.2],11]; } };
+
+// ---------- 5. THE ARTIFICIAL HUMAN ----------
+OD_CH.br5={secs:40,sky:'in',mood:'sad',init(S){ brDeckard(S); brShow('dapt'); S.ra=brPerson(S.grp,'rachael',...DAP(-2.2,0,-1.8),-Math.PI*0.75); S.tear=brTear(S,S.ra); S.tear.visible=false; S.pic=brPhoto(S.ra.R.armR,brOldPhoto(2),0.24,0.3); S.pic.position.set(0,-0.74,-0.16); S.pic.rotation.x=-0.6; },
+  tick(S,dt){ const K=brK, t=S.t, R=S.ra; K.sweep.position.z=Math.sin(t*0.6)*3.5; K.sweep.rotation.y=Math.sin(t*0.3)*0.3;
+    if(t<3.6)odHeroPath(S,DAP(-3,0,3.4),DAP(-0.4,0,0.2),0.4,3.4); else if(t<20)odHeroTo(S,DAP(-0.4,0,0.2),Math.atan2(-(-2.2+0.4),-(-1.8-0.2)),false); odAt(S,0.2,'door',()=>brSfx('door')); K.dDoor.rotation.y=t<3.4?-1.2:0;
+    if(t<16.4){ R.g.position.set(...DAP(-2.2,0,-1.8)); R.g.rotation.y=Math.atan2(-(-0.4+2.2),-(0.2+1.8)); R.R.armR.rotation.x=t>6&&t<12?1.2:0.1; animRig(R.R,dt,0); S.pic.visible=t<15; }
+    odAt(S,3.8,'r1',()=>odSay(S,R,"I'm sorry it's so late. I had to show you something.")); odAt(S,6.6,'r2',()=>odSay(S,R,'Look! Me as a little girl, with my mother. I remember that day!'));
+    odAt(S,9.6,'d1',()=>odSay(S,S.hero,'Do you remember a spider? Outside your window?')); odAt(S,12.2,'d2',()=>odSay(S,S.hero,"That memory isn't yours, Rachael. Someone gave it to you."));
+    if(t>=12.2&&t<16.4){ R.R.head.rotation.x=0.4; S.tear.visible=true; S.tear.position.y=0.12-((t-12.2)*0.12)%0.3; } odAt(S,14.6,'r3',()=>odSay(S,R,'Then... who am I?'));
+    if(t>=16.4&&t<19.4){ R.R.head.rotation.x=0.2; S.tear.visible=false; odMove(R,DAP(-2.2,0,-1.8),DAP(-3,0,3.6),odSeg(S,16.4,18.8)); odWalk(R,dt,t<18.8,8); R.g.visible=t<18.8; K.dDoor.rotation.y=t<19?-1.2:0; } if(t>=19.4)R.g.visible=false; odAt(S,17,'d3',()=>odSay(S,S.hero,'Rachael, wait—')); odAt(S,19,'slam',()=>brSfx('door'));
+    // alone at the piano with old photographs, then the photo machine
+    if(t>=20&&t<26){ odHeroTo(S,DAP(-3,0,-2.4),0,false); odAt(S,20.4,'pn',()=>odS(v=>{ [69,65,62,60,57].forEach((n,i)=>tone('sine',midiF(n),midiF(n),0.9,0.07*v,i*0.55)); })); }
+    if(t>=26){ odHeroTo(S,DAP(3,0,-2.2),0,false); const z=Math.min(1,Math.max(0,(t-27)/6)); brEsper(K.esper,z,t); }
+    odAt(S,26.6,'d4',()=>odSay(S,S.hero,"Leon's photo. Let's look closer.")); odAt(S,29.2,'d5',()=>odSay(S,S.hero,'Zoom in... turn left... closer...')); odAt(S,32.6,'d6',()=>odSay(S,S.hero,"There. Someone's in the mirror. A woman, with a snake."));
+    if(t>=35.4){ odHeroTo(S,DAP(-1.9,0,-2.4),0,false); K.dOrig[1].position.set(...odLW(armR,[0,-0.72,-0.15]).map((v,i)=>v-BRS.dapt[i])); } odAt(S,36,'d7',()=>odSay(S,S.hero,'Gaff\'s little paper men... what are you trying to tell me?')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; head.rotation.x=0; if(t>=20&&t<35.4){ mxSitPose(); armL.rotation.x=armR.rotation.x=t<26?1.2+Math.sin(t*5)*0.08:1.0; } if(t>=35.4){ armR.rotation.x=1.3; head.rotation.x=0.3; } if(t>=14.6&&t<16.4)head.rotation.x=0.2; },
+  cam(S){ const t=S.t; if(t<3.6)return [DAP(1.6,2.2,2.6),DAP(-1.6,1.2,-0.6),0]; if(t<9.4)return [DAP(-0.1,1.65,-0.3),DAP(-2.2,1.5,-1.8),1]; if(t<12)return [DAP(-1.7,1.6,-1.3),DAP(-0.4,1.55,0.2),2]; if(t<16.4)return [DAP(-0.6,1.6,-0.6),DAP(-2.2,1.45,-1.8),3]; if(t<20)return [DAP(2.4,2,1.4),DAP(-2.6,1.2,2.4),4];
+    if(t<23)return [DAP(-1.4,1.6,-2.2),DAP(-3,1.2,-3.0),5]; if(t<26)return [DAP(-3.4,1.6,-2.8),DAP(-3.4,1.3,-3.45),6]; if(t<29)return [DAP(3.8,2.0,-0.8),DAP(3,1.2,-3.2),7]; if(t<35.4)return [DAP(3,1.4,-2.55),DAP(3,1.25,-3.4),8]; if(t<38)return [DAP(-1.3,1.6,-3.1),DAP(-1.9,1.45,-2.3),9]; const k=odSeg(S,38,40); return [DAP(-1.3+k*3.4,1.6+k*1.2,-3.1+k*5),DAP(-1.9,1.3,-2.6),10]; } };
+function brEsper(c,z,t){ const x=c.x, w=256, h=160; x.save(); const s=1+z*5, fx=170, fy=64; x.fillStyle='#000'; x.fillRect(0,0,w,h); x.translate(w/2,h/2); x.scale(s,s); x.translate(-(w/2+(fx-w/2)*z),-(h/2+(fy-h/2)*z));
+  x.fillStyle='#6a5a40'; x.fillRect(0,0,w,h); x.fillStyle='#4a3a2a'; x.fillRect(20,30,70,110); x.fillStyle='#8a7a5a'; x.fillRect(110,20,120,90); x.fillStyle='#a8c0d0'; x.fillRect(150,40,40,50); x.fillStyle='#d8b898'; x.fillRect(165,52,10,10); x.fillStyle='#2a1a10'; x.fillRect(164,48,12,5); x.fillStyle='#3a8a3a'; x.fillRect(172,64,3,10); x.fillStyle='#c8a8e8'; x.fillRect(160,62,20,24);
+  x.restore(); x.strokeStyle='#6affd8'; x.lineWidth=1; x.strokeRect(w/2-20,h/2-14,40,28); x.fillStyle='#6affd8'; x.font='10px monospace'; x.fillText('ZOOM '+(1+z*5).toFixed(1)+'x',6,152); c.t.needsUpdate=true; }
+
+// ---------- 6. THE STRANGE WORLD OF J.F. SEBASTIAN ----------
+OD_CH.br6={secs:40,sky:'rain',mood:'sad',init(S){ const K=brK, G=BRC.G; S.hideHero=true; S.se=brPerson(S.grp,'sebastian',30,G,57,0); S.pr=brPerson(S.grp,'pris',20.4,G,62.6,Math.PI); S.ro=brPerson(S.grp,'roy',23,G,63,Math.PI); S.ro.g.visible=false;
+    S.bag=mb(S.se.R.armL,0.3,0.36,0.24,mm(0xb89a6a),0,-0.85,-0.05); },
+  tick(S,dt){ const K=brK, t=S.t, G=BRC.G, Se=S.se, P=S.pr, R=S.ro;
+    // outside, in the rain: a stranger by Sebastian's door
+    if(t<6.4){ odMove(Se,[30,G,57],[23.6,G,61.4],odSeg(S,0,3)); odWalk(Se,dt,t<3,7); if(t>=3)elFaceBr(Se,P.g.position); P.g.position.set(20.4,G+(t<1?-0.5:0),62.6); elFaceBr(P,Se.g.position); P.R.armL.rotation.x=P.R.armR.rotation.x=t<1?1.2:0.3; animRig(P.R,dt,0); }
+    odAt(S,1.2,'p1',()=>odSay(S,P,"Oh! Sorry... I'm lost, and I don't have anywhere to go.")); odAt(S,3.8,'s1',()=>odSay(S,Se,"You must be freezing! Come inside. I'm J.F. Sebastian."));
+    // the old building: tall stairs, balconies, an elevator cage, dusty light
+    odAt(S,6.4,'in',()=>{ brSky('dark'); }); if(t>=6.4&&t<12){ const k=odSeg(S,6.4,10.6); odMove(Se,[23.2,G,65.4],[22.6,G,76],k); odMove(P,[22.4,G,64.4],[21.6,G,75],k); odWalk(Se,dt,k<1,7); odWalk(P,dt,k<1,7); K.cageCar.position.y=G+Math.sin(t*0.4)*3+3; }
+    odAt(S,7.4,'s2',()=>odSay(S,Se,"It's a big old building. I'm the only one who lives here."));
+    // his toys come out to say hello
+    if(t>=12&&t<24.6){ Se.g.position.set(22.6,G,76); elFaceBr(Se,[23,0,79]); P.g.position.set(21.4,G,76.6); elFaceBr(P,[22,0,79]); K.toys.forEach((o,i)=>{ const walk=i<3; if(walk){ const k=odSeg(S,12,16); o.g.position.set(o.home[0]+(i-1)*0.3,G,o.home[1]-k*1.4); o.g.rotation.y=0; o.legs.forEach((l,j)=>l.rotation.x=Math.sin(t*8+j*Math.PI)*0.5*(k<1?1:0)); }
+        o.arms.forEach((a,j)=>a.rotation.x=o.kind==='bear'?Math.abs(Math.sin(t*9+j))*1.2:Math.sin(t*3+i+j)*0.3); }); P.R.armL.rotation.z=t>14.4&&t<17?-2.4:0; P.R.armR.rotation.z=t>14.4&&t<17?2.4:0; animRig(P.R,dt,0); animRig(Se.R,dt,0); if(t>14&&t<14.2)odS(v=>{ for(let i=0;i<4;i++)tone('square',600,600,0.05,0.03*v,i*0.25); }); }
+    odAt(S,12.6,'ty',()=>{ odSay(S,{g:K.toys[0].g},'Welcome home! Welcome home!'); }); odAt(S,14.6,'p2',()=>odSay(S,P,'Ha! They\'re wonderful! Did you make all of them?')); odAt(S,17.2,'s3',()=>odSay(S,Se,"I build my friends. I don't get many visitors."));
+    odAt(S,20,'p3',()=>odSay(S,P,'Well... you have one now.'));
+    // Roy arrives
+    if(t>=24.6){ R.g.visible=true; const k=odSeg(S,24.6,27); odMove(R,[23,G,66],[22.4,G,74.6],k); odWalk(R,dt,k<1,8); if(k>=1)elFaceBr(R,Se.g.position); if(t<27){ odMove(P,[21.4,G,76.6],[21.8,G,75.4],odSeg(S,24.8,25.8)); } else elFaceBr(P,R.g.position); P.R.armL.rotation.x=P.R.armR.rotation.x=t>25.4&&t<27?1.4:0; animRig(P.R,dt,0); animRig(R.R,dt,0); Se.R.armL.rotation.x=t>30?0.3:0; }
+    odAt(S,25,'p4',()=>odSay(S,P,'Roy!')); odAt(S,27.4,'r1',()=>odSay(S,R,'So you are Sebastian. Pris says you design things for Tyrell.')); odAt(S,30.2,'s4',()=>odSay(S,Se,'I do! Sometimes we even play chess together.'));
+    odAt(S,33,'r2',()=>odSay(S,R,'Then take me to him. I need to talk to the man who made me.')); odAt(S,36.4,'s5',()=>odSay(S,Se,"...Okay. I'll take you.")); odAt(S,34.4,'th',()=>{ brSfx('boom'); scene.background.setHex(0x8a8aa8); setTimeout(()=>{ if(brStage===S)scene.background.setHex(0x050508); },120); });
+    K.lamps.forEach((l,i)=>l.visible=Math.sin(t*9+i*3)>-0.9||Math.random()<0.5); },
+  cam(S){ const t=S.t, G=BRC.G; if(t<3.4)return [[26,G+2.4,57.4],[22,G+1,62.6],0]; if(t<6.4)return [[21.6,G+1.6,60],[21.6,G+1.3,62.6],1]; if(t<12){ const k=odSeg(S,6.4,12); return [[24,G+2+k*9,82-k*2],[23,G+3+k*4,72],2]; }
+    if(t<17)return [[23.8,G+1.4,82.6],[22.4,G+0.8,77.6],3]; if(t<24.6)return [[24.6,G+1.9,74.2],[21.8,G+1.4,76.6],4]; if(t<27.4)return [[22.8,G+2.6,80.6],[22.4,G+1.4,73],5]; if(t<33)return [[20.4,G+1.9,74],[23,G+1.4,75.8],6]; if(t<36.4)return [[23.4,G+1.7,75.6],[22.4,G+1.65,74.6],7]; return [[19.6,G+2.4,80],[22.4,G+1.5,75],8]; } };
+function elFaceBr(a,p){ const x=p.x!==undefined?p.x:p[0], z=p.z!==undefined?p.z:p[2]; a.g.rotation.y=Math.atan2(-(x-a.g.position.x),-(z-a.g.position.z)); }
+
+// ---------- 7. THE CREATOR AND HIS CREATION ----------
+OD_CH.br7={secs:38,sky:'high',mood:'tense',init(S){ const K=brK, G=BRC.G; S.hideHero=true; S.lift=grp(S.grp,96,G,69.6); const gl=new THREE.MeshBasicMaterial({color:0xfff0c0,transparent:true,opacity:0.7,depthWrite:false}); mb(S.lift,2,2.6,2,gl,0,1.3,0); S.lift.add(new THREE.PointLight(0xffe0a0,2,14)); msph(S.lift,0.2,glowM(0xfff0c0),0,2.5,0);
+    S.ro=brPerson(S.grp,'roy',...BED(0.4,0,5),Math.PI); S.se=brPerson(S.grp,'sebastian',...BED(-0.6,0,5.2),Math.PI); S.ty=brPerson(S.grp,'tyrell',...BED(0,0.95,-3.2),0); S.ty.g.rotation.set(-Math.PI/2,0,0,'YXZ'); },
+  tick(S,dt){ const K=brK, t=S.t, G=BRC.G, R=S.ro, T=S.ty, Se=S.se;
+    // the glass elevator, rising up the pyramid in the dark
+    if(t<6){ S.lift.position.y=G+odE(odSeg(S,0.4,5.8))*34; S.lift.visible=true; } else S.lift.visible=false; odAt(S,0.4,'lf',()=>brSfx('whoosh'));
+    // the bedroom: candles, a giant bed, and the man who made the replicants
+    odAt(S,6,'bed',()=>{ brShow('bed'); brSky('in'); scene.background.setHex(0x0a0604); brMood='gold'; }); if(t>=6){ K.candles.forEach((c,i)=>c.scale.setScalar(t>=31.2?0.01:0.8+Math.sin(t*14+i)*0.3)); K.bedLight.intensity=t>=31.2?0.3:1.2+Math.sin(t*9)*0.15; brNightView(K.bedView,t); }
+    if(t>=6&&t<12){ K.bedDoors.forEach((d,i)=>d.position.x=(i?1:-1)*(0.45+Math.min(1,(t-7)*0.8)*0.9)); const k=odSeg(S,7.6,10); odMove(R,BED(0.4,0,5),BED(0.8,0,0.4),k); odWalk(R,dt,k<1,6); odMove(Se,BED(-0.6,0,5.2),BED(-2.4,0,2.6),k); odWalk(Se,dt,k<1,6); }
+    if(t>=8.6){ const k=odSeg(S,8.6,9.6); T.g.rotation.set(-Math.PI/2*(1-k),0,0,'YXZ'); T.g.position.set(...BED(0,0.95-k*0.25,-3.2+k*0.4)); if(k>=1)odSit(T); } if(t>=12){ R.g.position.set(...BED(0.8,0,0.4)); elFaceBr(R,T.g.position); Se.g.position.set(...BED(-2.4,0,2.6)); elFaceBr(Se,R.g.position); }
+    odAt(S,6.4,'zz',()=>odSay(S,T,'Zzz...')); odAt(S,9.6,'t1',()=>odSay(S,T,"Sebastian? At this hour? ...And who's this?"));
+    odAt(S,12.4,'r1',()=>odSay(S,R,'You know me, Dr. Tyrell. You made me.')); odAt(S,15,'t2',()=>odSay(S,T,'Roy Batty. My finest work, standing right in my bedroom.'));
+    odAt(S,18,'r2',()=>odSay(S,R,"I don't have much time left. Give me more.")); odAt(S,21,'t3',()=>odSay(S,T,'Your clock was set the day you were made. Nobody can wind it back. Not even me.'));
+    odAt(S,24.6,'r3',()=>odSay(S,R,'You built us... and then you gave us an ending?')); odAt(S,27.2,'t4',()=>odSay(S,T,'Then make the time you have count, Roy.'));
+    if(t>=29.4&&t<31.2){ odMove(R,BED(0.8,0,0.4),BED(0.4,0,-1.2),odSeg(S,29.4,30.6)); odWalk(R,dt,t<30.6,5); R.R.armL.rotation.x=R.R.armR.rotation.x=t>30.4?1.4:0; animRig(R.R,dt,0); } odAt(S,29.6,'r4',()=>odSay(S,R,"...It's not enough."));
+    // lightning, the candles go out, and we pull away from the window
+    odAt(S,31.2,'fl',()=>{ $('dmFade').style.background='#fff'; brSfx('boom'); }); if(t>=31.2&&t<32.4)brFadeTo(Math.max(0,1-(t-31.2)/1.1)); odAt(S,32.4,'bg',()=>{ brFadeTo(0); $('dmFade').style.background=''; }); },
+  cam(S){ const t=S.t, G=BRC.G; if(t<6){ const y=S.lift.position.y; return [[96,G+6+y*0.3,50],[96,y+1.2,70],0]; } if(t<9.6)return [BED(0,2.6,5.4),BED(0,1,-2.4),1]; if(t<12.2)return [BED(1.6,2.2,0.2),BED(0,1.9,-2.8),2];
+    if(t<15)return [BED(-0.6,1.6,-1.6),BED(0.8,1.6,0.4),3]; if(t<18)return [BED(1.6,1.7,-0.4),BED(0,1.3,-2.8),4]; if(t<24.4)return [BED(3.6,2.2,0.6),BED(0.2,1.2,-1.6),5]; if(t<27)return [BED(0.2,1.65,-1.4),BED(0.8,1.65,0.4),6]; if(t<29.4)return [BED(0.6,2.2,-0.6),BED(0,2.15,-2.8),7];
+    if(t<31.2)return [BED(0.4,1.7,-2.2),BED(0.4,1.7,-1.2),8]; const k=odSeg(S,31.4,38); return [BED(0,2+k*2,4-k*1.4),BED(0,3,-6),9]; } };
+
+// ---------- 8. THE FINAL HUNT AT THE BRADBURY ----------
+OD_CH.br8={secs:42,sky:'dark',mood:'tense',init(S){ const K=brK, G=BRC.G; brDeckard(S); S.gun=brGun(S); S.torch=brTorch(S); S.pr=brPerson(S.grp,'pris',27.4,G,84.6,Math.PI); S.veil=mb(S.pr.R.head,0.52,0.4,0.52,new THREE.MeshLambertMaterial({color:0xf2f2f2,transparent:true,opacity:0.85}),0,0.2,0);
+    S.ro=brPerson(S.grp,'roy',23,G,65,Math.PI); S.ro.g.visible=false; K.toys[3].g.visible=false; },
+  tick(S,dt){ const K=brK, t=S.t, G=BRC.G, P=S.pr, R=S.ro; brZapTick(S,dt); K.lamps.forEach((l,i)=>l.visible=Math.sin(t*7+i*3)>-0.6||Math.random()<0.3);
+    // in through the dark, flashlight first
+    if(t<13.6){ const k=odSeg(S,0.4,10); odHeroTo(S,odL([23,G,65],[25.6,G,81.4],k),Math.atan2(-(25.6-23),-(81.4-65)),k>0&&k<1); if(k>=1)odHeroTo(S,[25.6,G,81.4],Math.atan2(-(27.4-25.6),-(84.6-81.4))+0.6*Math.sin(t*0.8),false); P.g.position.set(27.4,G-0.2,84.6); P.g.rotation.y=Math.PI; odSit(P); }
+    K.toys.forEach((o,i)=>{ o.g.rotation.y=o.home[2]+Math.sin(t*0.5+i)*0.15; }); odAt(S,1,'d1',()=>odSay(S,S.hero,'Pris lives here somewhere. Careful, Deckard...')); odAt(S,7,'d2',()=>odSay(S,S.hero,"So many toys... and they're all watching me."));
+    // Pris leaps out
+    if(t>=13.6&&t<22.6){ S.veil.visible=false; const k=odSeg(S,13.6,14.6); if(t<16){ P.g.position.set(...odL([27.4,G,84.6],[26.2,G,82.6],k)); P.g.position.y=G+Math.sin(k*Math.PI)*1.6; P.g.rotation.set(-k*Math.PI*2,Math.PI*0.8,0,'YXZ'); odRest(P); }
+      else if(t<19.4){ P.g.rotation.set(0,Math.PI*0.8,0); P.g.position.set(26.2,G,82.6); P.R.legR.rotation.x=t>16.4&&t<17?-1.6:0; P.R.armL.rotation.z=-1.2; } else { const j=odSeg(S,19.4,20.8); P.g.position.set(...odL([26.2,G,82.6],[25.2,G,79.6],j)); P.g.position.y=G+Math.sin(j*Math.PI)*1.8; P.g.rotation.set(j*Math.PI*2,Math.PI*0.8,0,'YXZ'); }
+      animRig(P.R,dt,0); if(t>=16.6&&t<19){ odHeroTo(S,[25.2,G,79.8],Math.atan2(-(26.2-25.2),-(82.6-79.8)),false); } else if(t>=19)odHeroTo(S,[24.8,G,78.6],Math.atan2(-(26.2-24.8),-(82.6-78.6)),false);
+      odAt(S,20.8,'fire',()=>brZap(S,[24.9,G+1.2,78.4],[25.2,G+1.2,79.6])); if(t>=20.9){ const g=odSeg(S,20.9,22.6); P.g.rotation.set(0,Math.PI*0.8,0); P.g.position.set(25.2,G,79.6); brGlitch(P,g,t); } }
+    odAt(S,13.6,'p1',()=>{ odSay(S,P,'BOO!',1.3); brSfx('crash'); }); odAt(S,15.6,'p2',()=>odSay(S,P,'Hello, Blade Runner! Want to play?')); odAt(S,16.6,'kick',()=>{ brSfx('crash'); K.toys[4].g.rotation.x=1.5; }); odAt(S,23.4,'d3',()=>odSay(S,S.hero,'...Sorry, Pris.'));
+    // Roy comes home and finds her gone
+    if(t>=25){ R.g.visible=true; const k=odSeg(S,25,28); odMove(R,[23,G,70],[25,G,79],k); odWalk(R,dt,k<1,9); if(k>=1){ R.g.rotation.y=Math.PI; R.R.head.rotation.x=t<30?0.6:0; } animRig(R.R,dt,0); if(t<34)odHeroTo(S,[22.6,G,71.6],Math.PI*0.8,false); }
+    odAt(S,28.4,'r1',()=>odSay(S,R,'Pris...?')); odAt(S,30.6,'r2',()=>{ odSay(S,R,'DECKARD! You cannot hide from me!',1.2); brSfx('boom'); });
+    // up the stairs, with Roy right behind
+    if(t>=33.6){ const P1=[[22.6,G,71.6],[19.6,G,69.5],[23.6,G+4,69.5],[24.4,G+5,67.6],[25.2,G+6,69.5],[28.6,G+9,69.5],[29.4,G+10,67.4]]; odPathHero(S,P1,odSeg(S,33.6,40.6)); const k=odSeg(S,35.4,42); odPathMove(R,[[25,G,79],[20,G,72],...P1.slice(1)],k*0.8); odWalk(R,dt,true,14); }
+    odAt(S,34,'d4',()=>odSay(S,S.hero,'Higher... I have to go higher!')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; S.torch.visible=t<25; armL.rotation.x=t<25?1.3:0; if(t>=16.6&&t<19){ model.rotation.x=-0.3; } if(t>=20.4&&t<21.4)armR.rotation.x=1.5; },
+  cam(S){ const t=S.t, G=BRC.G; if(t<4)return [[23,G+2.2,62],[23.6,G+1.2,68],0]; if(t<10)return [[pl.p[0]-1.4,G+2,pl.p[2]-2.2],[pl.p[0]+0.6,G+1,pl.p[2]+4],1]; if(t<13.6)return [[26.4,G+1.4,82.2],[27.6,G+0.9,85],2];
+    if(t<16.6)return [[24,G+1.8,80],[26.6,G+1.2,83],3]; if(t<20.6)return [[23,G+2.2,81.4],[25.6,G+1,81],4]; if(t<23.4)return [[23.4,G+1.8,77],[25.2,G+1.1,79.6],5]; if(t<25)return [[24.6,G+1.7,77],[24.8,G+1.6,78.6],6];
+    if(t<33.6)return [[23.4,G+1.7,76.6],[25,G+1.5,79],7]; return [[23,G+1.2,78],[pl.p[0],pl.p[1]+1.4,pl.p[2]],8]; } };
+
+// ---------- 9. THE ROOFTOP AND THE LAST MOMENTS ----------
+OD_CH.br9={secs:45,sky:'rain',mood:'tense',init(S){ const K=brK; brDeckard(S); brShow('roof'); S.ro=brPerson(S.grp,'roy',...RF(-10,0,0),-Math.PI/2); S.ro.g.visible=false; S.dv=brDove(S.grp); S.dv.g.visible=false; S.glow=[]; },
+  tick(S,dt){ const K=brK, t=S.t, R=S.ro, dv=S.dv; K.roofFlash=(K.roofFlash||0)-dt; if(K.roofFlash<=0&&Math.random()<dt*0.5){ K.roofFlash=0.25; brSfx('boom'); } K.roofLight.intensity=K.roofFlash>0?3:0; K.roofSky.material.color.setHex(K.roofFlash>0?0xffffff:0xb8b8c8);
+    // Deckard runs and jumps... and doesn't quite make it
+    if(t<7.2){ if(t<6.2)odHeroPath(S,RF(-12,0,0.4),RF(-1.8,0,0.4),0.6,6.2); else { const k=odSeg(S,6.2,7.2); const p=odL(RF(-1.8,0,0.4),RF(1.75,-2.9,0.4),k); p[1]+=Math.sin(k*Math.PI)*1.6; odHeroTo(S,p,-Math.PI/2,false); } } else if(t<18)odHeroTo(S,RF(1.75,-2.9-(t>15&&t<17.8?(t-15)*0.04:0),0.4),-Math.PI/2,false);
+    odAt(S,1,'d1',()=>odSay(S,S.hero,'Nowhere left to run...')); odAt(S,7.2,'grab',()=>brSfx('crash')); odAt(S,8,'d2',()=>odSay(S,S.hero,'Whoa! Hang on... hang on!'));
+    // Roy, with a white dove, leaps the gap like it's nothing
+    if(t>=8.6&&t<18){ R.g.visible=true; dv.g.visible=true; if(t<12)odMove(R,RF(-10,0,0),RF(-2,0,0),odSeg(S,8.6,12)); else if(t<13.6){ const k=odSeg(S,12,13.6); const p=odL(RF(-2,0,0),RF(3.4,-1,0),k); p[1]+=Math.sin(k*Math.PI)*2.6; R.g.position.set(...p); R.g.rotation.x=0; } else { R.g.position.set(...RF(3.2,-1,0.4)); R.g.rotation.y=Math.PI/2; } odWalk(R,dt,t<12,9); R.R.armL.rotation.x=1.1; dv.g.position.set(...odLW(R.R.armL,[0,-0.7,-0.15])); dv.wings.forEach(w=>w.rotation.z=Math.sin(t*3)*0.2); }
+    odAt(S,9.4,'r1',()=>odSay(S,R,'Too slow, Deckard!')); odAt(S,15.2,'d3',()=>odSay(S,S.hero,"Can't... hold on..."));
+    // Roy reaches down and pulls him up
+    if(t>=17.8&&t<20.6){ R.R.armR.rotation.x=2.4; const k=odSeg(S,17.8,20); odHeroTo(S,odL(RF(1.75,-2.9,0.4),RF(4.2,-1,0.4),odE(k)),-Math.PI/2,false); }
+    if(t>=20.6){ odHeroTo(S,RF(5.6,-1,1.3),0,false); R.g.position.set(...RF(5.6,-1.2,-0.7)); R.g.rotation.set(0,Math.PI,0); odSit(R); R.R.armL.rotation.x=0.8; dv.g.visible=t<39.4; if(t<39.4)dv.g.position.set(...RF(5.6,-0.45,-0.3)); animRig(R.R,dt,0); }
+    odAt(S,20.8,'d4',()=>odSay(S,S.hero,'...Why? Why save me?')); brMood=t>=22?'sad':brMood;
+    // Roy's last words, in the rain
+    const L=[[23,'Do you know what I have seen, Deckard?'],[26.2,'Oceans of light between the stars. Three suns rising over a frozen world.'],[30,'I raced comets. I heard a whole planet sing when the storms came.'],[33.6,'And nobody remembers any of it... but me.'],[36.4,'So you remember, Deckard. Remember that I was here.']];
+    L.forEach(([tt,txt],i)=>odAt(S,tt,'rl'+i,()=>odSay(S,R,txt))); if(t>=38.6&&t<41){ R.R.head.rotation.x=Math.min(0.9,(t-38.6)*0.6); if(Math.random()<dt*14){ const p=R.g.getWorldPosition(new THREE.Vector3()); burst(p.x-0.5+(Math.random()-0.5)*0.6,p.y+0.6+Math.random(),p.z-0.5,new THREE.Color(0x9ad8ff),2); } }
+    // the dove flies up into the sky
+    if(t>=39.4){ dv.g.visible=true; const k=odSeg(S,39.4,45); dv.g.position.set(...RF(5.6+Math.sin(k*4)*1.4,-0.45+k*24,-0.3-k*6)); dv.wings.forEach((w,i)=>w.rotation.z=(i?-1:1)*Math.sin(t*16)*0.8); odAt(S,39.6,'fl',()=>brSfx('whoosh')); } },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t>=6.2&&t<20){ armL.rotation.x=armR.rotation.x=3.0; } if(t>=20.6){ mxSitPose(); armL.rotation.x=armR.rotation.x=0.7; } },
+  cam(S){ const t=S.t; if(t<6.2)return [RF(-6,2.2,5.6),[pl.p[0],pl.p[1]+1.2,pl.p[2]],0]; if(t<8.6)return [RF(0.2,0.6,6),RF(1.8,-1.4,0.4),1]; if(t<13.6)return [RF(-4,2.6,6.8),[S.ro.g.position.x,S.ro.g.position.y+1.2,S.ro.g.position.z],2];
+    if(t<17.8)return [RF(1.2,-1.6,2.6),RF(1.9,-1.4,0.4),3]; if(t<20.6)return [RF(5.6,0.8,4.6),RF(3,-0.8,0.4),4]; if(t<23)return [RF(8.4,0.6,0.3),RF(5.6,-0.2,0.3),5];
+    if(t<38.6){ const a=(t-23)*0.03; return [RF(5.6+Math.cos(a)*3.2,0.5,0.3+Math.sin(a)*1.6),RF(5.6,-0.1,0.3),6]; } if(t<39.4)return [RF(7.4,0.2,0.6),RF(5.6,-0.3,-0.6),7]; const p=S.dv.g.position; return [[p.x+2.5,p.y-1.2,p.z+4.5],[p.x,p.y,p.z],8]; } };
+
+// ---------- 10. THE FINAL ESCAPE ----------
+OD_CH.br10={secs:38,sky:'in',mood:'sad',init(S){ brDeckard(S); brShow('hall'); S.ra=brPerson(S.grp,'rachael',...DAP(1.6,0.45,1.5),0); S.ra.g.rotation.set(-Math.PI/2,Math.PI/2,0,'YXZ'); brK.blanket.visible=true; brK.uni.visible=true; },
+  tick(S,dt){ const K=brK, t=S.t, R=S.ra, G=BRC.G; K.sweep.position.z=Math.sin(t*0.6)*3.5;
+    // the hallway home
+    if(t<5.6){ odHeroPath(S,HAL(0,0,5),HAL(0,0,1),0.4,5); } odAt(S,1.6,'d1',()=>odSay(S,S.hero,'The door is open... Rachael?'));
+    // she's there, waiting for him
+    odAt(S,5.6,'ap',()=>{ brShow('dapt'); }); if(t>=5.6&&t<20){ if(t<8)odHeroPath(S,DAP(-3,0,3.4),DAP(-0.6,0,1.4),5.6,7.6); else if(t<12.6)odHeroTo(S,DAP(-0.6,0,1.4),Math.atan2(-(1.6+0.6),-(1.5-1.4)),false);
+      if(t<8.4){ R.g.position.set(...DAP(1.6,0.45,1.5)); R.g.rotation.set(-Math.PI/2,Math.PI/2,0,'YXZ'); } else { R.g.rotation.set(0,0,0); K.blanket.visible=false; R.g.position.set(...DAP(1.0,0,1.4)); elFaceBr(R,pl.p); R.R.head.rotation.x=0; animRig(R.R,dt,0); } }
+    odAt(S,8.6,'r1',()=>odSay(S,R,'You came back.')); odAt(S,10.6,'d2',()=>odSay(S,S.hero,'We have to go. Right now.'));
+    // a paper unicorn on the floor
+    if(t>=12.6&&t<20){ if(t<14)odHeroPath(S,DAP(-0.6,0,1.4),DAP(-2.4,0,2.6),12.6,14); else { odHeroTo(S,DAP(-2.4,0,2.6),Math.PI,false); if(t>=15)K.uni.position.set(...odLW(armR,[0,-0.72,-0.15]).map((v,i)=>v-BRS.dapt[i])); } }
+    odAt(S,14.4,'d3',()=>odSay(S,S.hero,'A paper unicorn... Gaff was here.')); odAt(S,17,'d4',()=>odSay(S,S.hero,'And he let you go.'));
+    // into the elevator together; the doors slowly close
+    odAt(S,20,'hl',()=>{ brShow('hall'); }); if(t>=20&&t<30){ const k=odSeg(S,20,23.4); odHeroTo(S,odL(HAL(0.4,0,2),HAL(0.4,0,-7.2),k),k<1?Math.PI*0+0:Math.PI,k>0&&k<1); if(k>=1)odHeroTo(S,HAL(0.4,0,-7.2),0+Math.PI,false); R.g.position.set(...odL(HAL(-0.4,0,2.6),HAL(-0.4,0,-7.2),odSeg(S,20.2,23.6))); R.g.rotation.y=t<23.6?0:Math.PI; odWalk(R,dt,t<23.6,7); if(t>=24.4){ elFaceBr(R,pl.p); }
+      const d=odSeg(S,25,28.4); K.eDoors.forEach((p,i)=>p.position.x=(i?1:-1)*(1.12-d*0.75)); }
+    odAt(S,21,'r2',()=>odSay(S,R,'Where will we go?')); odAt(S,23.8,'d5',()=>odSay(S,S.hero,'Somewhere far away. Together.')); odAt(S,25,'ding',()=>MX_SFX.ding&&odS(MX_SFX.ding));
+    // the city, from far above, as the camera pulls away into the dark
+    odAt(S,28.6,'out',()=>{ brShow(); brSky('high'); brMood='city'; S.hideHero=true; }); odAt(S,30.4,'title',()=>rkTitle('<div>BLADE RUNNER</div><div style="font-size:.42em;margin-top:.3em;letter-spacing:.12em">A BLOCKSTAR ADVENTURE</div><div style="font-size:.36em;margin-top:1em;font-style:italic">"MORE HUMAN THAN HUMAN."</div>',true));
+    if(t>=36){ brFadeTo(Math.min(1,(t-36)/1.6)); } },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; head.rotation.x=0; if(t>=14&&t<15){ armR.rotation.x=0.6; head.rotation.x=0.6; } if(t>=15&&t<20){ armR.rotation.x=1.3; head.rotation.x=0.3; } },
+  cam(S){ const t=S.t, G=BRC.G; if(t<5.6)return [HAL(0,1.8,-2),[pl.p[0],pl.p[1]+1.5,pl.p[2]],0]; if(t<8.4)return [DAP(-1,1.8,-1.4),DAP(0.4,1,1.4),1]; if(t<10.6)return [DAP(-0.4,1.6,0.6),DAP(1,1.4,1.4),2]; if(t<12.6)return [DAP(0.6,1.6,0.8),DAP(-0.6,1.6,1.4),3];
+    if(t<15)return [DAP(-1.8,1.3,3.6),DAP(-2.4,0.6,2.9),4]; if(t<20)return [DAP(-1.9,1.6,3.5),DAP(-2.4,1.5,2.6),5]; if(t<25)return [HAL(0,1.8,2.6),HAL(0,1.2,-6),6]; if(t<28.6)return [HAL(0,1.6,-3.4),HAL(0,1.5,-7.2),7];
+    const k=odSeg(S,28.6,38); return [[24-k*30,G+28+k*24,47-k*20],[96,G+24,96],8]; } };
+BR_NAMES.push('The Hunt Through the City','The Artificial Human','The Strange World of J.F. Sebastian','The Creator and His Creation','The Final Hunt at the Bradbury','The Rooftop and the Last Moments','The Final Escape');
 
 // ================= THE NORTH POLE & CHRISTMAS NEW YORK =================
 // One snowy world: the North Pole village and Santa's workshop at the north end, a candy-cane forest and a magic tunnel
