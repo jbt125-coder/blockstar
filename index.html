@@ -1492,6 +1492,7 @@ function updateShots2(dt){
       else for(const m of mobs){ if(boxHit(m,x,y,z,0.12)){ hit=true; damageMob(m,s.dmg,s.v[0],s.v[2],4); if(s.sp)specialImpact(s,m,x,y,z,px0,py0,pz0); break; } }
       if(!hit&&!s.fromMob&&odyK&&onOdyssey()&&!demo){ const c=odyAt(x,y,z); if(c){ hit=true; odyHurt(c,s.dmg,s.v[0],s.v[2],true); } } // a sea creature, a sheep, the Cyclops...
       if(!hit&&!s.fromMob&&s.kind==='snow'&&elK){ const k=elKidAt(x,y,z); if(k){ hit=true; elKidHit(k); } } // a kid in the snowball fight
+      if(!hit&&!s.fromMob&&elK){ const r=elRacAt(x,y,z); if(r){ hit=true; elRacScare(r); } } // the raccoon runs off from a snowball or an arrow
       if(!hit&&!s.fromMob&&ranchK)for(const a of ranchK.animals){ if(a.game&&boxHit(a,x,y,z,0.15)){ hit=true; huntHit(a); break; } } // a deer or bunny on the ranch
     }
     if(hit){ freeShot(s); continue; }
@@ -4648,6 +4649,7 @@ function chairMesh(){ const g=new THREE.Group(), w=lm(0x8a5a2e), dk=lm(0x6b4220)
 function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
 function riding(){ return !!(ranchK&&ranchK.ride); }
 function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
+  if(demo&&demo.sc&&typeof isElf==='function'&&isElf(demo.sc))return Object.assign({},look,{skin:'#f6dcc8',hair:'curly',hairC:'#f0d070',eyes:'#3a7ad8',beard:'none',glasses:'none'}); // Buddy: the same fair skin, blond curls and blue eyes from baby to grown-up
   if(curPlace()==='ranch'&&ranchK){ const L=Object.assign({},look); for(const [k] of GEAR)if(ranchK.gear[k])L[k]=COWBOY[k]; if(ranchK.gear.neck)L.neckC=COWBOY.neckC;
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
   return look; }
@@ -9287,7 +9289,7 @@ const EL_CAST={papa:{skin:'#f2d0b8',hair:'short',hairC:'#f2f2f2',beard:'full',ey
   walter:{skin:'#e8c4a0',hair:'short',hairC:'#6a6a6a',eyes:'#3a4a5a',top:'jacket',topC:'#2a2a34',bottom:'pants',bottomC:'#2a2a34',shoes:'shoes',shoeC:'#111111'},
   jovie:{skin:'#f2dcc8',hair:'short',hairC:'#e8d070',eyes:'#3a7aa8',top:'long',topC:'#2a8a3a',bottom:'skirt',bottomC:'#c81a2a',shoes:'boots',shoeC:'#111111'},
   michael:{skin:'#f2d4bc',hair:'short',hairC:'#5a3a20',eyes:'#3a5a3a',top:'hoodie',topC:'#2a5ac8',bottom:'jeans',bottomC:'#3a4a6a',shoes:'sneakers',shoeC:'#f2f2f2'},
-  kidbuddy:{skin:'#f2d0b8',hair:'curly',hairC:'#6a4a2a',eyes:'#4a6a9a',top:'long',topC:'#1a8a3a',bottom:'pants',bottomC:'#f0d040',shoes:'shoes',shoeC:'#111111'}};
+  kidbuddy:{skin:'#f6dcc8',hair:'curly',hairC:'#f0d070',eyes:'#3a7ad8',top:'long',topC:'#1a8a3a',bottom:'pants',bottomC:'#f0d040',shoes:'shoes',shoeC:'#111111'}};
 function elHat(par,col,y,s){ const g=grp(par,0,y||0.47,0); mb(g,0.52,0.09,0.52,mm(0xf6f6f6),0,0,0); const c=new THREE.Mesh(new THREE.ConeGeometry(0.25,0.62,8),mm(col)); c.position.set(0,0.33,0.06); c.rotation.x=0.35; g.add(c); msph(g,0.07,mm(0xf6f6f6),0,0.6,0.2); if(s)g.scale.setScalar(s); return g; }
 function elEars(R){ for(const s of[-1,1]){ const e=mb(R.head,0.06,0.16,0.1,mm(0xf0c8a8),s*0.25,0.28,0); e.rotation.z=-s*0.5; } }
 function elElf(par,x,y,z,ry,o,sc){ const pick=a=>a[Math.floor(Math.random()*a.length)], c=pick(['#1a8a3a','#c81a2a','#2a5ac8','#d8a020']);
@@ -9319,6 +9321,16 @@ function elSleighMesh(par){ const g=grp(par,0,0,0), red=mm(0xc8102a), gold=mm(0x
   const sack=msph(g,0.55,mm(0x8a1a1a),0,1.45,0.75,1,0.9,0.9); const deer=[]; for(let i=0;i<4;i++){ const d=elDeer(g); d.g.position.set((i%2?0.45:-0.45),-0.1,-3.0-Math.floor(i/2)*1.6); deer.push(d); }
   for(const s of[-1,1])mb(g,0.03,0.03,3.6,gold,s*0.45,1.1,-2.9); return {g,deer,sack}; }
 function elDeerRun(S,t,on){ for(const d of S.deer)d.legs.forEach((l,k)=>l.rotation.x=on?Math.sin(t*12+k*1.6+(k>1?Math.PI:0))*0.6:0); }
+function elRaccoon(par){ const g=grp(par,0,0,0), gr=mm(0x7a7a80), dk=mm(0x2a2a2e), wh=mm(0xe8e8e8); mb(g,0.5,0.4,0.8,gr,0,0.42,0); const hd=grp(g,0,0.62,-0.42); mb(hd,0.4,0.32,0.32,gr,0,0,0); mb(hd,0.42,0.1,0.06,dk,0,0.03,-0.165); mb(hd,0.16,0.12,0.16,wh,0,-0.06,-0.2); mb(hd,0.06,0.05,0.04,dk,0,-0.04,-0.29);
+  for(const sx of[-1,1]){ msph(hd,0.035,mm(0xffffff),sx*0.1,0.04,-0.2); mb(hd,0.1,0.12,0.06,gr,sx*0.14,0.2,0); }
+  const tail=grp(g,0,0.5,0.4); for(let i=0;i<5;i++)mb(tail,0.18,0.18,0.16,i%2?dk:gr,0,0.06*i,0.14*i); const legs=[]; for(const [x,z] of [[-0.17,-0.28],[0.17,-0.28],[-0.17,0.28],[0.17,0.28]]){ const l=grp(g,x,0.28,z); mb(l,0.12,0.28,0.12,dk,0,-0.14,0); legs.push(l); } return {g,hd,tail,legs}; }
+function elPuffin(par,x,y,z,ry){ const g=grp(par,x,y,z,ry); mb(g,0.42,0.6,0.4,mm(0x1a1a1e),0,0.45,0.02); mb(g,0.34,0.46,0.06,mm(0xf6f6f6),0,0.42,-0.19); const hd=grp(g,0,0.85,0); mb(hd,0.34,0.3,0.32,mm(0x1a1a1e),0,0,0); for(const sx of[-1,1])mb(hd,0.04,0.18,0.18,mm(0xf6f6f6),sx*0.16,0,-0.02); mb(hd,0.14,0.16,0.16,mm(0xf2621a),0,-0.03,-0.24); mb(hd,0.14,0.05,0.04,mm(0xf2c21a),0,0.02,-0.3);
+  for(const sx of[-1,1]){ msph(hd,0.03,mm(0x111111),sx*0.17,0.04,-0.06); mb(g,0.12,0.06,0.2,mm(0xf2621a),sx*0.1,0.03,-0.06); } return {g,hd}; }
+function elSnowman(par,x,y,z,ry){ const g=grp(par,x,y,z,ry), w=mm(0xf8f8fc); msph(g,0.7,w,0,0.65,0); msph(g,0.52,w,0,1.65,0); const hd=grp(g,0,2.4,0); msph(hd,0.38,w,0,0,0);
+  for(const sx of[-1,1]){ const l=new THREE.Mesh(new THREE.TorusGeometry(0.1,0.02,6,14),mm(0x111111)); l.position.set(sx*0.13,0.06,-0.36); hd.add(l); msph(hd,0.08,mm(0x2a2a34),sx*0.13,0.06,-0.35,1,1,0.3); } mb(hd,0.08,0.02,0.02,mm(0x111111),0,0.07,-0.37);
+  const n=mcyl(hd,0.005,0.07,0.32,mm(0xf2821a),0,-0.04,-0.5,6); n.rotation.x=-Math.PI/2; for(let i=0;i<5;i++)msph(hd,0.035,mm(0x111111),Math.sin((i-2)*0.35)*0.22,-0.18-Math.cos((i-2)*0.35)*0.04+0.04,-0.33);
+  mb(g,0.9,0.14,0.14,mm(0xd81a2a),0,2.0,-0.05); mb(g,0.14,0.5,0.1,mm(0xd81a2a),0.22,1.75,-0.48); for(let i=0;i<3;i++)msph(g,0.06,mm(0x111111),0,1.4+i*0.25,-0.5);
+  for(const sx of[-1,1]){ const a=mcyl(g,0.03,0.03,1.0,mm(0x5a3a1a),sx*0.85,1.85,0,5); a.rotation.z=sx*-0.9; } return {g,hd}; }
 function elBear(par){ const g=grp(par,0,0,0), w=mm(0xf2f2ee); mb(g,1.0,0.9,1.8,w,0,0.95,0); const hd=grp(g,0,1.3,-1.0); mb(hd,0.6,0.55,0.6,w,0,0,0); mb(hd,0.3,0.25,0.3,w,0,-0.08,-0.4); mb(hd,0.1,0.08,0.06,mm(0x111111),0,0,-0.56); for(const s of[-1,1]){ mb(hd,0.14,0.14,0.08,w,s*0.22,0.3,0); mb(hd,0.06,0.06,0.02,mm(0x111111),s*0.15,0.1,-0.31); }
   const legs=[]; for(const [x,z] of [[-0.32,-0.6],[0.32,-0.6],[-0.32,0.6],[0.32,0.6]]){ const l=grp(g,x,0.6,z); mb(l,0.32,0.6,0.32,w,0,-0.3,0); legs.push(l); } return {g,hd,legs}; }
 function elRevolver(par){ const g=grp(par,0,0,0); mcyl(g,0.08,0.08,2.8,mm(0x8a6a2a),0,1.4,0,8); mcyl(g,1.5,1.5,0.15,mm(0x8a6a2a),0,2.85,0,20); const wings=grp(g,0,0,0); const gl=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.4,depthWrite:false});
@@ -9336,7 +9348,7 @@ const EL_GIFTS=[[22,4,20],[30,4,47],[58,4,60],[118,4,34],[146,4,22],[80,ELC.G+15
 function elSave(){ try{ localStorage.setItem('blockstar_elf',JSON.stringify({spirit:elK.spirit,gifts:elK.giftsGot,deco:elK.decoDone})); }catch(e){} }
 function elLoad(){ try{ return JSON.parse(localStorage.getItem('blockstar_elf')||'null')||{}; }catch(e){ return {}; } }
 function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add(root); const G=ELC.G, sv=elLoad(); const K=elK={root,t:0,speak:[],elves:[],walkers:[],taxis:[],kids:[],balls:[],gifts:[],deco:[],spirit:Math.max(0,Math.min(100,+sv.spirit||0)),giftsGot:Array.isArray(sv.gifts)?sv.gifts:[],decoDone:Array.isArray(sv.deco)?sv.deco:[]};
-  K.aurora=elAurora(root); K.bigTree=elTree(root,80,G,48,12); for(let z=40;z<=68;z+=7)for(const x of [74,86])elCane(root,x,G,z);
+  K.aurora=elAurora(root); K.bigTree=elTree(root,65,G,39,12); /* off to the side, so the walk to the tunnel is clear */ for(let z=40;z<=68;z+=7)for(const x of [74,86])elCane(root,x,G,z);
   // elves busy in the village, carrying presents
   for(let i=0;i<14;i++){ const e=elElf(root,0,G,0,0); const gift=elGift(e.R.armL,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); gift.position.set(0.18,-0.75,-0.2); gift.scale.setScalar(0.7); e.R.armL.rotation.x=e.R.armR.rotation.x=0.9;
     K.elves.push({a:e,a0:Math.random()*6.28,r:8+Math.random()*16,c:[i%2?30:126,30],sp:(0.15+Math.random()*0.2)*(i%3?1:-1)}); }
@@ -9348,6 +9360,18 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
   { const pts=[]; for(let i=0;i<260;i++){ const x=2+Math.random()*156, z=58+Math.random()*30; if(x>70&&x<90)continue; pts.push([x,z,2.5+Math.random()*2.5]); } const geo=new THREE.ConeGeometry(1,1,7), M=new THREE.InstancedMesh(geo,mm(0x1a5a34),pts.length), S2=new THREE.InstancedMesh(geo,mm(0xf6f6f6),pts.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion();
     pts.forEach(([x,z,h],k)=>{ const y=standY(Math.floor(x),Math.floor(z)); m4.compose(new THREE.Vector3(x,y+h*0.9,z),q,new THREE.Vector3(h*0.45,h*1.8,h*0.45)); M.setMatrixAt(k,m4); m4.compose(new THREE.Vector3(x,y+h*1.6,z),q,new THREE.Vector3(h*0.2,h*0.5,h*0.2)); S2.setMatrixAt(k,m4); }); root.add(M,S2); }
   K.bear=elBear(root); K.bear.g.position.set(70,G,64); K.bear.g.rotation.y=-Math.PI/2;
+  // a puffin and a snowman in round sunglasses wave travelers off to the tunnel
+  K.puffin=elPuffin(root,75.2,G,61.4,-Math.PI/2); K.snowman=elSnowman(root,85.4,G,64.4,Math.PI/2);
+  // the candy tunnel: swirling rainbow rings, giant candy canes and gumdrops
+  K.rings=[]; for(let z=69;z<=85;z+=2){ const r=new THREE.Mesh(new THREE.TorusGeometry(2.7,0.16,6,28),glowM([0xff3a3a,0xff9a2a,0xffe23a,0x3aff6a,0x3a8aff,0x8a3aff,0xff5ae8][K.rings.length%7])); r.position.set(80.5,G+2.6,z+0.5); root.add(r); K.rings.push(r); }
+  for(const z of [67.5,87.5])for(const x of [76.2,84.8]){ const c=elCane(root,x,G,z); c.scale.setScalar(1.3); if(x>80)c.rotation.y=Math.PI; }
+  for(let z=69;z<=85;z+=1.6)for(const x of [76.5,84.5]){ const d=msph(root,0.28,glowM([0xff3a6a,0x3aff8a,0xffd23a,0x8a5aff,0xff8a2a][Math.floor(z*1.7+x)%5]),x,G+0.18,z,1,0.75,1); }
+  // the white crosswalk stripes on the plaza street (for hopscotch)
+  for(let k=1;k<=6;k++)mb(root,2.6,0.04,0.8,mm(0xf6f6f6),88,G+0.02,132.2-k*9.2/6);
+  // a chimney on the rooftop where Santa lands
+  { const ry=standY(121,116); const ch=grp(root,121.5,ry,116); mb(ch,1.3,2.2,1.3,mm(0x9a3a2a),0,1.1,0); mb(ch,1.5,0.2,1.5,mm(0x6a2a1a),0,2.2,0); mb(ch,0.9,0.1,0.9,mm(0x111111),0,2.31,0); mb(ch,1.32,0.3,1.32,mm(0xf6f6f6),0,2.0,0); }
+  // a grumpy raccoon by the tunnel's city end: it bites, and a snowball or an arrow scares it off
+  K.rac=Object.assign(elRaccoon(root),{p:[82,G,91],home:[82,G,91],hide:0,biteT:0,h:0}); K.rac.hw=0.35; K.rac.ht=0.8;
   // the tunnel's magic arches
   K.arches=[]; for(const z of [ELC.ridge[0]-4.5,ELC.ridge[1]+4.5]){ const g=grp(root,80,G,z); const ring=new THREE.Mesh(new THREE.TorusGeometry(4.2,0.3,8,24,Math.PI),glowM(0xff3a6a)); ring.position.y=0.2; g.add(ring); for(let i=0;i<9;i++){ const a=i/8*Math.PI; msph(g,0.25,glowM(i%2?0xffffff:0x3aff8a),Math.cos(a)*4.2,Math.sin(a)*4.2+0.2,0); } K.arches.push(g); }
   // New York: the store's sign, its window displays, the revolving door and the escalator, the giant tree, lamps, cocoa, taxis and people
@@ -9359,7 +9383,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
     K.storeTree=elTree(root,46,G0,111,6.5); }
   K.plazaTree=elTree(root,...ELC.tree,22); for(const x of [10,26,42,58,90,106,122,138,150])for(const z of [90.5,101.3]){ const p=grp(root,x,G,z); mcyl(p,0.08,0.1,4.6,mm(0x2a3a2a),0,2.3,0,6); msph(p,0.25,glowM(0xfff2c0),0,4.7,0); mb(p,0.9,0.1,0.06,mm(0xd81a2a),0,3.8,0); }
   { const cart=grp(root,70,G,101.2); mb(cart,2,1,1,mm(0xc8102a),0,0.8,0); mb(cart,2.4,0.1,1.4,mm(0xf6f6f6),0,2.3,0); for(const s of[-1,1])mcyl(cart,0.04,0.04,1.3,mm(0x2a2a2a),s*1.1,1.65,0,5); for(let i=0;i<3;i++)mcyl(cart,0.08,0.07,0.16,mm(0xf2f2f2),-0.5+i*0.5,1.38,0,8);
-    const sg=canvasTex(256,64); sg.x.fillStyle='#fff'; sg.x.fillRect(0,0,256,64); sg.x.fillStyle='#8a1a1a'; sg.x.font='bold 30px sans-serif'; sg.x.textAlign='center'; sg.x.fillText('HOT COCOA ☕',128,44); sg.t.needsUpdate=true; const sp=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5),new THREE.MeshBasicMaterial({map:sg.t})); sp.position.set(0,2.0,-0.52); sp.rotation.y=Math.PI; cart.add(sp); K.cocoa=elPerson(root,'walter',70,G,102.2,Math.PI); dressRig(K.cocoa.R,mxLook({top:'jacket',topC:'#5a3a2a',hat:'beanie',hatC:'#c81a2a',hair:'short',hairC:'#2a1a10'})); }
+    const sg=canvasTex(256,64); sg.x.fillStyle='#fff'; sg.x.fillRect(0,0,256,64); sg.x.fillStyle='#8a1a1a'; sg.x.font='bold 30px sans-serif'; sg.x.textAlign='center'; sg.x.fillText('HOT COCOA ☕',128,44); sg.t.needsUpdate=true; const sp=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5),new THREE.MeshBasicMaterial({map:sg.t})); sp.position.set(0,2.72,0); sp.rotation.y=Math.PI; cart.add(sp); const sp2=sp.clone(); sp2.rotation.y=0; sp2.position.z=0.01; cart.add(sp2); K.cocoa=elPerson(root,'walter',70,G,102.2,0); /* behind the cart, facing the street; the sign sits up on top */ dressRig(K.cocoa.R,mxLook({top:'jacket',topC:'#5a3a2a',hat:'beanie',hatC:'#c81a2a',hair:'short',hairC:'#2a1a10'})); }
   for(let i=0;i<5;i++){ const c=mxCar(root,0xf2c21a); mb(c,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); K.taxis.push({c,x:i*32,z:i%2?94:97.5,dir:i%2?1:-1,sp:7+i}); c.visible=!!demo; }
   for(let i=0;i<14;i++){ const a=odPerson(root,0,G,0,0,mxLook({top:['jacket','hoodie','long'][i%3],topC:['#c81a2a','#2a3a6a','#1a6a3a','#5a3a2a','#3a3a3a'][i%5],bottom:'pants',bottomC:'#2a2a2e',hat:i%3?'beanie':'none',hatC:['#c81a2a','#f2f2f2','#1a6a3a'][i%3],hair:['short','long','bun','curly'][i%4]}));
     if(i%2){ const bag=mb(a.R.armR,0.3,0.36,0.14,mm([0xc81a2a,0x1a8a3a,0xd8a020][i%3]),0,-0.85,0); } K.walkers.push({a,x:Math.random()*150+4,z:i%2?90.4:100.6,dir:i%2?1:-1,sp:1+Math.random()*0.6}); }
@@ -9382,7 +9406,10 @@ function elTick(dt){ const K=elK; K.t+=dt; const t=K.t, G=ELC.G;
   for(const e of K.elves){ if(e.work){ e.a.R.armL.rotation.x=1.1+Math.sin(t*12+e.a.ph)*0.3; e.a.R.armR.rotation.x=1.1-Math.sin(t*12+e.a.ph)*0.3; animRig(e.a.R,dt,0); continue; } if(e.film)continue;
     e.a0+=e.sp*dt; const x=e.c[0]+Math.cos(e.a0)*e.r, z=e.c[1]+Math.sin(e.a0)*e.r*0.9; e.a.g.position.set(x,G,z); e.a.g.rotation.y=Math.atan2(Math.sin(e.a0)*e.sp,-Math.cos(e.a0)*e.sp*0.9); /* face the way they walk */ odWalk(e.a,dt,true,10); e.a.R.armL.rotation.x=e.a.R.armR.rotation.x=0.9; }
   K.beltToys.forEach((g,i)=>{ g.position.x=-3+((t*0.8+i)%6); });
-  for(const w of K.walkers){ w.x+=w.dir*w.sp*dt; if(w.x>156)w.x=2; if(w.x<2)w.x=156; w.a.g.position.set(w.x,G,w.z); w.a.g.rotation.y=w.dir>0?-Math.PI/2:Math.PI/2; odWalk(w.a,dt,true,7); }
+  for(const w of K.walkers){ w.x+=w.dir*w.sp*dt; if(w.x>156)w.x=2; if(w.x<2)w.x=156; const dx=pl.p[0]-w.x, dz=pl.p[2]-w.z, near=Math.abs(dx)<2.2&&Math.abs(dz)<1.6&&Math.abs(pl.p[1]-G)<2; // step around you, never through you
+    const want=near?(dz>0?-1.6:1.6):0; w.off=(w.off||0)+(want-(w.off||0))*Math.min(1,dt*6); w.a.g.position.set(w.x,G,w.z+w.off); w.a.g.rotation.y=w.dir>0?-Math.PI/2:Math.PI/2; odWalk(w.a,dt,true,7); }
+  K.rings.forEach((r,i)=>{ r.rotation.z=t*(i%2?1.2:-1.2); r.material.color.setHSL(((t*0.25+i/9)%1),1,0.6); }); K.puffin.hd.rotation.y=Math.sin(t*1.5)*0.6; K.snowman.hd.rotation.z=Math.sin(t*0.8)*0.1;
+  elRacTick(K,dt); if(K.sets.papa.visible)elWinDraw(K,t);
   for(const c of K.taxis){ c.c.visible=!!demo; if(c.film)continue; c.x+=c.dir*c.sp*dt; if(c.x>165)c.x=-5; if(c.x<-5)c.x=165; c.c.position.set(c.x,G,c.z); c.c.rotation.y=c.dir>0?-Math.PI/2:Math.PI/2; }
   K.rev.wings.rotation.y+=dt*(K.revSp||0.6); K.esc.st.forEach((b,i)=>{ const u=((i/20)+t*0.08)%1, L=K.esc.L, Hh=K.esc.Hh; b.position.set(0,0.1+u*Hh,-u*L); }); (K.winTrain||[]).forEach((tr,i)=>tr.position.x=2.6+Math.sin(t*0.8+i)*0.4);
   K.arches.forEach(g=>g.children.forEach((c,i)=>{ if(i>0)c.material.color.setHex(Math.floor(t*3+i)%2?0xffffff:0x3aff8a); }));
@@ -9437,6 +9464,17 @@ function elAction(){ const K=elK; if(!K||!onElf()||demo)return null; const H=K.s
 WP.snowball={id:'snowball',name:'Snowballs',icon:'❄️',dmg:1,cd:0.35,ranged:true,spd:24,grav:9,range:40,fact:'Snow packs into a good snowball when it is close to melting, around 0 °C. Very cold snow is too dry to stick together.'}; WEAPON_IDS.push('snowball');
 function elGiveSnow(){ if(demo||!owned||owned.includes('snowball'))return; owned.push('snowball'); weapon='snowball'; refreshWeapon(); queueSave(); }
 function elSnowMesh(){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,6),new THREE.MeshLambertMaterial({color:0xffffff})); m.userData.own=true; const g=new THREE.Group(); g.add(m); return g; }
+function elRacTick(K,dt){ const R=K.rac, G=ELC.G; R.g.visible=!demo&&R.hide<=0; if(demo||!onElf())return; if(R.hide>0){ R.hide-=dt; if(R.hide<=0)R.p=R.home.slice(); return; }
+  const dx=pl.p[0]-R.p[0], dz=pl.p[2]-R.p[2], d=Math.hypot(dx,dz), near=!dead&&d<6&&Math.abs(pl.p[1]-G)<2.5; let mv=0;
+  if(near&&d>0.9){ const sp=3.2*dt; R.p[0]+=dx/d*sp; R.p[2]+=dz/d*sp; R.h=Math.atan2(-dx,-dz); mv=1; } else if(!near){ const hx=R.home[0]-R.p[0], hz=R.home[2]-R.p[2], hd=Math.hypot(hx,hz); if(hd>0.3){ R.p[0]+=hx/hd*1.5*dt; R.p[2]+=hz/hd*1.5*dt; R.h=Math.atan2(-hx,-hz); mv=1; } }
+  R.biteT-=dt; if(near&&d<1.2&&R.biteT<=0){ R.biteT=1.2; hurtPlayer(1,dx/(d||1)*0.4,dz/(d||1)*0.4,'A grumpy raccoon'); npcSay(R,['HISSS!','Grrr!','No hugs!'][Math.floor(Math.random()*3)]); R.bubT=1.5; }
+  if(R.bubT>0){ R.bubT-=dt; if(R.bubT<=0)odBubOff(R.g,R); }
+  R.g.position.set(R.p[0],G,R.p[2]); R.g.rotation.y=R.h; R.legs.forEach((l,i)=>l.rotation.x=mv?Math.sin(K.t*18+i*Math.PI)*0.6:0); R.tail.rotation.x=Math.sin(K.t*5)*0.25; }
+function elWinDraw(K,t){ const x=K.pWin.x; x.fillStyle='#1a2a5a'; x.fillRect(0,0,128,112); x.fillStyle='#f2f6ff'; x.fillRect(0,88,128,24); x.fillStyle='#5a3a1a'; x.fillRect(86,76,6,14);
+  x.fillStyle='#1a6a34'; for(let i=0;i<3;i++){ x.beginPath(); x.moveTo(89,30+i*14); x.lineTo(70-i*3+i*0,62+i*10); x.lineTo(108+i*3,62+i*10); x.fill(); } x.fillStyle='#ffe23a'; x.fillRect(86,26,6,6); for(let i=0;i<6;i++){ x.fillStyle=['#ff3a3a','#3a8aff','#ffd23a'][i%3]; x.fillRect(78+(i*11)%22,48+i*6,3,3); }
+  x.fillStyle='#fff'; for(let i=0;i<40;i++){ const px=(i*37+Math.sin(t+i)*6)%128, py=((i*29)+t*18*(0.6+(i%3)*0.3))%112; x.fillRect((px+128)%128,py,2,2); } K.pWin.t.needsUpdate=true; }
+function elRacAt(x,y,z){ const R=elK&&elK.rac; if(!R||!R.g.visible||demo)return null; return Math.abs(x-R.p[0])<0.5&&Math.abs(z-R.p[2])<0.6&&y>ELC.G-0.2&&y<ELC.G+1.1?R:null; }
+function elRacScare(R){ burst(R.p[0]-0.5,ELC.G+0.6,R.p[2]-0.5,new THREE.Color(0.6,0.6,0.65),12); npcSay(R,'EEEK!'); R.bubT=0.8; snd(()=>tone('square',1200,500,0.25,0.05)); R.hide=40; toast('🦝 You scared the raccoon away!'); setTimeout(()=>{ if(R.bub)odBubOff(R.g,R); },800); }
 function elKidAt(x,y,z){ if(!elK)return null; for(const k of elK.kids)if(k.down<=0&&boxHit(k,x,y,z,0.2))return k; return null; }
 function elKidHit(k){ k.down=4; burst(k.p[0]-0.5,k.p[1]+1,k.p[2]-0.5,new THREE.Color(1,1,1),14); coins+=1; updateHUD(); sfx('coin'); snd(()=>{ tone('sine',700,300,0.2,0.06); tone('sine',900,500,0.2,0.05,0.15); }); if(Math.random()<0.4)npcSay(k.a,['Hahaha! Got me!','No fair, you\'re too good!','Whoa! Nice throw!'][Math.floor(Math.random()*3)]); elK.speak.includes(k.a)||elK.speak.push(k.a); }
 let elSplatEl=null;
@@ -9493,7 +9531,7 @@ function elSfx(k){ odS(EL_SFX[k]); }
 // --- the movie's rooms, far below the world: the orphanage, the inside of Santa's workshop, and Papa Elf's cottage
 const ELS={orph:[80,-40,80],wks:[80,-70,80],papa:[80,-100,80]};
 const ORP=(x,y,z)=>[ELS.orph[0]+x,ELS.orph[1]+y,ELS.orph[2]+z], WKS=(x,y,z)=>[ELS.wks[0]+x,ELS.wks[1]+y,ELS.wks[2]+z], PAP=(x,y,z)=>[ELS.papa[0]+x,ELS.papa[1]+y,ELS.papa[2]+z];
-function elFire(par){ const g=grp(par,0,0,0); mb(g,2.2,1.6,0.6,mm(0x8a3a2a),0,0.8,0); mb(g,1.3,0.9,0.4,mm(0x1a0a05),0,0.55,-0.12); mb(g,2.6,0.15,0.8,mm(0x5a2a1a),0,1.65,0); const f=[]; for(let i=0;i<3;i++){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,6),glowM([0xff7a1a,0xffc83a,0xff4a1a][i])); c.position.set(-0.3+i*0.3,0.35,-0.25); g.add(c); f.push(c); }
+function elFire(par){ const g=grp(par,0,0,0); mb(g,2.2,1.6,0.6,mm(0x8a3a2a),0,0.8,0); mb(g,1.3,0.9,0.4,mm(0x1a0a05),0,0.55,0.13); mb(g,2.6,0.15,0.8,mm(0x5a2a1a),0,1.65,0); const f=[]; for(let i=0;i<3;i++){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,6),glowM([0xff7a1a,0xffc83a,0xff4a1a][i])); c.position.set(-0.3+i*0.3,0.3,0.42); g.add(c); f.push(c); } /* flames in the open hearth, in view */
   const l=new THREE.PointLight(0xffa040,1.3,9); l.position.set(0,0.8,-1); g.add(l); return {g,f}; }
 function elLights(par,x0,x1,y,z){ const out=[]; for(let x=x0;x<=x1;x+=0.6){ out.push(msph(par,0.07,glowM([0xff3a3a,0x3aff6a,0xffd23a,0x3a8aff][out.length%4]),x,y-Math.sin((x-x0)*0.9)*0.15,z)); } return out; }
 function elBuildSets(K){ const root=K.root, sets=K.sets={};
@@ -9505,14 +9543,18 @@ function elBuildSets(K){ const root=K.root, sets=K.sets={};
     K.belts=[]; for(const z of [-3,1.5]){ mb(s,16,0.75,1.0,mm(0x5a3a1a),0,0.37,z); const b=mb(s,16.2,0.04,0.8,mm(0x2a2a2e),0,0.77,z); const toys=[]; for(let i=0;i<10;i++){ const g2=elGift(s,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.scale.setScalar(0.45); g2.position.set(-8+i*1.6,0.79,z); toys.push(g2); } K.belts.push(toys); }
     for(let i=0;i<5;i++)mb(s,2.4,3.2,0.5,mm(0x6a4a2a),-9+i*4.4,1.6,-6.7); for(let i=0;i<5;i++)for(let k=0;k<3;k++){ const g2=elGift(s,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][(i+k)%4]); g2.scale.setScalar(0.4); g2.position.set(-9.6+i*4.4+k*0.6,1.2+k*0.9,-6.5); }
     // the tiny elf doorway, the tiny chair and the tiny bed (for the years when Buddy kept growing)
-    const dw=grp(s,10.9,0,-1); mb(dw,0.15,1.45,0.15,mm(0x2a8a3a),0,0.72,-0.5); mb(dw,0.15,1.45,0.15,mm(0x2a8a3a),0,0.72,0.5); mb(dw,0.15,0.15,1.15,mm(0x2a8a3a),0,1.45,0); mb(dw,0.05,1.35,0.85,mm(0x5a3a1a),0.06,0.68,0); K.tinyDoor=dw;
+    const dw=grp(s,10.9,0,-1); mb(dw,0.15,1.05,0.15,mm(0x2a8a3a),0,0.52,-0.5); mb(dw,0.15,1.05,0.15,mm(0x2a8a3a),0,0.52,0.5); mb(dw,0.15,0.15,1.15,mm(0x2a8a3a),0,1.05,0); mb(dw,0.05,0.97,0.85,mm(0x5a3a1a),0.06,0.49,0); K.tinyDoor=dw;
     K.tinyChair=grp(s,6,0,4.6); mb(K.tinyChair,0.5,0.06,0.5,mm(0xc81a2a),0,0.35,0); mb(K.tinyChair,0.5,0.45,0.06,mm(0xc81a2a),0,0.6,0.22); for(const [x,z] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])mb(K.tinyChair,0.05,0.35,0.05,mm(0x8a1a1a),x,0.17,z);
     K.tinyBed=grp(s,-7,0,4.8); mb(K.tinyBed,1.0,0.35,1.5,mm(0x6a4a2a),0,0.18,0); mb(K.tinyBed,0.95,0.1,1.45,mm(0xf2f2f2),0,0.4,0); mb(K.tinyBed,0.96,0.08,0.9,mm(0xc81a2a),0,0.46,0.25); mb(K.tinyBed,1.0,0.6,0.08,mm(0x6a4a2a),0,0.4,-0.75);
     K.box=grp(s,0,0,-0.6); for(let i=0;i<4;i++){ const g2=elGift(K.box,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i]); g2.scale.setScalar(0.6); g2.position.set(-0.6+i*0.4,0,0.5*(i%2)); }
     const cal=canvasTex(64,80); K.cal=cal; const cm=new THREE.Mesh(new THREE.PlaneGeometry(1,1.25),new THREE.MeshBasicMaterial({map:cal.t})); cm.position.set(-3,3.3,-6.94); s.add(cm); }
-  { const s=sets.papa=grp(root,...ELS.papa); mxRoom(s,8,3,7,0x6a3a24,0x5a3a1e); K.pFire=elFire(s); K.pFire.g.position.set(0,0,-3.2); K.pFire.g.scale.setScalar(0.8); mxChair(s,-1.6,0,-1.2,Math.PI*0.8,0x2a7a3a).scale.set(0.6,0.6,0.6); mb(s,0.4,0.36,0.4,mm(0x8a5a32),1.2,0.18,-0.6);
+  { const s=sets.papa=grp(root,...ELS.papa); mxRoom(s,8,3,7,0x6a3a24,0x5a3a1e); K.pFire=elFire(s); K.pFire.g.position.set(0,0,-3.2); K.pFire.g.scale.setScalar(0.8); mxChair(s,-1.6,0,-1.2,Math.atan2(-2.8,-0.6),0x2a7a3a).scale.set(0.6,0.6,0.6); /* Papa's chair turned to face Buddy */ mb(s,0.4,0.36,0.4,mm(0x8a5a32),1.2,0.18,-0.6);
     for(let i=0;i<3;i++)mb(s,1.4,0.06,0.4,mm(0x5a3a1a),3.6,0.6+i*0.7,-2); K.photo=canvasTex(64,80); const px=K.photo.x; px.fillStyle='#e8dcc0'; px.fillRect(0,0,64,80); px.fillStyle='#8ab0d8'; px.fillRect(6,6,52,58); px.fillStyle='#e8c4a0'; px.fillRect(22,16,20,22); px.fillStyle='#6a6a6a'; px.fillRect(22,12,20,6); px.fillStyle='#2a2a34'; px.fillRect(14,38,36,26); px.fillStyle='#111'; px.font='bold 9px sans-serif'; px.fillText('W. HOBBS',10,76); K.photo.t.needsUpdate=true;
-    K.photoM=new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.44),new THREE.MeshBasicMaterial({map:K.photo.t})); K.photoM.visible=false; s.add(K.photoM); elLights(s,-3.6,3.6,2.8,-3.4); }
+    K.photoM=new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.44),new THREE.MeshBasicMaterial({map:K.photo.t})); K.photoM.visible=false; s.add(K.photoM); elLights(s,-3.6,3.6,2.8,-3.4);
+    // a window on the back wall: snow falling past a little Christmas tree outside
+    K.pWin=canvasTex(128,112); const wm=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.4),new THREE.MeshBasicMaterial({map:K.pWin.t})); wm.position.set(2.4,1.7,-3.47); s.add(wm); mb(s,1.8,0.1,0.14,mm(0x5a3a1a),2.4,0.95,-3.42); mb(s,1.8,0.1,0.08,mm(0x5a3a1a),2.4,2.45,-3.45); for(const x of [1.5,2.4,3.3])mb(s,0.08,1.5,0.08,mm(0x5a3a1a),x,1.7,-3.45); mb(s,1.7,0.06,0.08,mm(0x5a3a1a),2.4,1.7,-3.45);
+    // a little table with a glass of milk and a plate of cookies
+    { const tb=grp(s,-2.5,0,0.2); mcyl(tb,0.32,0.32,0.05,mm(0x8a5a32),0,0.55,0,12); mcyl(tb,0.05,0.07,0.55,mm(0x5a3a1a),0,0.27,0,6); mcyl(tb,0.06,0.05,0.18,mm(0xf6f6f6),-0.12,0.67,0,8); mcyl(tb,0.15,0.15,0.02,mm(0xd8d8e0),0.1,0.59,0.05,12); for(let i=0;i<4;i++)mcyl(tb,0.05,0.05,0.025,mm(0xb87a3a),0.1+Math.cos(i*1.6)*0.07,0.615+i*0.012,0.05+Math.sin(i*1.6)*0.07,8); } }
   for(const k in sets)sets[k].visible=false; }
 function elShow(...names){ const K=elK; for(const k in K.sets)K.sets[k].visible=names.includes(k); }
 // ================= ELF IN DEMO MODE =================
@@ -9527,111 +9569,141 @@ function elStageClear(){ const S=elStage; if(!S)return; odBubOff(model,S.hero); 
   model.rotation.x=model.rotation.y=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=head.rotation.y=0; $('dmFade').style.background=''; $('dmFade').style.opacity=0; rkTitle('',false); canvas.style.transform=''; if(elK)elDefaults(); }
 function elDefaults(){ const K=elK; for(const k in K.sets)K.sets[k].visible=false; K.gifts.forEach(g=>g.g.visible=!demo&&!K.giftsGot.includes(g.i)); K.deco.forEach(d=>{ d.glow.visible=!demo&&!d.done; const on=demo||d.done; d.t.orn.forEach(o=>o.visible=on); d.t.star.visible=on; });
   K.sleigh.film=false; K.sleigh.ride=false; K.sleigh.g.visible=true; [K.sleigh.x,K.sleigh.y,K.sleigh.z]=ELC.sleigh; K.sleigh.h=0; K.sleigh.tilt=K.sleigh.roll=0; K.elves.forEach(e=>{ e.film=false; e.a.g.visible=true; }); K.taxis.forEach(c=>c.film=false); K.revSp=0.6;
-  K.tinyChair.scale.set(1,1,1); K.tinyDoor.rotation.set(0,0,0); K.box.visible=true; K.photoM.visible=false; K.bear.g.position.set(70,ELC.G,64); K.bear.g.rotation.set(0,-Math.PI/2,0); K.bear.hd.rotation.set(0,0,0); K.kids.forEach(k=>k.down=0); elDefaults2(); }
+  K.tinyChair.scale.set(1,1,1); K.tinyChair.visible=K.tinyBed.visible=true; K.bear.g.visible=true; K.rac.hide=0; K.rac.p=K.rac.home.slice(); K.tinyDoor.rotation.set(0,0,0); K.box.visible=true; K.photoM.visible=false; K.bear.g.position.set(70,ELC.G,64); K.bear.g.rotation.set(0,-Math.PI/2,0); K.bear.hd.rotation.set(0,0,0); K.kids.forEach(k=>k.down=0); elDefaults2(); }
 function elCal(K,txt){ const x=K.cal.x; x.fillStyle='#fff'; x.fillRect(0,0,64,80); x.fillStyle='#c81a2a'; x.fillRect(0,0,64,20); x.fillStyle='#fff'; x.font='bold 12px sans-serif'; x.textAlign='center'; x.fillText('YEAR',32,15); x.fillStyle='#111'; x.font='bold 34px sans-serif'; x.fillText(txt,32,60); K.cal.t.needsUpdate=true; }
 function elFilmSleigh(S){ const s=elSleighMesh(S.grp); S.santaIn=elPerson(s.g,'santa',0,0.5,0.4,0); odSit(S.santaIn); s.g.visible=false; return s; }
 function elFace(a,p){ const x=p.x!==undefined?p.x:p[0], z=p.z!==undefined?p.z:p[2], dx=x-a.g.position.x, dz=z-a.g.position.z; a.g.rotation.y=Math.atan2(-dx,-dz); }
 function elGlowTex(){ if(elGlowTex.t)return elGlowTex.t; const c=canvasTex(64,64), g=c.x.createRadialGradient(32,32,2,32,32,32); g.addColorStop(0,'rgba(255,240,180,1)'); g.addColorStop(1,'rgba(255,240,180,0)'); c.x.fillStyle=g; c.x.fillRect(0,0,64,64); c.t.needsUpdate=true; return elGlowTex.t=c.t; }
 
 // ---------- 1. THE NORTH POLE AND THE MYSTERIOUS BABY ----------
-OD_CH.el1={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; S.hideHero=true; elBuddy(S); S.sl=elFilmSleigh(S); S.sa=elPerson(S.grp,'santa',...ORP(2.6,0,1),Math.PI/2); S.sa.g.visible=false;
-    S.sack=msph(S.grp,0.5,mm(0x8a1a1a),...ORP(1.2,0.45,-0.4),1,1.1,1); S.sack.visible=false; S.baby=odPerson(S.grp,...ORP(-3,0.62,1.6),0,mxLook({hair:'curly',hairC:'#6a4a2a',top:'long',topC:'#bfe0f0',bottom:'pants',bottomC:'#bfe0f0',shoes:'bare'})); S.baby.g.scale.setScalar(0.4);
+const EL_KID={skin:'#f6dcc8',hair:'curly',hairC:'#f0d070',eyes:'#3a7ad8'}; // Buddy as a baby and a kid: fair skin, curly blond hair, blue eyes
+OD_CH.el1={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; S.hideHero=true; elBuddy(S); S.sl=elFilmSleigh(S); S.sa=elPerson(S.grp,'santa',...ORP(1.6,0,-1.2),Math.atan2(-1.4,1.4)); S.sa.g.visible=false;
+    S.sack=msph(S.grp,0.5,mm(0x8a1a1a),...ORP(0.9,0.45,-0.2),1,1.1,1); S.sack.visible=false; S.baby=odPerson(S.grp,...ORP(-3,0.62,1.6),0,mxLook(Object.assign({top:'long',topC:'#bfe0f0',bottom:'pants',bottomC:'#bfe0f0',shoes:'bare'},EL_KID))); S.baby.g.scale.setScalar(0.4);
+    S.opres=[]; for(let i=0;i<7;i++){ const a=i/7*Math.PI*1.6+2.4, g2=elGift(S.grp,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020,0x8a2ad8][i%5]); g2.scale.setScalar(0.55+(i%3)*0.12); g2.position.set(...ORP(3+Math.cos(a)*1.25,0,-2.6+Math.sin(a)*1.0)); g2.rotation.y=i; g2.visible=false; S.opres.push(g2); }
     S.pa=elPerson(S.grp,'papa',...WKS(-1.6,0,1.2),Math.PI*0.2); S.wel=[]; for(let i=0;i<7;i++){ const a=0.25+i*(Math.PI-0.5)/6, e=elElf(S.grp,...WKS(0.4+Math.cos(a)*2.6,0,0.3-Math.sin(a)*2.2),0); S.wel.push(e); }
-    S.kb=elPerson(S.grp,'kidbuddy',...WKS(0,0,0),0); S.kb.g.visible=false; },
+    S.kb=elPerson(S.grp,'kidbuddy',...WKS(0,0,0),0); S.kb.g.visible=false; S.blk=mb(S.grp,1.05,0.1,1.3,mm(0xc81a2a),...WKS(-7,0.72,5.2)); S.blk.visible=false;
+    S.ball=msph(S.grp,0.24,mm(0xe8781a),0,0,0); for(const r of [0,Math.PI/2]){ const l=new THREE.Mesh(new THREE.TorusGeometry(0.245,0.012,4,16),mm(0x2a1a10)); l.rotation.y=r; S.ball.add(l); } S.ball.visible=false;
+    S.hoop=grp(S.grp,...WKS(0,4.4,6.9)); mb(S.hoop,1.8,1.1,0.08,mm(0xf6f6f6),0,0,0.02); mb(S.hoop,0.6,0.45,0.02,mm(0xd81a2a),0,-0.15,-0.03); const rim=new THREE.Mesh(new THREE.TorusGeometry(0.38,0.04,6,18),mm(0xe8781a)); rim.rotation.x=Math.PI/2; rim.position.set(0,-0.42,-0.45); S.hoop.add(rim); for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; mb(S.hoop,0.02,0.4,0.02,mm(0xf6f6f6),Math.cos(a)*0.33,-0.62,-0.45+Math.sin(a)*0.33); } S.hoop.visible=false;
+    const L=K.oFire.g.children.find(o=>o.isLight); if(L)L.intensity=1.3; K.oFire.f.forEach(c=>c.visible=true); },
   tick(S,dt){ const K=elK, t=S.t, G=ELC.G, sl=S.sl, sa=S.sa;
     // over the North Pole, under the northern lights
     if(t<7){ K.elves.forEach(e=>e.a.g.visible=true); }
-    // Santa's sleigh over New York on Christmas Eve, landing on a rooftop
-    odAt(S,7,'nyc',()=>{ elSky('night'); elMood='deck'; }); if(t>=7&&t<12.4){ const k=odE(odSeg(S,7,12)); sl.g.visible=true; const a=[10,G+30,96], b=[134,G+14.2,111], p=odL(a,b,k); p[1]+=Math.sin(k*Math.PI)*6; sl.g.position.set(...p); sl.g.rotation.y=Math.atan2(-(b[0]-a[0]),-(b[2]-a[2])); elDeerRun(sl,t,k<1); odAt(S,7.2,'jb',()=>elSfx('magic')); } else sl.g.visible=false;
-    // inside the orphanage: Santa leaves presents, and a curious baby crawls into his sack
-    odAt(S,12.4,'orph',()=>{ elShow('orph'); elSky('in'); scene.background.setHex(0x1a1a2a); S.sack.visible=true; sa.g.visible=true; elMood='silent'; });
-    if(t>=12.4&&t<19.2){ K.oFire.f.forEach((c,i)=>c.scale.y=1+Math.sin(t*12+i)*0.3); sa.R.armL.rotation.x=sa.R.armR.rotation.x=t<15?1.2+Math.sin(t*4)*0.3:0; animRig(sa.R,dt,0); if(t>=16.6){ odMove(sa,ORP(2.6,0,1),ORP(0,0,-3.2),odSeg(S,16.6,18.2)); odWalk(sa,dt,t<18.2,7); if(t>18.2)sa.g.position.y=ELS.orph[1]+(t-18.2)*4; }
-      const B=S.baby, k=odSeg(S,13.4,15.6); if(t<13.4)B.g.position.set(...ORP(-3,0.62,1.6)); else if(t<15.6){ const p=odL(ORP(-3,0.62,1.6),ORP(-3,0,0.4),Math.min(1,k*3)); if(k>0.33){ const q=odL(ORP(-3,0,0.4),ORP(1.2,0,-0.2),(k-0.33)/0.67); B.g.position.set(...q); B.g.rotation.y=-Math.PI/2; B.g.rotation.x=0.9; B.R.legL.rotation.x=Math.sin(t*10)*0.6; B.R.legR.rotation.x=-Math.sin(t*10)*0.6; } else B.g.position.set(...p); }
-      else { B.g.visible=t<16.2; B.g.position.set(...ORP(1.2,0.2+(t-15.6)*0.5,-0.4)); } S.sack.visible=t<18.2; if(t>=18.2)S.sack.visible=false; S.sack.position.set(...(t<16.6?ORP(1.2,0.45,-0.4):odL(ORP(1.9,1.2,0.8),ORP(0,1.2,-3.4),odSeg(S,16.6,18.2)))); }
-    odAt(S,13.8,'b1',()=>odSay(S,S.baby,'Goo?')); odAt(S,16.4,'s1',()=>{ odSay(S,sa,'Ho ho ho! Merry Christmas, everyone!'); elSfx('ho'); });
+    // Santa's sleigh over New York on Christmas Eve: down the avenue (clear of the towers), then onto a rooftop by the chimney
+    odAt(S,7,'nyc',()=>{ elSky('night'); }); if(t>=7&&t<12.4){ const a=[170,G+30,95.5], b=[128,G+22,95.5], c=[119,G+14.2,111]; let p, h=Math.PI/2; if(t<9.6)p=odL(a,b,odE(odSeg(S,7,9.6))); else { const k=odE(odSeg(S,9.6,12)); p=odL(b,c,k); h=k<0.85?Math.atan2(-(c[0]-b[0]),-(c[2]-b[2])):Math.PI/2; }
+      sl.g.visible=true; sl.g.position.set(...p); sl.g.rotation.y=brTurn(S,h,dt); elDeerRun(sl,t,t<12); odAt(S,7.2,'jb',()=>elSfx('magic')); } else sl.g.visible=false;
+    // inside the orphanage: Santa leaves presents under the tree, and a curious baby crawls into his sack
+    odAt(S,12.4,'orph',()=>{ elShow('orph'); elSky('in'); scene.background.setHex(0x1a1a2a); S.sack.visible=true; sa.g.visible=true; });
+    if(t>=12.4&&t<19.4){ const fireOn=t<16.8; K.oFire.f.forEach((c,i)=>{ c.visible=fireOn||t<17.3; c.scale.setScalar(fireOn?1.7:Math.max(0.01,1.7-(t-16.8)*3.4)); c.scale.y=(fireOn?1.7+Math.sin(t*12+i)*0.5:Math.max(0.01,1.7-(t-16.8)*3.4)); }); const L=K.oFire.g.children.find(o=>o.isLight); if(L)L.intensity=fireOn?1.3:Math.max(0,1.3-(t-16.8)*2.6);
+      S.opres.forEach((g2,i)=>g2.visible=t>=13+i*0.35); sa.R.armL.rotation.x=sa.R.armR.rotation.x=t<15.6?1.2+Math.sin(t*4)*0.3:0; animRig(sa.R,dt,0);
+      if(t>=16.4&&t<16.9){ sa.R.armR.rotation.x=1.6; if(Math.random()<dt*40)burst(...ORP(-0.5,0.6,-3.6),new THREE.Color([0xffffff,0x9ad8ff,0xffe23a][Math.floor(Math.random()*3)]),3); }
+      if(t>=17){ odMove(sa,ORP(1.6,0,-1.2),ORP(0,0,-3.3),odSeg(S,17,18.2)); odWalk(sa,dt,t<18.2,7); if(t>18.2)sa.g.position.y=ELS.orph[1]+(t-18.2)*4; }
+      const B=S.baby, k=odSeg(S,13.4,15.6); if(t<13.4)B.g.position.set(...ORP(-3,0.62,1.6)); else if(t<15.6){ const p=odL(ORP(-3,0.62,1.6),ORP(-3,0,0.4),Math.min(1,k*3)); if(k>0.33){ const q=odL(ORP(-3,0,0.4),ORP(0.9,0,-0.1),(k-0.33)/0.67); B.g.position.set(...q); B.g.rotation.y=-Math.PI/2; B.g.rotation.x=0.9; B.R.legL.rotation.x=Math.sin(t*10)*0.6; B.R.legR.rotation.x=-Math.sin(t*10)*0.6; } else B.g.position.set(...p); }
+      else { B.g.visible=t<16.2; B.g.position.set(...ORP(0.9,0.2+(t-15.6)*0.5,-0.2)); } S.sack.visible=t<18.2; S.sack.position.set(...(t<17?ORP(0.9,0.45,-0.2):odL(ORP(1.4,1.2,-0.6),ORP(0,1.2,-3.4),odSeg(S,17,18.2)))); }
+    odAt(S,13.8,'b1',()=>odSay(S,S.baby,'Goo?')); odAt(S,15.8,'s1',()=>{ odSay(S,sa,'Ho ho ho! Merry Christmas, everyone!'); elSfx('ho'); }); odAt(S,16.4,'mg',()=>elSfx('magic'));
     // back at the North Pole: out of the sack pops... a baby!
-    odAt(S,19.2,'wks',()=>{ elShow('wks'); elSky('in'); scene.background.setHex(0x2a1a10); elMood='jingle'; sa.g.position.set(...WKS(1.6,0,-1.4)); sa.g.rotation.y=0; S.sack.visible=true; S.sack.position.set(...WKS(0.4,0.5,0.3)); S.baby.g.visible=false; });
-    if(t>=19.2&&t<26){ K.box.visible=false; const B=S.baby; if(t>=20.4){ B.g.visible=true; B.g.rotation.set(0,Math.PI,0); B.g.position.set(...WKS(0.4,0.9+Math.sin(Math.min(1,(t-20.4)*3)*Math.PI)*0.6,0.3)); }
+    odAt(S,19.4,'wks',()=>{ elShow('wks'); elSky('in'); scene.background.setHex(0x2a1a10); sa.g.position.set(...WKS(1.6,0,-1.4)); sa.g.rotation.y=0; S.sack.visible=true; S.sack.position.set(...WKS(0.4,0.5,0.3)); S.baby.g.visible=false; S.baby.g.rotation.set(0,0,0); });
+    if(t>=19.4&&t<26.6){ K.box.visible=false; const B=S.baby; if(t>=20.4){ B.g.visible=true; B.g.rotation.set(0,Math.PI,0); B.g.position.set(...WKS(0.4,0.9+Math.sin(Math.min(1,(t-20.4)*3)*Math.PI)*0.6,0.3)); }
       if(t>=23)B.g.position.set(...odLW(S.pa.R.armL,[0.2,-0.7,-0.3])); S.pa.R.armL.rotation.x=S.pa.R.armR.rotation.x=t>=23?1.4:0; odMove(S.pa,WKS(-1.6,0,1.2),WKS(-0.2,0,1.0),odSeg(S,21.8,22.8)); odWalk(S.pa,dt,t>21.8&&t<22.8,8);
-      S.wel.forEach((e,i)=>{ const jump=t>20.4&&t<21.4?Math.abs(Math.sin((t-20.4)*Math.PI*2+i))*0.3:0; e.g.position.y=ELS.wks[1]+jump; elFace(e,WKS(0.4,0,0.3)); e.R.armL.rotation.z=t>20.4?-2.4:0; e.R.armR.rotation.z=t>20.4?2.4:0; elFace(e,WKS(0.4,0,0.3)); animRig(e.R,dt,0); }); }
+      S.wel.forEach((e,i)=>{ const jump=t>20.4&&t<21.4?Math.abs(Math.sin((t-20.4)*Math.PI*2+i))*0.3:0; e.g.position.y=ELS.wks[1]+jump; e.R.armL.rotation.z=t>20.4?-2.4:0; e.R.armR.rotation.z=t>20.4?2.4:0; elFace(e,WKS(0.4,0,0.3)); animRig(e.R,dt,0); }); }
     odAt(S,20.4,'pop',()=>{ elSfx('pop'); elSfx('gasp'); }); odAt(S,20.8,'b2',()=>odSay(S,S.baby,'Goo goo!')); odAt(S,21.4,'e1',()=>odSay(S,S.wel[3],'A BABY?!'));
     odAt(S,23.2,'p1',()=>odSay(S,S.pa,'Well, hello there, little one!')); odAt(S,25,'p2',()=>odSay(S,S.pa,"I'll raise him myself. We'll call him... Buddy."));
-    // the years go by: Buddy grows and grows, and the elf-sized world gets very small
+    // the years go by: Buddy grows and grows, much too tall for the tiny doors, chairs and beds
     odAt(S,26.6,'yrs',()=>{ S.baby.g.visible=false; S.pa.R.armL.rotation.x=S.pa.R.armR.rotation.x=0; rkTitle('<div style="font-size:.55em">The years went by...</div>',true); }); odAt(S,28.4,'yx',()=>rkTitle('',false));
-    if(t>=26.6&&t<36){ const kb=S.kb, k=odSeg(S,26.6,35.4); kb.g.visible=true; kb.g.scale.setScalar(0.4+k*0.62); elCal(K,String(1+Math.floor(k*29))); sa.g.visible=false; S.sack.visible=false;
+    if(t>=26.6&&t<36){ const kb=S.kb, k=odSeg(S,26.6,35.4); kb.g.visible=true; kb.g.scale.setScalar(0.4+0.62*Math.min(1,k*2.2)); elCal(K,String(1+Math.floor(k*29))); sa.g.visible=false; S.sack.visible=false;
       if(t<30.2){ const w=odSeg(S,28.6,30); odMove(kb,WKS(6,0,-1),WKS(10.3,0,-1),w); odWalk(kb,dt,w>0&&w<1,9); if(t>=30){ kb.g.rotation.z=0.4; kb.R.head.rotation.x=-0.4; } }
       else if(t<33.2){ kb.g.rotation.z=0; kb.R.head.rotation.x=0; kb.g.position.set(...WKS(6,t>31?-0.12:0,4.6)); kb.g.rotation.y=0; odSit(kb); K.tinyChair.scale.set(1.3,t>31?0.25:1,1.3); }
-      else { odRest(kb); kb.g.position.set(...WKS(-7,0.5,4.8)); kb.g.rotation.set(-Math.PI/2,0,0,'YXZ'); kb.g.position.z=ELS.wks[2]+4.2; } animRig(kb.R,dt,0); S.pa.g.position.set(...WKS(2,0,3)); elFace(S.pa,kb.g.position.toArray()); }
-    odAt(S,30,'bonk',()=>{ elSfx('bonk'); odSay(S,S.kb,'Ow! Little doors!'); }); odAt(S,31,'sq',()=>{ elSfx('squish'); odSay(S,S.kb,'Oops! Sorry, chair!'); }); odAt(S,33.4,'zz',()=>odSay(S,S.kb,'Zzz... my feet are cold...'));
-    // grown up: Buddy, much taller than everyone
-    if(t>=36){ S.kb.g.visible=false; S.hideHero=false; odHeroTo(S,WKS(0,0,1),Math.PI,false); S.wel.forEach((e,i)=>{ e.g.position.set(...WKS(-3.2+i*1.07,0,-0.6+Math.abs(i-3)*0.3)); elFace(e,WKS(0,1.6,1)); e.R.head.rotation.x=-0.5; e.R.armL.rotation.z=e.R.armR.rotation.z=0; animRig(e.R,dt,0); }); S.pa.g.position.set(...WKS(1.4,0,-0.4)); elFace(S.pa,WKS(0,0,1)); S.pa.R.head.rotation.x=-0.5; }
-    odAt(S,36.6,'bd',()=>odSay(S,S.hero,'Good morning, everybody! Happy almost-Christmas!')); odAt(S,39.2,'e2',()=>odSay(S,S.wel[5],'He keeps getting TALLER...')); },
-  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t>=36){ armL.rotation.z=-2.4-Math.sin(t*8)*0.3; armR.rotation.z=2.4+Math.sin(t*8)*0.3; } },
-  cam(S){ const t=S.t, G=ELC.G, sp=S.sl.g.position; if(t<7){ const k=t/7; return [[34+k*80,G+30-k*8,62-k*10],[80,G+4,26],0]; } if(t<12.4)return [[sp.x-10,sp.y+5,sp.z+9],[sp.x,sp.y,sp.z],1];
-    if(t<15.6)return [ORP(-2.0,2.3,3.4),ORP(-3,0.7,1.2),2]; if(t<19.2)return [ORP(-2.6,2.2,3.4),ORP(1.2,1,-1),3]; if(t<23)return [WKS(0.4,1.8,5.4),WKS(0.4,0.9,0.3),4]; if(t<26.6)return [WKS(-0.4,1.5,3.6),WKS(-0.4,1.0,1.0),5];
-    if(t<30.2)return [WKS(7.6,1.6,2.6),WKS(10.2,0.9,-1),6]; if(t<33.2)return [WKS(6,1.4,2.2),WKS(6,0.5,4.6),7]; if(t<36)return [WKS(-7,1.8,1.8),WKS(-7,0.4,4.6),8]; return [WKS(0,1.5,-3.4),WKS(0,1.3,1),9]; } };
+      else { odRest(kb); kb.g.rotation.set(Math.PI/2,Math.PI,0,'YXZ'); kb.g.position.set(...WKS(-7,0.6,5.95)); S.blk.visible=true; S.blk.position.z=ELS.wks[2]+(t<34.4?5.2:5.2-Math.min(1,(t-34.4)*2)*0.75); } animRig(kb.R,dt,0); S.pa.g.position.set(...WKS(2,0,3)); elFace(S.pa,kb.g.position); }
+    odAt(S,30,'bonk',()=>{ elSfx('bonk'); odSay(S,S.kb,'Ow! Little doors!'); }); odAt(S,31,'sq',()=>{ elSfx('squish'); odSay(S,S.kb,'Oops! Sorry, chair!'); }); odAt(S,33.4,'zz',()=>{ odSay(S,S.kb,'Zzz... my feet are cold...'); S.kb.bub.position.set(0,1.0,-1.6); }); odAt(S,34.8,'zz2',()=>{ odSay(S,S.kb,'Brrr! Now my TOES are out!'); S.kb.bub.position.set(0,1.0,-1.6); });
+    // grown up: Buddy, much taller than everyone, holds the ball up high while the elves jump for it
+    if(t>=36){ S.kb.g.visible=false; S.blk.visible=false; S.hideHero=false; S.hoop.visible=true; S.ball.visible=true; odHeroTo(S,WKS(0,0,3.6),0,false); S.ball.position.set(pl.p[0],pl.p[1]+2.62+Math.sin(t*3)*0.05,pl.p[2]-0.1);
+      S.wel.forEach((e,i)=>{ const a=0.2+i*(Math.PI-0.4)/6; e.g.position.set(...WKS(Math.cos(a)*1.5,0,3.6+Math.sin(a)*1.3)); e.g.position.y=ELS.wks[1]+Math.abs(Math.sin(t*6+i*0.9))*0.5; elFace(e,WKS(0,0,3.6)); e.R.armL.rotation.z=-2.6-Math.sin(t*8+i)*0.4; e.R.armR.rotation.z=2.6+Math.sin(t*8+i+1)*0.4; e.R.head.rotation.x=-0.6; animRig(e.R,dt,0); });
+      S.pa.g.position.set(...WKS(2.6,0,1.8)); elFace(S.pa,WKS(0,0,3.6)); S.pa.R.head.rotation.x=-0.3; }
+    odAt(S,36.6,'bd',()=>odSay(S,S.hero,'Good morning, everybody! Happy almost-Christmas!')); odAt(S,38.4,'e3',()=>odSay(S,S.wel[2],"Hey! We can't reach!")); odAt(S,40,'e2',()=>odSay(S,S.wel[5],'He keeps getting TALLER...')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t>=36){ armL.rotation.z=-2.9; armR.rotation.z=2.9; armL.rotation.x=armR.rotation.x=0; } },
+  cam(S){ const t=S.t, G=ELC.G, sp=S.sl.g.position; if(t<7){ const k=t/7; return [[34+k*80,G+30-k*8,62-k*10],[80,G+4,26],0]; } if(t<9.6)return [[118,G+5,88],[sp.x,sp.y,sp.z],1]; if(t<12.4)return [[126,G+20,103],[120,G+14.6,113],1.5];
+    if(t<15.6)return [ORP(-2.0,2.3,3.4),ORP(-3,0.7,1.2),2]; if(t<16.8)return [ORP(-2.6,1.9,1.8),ORP(0.6,0.8,-2.6),2.5]; if(t<19.4)return [ORP(-1.4,1.9,2.6),ORP(0,0.9,-3.3),3]; if(t<23)return [WKS(0.4,1.8,5.4),WKS(0.4,0.9,0.3),4]; if(t<26.6)return [WKS(-0.4,1.5,3.6),WKS(-0.4,1.0,1.0),5];
+    if(t<30.2)return [WKS(7.6,1.6,2.6),WKS(10.2,0.9,-1),6]; if(t<33.2)return [WKS(6,1.4,2.2),WKS(6,0.5,4.6),7]; if(t<36)return [WKS(-5.6,2.3,4.4),WKS(-7,0.7,5.0),8]; return [WKS(0.5,2.0,-0.5),WKS(0,2.9,4.0),9]; } };
 
 // ---------- 2. BUDDY DISCOVERS THE TRUTH ----------
-OD_CH.el2={secs:42,sky:'in',mood:'deck',init(S){ const K=elK, G=ELC.G; elShow('wks'); scene.background.setHex(0x2a1a10); S.wel=[]; for(let i=0;i<5;i++)S.wel.push(elElf(S.grp,...WKS(-6+i*2.2,0,-2.2),Math.PI));
+OD_CH.el2={secs:44,sky:'in',mood:'deck',init(S){ const K=elK, G=ELC.G; elShow('wks'); scene.background.setHex(0x2a1a10); K.tinyBed.visible=false; K.tinyChair.visible=false; K.bear.g.visible=false;
+    S.wel=[]; for(let i=0;i<5;i++)S.wel.push(elElf(S.grp,...WKS(-6+i*2.2,0,-1.6),Math.PI)); // standing in front of the back belt, the toys gliding along behind them
     S.fo=elElf(S.grp,...WKS(4,0,3.4),Math.PI,{topC:'#2a5ac8'}); const cb=mb(S.fo.R.armR,0.3,0.4,0.04,mm(0x8a5a32),0,-0.75,-0.1); S.gos=[elElf(S.grp,...WKS(-8,0,3),0),elElf(S.grp,...WKS(-7.2,0,3),0)];
-    elBuddy(S,true); S.pack.visible=false; S.pa=elPerson(S.grp,'papa',...PAP(-1.6,0,-1.2),Math.PI*0.8); S.jack=grp(S.grp,...WKS(0.9,0.79,1.5)); mb(S.jack,0.3,0.3,0.3,mm(0xd8a020),0,0.15,0); S.jackHead=grp(S.jack,0,0.3,0); msph(S.jackHead,0.14,mm(0xf2d0b8),0,0.3,0); mb(S.jackHead,0.04,0.3,0.04,mm(0x8a8a90),0,0.1,0); S.jackHead.visible=false;
-    S.fly=[]; for(let i=0;i<5;i++){ const g2=elGift(S.grp,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.scale.setScalar(0.45); g2.visible=false; S.fly.push(g2); }
+    elBuddy(S,true); S.pack.visible=false; S.pa=elPerson(S.grp,'papa',...PAP(-1.6,0,-1.2),0); S.jack=grp(S.grp,...WKS(0.9,0.79,1.5)); mb(S.jack,0.3,0.3,0.3,mm(0xd8a020),0,0.15,0); S.jackHead=grp(S.jack,0,0.3,0); msph(S.jackHead,0.14,mm(0xf2d0b8),0,0.3,0); mb(S.jackHead,0.04,0.3,0.04,mm(0x8a8a90),0,0.1,0); S.jackHead.visible=false;
+    S.fly=[]; for(let i=0;i<28;i++){ const g2=elGift(S.grp,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020,0x8a2ad8][i%5]); g2.scale.setScalar(0.5); g2.visible=false; S.fly.push({g:g2,t0:9.8+i*0.08,v:[(Math.random()-0.5)*6,4.5+Math.random()*3.5,Math.random()*2.2],s:[Math.random()*8,Math.random()*8]}); }
     S.bear=elBear(S.grp); S.bear.g.scale.setScalar(1.6); S.bear.g.visible=false; S.el2=[]; for(let i=0;i<6;i++){ const e=elElf(S.grp,0,G,0,0); e.g.visible=false; S.el2.push(e); } S.sa=elPerson(S.grp,'santa',0,G,0,0); S.sa.g.visible=false; },
   tick(S,dt){ const K=elK, t=S.t, G=ELC.G; K.belts.forEach((b,j)=>b.forEach((g,i)=>g.position.x=-8+((i*1.6+t*(j?2.4:1.6))%16)));
     // on the toy line: the elves are fast, Buddy is... not
     if(t<12){ odHeroTo(S,WKS(1,0,2.4),0,false); S.wel.forEach((e,i)=>{ e.R.armL.rotation.x=1.2+Math.sin(t*14+i)*0.4; e.R.armR.rotation.x=1.2-Math.sin(t*14+i)*0.4; animRig(e.R,dt,0); }); S.jackHead.visible=t>=4.6; S.jackHead.position.y=0.3+Math.min(0.5,(t-4.6)*3)*(t>=4.6?1:0); S.jackHead.scale.setScalar(1+(t>4.6&&t<5?Math.sin((t-4.6)*20)*0.2:0)); }
     odAt(S,1,'b1',()=>odSay(S,S.hero,'One toy... done! Woo-hoo!')); odAt(S,4.6,'jk',()=>{ elSfx('boing'); odSay(S,S.hero,'Whoa! It bit me!'); });
     if(t>=2&&t<12){ S.fo.R.armR.rotation.x=0.9; animRig(S.fo.R,dt,0); elFace(S.fo,WKS(1,0,2.4)); } odAt(S,6.6,'f1',()=>odSay(S,S.fo,'Buddy... you built 12 toys. We needed one THOUSAND.')); odAt(S,9.2,'b2',()=>odSay(S,S.hero,"I'll go faster! FASTERRR!"));
-    if(t>=9.8&&t<12){ S.fly.forEach((g,i)=>{ const k=Math.min(1,(t-9.8-i*0.2)*1.4); g.visible=k>0; g.position.set(...WKS(1+Math.sin(i*2)*k*4,0.9+Math.sin(k*Math.PI)*2.4,1.5+k*3)); g.rotation.set(k*6,k*4,0); }); } if(t>=12)S.fly.forEach(g=>g.visible=false);
+    // presents flying off the line in every direction
+    if(t>=9.8&&t<13){ for(const f of S.fly){ const u=t-f.t0; f.g.visible=u>0&&u<2.6; if(u<=0)continue; const p=WKS(1+f.v[0]*u,0.9+f.v[1]*u-4.9*u*u,1.5+f.v[2]*u); p[1]=Math.max(ELS.wks[1]+0.1,p[1]); f.g.position.set(...p); f.g.rotation.set(f.s[0]*u,f.s[1]*u,0); } } if(t>=13)S.fly.forEach(f=>f.g.visible=false);
     // two elves whisper... and Buddy hears everything
     if(t>=12&&t<18){ odHeroTo(S,WKS(-5,0,1.2),Math.atan2(2.6,-1.8),false); S.gos.forEach((e,i)=>{ elFace(e,WKS(-7.6+(i?-0.6:0.6),0,3)); animRig(e.R,dt,0); }); }
     odAt(S,12.6,'g1',()=>odSay(S,S.gos[0],"Shh! He doesn't know he's a HUMAN!")); odAt(S,15.2,'b3',()=>odSay(S,S.hero,'A... HUMAN?!',1.2));
-    // Papa Elf tells him the truth, by the fire
-    odAt(S,18,'papa',()=>{ elShow('papa'); elMood='silent'; S.pa.g.position.set(...PAP(-1.6,0,-1.2)); odSit(S.pa); S.pa.g.position.y=ELS.papa[1]-0.1; }); if(t>=18&&t<29){ odHeroTo(S,PAP(1.2,-0.05,-0.6),Math.atan2(2.8,0.6),false); K.pFire.f.forEach((c,i)=>c.scale.y=1+Math.sin(t*12+i)*0.3); elFace(S.pa,PAP(1.2,0,-0.6)); S.pa.g.rotation.y+=0; animRig(S.pa.R,dt,0);
-      if(t>=22.6){ K.photoM.visible=true; K.photoM.position.set(...odLW(S.pa.R.armR,[0,-0.7,-0.2]).map((v,i)=>v-ELS.papa[i])); K.photoM.lookAt(new THREE.Vector3(...PAP(1.2,1.4,-0.6))); S.pa.R.armR.rotation.x=1.3; } }
-    odAt(S,18.6,'p1',()=>odSay(S,S.pa,'Buddy... you came here in Santa\'s sack, when you were just a baby.')); odAt(S,21.6,'p2',()=>odSay(S,S.pa,'Your real father is Walter Hobbs. He lives in New York City.'));
-    odAt(S,24.8,'b4',()=>odSay(S,S.hero,'I have a DAD?! I have to go meet him!')); odAt(S,27.2,'p3',()=>odSay(S,S.pa,'...Pack lots of snacks.'));
-    // packing up and saying goodbye in the village
-    odAt(S,29,'out',()=>{ elShow(); elSky('np'); elMood='jingle'; S.pack.visible=true; S.sa.g.visible=true; S.sa.g.position.set(78,G,40); S.pa.g.position.set(82.6,G,40.4); S.pa.g.rotation.set(0,0,0); odRest(S.pa); S.el2.forEach((e,i)=>{ e.g.visible=true; e.g.position.set(76+i*1.4,G,37.6+Math.abs(i-2.5)*0.4); }); });
-    if(t>=29&&t<35){ odHeroPath(S,[80,G,42],[80,G,52],31.5,35); if(t<31.5)odHeroTo(S,[80,G,42],Math.PI,false); for(const e of [...S.el2,S.pa,S.sa]){ elFace(e,pl.p); e.R.armR.rotation.z=2.4+Math.sin(t*8)*0.4; animRig(e.R,dt,0); } }
-    odAt(S,29.4,'s1',()=>odSay(S,S.sa,'Be good down there, Buddy! And look both ways!')); odAt(S,31.6,'b5',()=>odSay(S,S.hero,'Bye, everybody! Bye, Papa! I\'ll write!'));
-    // through the snowy forest: a polar bear, a big hug, and the magic tunnel
-    if(t>=35){ S.sa.g.visible=false; S.pa.g.visible=false; S.el2.forEach(e=>e.g.visible=false); const B=S.bear; B.g.visible=true; B.g.position.set(78,G,65); B.g.rotation.y=Math.PI*0.75; if(t<37.4)odHeroPath(S,[80,G,58],[79.6,G,63.6],35,37.4); else if(t<40)odHeroTo(S,[79.6,G,63.6],Math.PI*0.75+Math.PI,false); else odHeroPath(S,[79.6,G,63.6],[80,G,68.2],40,42);
-      B.hd.rotation.y=t>37&&t<40?0.3:0; B.legs.forEach((l,i)=>l.rotation.x=t>38&&t<40&&i<2?-1.2:0); odAt(S,38,'hug',()=>{ for(let k=0;k<3;k++)burst(79-0.5,G+2+k*0.3,64-0.5,new THREE.Color(0xff5a9a),6); }); }
-    odAt(S,36.2,'r',()=>elSfx('roar')); odAt(S,37.4,'b6',()=>odSay(S,S.hero,'Hi, Mr. Polar Bear! Want a hug?')); odAt(S,40.4,'b7',()=>odSay(S,S.hero,'Bye! New York, here I come!')); odAt(S,41,'mg',()=>elSfx('magic')); },
+    // Papa Elf tells him the truth, by the fire (snow falling outside the window, milk and cookies on the table)
+    odAt(S,18,'papa',()=>{ elShow('papa'); S.pa.g.position.set(...PAP(-1.6,0,-1.2)); odSit(S.pa); S.pa.g.position.y=ELS.papa[1]-0.1; }); if(t>=18&&t<29.6){ odHeroTo(S,PAP(1.2,-0.05,-0.6),Math.atan2(2.8,0.6),false); K.pFire.f.forEach((c,i)=>c.scale.y=1+Math.sin(t*12+i)*0.3); elFace(S.pa,PAP(1.2,0,-0.6)); animRig(S.pa.R,dt,0);
+      if(t>=21.4&&t<25.6){ K.photoM.visible=true; K.photoM.position.set(...odLW(S.pa.R.armR,[0,-0.7,-0.2]).map((v,i)=>v-ELS.papa[i])); K.photoM.lookAt(new THREE.Vector3(...PAP(1.2,1.4,-0.6))); S.pa.R.armR.rotation.x=1.3; } else { K.photoM.visible=false; S.pa.R.armR.rotation.x=t>=25.6&&t<27.6?1.6:0.4; } }
+    odAt(S,18.6,'p1',()=>odSay(S,S.pa,'Buddy... you came here in Santa\'s sack, when you were just a baby.')); odAt(S,21.4,'p2',()=>odSay(S,S.pa,'Your real father is Walter Hobbs. He lives in New York City.'));
+    odAt(S,23.8,'b4',()=>odSay(S,S.hero,'I have a DAD?!')); odAt(S,25.6,'p3',()=>odSay(S,S.pa,'And you should know, Buddy... your dad is on the NAUGHTY LIST!',1.1)); odAt(S,28,'b5',()=>{ if(S.pa.bub)odBubOff(S.pa.g,S.pa); odSay(S,S.hero,'NOOOO!!! I have to save him!',1.2); });
+    // packing up and saying goodbye in the village (the big tree stands off to the side now)
+    odAt(S,29.6,'out',()=>{ elShow(); elSky('np'); S.pack.visible=true; S.sa.g.visible=true; S.sa.g.position.set(78,G,40); S.pa.g.position.set(82.6,G,40.4); S.pa.g.rotation.set(0,0,0); odRest(S.pa); S.el2.forEach((e,i)=>{ e.g.visible=true; e.g.position.set(76+i*1.4,G,37.6+Math.abs(i-2.5)*0.4); }); });
+    if(t>=29.6&&t<35.6){ odHeroPath(S,[80,G,42],[80,G,52],32,35.6); if(t<32)odHeroTo(S,[80,G,42],Math.PI,false); for(const e of [...S.el2,S.pa,S.sa]){ elFace(e,pl.p); e.R.armR.rotation.z=2.4+Math.sin(t*8)*0.4; animRig(e.R,dt,0); } }
+    odAt(S,30,'s1',()=>odSay(S,S.sa,'Be good down there, Buddy! And look both ways!')); odAt(S,32.2,'b6',()=>odSay(S,S.hero,'Bye, everybody! Bye, Papa! I\'ll write!'));
+    // through the snowy forest: a polar bear hug, a puffin, a snowman in sunglasses, and into the rainbow tunnel
+    if(t>=35.6){ S.sa.g.visible=false; S.pa.g.visible=false; S.el2.forEach(e=>e.g.visible=false); const B=S.bear; B.g.visible=true; B.g.position.set(76.2,G,63.8); if(t<37.8)odHeroPath(S,[80,G,58],[79.6,G,63.8],35.6,37.8); else if(t<40.4)odHeroTo(S,[79.6,G,63.8],Math.PI/2,false); else odHeroPath(S,[79.6,G,63.8],[80,G,69.8],40.4,44);
+      B.g.rotation.y=Math.atan2(-(pl.p[0]-76.2),-(pl.p[2]-63.8)); B.hd.rotation.y=0; B.legs.forEach((l,i)=>l.rotation.x=t>38.2&&t<40.4&&i<2?-1.2:0); odAt(S,38.4,'hug',()=>{ for(let k=0;k<3;k++)burst(78-0.5,G+2+k*0.3,63.8-0.5,new THREE.Color(0xff5a9a),6); }); }
+    odAt(S,36.2,'r',()=>elSfx('roar')); odAt(S,37.8,'b7',()=>odSay(S,S.hero,'Hi, Mr. Polar Bear! Want a hug?')); odAt(S,40.4,'sm',()=>odSay(S,K.snowman,'Have a COOL trip, Buddy!')); odAt(S,41.6,'pf',()=>{ odSay(S,K.puffin,'Squawk!'); snd(()=>tone('square',900,1300,0.12,0.04)); });
+    odAt(S,42.4,'b8',()=>odSay(S,S.hero,'Bye! New York, here I come!')); odAt(S,43,'mg',()=>elSfx('magic')); },
   pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<12){ armL.rotation.x=armR.rotation.x=1.2+(t>9.8?Math.sin(t*20)*0.6:Math.sin(t*3)*0.2); if(t>4.6&&t<5.4)model.rotation.x=-0.3; }
-    if(t>=15&&t<17){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=18&&t<29){ mxSitPose(); } if(t>=24.8&&t<26.6){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=31.5&&t<33.6)armR.rotation.z=2.4+Math.sin(t*8)*0.4; if(t>=38&&t<40){ armL.rotation.x=armR.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.3; } },
-  cam(S){ const t=S.t, G=ELC.G; if(t<4.4)return [WKS(1,2.2,6),WKS(0,1,0),0]; if(t<6.4)return [WKS(1.9,1.7,0.9),WKS(1,1.4,2.4),1]; if(t<9.6)return [WKS(5.6,2.2,5.6),WKS(2,1.0,2.2),2]; if(t<12)return [WKS(1,2.4,7),WKS(1,1.4,2.2),3];
-    if(t<15)return [WKS(-6.2,1.4,5.6),WKS(-7.4,0.7,3),4]; if(t<18)return [WKS(-6.2,1.7,2.1),WKS(-5,1.5,1.2),5]; if(t<22.6)return [PAP(0.2,1.3,0.9),PAP(-1.6,0.8,-1.2),6]; if(t<25)return [PAP(-0.4,1.3,0.6),PAP(-1.2,1.0,-0.8),7]; if(t<29)return [PAP(-1.2,1.4,0.8),PAP(1.2,1.2,-0.6),8];
-    if(t<31.5)return [[83.6,G+2.2,36.8],[80,G+1.3,41.6],9]; if(t<35)return [[80,G+2.6,34],[pl.p[0],G+1.4,pl.p[2]],10]; if(t<40)return [[83.6,G+2.4,61.4],[79,G+1.3,64],11]; return [[80,G+2.6,58],[80,G+2,72],12]; } };
+    if(t>=15&&t<17){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=18&&t<29.6){ mxSitPose(); } if(t>=27.8&&t<29.6){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=32&&t<34.2)armR.rotation.z=2.4+Math.sin(t*8)*0.4; if(t>=38.2&&t<40.4){ armL.rotation.x=armR.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.3; } },
+  cam(S){ const t=S.t, G=ELC.G; if(t<4.4)return [WKS(1,2.2,6),WKS(0,1,0),0]; if(t<6.4)return [WKS(1.9,1.7,0.9),WKS(1,1.4,2.4),1]; if(t<9.6)return [WKS(5.6,2.2,5.6),WKS(2,1.0,2.2),2]; if(t<13)return [WKS(1,2.6,7.6),WKS(1,1.6,2.2),3];
+    if(t<15)return [WKS(-6.2,1.4,5.6),WKS(-7.4,0.7,3),4]; if(t<18)return [WKS(-6.2,1.7,2.1),WKS(-5,1.5,1.2),5]; if(t<21.4)return [PAP(0.2,1.3,0.9),PAP(-1.6,0.8,-1.2),6]; if(t<23.8)return [PAP(-0.4,1.3,0.6),PAP(-1.2,1.0,-0.8),7]; if(t<25.6)return [PAP(-1.2,1.4,0.8),PAP(1.2,1.2,-0.6),8]; if(t<27.8)return [PAP(0.2,1.3,0.9),PAP(-1.6,0.8,-1.2),8.5]; if(t<29.6)return [PAP(-1.2,1.4,0.8),PAP(1.2,1.2,-0.6),8.7];
+    if(t<32)return [[83.6,G+2.2,36.8],[80,G+1.3,41.6],9]; if(t<35.6)return [[80,G+2.6,34],[pl.p[0],G+1.4,pl.p[2]],10]; if(t<37.8)return [[83.4,G+2.4,59.4],[78,G+1.4,63.8],11]; if(t<40.4)return [[78.0,G+2.2,57.2],[78.0,G+1.3,63.8],11.5]; return [[82.4,G+2.4,59.6],[80,G+1.6,67.4],12]; } };
 
 // ---------- 3. THE JOURNEY TO NEW YORK ----------
-OD_CH.el3={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy(S,true); S.st=grp(S.grp,0,0,0); for(let i=0;i<3;i++)msph(S.st,0.08,glowM(0xffe23a),Math.cos(i*2.1)*0.35,0,Math.sin(i*2.1)*0.35); S.st.visible=false;
-    S.ny=[]; for(let i=0;i<2;i++)S.ny.push(odPerson(S.grp,0,G,0,0,mxLook({top:'jacket',topC:['#2a3a6a','#6a2a2a'][i],bottom:'pants',bottomC:'#2a2a2e',hat:'beanie',hatC:'#f2f2f2',hair:'short'}))); },
-  tick(S,dt){ const K=elK, t=S.t, G=ELC.G;
-    // whooshing through the icy tunnel on his belly
-    if(t<7.4){ const k=odSeg(S,0.4,7); odHeroTo(S,[80,G+0.3,ELC.ridge[0]-5+k*(ELC.ridge[1]-ELC.ridge[0]+12)],0+Math.PI,false); odAt(S,0.5,'sl',()=>elSfx('slide')); if(t>6.4)odAt(S,6.4,'out',()=>{ elSky('day'); elMood='deck'; }); }
-    // New York! Skyscrapers, taxis, crowds, and lights everywhere
-    if(t>=7.4&&t<14){ odHeroTo(S,[80,G,90.5],Math.PI,false); S.hideHero=t>=9.4; } else S.hideHero=false; odAt(S,7.6,'w1',()=>odSay(S,S.hero,'Wowww... New York!',1.1)); odAt(S,9.4,'hk',()=>elSfx('honk'));
+OD_CH.el3={secs:50,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy(S,true); K.rac.g.visible=false; S.st=grp(S.grp,0,0,0); for(let i=0;i<3;i++)msph(S.st,0.08,glowM(0xffe23a),Math.cos(i*2.1)*0.35,0,Math.sin(i*2.1)*0.35); S.st.visible=false;
+    S.rac=elRaccoon(S.grp); S.rac.g.position.set(80.4,G,91); S.taxi=mxCar(S.grp,0xf2c21a); mb(S.taxi,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.taxi.position.set(48,G,94.4); S.taxi.rotation.y=-Math.PI/2;
+    S.taxi2=mxCar(S.grp,0xf2c21a); mb(S.taxi2,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.taxi2.position.set(130,G,127.6); S.taxi2.rotation.y=Math.PI/2; S.tSay={g:S.taxi2}; },
+  tick(S,dt){ const K=elK, t=S.t, G=ELC.G, R=S.rac;
+    // floating through the candy-cane tunnel, past gumdrops and rainbow rings
+    if(t<6){ const k=odSeg(S,0.2,6); odHeroTo(S,[80+Math.sin(t*2)*0.9,G+0.9+Math.sin(t*3)*0.4,64+k*24],Math.PI,false); odAt(S,0.3,'mg',()=>elSfx('magic')); odAt(S,5.6,'out',()=>{ elSky('day'); }); }
+    odAt(S,0.8,'w0',()=>odSay(S,S.hero,'Candy canes! Gumdrops! RAINBOWS! Wheeee!'));
+    // a raccoon who does NOT want a hug
+    if(t>=6&&t<11.4){ if(t<7.2)odHeroPath(S,[80,G,88],[80,G,89.4],6,7.2); else odHeroTo(S,[80,G,89.4],Math.PI,false); R.g.visible=t<10.8;
+      if(t<8.6){ R.g.position.set(80.4,G,91); R.g.rotation.y=Math.atan2(-(pl.p[0]-80.4),-(pl.p[2]-91)); R.tail.rotation.x=Math.sin(t*6)*0.3; }
+      else if(t<10){ const k=Math.min(1,(t-8.6)*4); R.g.position.set(...odL([80.4,G,91],[80,G+1.15,89.85],k)); R.g.position.x+=Math.sin(t*30)*0.08; R.g.rotation.x=-0.8; }
+      else { const k=odSeg(S,10,10.8); R.g.rotation.x=0; R.g.position.set(80+k*9,G,89.6+k*2); R.g.rotation.y=-Math.PI/2; R.legs.forEach((l,i)=>l.rotation.x=Math.sin(t*20+i*Math.PI)*0.7); } }
+    odAt(S,7.2,'b1',()=>odSay(S,S.hero,'Aww! A furry friend! Want a hug?')); odAt(S,8.4,'r1',()=>{ odSay(S,R,'HISSSSS!'); snd(()=>noise(2200,0.5,0.15,'bandpass')); }); odAt(S,9.2,'b2',()=>odSay(S,S.hero,'AAAH! No hugs! NO HUGS!',1.1));
+    // New York! (a look around)
+    if(t>=11.4&&t<15){ odHeroTo(S,[80,G,90.4],Math.PI,false); S.hideHero=t>=12.6; } else S.hideHero=false; odAt(S,11.6,'w1',()=>odSay(S,S.hero,'Wowww... New York!',1.1));
+    // stepping off the curb... BEEP! A taxi bumps him
+    if(t>=15&&t<18.6){ const T=S.taxi; if(t<16.2){ odHeroPath(S,[80,G,90.4],[80,G,93.4],15,16.2); T.position.x=48+odSeg(S,15,16.2)*30.4; } else if(t<16.9){ const k=odSeg(S,16.2,16.8); odHeroTo(S,odL([80,G,93.4],[80,G,91.2],k),Math.PI,false); }
+      else { odHeroTo(S,[80,G,91.2],Math.PI,false); T.position.x=78.4+Math.max(0,t-17.8)*14; } }
+    odAt(S,15.8,'hk',()=>elSfx('honk')); odAt(S,16.2,'bmp',()=>elSfx('bonk')); odAt(S,17,'b3',()=>odSay(S,S.hero,'SORRY!!! Sorry, Mr. Taxi!',1.1));
     // the giant tree
-    if(t>=14&&t<20){ odHeroPath(S,[86,G,131],[99,G,136.4],14,17); if(t>=17)odHeroTo(S,[99,G,136.4],Math.atan2(-(104-99),-(146-136.4)),false); } odAt(S,17.4,'w2',()=>odSay(S,S.hero,"It's the BIGGEST tree I've ever seen!",1.1));
+    if(t>=18.6&&t<24){ odHeroPath(S,[92,G,131.6],[99,G,136.4],18.6,21); if(t>=21)odHeroTo(S,[99,G,136.4],Math.atan2(-(104-99),-(146-136.4)),false); } odAt(S,21.4,'w2',()=>odSay(S,S.hero,"It's the BIGGEST tree I've ever seen!",1.1));
+    // hopscotch across the crosswalk, one white stripe at a time (a taxi waits and beeps)
+    if(t>=24&&t<28.4){ const u=odSeg(S,24.2,28), n=6, z=132.2-u*9.2; odHeroTo(S,[88,G+Math.abs(Math.sin(u*n*Math.PI))*0.7,z],0,false); S.hopU=u; const T2=S.taxi2; T2.position.x=Math.max(92.6,130-odSeg(S,24,25.6)*37.4); if(t>27.6)T2.position.x=92.6-(t-27.6)*14; }
+    odAt(S,25.6,'hk2',()=>{ elSfx('honk'); odSay(S,S.tSay,'BEEP BEEP!'); }); odAt(S,26.4,'b4',()=>odSay(S,S.hero,'Hop! Hop! Hippity-hop!'));
     // the cocoa cart: asking about Santa
-    if(t>=20&&t<27){ odHeroTo(S,[70,G,99.8],0,false); K.cocoa.R.armR.rotation.x=t>22.6&&t<24.6?1.4:0; K.cocoa.R.armR.rotation.z=t>22.6&&t<24.6?-0.6:0; animRig(K.cocoa.R,dt,0); }
-    odAt(S,20.4,'b1',()=>odSay(S,S.hero,'Excuse me! Have you seen Santa? Big, jolly, red suit?')); odAt(S,23,'c1',()=>{ odSay(S,K.cocoa,"Santa? Try Merriwether's, pal. Right down the street."); elK.speak.includes(K.cocoa)||elK.speak.push(K.cocoa); }); odAt(S,25.4,'b2',()=>odSay(S,S.hero,'Thank you, new friend!'));
+    if(t>=28.4&&t<35){ odHeroTo(S,[70,G,99.8],Math.PI,false); K.cocoa.R.armR.rotation.x=t>32&&t<34?1.4:0; K.cocoa.R.armR.rotation.z=t>32&&t<34?0.6:0; animRig(K.cocoa.R,dt,0); }
+    odAt(S,28.8,'b5',()=>odSay(S,S.hero,'Excuse me! Have you seen Santa? Big, jolly, red suit?')); odAt(S,32.2,'c1',()=>{ if(S.hero.bub)odBubOff(model,S.hero); odSay(S,K.cocoa,"Santa? Try Merriwether's, pal. Right down the street."); elK.speak.includes(K.cocoa)||elK.speak.push(K.cocoa); }); odAt(S,34.4,'b6',()=>{ if(K.cocoa.bub)odBubOff(K.cocoa.g,K.cocoa); odSay(S,S.hero,'Thank you, new friend!'); });
     // the revolving door: round and round and round
-    if(t>=27&&t<34){ K.revSp=t<32.4?4.5:0.6; const a=K.rev.wings.rotation.y+Math.PI/4; if(t<32.4)odHeroTo(S,[36.5+Math.cos(a)*0.75,G,101+Math.sin(a)*0.75],-a,false); else { odHeroTo(S,[36.5,G,99.2],Math.PI+Math.sin(t*6)*0.4,false); S.st.visible=true; S.st.position.set(pl.p[0],pl.p[1]+2.3,pl.p[2]); S.st.rotation.y=t*5; } }
-    odAt(S,27.6,'b3',()=>odSay(S,S.hero,'Wheee! Again! AGAIN!')); odAt(S,32.6,'b4',()=>odSay(S,S.hero,'Whoa... the floor is spinning...'));
+    if(t>=35&&t<42){ K.revSp=t<40.4?4.5:0.6; const a=K.rev.wings.rotation.y+Math.PI/4; if(t<40.4)odHeroTo(S,[36.5+Math.cos(a)*0.75,G,101+Math.sin(a)*0.75],-a,false); else { odHeroTo(S,[36.5,G,99.2],Math.PI+Math.sin(t*6)*0.4,false); S.st.visible=true; S.st.position.set(pl.p[0],pl.p[1]+2.3,pl.p[2]); S.st.rotation.y=t*5; } }
+    odAt(S,35.6,'b7',()=>odSay(S,S.hero,'Wheee! Again! AGAIN!')); odAt(S,40.6,'b8',()=>odSay(S,S.hero,'Whoa... the floor is spinning...'));
     // the escalator: up and down, up and down
-    if(t>=34){ S.st.visible=false; K.revSp=0.6; const k=((t-34)*0.22)%1, up=k<0.5, u=up?k*2:2-k*2; odHeroTo(S,[24,G+0.2+u*K.esc.Hh,104.5+u*K.esc.L],up?Math.PI:0,false); }
-    odAt(S,35,'b5',()=>odSay(S,S.hero,'Moving stairs! Hee hee hee!')); odAt(S,39,'b6',()=>odSay(S,S.hero,"Santa, I'm coming!"));
-    S.ny.forEach((a,i)=>{ if(t>=7.4&&t<14){ a.g.visible=true; const k=odSeg(S,7.4,14); a.g.position.set(70+i*22+k*(i?-8:8),G,90.2+i*0.4); a.g.rotation.y=i?Math.PI/2:-Math.PI/2; odWalk(a,dt,true,7); } else a.g.visible=false; }); },
-  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<7.4){ model.rotation.x=-Math.PI/2; model.position.y+=0.3; armL.rotation.z=-2.8; armR.rotation.z=2.8; }
-    if(t>=7.4&&t<14){ armL.rotation.z=-1.2; armR.rotation.z=1.2; } if(t>=17&&t<20){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=27&&t<32.4){ armL.rotation.z=-1.5; armR.rotation.z=1.5; } if(t>=32.4&&t<34)model.rotation.z=Math.sin(t*5)*0.2;
-    if(t>=34){ legL.rotation.x=0.6; legR.rotation.x=-0.6; armL.rotation.z=-1.6; armR.rotation.z=1.6; } },
-  cam(S){ const t=S.t, G=ELC.G; if(t<7.4){ return [[pl.p[0],G+2.2,pl.p[2]-3.6],[pl.p[0],G+0.6,pl.p[2]+2],0]; }
-    if(t<9.4)return [[80,G+1.8,94.4],[80,G+1.5,90.5],7]; if(t<14){ const a=Math.PI-0.9+odE(odSeg(S,9.6,13.8))*1.8, e=[80,G+1.62,90.5]; return [e,[e[0]-Math.sin(a)*10,G+4+odSeg(S,8,10)*8,e[2]-Math.cos(a)*10],1]; }
-    if(t<17)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],2]; if(t<20){ const k=odSeg(S,17,20); return [[94.6,G+2,130.6],[104,G+6+k*10,146],3]; }
-    if(t<27)return [[72.4,G+1.9,97.4],[70,G+1.4,100.4],4]; if(t<34)return [[38.6,G+2.3,97.2],[36.5,G+1.1,100.6],5]; return [[pl.p[0]+3.2,pl.p[1]+1.7,pl.p[2]+1.6],[pl.p[0],pl.p[1]+1.2,pl.p[2]],6]; } };
+    if(t>=42){ S.st.visible=false; K.revSp=0.6; const k=((t-42)*0.22)%1, up=k<0.5, u=up?k*2:2-k*2; odHeroTo(S,[24,G+0.2+u*K.esc.Hh,104.5+u*K.esc.L],up?Math.PI:0,false); }
+    odAt(S,43,'b9',()=>odSay(S,S.hero,'Moving stairs! Hee hee hee!')); odAt(S,47,'b10',()=>odSay(S,S.hero,"Santa, I'm coming!")); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<6){ armL.rotation.z=-2.0+Math.sin(t*4)*0.3; armR.rotation.z=2.0-Math.sin(t*4)*0.3; model.rotation.z=Math.sin(t*2)*0.15; legL.rotation.x=0.4; legR.rotation.x=-0.2; }
+    if(t>=7.2&&t<8.6){ armL.rotation.x=armR.rotation.x=1.4; } if(t>=8.6&&t<10.4){ armL.rotation.z=-2.6-Math.sin(t*20)*0.4; armR.rotation.z=2.6+Math.sin(t*20)*0.4; model.rotation.z=Math.sin(t*18)*0.15; }
+    if(t>=11.4&&t<12.6){ armL.rotation.z=-1.2; armR.rotation.z=1.2; } if(t>=16.2&&t<16.9){ model.rotation.x=-0.6*Math.sin(odSeg(S,16.2,16.9)*Math.PI); } if(t>=17&&t<18.4){ armL.rotation.x=armR.rotation.x=1.3; }
+    if(t>=21&&t<24){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=24&&t<28.4){ const ph=Math.floor((S.hopU||0)*6)%2; legL.rotation.x=ph?0.9:0; legR.rotation.x=ph?0:0.9; armL.rotation.z=-1.2; armR.rotation.z=1.2; }
+    if(t>=35&&t<40.4){ armL.rotation.z=-1.5; armR.rotation.z=1.5; } if(t>=40.4&&t<42)model.rotation.z=Math.sin(t*5)*0.2; if(t>=42){ legL.rotation.x=0.6; legR.rotation.x=-0.6; armL.rotation.z=-1.6; armR.rotation.z=1.6; } },
+  cam(S){ const t=S.t, G=ELC.G; if(t<6)return [[pl.p[0]+1.2,pl.p[1]+1.3,pl.p[2]+4.4],[pl.p[0],pl.p[1]+1.2,pl.p[2]-1.5],0];
+    if(t<11.4)return [[81.8,G+1.7,93.2],[80.2,G+0.9,90.0],1]; if(t<12.6)return [[80,G+1.8,93.4],[80,G+1.5,90.4],2]; if(t<15){ const a=Math.PI-0.9+odE(odSeg(S,12.8,14.8))*1.8, e=[80,G+1.62,90.4]; return [e,[e[0]-Math.sin(a)*10,G+4+odSeg(S,12.6,14)*8,e[2]-Math.cos(a)*10],3]; }
+    if(t<18.6)return [[73.4,G+2.2,90],[80,G+1,93.4],4]; if(t<21)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],5]; if(t<24){ const k=odSeg(S,21,24); return [[94.6,G+2,130.6],[104,G+6+k*10,146],6]; }
+    if(t<28.4)return [[82.8,G+2.2,127.6],[88,G+1,127.4],7]; if(t<35)return [[75.4,G+2.5,99.0],[70,G+1.8,101.2],8]; if(t<42)return [[38.6,G+2.3,97.2],[36.5,G+1.1,100.6],9]; return [[pl.p[0]+3.2,pl.p[1]+1.7,pl.p[2]+1.6],[pl.p[0],pl.p[1]+1.2,pl.p[2]],10]; } };
 const EL_NAMES=['The North Pole and the Mysterious Baby','Buddy Discovers the Truth','The Journey to New York'];
 // ================= MERRIWETHER'S SECOND FLOOR =================
 // Ride the escalator up: the store manager is dressed as Santa, with kids lining up for his lap and an elf helping out; a rack of
