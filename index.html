@@ -414,6 +414,7 @@ makeTile('portal_drag',139,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90];
 makeTile('portal_ranch',140,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; if(y>=11)return nz([90,160,60],r,.12); const h=Math.abs(x-7.5); if(y>=3&&y<11&&h<(y-2)*0.9)return y<5?[245,245,250]:nz([120,110,120],r,.1); return nz([140,200,255],r,.06); });
 makeTile('portal_philly',141,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [60,40,90]; const bell=y>=4&&y<=11&&Math.abs(x-7.5)<(y-2)*0.55, crack=x===8&&y>=8&&y<=11; if(y===3&&x>=5&&x<=10)return [90,60,30]; if(crack)return [30,20,10]; if(bell)return nz([150,110,60],r,.12); return nz([170,60,50],r,.1); });
 makeTile('portal_la',142,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [40,20,60]; const pyr=y>=6&&y<=12&&Math.abs(x-7.5)<(y-5)*0.75; if(pyr)return (y%2?nz([240,190,80],r,.12):nz([200,140,50],r,.1)); if(y===3&&x>=3&&x<=12)return x%2?[255,60,140]:[60,240,220]; if(y<6&&(x*3+y)%7===0)return [120,180,255]; return nz([14,10,30],r,.2); });
+makeTile('portal_elf',143,(x,y,r)=>{ if(x<1||y<1||x>14||y>14)return [200,30,40]; const tree=y>=3&&y<=12&&Math.abs(x-7.5)<(y-2)*0.42; if(y===2&&(x===7||x===8))return [255,220,60]; if(y>12&&(x===7||x===8))return [110,70,30]; if(tree)return (x*5+y*3)%7===0?[[255,60,60],[255,220,60],[80,150,255]][(x+y)%3]:nz([30,140,60],r,.12); return (x+y)%4===0?[255,255,255]:nz([190,30,40],r,.1); });
 for(const [k,c,c2,sd] of [['coral_pink',[255,110,160],[255,190,210],151],['coral_orange',[255,140,50],[255,210,120],152],['coral_purple',[160,80,230],[215,160,255],153]])makeTile(k,sd,(x,y,r)=>{ // coral: bright, with light polyps and dark crevices
   const dot=((x*5+y*3)%7===0)||((x*3+y*7+2)%9===0), crev=((x+y*2)%6===0)||((x*2+y+3)%7===0); if(dot)return nz(c2,r,.12); if(crev)return nz(mul(c,0.55),r,.15); return nz(c,r,.22); });
 { const furrow=(base,dk,r,x,y)=>{ let c=y%4<2?nz(base,r,.1):nz(dk,r,.1); if(r()<.05)c=mul(c,0.8); return c; };
@@ -515,6 +516,7 @@ addBlock('coral_pink','Pink Coral','Plants','Coral is an animal! Tiny polyps bui
 addBlock('coral_orange','Orange Coral','Plants','Corals get their bright colors from tiny algae that live inside them and make food from sunlight, so reefs grow in shallow, sunny water.',{t:'coral_orange'},{hidden:true});
 addBlock('coral_purple','Purple Coral','Plants','Corals grow slowly: some only about 1 cm a year. Gardeners now grow coral in nurseries and transplant it to help damaged reefs regrow.',{t:'coral_purple'},{hidden:true});
 addBlock('portal_la','Los Angeles 2019 Portal','Portal','Place it and a doorway to Los Angeles 2019 opens: a rainy neon city with flying police spinners, a noodle bar, the Bradbury Building and a giant golden pyramid. The real Bradbury Building in Los Angeles was built in 1893, and it has been in lots of movies.',{t:'portal_la'},{portal:'la'});
+addBlock('portal_elf','North Pole Portal','Portal','Place it and a doorway to the North Pole opens: Santa\'s workshop, an elf village under the northern lights, a magic tunnel, and New York at Christmas. The real North Pole sits on floating sea ice, with no land underneath at all.',{t:'portal_elf'},{portal:'elf'});
 const isFlam=id=>id&&B[id].flammable;
 
 B.forEach(b=>{ if(!b)return; const id=b.side; const d=actx.getImageData((id%COLS)*T,Math.floor(id/COLS)*T,T,T).data;
@@ -830,7 +832,7 @@ function applySnapshot(s){
   if(Array.isArray(s.apples)) for(const a of s.apples){ if(!Array.isArray(a.c))continue; const tr={x:a.x,ty:a.ty,z:a.z,cand:a.c,grow:+a.g||30,slots:[]}; appleTrees.push(tr);
     for(const [c,st,t] of (a.s||[])) if(tr.cand[c]) addFruit(tr,c,st,t); }
   setFly(!!s.fly,false);
-  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='la')buildBrLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); fishLoadList(s.fish);
+  applyMode(); edgeOpen=mode==='survival'; unstick(pl); edgeOpen=false; rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(s.ranch); dressHero(); } if(place==='drag')buildDragLife(s.drag); if(place==='mansion')buildMansionLife(s.mansion); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='la')buildBrLife(); if(place==='elf')buildElfLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); fishLoadList(s.fish);
   select(sel,false); refreshWeapon(); updateHUD(); updateWebHUD();
   $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 }
@@ -1046,6 +1048,7 @@ function weaponMesh(id,fp){
   const add=(w,h,d,c,y,x)=>{ const m=box(w,h,d,M(c)); m.position.set(x||0,y,0); if(fp)m.renderOrder=999; g.add(m); return m; };
   add(0.06,0.3,0.06,0x6b4a2a,0.05);
   if(id==='blaster'){ g.children[0].visible=false; add(0.12,0.16,0.44,0x2a2a30,0.2).position.z=-0.06; add(0.08,0.08,0.24,0x3a3a44,0.24).position.z=-0.36; add(0.09,0.09,0.06,0xff8a1a,0.24).position.z=-0.5; add(0.08,0.2,0.1,0x1a1a1e,0.04).position.z=0.06; }
+  if(id==='snowball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,8),M(0xffffff)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='ball'){ g.children[0].visible=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.1,10,8),M(0xd8304a)); b.position.y=0.05; if(fp)b.renderOrder=999; g.add(b); }
   if(id==='boomerang'){ g.children[0].visible=false; boomerangShape(g,M,fp); }
   if(id==='laser'){ g.children[0].visible=false; add(0.12,0.14,0.42,0xe8ecf2,0.2).position.z=-0.05; add(0.07,0.07,0.22,0x2a2e36,0.22).position.z=-0.34; add(0.08,0.08,0.05,0x40e0ff,0.22).position.z=-0.46; add(0.07,0.2,0.09,0x2a2e36,0.06).position.z=0.06; g.scale.setScalar(0.55); }
@@ -1413,7 +1416,7 @@ function laserMesh(kind){ const g=new THREE.Group(), mine=kind==='laser'; g.add(
 function blobMesh(kind){ const g=new THREE.Group(), f=kind==='fireball', pz=kind==='plasma'; const a=box(f?0.5:0.38,f?0.5:0.38,f?0.5:0.38,new THREE.MeshBasicMaterial({color:f?0xff6a10:pz?0x40ff60:0x6fb8ff,transparent:!f,opacity:0.85})); g.add(a);
   const c=box(f?0.3:0.2,f?0.3:0.2,f?0.3:0.2,new THREE.MeshBasicMaterial({color:f?0xffe24a:0xdff2ff})); c.position.set(0.05,0.05,-0.05); g.add(c); g.traverse(o=>{ if(o.geometry)o.userData.own=true; }); return g; }
 function addShot(o,d,spd,grav,dmg,kind,fromMob){
-  const mesh=kind==='dart'?mxDartMesh():kind==='bullet'?mxBulletMesh():kind==='web'?webMesh():kind==='spear'?spearMesh():kind==='rock'?rockMesh():kind==='fireball'||kind==='splash'||kind==='plasma'?blobMesh(kind):kind==='laser'||kind==='rlaser'?laserMesh(kind):arrowMesh(fromMob); scene.add(mesh);
+  const mesh=kind==='snow'?elSnowMesh():kind==='dart'?mxDartMesh():kind==='bullet'?mxBulletMesh():kind==='web'?webMesh():kind==='spear'?spearMesh():kind==='rock'?rockMesh():kind==='fireball'||kind==='splash'||kind==='plasma'?blobMesh(kind):kind==='laser'||kind==='rlaser'?laserMesh(kind):arrowMesh(fromMob); scene.add(mesh);
   const sh={p:[o.x,o.y,o.z],v:[d.x*spd,d.y*spd,d.z*spd],grav,dmg,kind,fromMob,mesh,life:3}; shots.push(sh); return sh; }
 function shoot(w){
   atkCd=w.cd; const d=lookDir(), o=camera.position.clone().addScaledVector(d,0.4);
@@ -1423,6 +1426,7 @@ function shoot(w){
     d.copy(aim.sub(o).normalize()); }
   if(w.boomer){ throwBoomerang(o,d,w); return; }
   if(weapon==='bow'&&arrowSel!=='normal'&&arrows[arrowSel]>0){ fireSpecial(arrowSel,o,d,w); return; }
+  if(weapon==='snowball'){ addShot(o,d,w.spd,w.grav,w.dmg,'snow',false); snd(()=>noise(1200,0.12,0.08,'bandpass')); return; }
   if(weapon==='blaster'){ const nerf=mxShotMode()==='nerf'; addShot(o,d,w.spd,w.grav,w.dmg,nerf?'dart':'bullet',false); snd(()=>nerf?tone('square',900,300,0.06,0.05):noise(2500,0.1,0.18,'highpass')); return; }
   addShot(o,d,w.spd,w.grav,w.dmg,'arrow',false);
   sfx('bow');
@@ -1476,6 +1480,7 @@ function updateShots2(dt){
         if(s.kind==='web') addWeb(); else { const l=Math.hypot(s.v[0],s.v[2])||1; hurtPlayer(s.dmg,s.v[0]/l*0.6,s.v[2]/l*0.6,s.kind==='spear'?'An Orc\'s spear':s.kind==='rock'?'A Troll\'s rock':'A Skeleton\'s arrow'); } } }
       else for(const m of mobs){ if(boxHit(m,x,y,z,0.12)){ hit=true; damageMob(m,s.dmg,s.v[0],s.v[2],4); if(s.sp)specialImpact(s,m,x,y,z,px0,py0,pz0); break; } }
       if(!hit&&!s.fromMob&&odyK&&onOdyssey()&&!demo){ const c=odyAt(x,y,z); if(c){ hit=true; odyHurt(c,s.dmg,s.v[0],s.v[2]); } } // a sea creature, a sheep, the Cyclops...
+      if(!hit&&!s.fromMob&&s.kind==='snow'&&elK){ const k=elKidAt(x,y,z); if(k){ hit=true; elKidHit(k); } } // a kid in the snowball fight
       if(!hit&&!s.fromMob&&ranchK)for(const a of ranchK.animals){ if(a.game&&boxHit(a,x,y,z,0.15)){ hit=true; huntHit(a); break; } } // a deer or bunny on the ranch
     }
     if(hit){ freeShot(s); continue; }
@@ -1704,7 +1709,7 @@ const OUT_MAX=70;
 function outsideDist(){ const ox=Math.max(0,-pl.p[0],pl.p[0]-W), oz=Math.max(0,-pl.p[2],pl.p[2]-D); return Math.hypot(ox,oz); }
 let viewF=-1;
 function updateViewRange(dt){ // fog thins out as you fly away so the whole landscape stays visible
-  if(curPlace()==='drag'||curPlace()==='mansion'||curPlace()==='odyssey'||curPlace()==='matrix'||curPlace()==='la'||curPlace()==='petshop'){ viewF=0; return; }
+  if(curPlace()==='drag'||curPlace()==='mansion'||curPlace()==='odyssey'||curPlace()==='matrix'||curPlace()==='la'||curPlace()==='elf'||curPlace()==='petshop'){ viewF=0; return; }
   const want=Math.min(1,outsideDist()/12); const f=viewF<0?want:viewF+(want-viewF)*Math.min(1,dt*2);
   if(Math.abs(f-viewF)<0.001)return; viewF=f;
   const big=curPlace()==='ranch'?2:1; scene.fog.near=40*big+f*130; scene.fog.far=90*big+f*260; camera.far=big>1?600:200+f*220; camera.updateProjectionMatrix(); }
@@ -1842,6 +1847,7 @@ function openNewGame(fromTitle){
     '<div class="item"><div class="ic">🏛️</div><div class="tx"><b>Odyssey Sea</b><div class="fx">'+PLACES.odyssey.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="odyssey">Start</button></div>'+
     '<div class="item"><div class="ic">💊</div><div class="tx"><b>Matrix City</b><div class="fx">'+PLACES.matrix.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="matrix">Start</button></div>'+
     '<div class="item"><div class="ic">🌃</div><div class="tx"><b>Los Angeles 2019</b><div class="fx">'+PLACES.la.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="la">Start</button></div>'+
+    '<div class="item"><div class="ic">🎄</div><div class="tx"><b>North Pole & Christmas NYC</b><div class="fx">'+PLACES.elf.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="elf">Start</button></div>'+
     '<div class="item"><div class="ic">🦃</div><div class="tx"><b>Thanksgiving Mansion</b><div class="fx">'+PLACES.mansion.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="mansion">Start</button></div>'+
     '<div class="item"><div class="ic">🏁</div><div class="tx"><b>Car World</b><div class="fx">'+PLACES.drag.blurb+' Your Survival world stays safe.</div></div><button class="ibtn" data-newcity="drag">Start</button></div>'+
     '<div class="row"><button class="mbtn gold" id="nSave">💾 Save current game first</button><button class="mbtn gray" id="nBack">Back</button></div>';
@@ -1856,7 +1862,7 @@ function openNewGame(fromTitle){
 }
 
 // ================= GAME MODES =================
-function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; clearMxLife(); clearBrLife(); clearRkLife(); clearPetShopLife(); petsClear(); fishClear(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
+function clearEntities(){ if(titleOn)hideTitle(); clearRanchLife(); clearDragLife(); clearMansionLife(); clearOdyLife(); odStage=null; clearMxLife(); clearBrLife(); clearElfLife(); clearRkLife(); clearPetShopLife(); petsClear(); fishClear(); if(drive&&freeVehicles.includes(drive))exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); clearApples(); for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0;
   for(const sh of shots.slice())freeShot(sh); if(boom){ scene.remove(boom.mesh); boom=null; refreshHeld(); } }
 function applyMode(){ merchant.g.visible=place==='survival'; $('coins').style.display=''; scene.background.setHex(SKY); scene.fog.color.setHex(SKY); for(const c of clouds)c.visible=true;
   lastOffer=Math.floor(coins/5); lastCoins=-1; updateHUD(); refreshArrowBtn();
@@ -2370,7 +2376,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',el1:'🎄 Elf 1: The North Pole and the Mysterious Baby',el2:'🎄 Elf 2: Buddy Discovers the Truth',el3:'🎄 Elf 3: The Journey to New York',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2440,7 +2446,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
       (s.act==='wonder'?'<label>Wonder'+sel(DM_WON,'wonder',i,s.wonder)+'</label><label>Monsters'+sel(DM_WMON,'wmon',i,s.wmon)+'</label>':'')+'<label>Time of day'+sel(DM_TIME,'time',i,s.time)+'</label><label>Weather'+sel(DM_WX,'wx',i,s.wx)+'</label><label>Land'+sel(DM_LAND,'land',i,s.land)+'</label>')+
     (s.act==='stadium'||s.act==='fire'||s.act==='ride'||s.act==='drag'||s.act==='thanks'||isFilm(s)||s.act==='petshop'||s.act==='petranch'?'':'<label>Camera'+sel(DM_CAM,'cam',i,s.cam)+'</label>')+'<label>Color look'+sel(DM_FXS,'fx',i,s.fx)+'</label><label>Seconds<input type="number" min="3" max="300" data-i="'+i+'" data-k="secs" value="'+s.secs+'"></label></div>'+
     '<label class="dmCapL">Caption (leave blank for none)<input maxlength="80" data-i="'+i+'" data-k="cap" value="'+esc(s.cap)+'" placeholder="Words that fade in at the bottom"></label></div>'; });
-  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the whole Matrix (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmBlade">🌃 Load Blade Runner (chapters 1 to 3)</button></div>';
+  h+='<div class="row"><button class="mbtn gray" id="dmAdd">＋ Add a scene</button><button class="mbtn gray" id="dmReset">↺ Example scenes</button></div><div class="row"><button class="mbtn gold" id="dmOdyssey">🏛️ Load the whole Odyssey (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmMatrix">💊 Load the whole Matrix (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmRocky">🥊 Load the whole Rocky (10 chapters)</button></div><div class="row"><button class="mbtn gold" id="dmBlade">🌃 Load Blade Runner (chapters 1 to 3)</button></div><div class="row"><button class="mbtn gold" id="dmElf">🎄 Load Elf (chapters 1 to 3)</button></div>';
   h+='<h3>🎵 Song</h3><div class="chips">'+[['none','🔇 No music'],['tune','🎹 Built-in tune'],['mp3','📁 My song file'],['yt','▶️ YouTube link']].map(([k,l])=>'<div class="chip'+(mus.src===k?' on':'')+'" data-src="'+k+'">'+l+'</div>').join('')+'</div>';
   if(mus.src==='tune')h+='<div class="dmRow"><select id="dmTune">'+Object.entries(TUNES).map(([k,t])=>'<option value="'+k+'"'+(k===mus.tune?' selected':'')+'>'+t.name+'</option>').join('')+'</select><button class="ibtn" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div>';
   if(mus.src==='mp3')h+='<div class="dmRow"><button class="ibtn" id="dmPick">📁 Choose a song file</button><span id="dmMp3" class="fx">'+(mp3Name?esc(mp3Name):'No song picked yet')+'</span><button class="ibtn gray" id="dmPrev">'+(musOnNow?'■ Stop':'▶ Listen')+'</button></div><div class="fx">MP3, M4A, WAV or OGG. It stays in this browser, so you only pick it once.</div>';
@@ -2467,6 +2473,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   box2.querySelectorAll('[data-rm]').forEach(el=>onClick(el,()=>{ dmCfg.scenes.splice(+el.dataset.rm,1); saveDemo(); redraw(); }));
   onClick($('dmOdyssey'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Odyssey (about 5 minutes)?'))return; loadOdyssey(); redraw(); });
   onClick($('dmMatrix'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of the Matrix (about 7 minutes)?'))return; loadMatrix(); redraw(); });
+  onClick($('dmElf'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with Elf chapters 1 to 3 (about 2 minutes)?'))return; loadElf(); redraw(); });
   onClick($('dmBlade'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with Blade Runner chapters 1 to 3 (about 2¼ minutes)?'))return; loadBlade(); redraw(); });
   onClick($('dmRocky'),()=>{ if(dmCfg.scenes.length&&!confirm('Replace your scenes with the 10 chapters of Rocky (about 6½ minutes)?'))return; loadRocky(); redraw(); });
   onClick($('dmAdd'),()=>{ if(dmCfg.scenes.length>=30){ toast('30 scenes is the most.'); return; } dmCfg.scenes.push(cleanScene(DM_SCENE0)); saveDemo(); redraw(); box2.scrollTop=box2.querySelector('#dmAdd').offsetTop-260; });
@@ -2529,7 +2536,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
 function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; camp.visible=false; if(campK){ campK.mic.visible=false; campK.gl=null; } canvas.style.transform=''; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); mxRainOff(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
-function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); demo.odyWorld=demo.mxWorld=demo.brWorld=demo.rkWorld=demo.ranchWorld=demo.dragWorld=demo.mansionWorld=demo.petWorld=false; } }
+function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); demo.odyWorld=demo.mxWorld=demo.brWorld=demo.elWorld=demo.rkWorld=demo.ranchWorld=demo.dragWorld=demo.mansionWorld=demo.petWorld=false; } }
   if(demo.bak){ world.set(demo.bak.w); meta.set(demo.bak.m); lavaSet.clear(); for(const q of demo.bak.lava)lavaSet.add(q); lavaArr=null; demo.bak=null; // put the land back after a wonder
     activeW.clear(); activeL.clear(); fires.clear(); for(const sh of shots.slice())freeShot(sh); rebuildAll(); }
   demo.i=i; demo.t=0; demo.st=0; demo.sc=dmCfg.scenes[i]; demo.cam=null; demoSetup(demo.sc);
@@ -2539,7 +2546,7 @@ function groundY(x,z){ const s=surfaceAt(Math.floor(x),Math.floor(z)); return s.
 function landSpot(cx,cz,r){ for(let k=0;k<40;k++){ const a=Math.random()*Math.PI*2, d=Math.random()*r, x=Math.floor(cx+Math.cos(a)*d), z=Math.floor(cz+Math.sin(a)*d);
   if(x<3||z<3||x>=W-3||z>=D-3)continue; const s=surfaceAt(x,z); if(s.y<0||s.id===ID.water||s.id===ID.lava||s.id===ID.leaves||!B[s.id].solid)continue; return [x+0.5,s.y+1,z+0.5]; } return [CX+0.5,groundY(CX,CZ+2),CZ+2.5]; }
 function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOnNow=''; demo.tunePaused=true; } } else if(demo.tunePaused){ demo.tunePaused=false; musicPlay(); } // the stories bring their own soundtrack
-  if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.brWorld&&!isBr(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
+  if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.brWorld&&!isBr(sc))||(demo.elWorld&&!isElf(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
   weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'||sc.act==='thanks'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
@@ -2557,6 +2564,7 @@ function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOn
   if(isMx(sc)){ demoMxSetup(sc,P); return; }
   if(isRk(sc)){ demoRkSetup(sc,P); return; }
   if(isBr(sc)){ demoBrSetup(sc,P); return; }
+  if(isElf(sc)){ demoElfSetup(sc,P); return; }
   if(sc.act==='petshop'||sc.act==='petranch'){ demoPetSetup(sc,P); return; }
   if(sc.act==='thanks'){ if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } demoMansionSetup(sc,P); return; }
   if(sc.act==='wonder'){ wonderSetup(sc,P); return; }
@@ -3788,7 +3796,7 @@ function dodgeTick(K,p,dt){ if(p.gone)return; const px=p.g.position.x, pz=p.g.po
   else if(p.off){ p.off[0]*=Math.max(0,1-dt*1.2); p.off[1]*=Math.max(0,1-dt*1.2); if(Math.hypot(p.off[0],p.off[1])<0.02)p.off=null; } // drift back onto the sidewalk
   if(p.heyT>0){ p.heyT-=dt; if(p.heyT<=0&&p.hey)p.hey.visible=false; } }
 // what's near you to do? (the E key, the yellow button on touch screens, or Y on a controller)
-function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; } if(mxK){ const r=mxAction(); if(r)return r; } if(brK){ const r=brAction(); if(r)return r; }
+function nearAction(){ if(drive)return {label:'🚪 Get out',fn:()=>exitVehicle()}; { const c=coralAction(); if(c)return c; } if(ranchK){ const r=ranchAction(); if(r)return r; } if(mansionK){ const r=mansionAction(); if(r)return r; } if(odyK){ const r=odyAction(); if(r)return r; } if(mxK){ const r=mxAction(); if(r)return r; } if(brK){ const r=brAction(); if(r)return r; } if(elK){ const r=elAction(); if(r)return r; }
   if(nearMerchant())return {label:'💬 Talk',fn:openShop};
   let best=null, bd=1e9;
   for(const v of vehList()){ if(v.npc||v.driver||v.wrecked||v.towed)continue; const d=Math.hypot(pl.p[0]-v.p[0],pl.p[2]-v.p[2])-v.V.len/2; if(d<1.8&&d<bd&&Math.abs(pl.p[1]-v.p[1])<2.5){ bd=d; best=v; } }
@@ -4017,7 +4025,7 @@ function demoCitySetup(sc,P){ if(demo.ranchWorld){ clearRanchLife(); clearApples
   activeW.clear(); activeL.clear(); fires.clear(); rebuildAll(); refreshPortals(); buildCityLife(); applyPlaceSky(); citySpawn(); yaw=0; pitch=-0.05;
   Object.assign(P,{c:{mode:'pick',t:0,last:''}}); }
 // leave a city scene: put back the demo's usual world for the next scene
-function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.rkWorld){ clearRkLife(); demo.rkWorld=false; demo.vplace=null; } if(demo.brWorld){ clearBrLife(); demo.brWorld=false; demo.vplace=null; } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
+function demoBaseWorld(){ if(drive)exitVehicle(true,true); if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; demo.vplace=null; applyPlaceSky(); } if(demo.rkWorld){ clearRkLife(); demo.rkWorld=false; demo.vplace=null; } if(demo.brWorld){ clearBrLife(); demo.brWorld=false; demo.vplace=null; } if(demo.elWorld){ clearElfLife(); demo.elWorld=false; demo.vplace=null; } clearCityLife(); clearInteriorLife(); demo.cityKey=null; demo.vplace=null; demo.inKind=null; demo.stack=[]; demo.cityWorld=false;
   let ok=false; if(dmCfg.world==='mine')try{ const s=JSON.parse(localStorage.getItem(PLACES[place].key)||'null'); if(s&&Array.isArray(s.w)){ const dm=s.dims||[96,48,96]; setWorldSize(dm[0],dm[1],dm[2]); world=rleDecode(s.w); meta=rleDecode(s.m); ok=true; } }catch(e){}
   if(!ok){ setWorldSize(96,48,96); generate(dmCfg.seed); } rebuildAll(); refreshPortals(); }
 // --- going in and out of buildings (the city or hallway waits, exactly as it was)
@@ -4125,9 +4133,10 @@ const PLACES={survival:{name:'Survival world',icon:'🌳',key:'blockstar_v2',dim
   matrix:{name:'Matrix City',icon:'💊',key:'blockstar_matrix',dims:[128,48,128],col:[40,220,90],matrix:true,blurb:'A green-tinted city that isn\'t real: Neo\'s apartment, a neon club, the office tower, the agents\' building, and the real world hiding far below.'},
   philly:{name:'Philadelphia',icon:'🔔',key:'blockstar_city_phl2',dims:[160,48,160],col:[200,90,70],city:'philly',blurb:'1970s row houses, the Art Museum and its famous steps, Independence Hall, the Liberty Bell, a pet shop and an old boxing gym.'},
   la:{name:'Los Angeles 2019',icon:'🌃',key:'blockstar_la',dims:[128,64,128],col:[255,60,160],la:true,blurb:'A rainy neon city of the future, always at night: flying police spinners, a street market and noodle bar, the old Bradbury Building, and a giant golden pyramid.'},
+  elf:{name:'North Pole & Christmas NYC',icon:'🎄',key:'blockstar_elf_world',dims:[160,56,160],col:[220,40,60],elf:true,blurb:'Santa\'s workshop and the elf village under the northern lights, a magic tunnel through the mountains, and New York at Christmas: a big department store, a giant tree, and snowball fights in the park.'},
   drag:{name:'Drag Strip',icon:'🏁',key:'blockstar_drag',dims:[96,40,880],col:[255,200,60],drag:true,blurb:'A quarter-mile drag strip at night, high above a big city. Pick any car, truck or motorcycle in the pits and race!'}};
 const CITY_PLACES=['city','newyork','sanfran','orlando','philly'];
-const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop','matrix','philly','la']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
+const DESTS=['survival','city','newyork','sanfran','orlando','out','in_house1','in_house2','in_house3','in_house4','in_dealer','in_school','in_chem','in_english','in_math','in_history','in_club','ranch','drag','mansion','odyssey','petshop','matrix','philly','la','elf']; // a portal's meta is (index in this list)*2 + which way it faces. Only ever add to the end
 const PLACE_KEY='blockstar_place';
 function loadPlace(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); if(!validSave(s)||(s.place||'survival')!==k)return false; if(PLACES[k].city&&s.cityVer!==CITY_VER)return false; if(PLACES[k].interior&&s.intVer!==INT_VER)return false; /* an older city: build it fresh */ applySnapshot(s); return true; }catch(e){ return false; } }
 // --- the cities. Same kit, different style: a grid of roads every 32 blocks, sidewalks, blocks of buildings, parks,
@@ -4300,6 +4309,7 @@ function applyPlaceSky(){ const ck=cityKey(), cp=curPlace(), I=PLACES[cp]&&PLACE
   if(cp==='odyssey'){ odSky('day'); return; }
   if(cp==='matrix'){ mxSky('night'); return; }
   if(cp==='la'){ brSky('rain'); return; }
+  if(cp==='elf'){ elSky('np'); return; }
   if(cp==='petshop'){ scene.background.setHex(0xfff2e0); scene.fog.color.setHex(0xfff2e0); scene.fog.near=60; scene.fog.far=200; for(const c of clouds)c.visible=false; setWeather('clear'); return; }
   if(cp==='ranch'){ scene.fog.near=80; scene.fog.far=190; if(camera.far<600){ camera.far=600; camera.updateProjectionMatrix(); } setWeather('clear'); return; } // see the mountains from far away
   if(!ck){ setWeather('clear'); return; } const S=CITY_STYLES[ck];
@@ -4358,12 +4368,12 @@ function travel(dest){ if(dest===place)return; traveling=true; sfx('zap'); warpE
     if(PLACES[dest])toast(PLACES[dest].icon+' '+(PLACES[dest].interior?PLACES[dest].name:'Welcome to '+(PLACES[dest].city?'':'the ')+PLACES[dest].name+'!')); },650); }
 // the first visit to a place: make it, and put a portal back where you came from just behind you
 function newPlace(dest,from){ clearEntities(); placed.clear(); setWorldSize(...PLACES[dest].dims); place=dest; const inner=PLACES[dest].interior; let sp=null;
-  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].odyssey){ generateOdyssey((Math.random()*1e9)|0); pl.p=[64.5,15,176.5]; } else if(PLACES[dest].matrix){ generateMatrix((Math.random()*1e9)|0); pl.p=MXC.spawn.slice(); } else if(PLACES[dest].la){ generateLA((Math.random()*1e9)|0); pl.p=BRC.spawn.slice(); } else if(PLACES[dest].petshop){ generatePetShop((Math.random()*1e9)|0); pl.p=PS.spawn.slice(); } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
-  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion||!!PLACES[dest].odyssey||!!PLACES[dest].matrix||!!PLACES[dest].la||!!PLACES[dest].petshop; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
+  if(inner)sp=generateInterior(inner); else if(PLACES[dest].ranch){ generateRanch((Math.random()*1e9)|0); pl.p=[RANCH.spawn[0],FY,RANCH.spawn[1]]; } else if(PLACES[dest].drag){ generateDrag((Math.random()*1e9)|0); pl.p=[DR.spawn[0],DR.GY,DR.spawn[1]]; } else if(PLACES[dest].mansion){ generateMansion((Math.random()*1e9)|0); pl.p=MN.spawn.slice(); } else if(PLACES[dest].odyssey){ generateOdyssey((Math.random()*1e9)|0); pl.p=[64.5,15,176.5]; } else if(PLACES[dest].matrix){ generateMatrix((Math.random()*1e9)|0); pl.p=MXC.spawn.slice(); } else if(PLACES[dest].la){ generateLA((Math.random()*1e9)|0); pl.p=BRC.spawn.slice(); } else if(PLACES[dest].elf){ generateElf((Math.random()*1e9)|0); pl.p=ELC.spawn.slice(); } else if(PLACES[dest].petshop){ generatePetShop((Math.random()*1e9)|0); pl.p=PS.spawn.slice(); } else if(PLACES[dest].city){ generateCity((Math.random()*1e9)|0); cityExtras(PLACES[dest].city); citySpawn(); } else { generate((Math.random()*1e9)|0); pl.p=[CX+0.5,SPAWN_H,CZ+2.5]; }
+  if(sp)pl.p=sp.p.slice(); const city=!!PLACES[dest].city||!!PLACES[dest].ranch||!!PLACES[dest].drag||!!PLACES[dest].mansion||!!PLACES[dest].odyssey||!!PLACES[dest].matrix||!!PLACES[dest].la||!!PLACES[dest].elf||!!PLACES[dest].petshop; pl.v=[0,0,0]; pl.kb=[0,0,0]; yaw=sp?sp.yaw:city?0:Math.PI; pitch=-0.1; setFly(false,false); unstick(pl); // in a city you face up the street towards the garage
   if(!inner&&from&&PLACES[from]){ const gx=Math.floor(pl.p[0])-1, gz=Math.floor(pl.p[2])+(city?(PLACES[dest].ranch?7:3):-4); let gy=Math.floor(pl.p[1]); // the way back, just behind you (turn round to see it)
     for(let i=-1;i<=2;i++)for(let j=0;j<=4;j++){ const X=gx+i, Y=gy+j; if(inB(X,Y,gz)&&get(X,Y,gz))setBlock(X,Y,gz,0); }
     makeGateway(gx,gy,gz,true,from); }
-  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='la')buildBrLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); }
+  applyMode(); rebuildAll(); refreshPortals(); buildCityLife(); buildInteriorLife(); if(place==='ranch'){ buildRanchLife(null); dressHero(); } if(place==='drag')buildDragLife(null); if(place==='mansion')buildMansionLife(null); if(place==='odyssey')buildOdyLife(); if(place==='matrix')buildMxLife(); if(place==='la')buildBrLife(); if(place==='elf')buildElfLife(); if(place==='philly')buildRkLife(); if(place==='petshop')buildPetShopLife(); petsWorldEnter(); }
 
 // --- picking a city from the title screen (or the menu)
 function citySaved(k){ try{ const s=JSON.parse(localStorage.getItem(PLACES[k].key)||'null'); return !!s&&s.cityVer===CITY_VER; }catch(e){ return false; } }
@@ -5121,7 +5131,8 @@ function updatePlayer(dt){
   if(mansionK&&mansionK.danceT>0){ $('tint').style.opacity=0; mansionK.danceT-=dt; if(mansionK.danceT<=0&&mansionK.camWas){ camMode=mansionK.camWas; mansionK.camWas=0; } if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } pl.v=[0,0,0]; return {hs:0}; } // dancing in the pool after the slide
   if(odyK&&odyK.ride)return odRideUpdate(dt); // sailing a ship on the Odyssey's sea
   if(mxK&&mxK.heli&&mxK.heli.ride)return mxHeliUpdate(dt);
-  if(brK&&brK.spin&&brK.spin.ride)return brSpinUpdate(dt); // flying a police spinner over Los Angeles 2019 // flying the helicopter over Matrix City
+  if(brK&&brK.spin&&brK.spin.ride)return brSpinUpdate(dt);
+  if(elK&&elK.sleigh&&elK.sleigh.ride)return elSleighUpdate(dt); // flying Santa's sleigh // flying a police spinner over Los Angeles 2019 // flying the helicopter over Matrix City
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
   if(mansionK&&mansionK.hold){ $('tint').style.opacity=0; if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } if(mansionK.hold)pl.p=mansionK.hold.slice(); pl.v=[0,0,0]; return {hs:0}; } // up a ladder (in a demo)
@@ -5351,7 +5362,7 @@ function update(dt){
   if((cityK||ranchK)&&!drive&&!demo){ const gp=padRead(); if(gp.y&&!padYWas&&act)act.fn(); padYWas=gp.y; }
 
   if(!cityK)for(const v of vehList()){ if(v.V.siren)sirenTick(v,dt); vehSmoke(v,dt); }
-  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); mowerTick(dt); coralTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); if(brK)brTick(dt); brVkTick(dt); if(rkK)rkTick(dt); rkBallTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
+  portalCheck(); if(portalMeshes.length){ drawSwirls(dt); portalLabels(); } if(intK)interiorTick(dt); smokeTick(dt); if(saplings.length)saplingTick(dt); if(cityK)cityTick(dt); if(ranchK)ranchTick(dt); if(dragK)dragTick(dt); if(mansionK)mansionTick(dt); mowerTick(dt); coralTick(dt); if(odyK)odyTick(dt); if(mxK)mxTick(dt); if(brK)brTick(dt); brVkTick(dt); if(elK)elTick(dt); elToyTick(dt); if(rkK)rkTick(dt); rkBallTick(dt); petsTick(dt); fishTick(dt); dashTick(dt); if(!demo&&wxPts)updateWeather(dt);
   updateMobs(dt); updateShots(dt); updateBoomerang(dt); updateDrops(dt); updateTarget();
 
   // world sim
@@ -7074,9 +7085,9 @@ function odDefaults(){ const K=odyK; K.ride=null; K.ships.forEach(s=>{ if(s.home
   K.boulder.position.set(79,OD.cave.floor+3.1,57.5); K.horse.hatch.rotation.y=0; K.gate.forEach(g=>g.rotation.y=0); const [ix,iz]=OD.ithaca; K.pen.g.position.set(ix,23,iz+5); K.pen.g.rotation.y=Math.PI; K.tel.g.position.set(ix+3,23,iz+2); K.tel.g.rotation.y=Math.PI; K.pen.g.visible=K.tel.g.visible=true; odRest(K.pen); odRest(K.tel); }
 function odFree(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(!o.material)return; for(const m of [].concat(o.material))if(m.userData.own||o.isSprite){ if(m.map)m.map.dispose(); m.dispose(); } }); } // a chapter's own faces, clothes and bubbles (the shared block textures stay)
 function odBubOff(par,who){ if(!who.bub)return; par.remove(who.bub); if(who.bub.material.map)who.bub.material.map.dispose(); who.bub.material.dispose(); who.bub=null; }
-function odyPilot(dt,P){ const S=P.S; if(!S||!(S.mx?mxK:S.rk?rkK:S.br?brK:odyK))return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
+function odyPilot(dt,P){ const S=P.S; if(!S||!(S.mx?mxK:S.rk?rkK:S.br?brK:S.el?elK:odyK))return; S.t+=dt; S.ch.tick(S,dt); P.hs=S.hs||0; for(const p of S.speak)if(p!==S.hero&&p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   if(S.hero.bubT>0){ S.hero.bubT-=dt; if(S.hero.bubT<=0)odBubOff(model,S.hero); } }
-function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:S.rk?rkK:S.br?brK:odyK))return; if(S.ch.pose)S.ch.pose(S); if(S.rk)rkMickeyLook(dt); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
+function odyCam(dt){ const P=demo.pil, S=P&&P.S; if(!S||!(S.mx?mxK:S.rk?rkK:S.br?brK:S.el?elK:odyK))return; if(S.ch.pose)S.ch.pose(S); if(S.rk)rkMickeyLook(dt); model.visible=!S.hideHero; const c=S.ch.cam(S), want=new THREE.Vector3(...c[0]), look=new THREE.Vector3(...c[1]);
   if(!demo.cam||demo.cam.k!=='od'||demo.cam.shot!==c[2])demo.cam={k:'od',p:want.clone(),l:look.clone(),shot:c[2]}; else { demo.cam.p.lerp(want,Math.min(1,dt*2.5)); demo.cam.l.lerp(look,Math.min(1,dt*4)); }
   camera.position.copy(demo.cam.p); camera.lookAt(demo.cam.l); }
 const OD_CH={};
@@ -7595,7 +7606,7 @@ function mxTick(dt){ const K=mxK; K.t+=dt; const t=K.t;
 // shots. Your hero plays Neo. All the chapters share Matrix City, so playing them in a row flows without reloading.
 let mxStage=null;
 const isMx=sc=>!!sc&&/^mx\d+$/.test(sc.act||'');
-const isFilm=sc=>isOdy(sc)||isMx(sc)||isRk(sc)||isBr(sc);
+const isFilm=sc=>isOdy(sc)||isMx(sc)||isRk(sc)||isBr(sc)||isElf(sc);
 function demoMxSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
   if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; } if(demo.brWorld){ clearBrLife(); demo.brWorld=false; } clearCityLife(); clearInteriorLife();
   demo.vplace='matrix'; demo.cityKey=null; if(!demo.mxWorld||!mxK){ demo.mxWorld=true; clearApples(); setWorldSize(...PLACES.matrix.dims); generateMatrix(dmCfg.seed+57); rebuildAll(); refreshPortals(); buildMxLife(); }
@@ -8856,6 +8867,380 @@ OD_CH.br3={secs:45,sky:'high',mood:'gold',init(S){ const K=brK; brDeckard(S); S.
 const BR_NAMES=['The Eye of the Future','The Blade Runner Returns','The Tyrell Corporation'];
 function loadBlade(){ dmCfg.scenes=BR_NAMES.map((n,i)=>cleanScene({act:'br'+(i+1),time:'night',wx:'rain',land:'normal',cam:'cine',secs:OD_CH['br'+(i+1)].secs,cap:''})); saveDemo(); }
 
+// ================= THE NORTH POLE & CHRISTMAS NEW YORK =================
+// One snowy world: the North Pole village and Santa's workshop at the north end, a candy-cane forest and a magic tunnel
+// through the mountains in the middle, and New York at Christmas at the south end (a big department store, an office
+// tower, brownstones, a park for snowball fights, and a plaza with a giant tree). Fly Santa's sleigh, throw snowballs,
+// decorate trees and find presents to raise the Christmas Spirit, and build toys on the workshop's assembly line.
+const ELC={G:4,wks:{x0:58,x1:102,z0:10,z1:34,h:10},ridge:[72,82],tun:[76,84],store:{x0:14,x1:58,z0:102,z1:120,h:14},hobbs:{x0:92,x1:108,z0:104,z1:120},brown:{x0:114,x1:154,z0:104,z1:120,h:12},
+  spawn:[80.5,4,40.5],sleigh:[62,4,48],toy:[80,4,24],park:{x0:10,x1:70,z0:136,z1:156},plaza:{x0:88,x1:120,z0:136,z1:156},tree:[104,4,146]};
+const EL_COTS=[[14,10],[26,10],[38,10],[14,24],[26,24],[38,24],[14,40],[38,40],[112,10],[124,10],[136,10],[112,24],[136,24],[112,40],[124,40],[136,40]];
+function generateElf(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array(N); activeW.clear(); activeL.clear(); lavaSet.clear(); fires.clear(); lavaArr=null;
+  const P=(x,y,z,id)=>{ if(inB(x,y,z))world[idx(x,y,z)]=id; }, F=(x0,y0,z0,x1,y1,z1,id)=>{ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)P(x,y,z,id); };
+  const shell=(x0,z0,x1,z1,y0,y1,id)=>{ for(let y=y0;y<=y1;y++){ F(x0,y,z0,x1,y,z0,id); F(x0,y,z1,x1,y,z1,id); F(x0,y,z0,x0,y,z1,id); F(x1,y,z0,x1,y,z1,id); } };
+  const wins=(x0,z0,x1,z1,y,id,ev)=>{ for(let x=x0+1;x<x1;x++)if((x-x0)%ev){ P(x,y,z0,id); P(x,y,z1,id); } for(let z=z0+1;z<z1;z++)if((z-z0)%ev){ P(x0,y,z,id); P(x1,y,z,id); } };
+  const r=mulberry32(s+13), G=ELC.G;
+  F(0,0,0,W-1,G-2,D-1,ID.granite); F(0,G-1,0,W-1,G-1,87,ID.snow); F(0,G-1,88,W-1,G-1,D-1,ID.concrete);
+  // the North Pole: Santa's big red workshop, and the elves' little houses
+  { const S0=ELC.wks; shell(S0.x0,S0.z0,S0.x1,S0.z1,G,G+S0.h,ID.paint_red); F(S0.x0+1,G-1,S0.z0+1,S0.x1-1,G-1,S0.z1-1,ID.planks); for(let k=0;k<4;k++)F(S0.x0+k*2,G+S0.h+1+k,S0.z0,S0.x1-k*2,G+S0.h+1+k,S0.z1,k%2?ID.paint_white:ID.snow);
+    for(const y of [G+2,G+3,G+6,G+7])wins(S0.x0,S0.z0,S0.x1,S0.z1,y,ID.window,4); F(78,G,S0.z1,82,G+3,S0.z1,0); for(let x=S0.x0;x<=S0.x1;x+=4)F(x,G,S0.z1+1,x,G+S0.h,S0.z1+1,ID.paint_white); }
+  EL_COTS.forEach(([x0,z0],i)=>{ const col=[ID.paint_green,ID.paint_red,ID.paint_yellow,ID.paint_blue,ID.paint_white][i%5]; shell(x0,z0,x0+7,z0+7,G,G+4,col); F(x0+1,G-1,z0+1,x0+6,G-1,z0+6,ID.planks);
+    for(let k=0;k<3;k++)F(x0+k,G+5+k,z0+k,x0+7-k,G+5+k,z0+7-k,ID.snow); F(x0+3,G,z0+7,x0+4,G+1,z0+7,0); for(const y of [G+2,G+3]){ P(x0,y,z0+3,ID.window); P(x0+7,y,z0+3,ID.window); } });
+  // the mountains, with the magic tunnel through them
+  { const [z0,z1]=ELC.ridge, [t0,t1]=ELC.tun; for(let x=0;x<W;x++){ const h=14+Math.round(Math.sin(x*0.09)*5+Math.sin(x*0.23+1)*3+r()*2); for(let z=z0-4;z<=z1+4;z++){ const edge=Math.min(z-(z0-4),(z1+4)-z), hh=Math.min(h,edge*4+2); for(let y=G;y<G+hh;y++)P(x,y,z,y>G+hh-3?ID.snow:ID.granite); } }
+    for(let x=t0;x<=t1;x++)for(let z=z0-4;z<=z1+4;z++)for(let y=G;y<G+6;y++){ const arch=Math.abs(x-(t0+t1)/2)>3.2&&y>=G+5; if(!arch)P(x,y,z,0); }
+    for(let z=z0-4;z<=z1+4;z++){ F(t0,G-1,z,t1,G-1,z,ID.glass); } }
+  // New York: streets, the department store, the office tower, the brownstones, the park and the plaza
+  F(0,G-1,92,W-1,G-1,99,ID.asphalt); F(76,G-1,88,83,G-1,D-1,ID.asphalt); F(0,G-1,124,W-1,G-1,131,ID.asphalt); for(let x=1;x<W;x+=4)if(x<74||x>85){ F(x,G-1,95,x+1,G-1,95,ID.paint_yellow); F(x,G-1,127,x+1,G-1,127,ID.paint_yellow); }
+  { const S0=ELC.store; shell(S0.x0,S0.z0,S0.x1,S0.z1,G,G+S0.h,ID.limestone); F(S0.x0+1,G-1,S0.z0+1,S0.x1-1,G-1,S0.z1-1,ID.marble); F(S0.x0+1,G+7,S0.z0+1,S0.x1-1,G+7,S0.z1-1,ID.marble); F(21,G+7,103,27,G+7,115,0); F(S0.x0,G+S0.h+1,S0.z0,S0.x1,G+S0.h+1,S0.z1,ID.concrete);
+    for(const [a,b] of [[16,31],[41,56]])F(a,G,S0.z0,b,G+3,S0.z0,ID.glass); F(34,G,S0.z0,38,G+2,S0.z0,0); for(const y of [G+9,G+10,G+11,G+12])wins(S0.x0,S0.z0,S0.x1,S0.z1,y,ID.window,3); F(S0.x0,G+5,S0.z0-1,S0.x1,G+5,S0.z0-1,ID.paint_red); }
+  { const T=ELC.hobbs; F(T.x0,G,T.z0,T.x1,G+30,T.z1,ID.limestone); F(T.x0+3,G+31,T.z0+3,T.x1-3,G+40,T.z1-3,ID.limestone); F(T.x0+6,G+41,T.z0+6,T.x1-6,G+46,T.z1-6,ID.limestone);
+    for(let y=G+1;y<=G+46;y++)if(y%3){ const i=y<=G+30?0:y<=G+40?3:6; wins(T.x0+i,T.z0+i,T.x1-i,T.z1-i,y,ID.window,2); } F(99,G,T.z0,101,G+2,T.z0,0); F(T.x0+1,G,T.z0+1,T.x1-1,G+3,T.z1-1,0); F(T.x0+1,G-1,T.z0+1,T.x1-1,G-1,T.z1-1,ID.marble); }
+  { const B0=ELC.brown; for(let x=B0.x0;x<=B0.x1;x+=10){ const id=[ID.brick,ID.sandstone,ID.brick,ID.clay][(x/10|0)%4]; shell(x,B0.z0,Math.min(B0.x1,x+9),B0.z1,G,G+B0.h,id); F(x,G+B0.h+1,B0.z0,Math.min(B0.x1,x+9),G+B0.h+1,B0.z1,ID.slate);
+      for(const y of [G+2,G+3,G+6,G+7,G+10,G+11])wins(x,B0.z0,Math.min(B0.x1,x+9),B0.z1,y,ID.window,3); F(x+4,G,B0.z0,x+5,G+2,B0.z0,0); for(let k=0;k<2;k++)F(x+3,G+k,B0.z0-2+k,x+6,G+k,B0.z0-2+k,ID.sandstone); } }
+  { const Pk=ELC.park; F(Pk.x0,G-1,Pk.z0,Pk.x1,G-1,Pk.z1,ID.snow); F(30,G-1,141,46,G-1,150,ID.glass); // the frozen pond
+    for(const [x,z,w] of [[16,140,5],[56,140,5],[22,151,6],[52,151,6],[38,138,6]]){ F(x,G,z,x+w,G,z,ID.snow); F(x,G,z,x,G,z+2,ID.snow); } }
+  { const Pz=ELC.plaza; F(Pz.x0,G-1,Pz.z0,Pz.x1,G-1,Pz.z1,ID.marble); F(96,G-1,138,112,G-1,142,ID.glass); }
+  const tower=(x0,z0,x1,z1,h,id)=>{ F(x0,G,z0,x1,G+h,z1,id); for(let y=G+1;y<G+h;y++)if((y-G)%3)wins(x0,z0,x1,z1,y,ID.window,2); };
+  for(const [x0,z0,x1,z1] of [[124,136,138,154],[142,136,156,154],[4,104,10,120],[62,104,72,120],[86,88,98,90]])tower(x0,z0,x1,z1,Math.min(44,16+Math.floor(r()*26)),[ID.limestone,ID.concrete,ID.brick,ID.steel][Math.floor(r()*4)]); }
+// --- the people: Buddy (your hero, in an elf suit), the elves, Papa Elf, Santa, and New Yorkers
+const EL_CAST={papa:{skin:'#f2d0b8',hair:'short',hairC:'#f2f2f2',beard:'full',eyes:'#3a5a8a',glasses:'round',top:'long',topC:'#c81a2a',bottom:'pants',bottomC:'#2a6a2a',shoes:'boots',shoeC:'#5a3a1a'},
+  santa:{skin:'#f2c8a8',hair:'short',hairC:'#f2f2f2',beard:'long',eyes:'#3a5a8a',top:'long',topC:'#c8102a',bottom:'pants',bottomC:'#c8102a',shoes:'boots',shoeC:'#111111',belt:'buckle'},
+  walter:{skin:'#e8c4a0',hair:'short',hairC:'#6a6a6a',eyes:'#3a4a5a',top:'jacket',topC:'#2a2a34',bottom:'pants',bottomC:'#2a2a34',shoes:'shoes',shoeC:'#111111'},
+  jovie:{skin:'#f2dcc8',hair:'short',hairC:'#e8d070',eyes:'#3a7aa8',top:'long',topC:'#2a8a3a',bottom:'skirt',bottomC:'#c81a2a',shoes:'boots',shoeC:'#111111'},
+  michael:{skin:'#f2d4bc',hair:'short',hairC:'#5a3a20',eyes:'#3a5a3a',top:'hoodie',topC:'#2a5ac8',bottom:'jeans',bottomC:'#3a4a6a',shoes:'sneakers',shoeC:'#f2f2f2'},
+  kidbuddy:{skin:'#f2d0b8',hair:'curly',hairC:'#6a4a2a',eyes:'#4a6a9a',top:'long',topC:'#1a8a3a',bottom:'pants',bottomC:'#f0d040',shoes:'shoes',shoeC:'#111111'}};
+function elHat(par,col,y,s){ const g=grp(par,0,y||0.47,0); mb(g,0.52,0.09,0.52,mm(0xf6f6f6),0,0,0); const c=new THREE.Mesh(new THREE.ConeGeometry(0.25,0.62,8),mm(col)); c.position.set(0,0.33,0.06); c.rotation.x=0.35; g.add(c); msph(g,0.07,mm(0xf6f6f6),0,0.6,0.2); if(s)g.scale.setScalar(s); return g; }
+function elEars(R){ for(const s of[-1,1]){ const e=mb(R.head,0.06,0.16,0.1,mm(0xf0c8a8),s*0.25,0.28,0); e.rotation.z=-s*0.5; } }
+function elElf(par,x,y,z,ry,o,sc){ const pick=a=>a[Math.floor(Math.random()*a.length)], c=pick(['#1a8a3a','#c81a2a','#2a5ac8','#d8a020']);
+  const a=odPerson(par,x,y,z,ry||0,mxLook(Object.assign({top:'long',topC:c,bottom:'pants',bottomC:pick(['#f2f2f2','#c81a2a','#1a8a3a','#f0d040']),shoes:'boots',shoeC:'#5a2a1a',hair:pick(['short','curly','ponytail','bun','spiky']),hairC:pick(['#6a4a2a','#d8a850','#2a1a10','#c8401e'])},o||{})));
+  elHat(a.R.head,o&&o.hat!==undefined?o.hat:(c==='#1a8a3a'?0xc81a2a:0x1a8a3a)); elEars(a.R); a.g.scale.setScalar(sc||0.6); a.base=sc||0.6; return a; }
+function elPerson(par,kind,x,y,z,ry){ if(kind==='papa'){ const a=elElf(par,x,y,z,ry,EL_CAST.papa,0.66); a.kind=kind; return a; }
+  const a=odPerson(par,x||0,y||0,z||0,ry||0,mxLook(EL_CAST[kind]||{})); a.kind=kind;
+  if(kind==='santa'){ elHat(a.R.head,0xc8102a,0.47,1.1); for(const s of[a.R.armL,a.R.armR])mb(s,0.3,0.1,0.3,mm(0xf6f6f6),0,-0.62,0); mb(a.R.torso,0.58,0.1,0.32,mm(0xf6f6f6),0,0.72,0); mb(a.R.torso,0.1,0.7,0.32,mm(0xf6f6f6),0,1.07,-0.01); a.g.scale.set(1.15,1.05,1.15); }
+  if(kind==='kidbuddy'){ elHat(a.R.head,0x1a8a3a); mb(a.R.torso,0.58,0.08,0.32,mm(0xf6f6f6),0,0.72,0); }
+  if(kind==='michael')a.g.scale.setScalar(0.8); return a; }
+// Buddy: your hero in a green elf suit with a white fur trim, yellow tights and a pointy hat
+function elBuddy(S,pack){ const put=(par,w,h,d,col,x,y,z)=>{ const b=box(w,h,d,mm(col)); b.position.set(x,y,z); par.add(b); S.bits.push(b); return b; };
+  put(rig.torso,0.58,0.84,0.34,0x1a8a3a,0,1.0,0); put(rig.torso,0.62,0.1,0.36,0xf6f6f6,0,0.6,0); put(rig.torso,0.6,0.08,0.36,0xf6f6f6,0,1.42,0); put(rig.torso,0.6,0.08,0.36,0x111111,0,0.84,0); put(rig.torso,0.14,0.1,0.02,0xf2c230,0,0.84,-0.19);
+  for(const a of [armL,armR]){ put(a,0.28,0.68,0.28,0x1a8a3a,0,-0.3,0); put(a,0.3,0.08,0.3,0xf6f6f6,0,-0.6,0); } for(const l of [legL,legR])put(l,0.27,0.72,0.27,0xf0d040,0,-0.34,0);
+  const h=elHat(head,0x1a8a3a,0.47); S.bits.push(h);
+  if(pack){ const b=grp(rig.torso,0,1.05,0.42); S.bits.push(b); mb(b,0.62,0.9,0.4,mm(0x8a5a2a),0,0,0); for(let i=0;i<5;i++){ const cc=mcyl(b,0.04,0.04,0.7,mm(i%2?0xf6f6f6:0xd81a2a),-0.24+i*0.12,0.6,0,6); cc.rotation.z=(i-2)*0.12; } for(let i=0;i<6;i++)msph(b,0.05,glowM([0xff3a3a,0x3aff6a,0xffd23a][i%3]),-0.3+i*0.12,0.3,0.21); S.pack=b; } }
+// props
+function elTree(par,x,y,z,h,lit){ const g=grp(par,x,y,z), s=h/8; mcyl(g,0.4*s,0.5*s,1.2*s,mm(0x5a3a1a),0,0.6*s,0,8); const orn=[];
+  for(let i=0;i<4;i++){ const r=(3.2-i*0.7)*s, hh=(2.6-i*0.2)*s, yy=(1.6+i*1.6)*s; const c=new THREE.Mesh(new THREE.ConeGeometry(r,hh,10),mm(0x1a6a34)); c.position.y=yy+hh/2; g.add(c); const sn=new THREE.Mesh(new THREE.ConeGeometry(r*0.4,hh*0.3,10),mm(0xf6f6f6)); sn.position.y=yy+hh*0.88; g.add(sn);
+    for(let k=0;k<7;k++){ const a=k/7*Math.PI*2+i, o=msph(g,0.14*s,glowM([0xff3a3a,0xffd23a,0x3a8aff,0xff7ae8,0x3aff6a][(k+i)%5]),Math.cos(a)*r*0.75,yy+hh*0.25,Math.sin(a)*r*0.75); orn.push(o); } }
+  const star=new THREE.Mesh(new THREE.OctahedronGeometry(0.5*s),glowM(0xffe23a)); star.position.y=8.6*s; g.add(star); orn.forEach(o=>o.visible=lit!==false); star.visible=lit!==false; return {g,orn,star}; }
+function elCane(par,x,y,z){ const g=grp(par,x,y,z); for(let i=0;i<9;i++)mcyl(g,0.12,0.12,0.4,mm(i%2?0xf6f6f6:0xd81a2a),0,0.2+i*0.4,0,8); const hk=grp(g,0.3,3.6,0); for(let i=0;i<5;i++){ const a=i/4*Math.PI; mcyl(hk,0.12,0.12,0.3,mm(i%2?0xf6f6f6:0xd81a2a),-Math.cos(a)*0.3,Math.sin(a)*0.3,0,8).rotation.z=a-Math.PI/2; } msph(g,0.22,glowM(0xfff2c0),0.6,3.2,0); return g; }
+function elGift(par,col){ const g=grp(par,0,0,0); mb(g,0.6,0.5,0.6,mm(col),0,0.25,0); mb(g,0.62,0.52,0.12,mm(0xffd23a),0,0.25,0); mb(g,0.12,0.52,0.62,mm(0xffd23a),0,0.25,0); for(const s of[-1,1]){ const b=mb(g,0.22,0.12,0.06,mm(0xffd23a),s*0.1,0.55,0); b.rotation.z=s*0.5; } return g; }
+function elDeer(par){ const g=grp(par,0,0,0), b=mm(0x8a5a32), d=mm(0x5a3a1e); mb(g,0.5,0.5,1.1,b,0,1.0,0); mb(g,0.52,0.1,0.3,mm(0xd81a2a),0,1.27,-0.3); const nk=grp(g,0,1.2,-0.5); mb(nk,0.24,0.6,0.24,b,0,0.25,-0.05).rotation.x=-0.4; const hd=grp(nk,0,0.55,-0.2); mb(hd,0.26,0.28,0.44,b,0,0,-0.1); mb(hd,0.12,0.1,0.06,mm(0x2a1a10),0,-0.02,-0.34);
+  for(const s of[-1,1]){ const an=grp(hd,s*0.1,0.16,0.04); mb(an,0.05,0.4,0.05,d,0,0.2,0).rotation.z=-s*0.3; mb(an,0.24,0.04,0.04,d,s*0.1,0.3,0); mb(an,0.04,0.2,0.04,d,s*0.2,0.38,0); msph(hd,0.035,mm(0x111111),s*0.1,0.05,-0.26); }
+  const legs=[]; for(const [x,z] of [[-0.16,-0.4],[0.16,-0.4],[-0.16,0.4],[0.16,0.4]]){ const l=grp(g,x,0.8,z); mb(l,0.12,0.8,0.12,b,0,-0.4,0); mb(l,0.13,0.12,0.13,mm(0x2a1a10),0,-0.78,0); legs.push(l); } msph(g,0.09,mm(0xf6f6f6),0,1.15,0.56); return {g,legs}; }
+function elSleighMesh(par){ const g=grp(par,0,0,0), red=mm(0xc8102a), gold=mm(0xf2c230); mb(g,1.6,0.7,2.4,red,0,0.75,0.2); mb(g,1.6,1.0,0.25,red,0,1.2,1.3); mb(g,1.6,0.5,0.3,red,0,1.1,-1.0).rotation.x=-0.4; mb(g,1.7,0.08,2.5,gold,0,1.12,0.2);
+  for(const s of[-1,1]){ mb(g,0.08,0.08,3.0,gold,s*0.65,0.1,0); const c=mb(g,0.08,0.5,0.08,gold,s*0.65,0.32,-1.5); c.rotation.x=-0.5; for(const z of [-0.6,0.8])mb(g,0.07,0.4,0.07,gold,s*0.65,0.32,z); }
+  const sack=msph(g,0.55,mm(0x8a1a1a),0,1.45,0.75,1,0.9,0.9); const deer=[]; for(let i=0;i<4;i++){ const d=elDeer(g); d.g.position.set((i%2?0.45:-0.45),-0.1,-3.0-Math.floor(i/2)*1.6); deer.push(d); }
+  for(const s of[-1,1])mb(g,0.03,0.03,3.6,gold,s*0.45,1.1,-2.9); return {g,deer,sack}; }
+function elDeerRun(S,t,on){ for(const d of S.deer)d.legs.forEach((l,k)=>l.rotation.x=on?Math.sin(t*12+k*1.6+(k>1?Math.PI:0))*0.6:0); }
+function elBear(par){ const g=grp(par,0,0,0), w=mm(0xf2f2ee); mb(g,1.0,0.9,1.8,w,0,0.95,0); const hd=grp(g,0,1.3,-1.0); mb(hd,0.6,0.55,0.6,w,0,0,0); mb(hd,0.3,0.25,0.3,w,0,-0.08,-0.4); mb(hd,0.1,0.08,0.06,mm(0x111111),0,0,-0.56); for(const s of[-1,1]){ mb(hd,0.14,0.14,0.08,w,s*0.22,0.3,0); mb(hd,0.06,0.06,0.02,mm(0x111111),s*0.15,0.1,-0.31); }
+  const legs=[]; for(const [x,z] of [[-0.32,-0.6],[0.32,-0.6],[-0.32,0.6],[0.32,0.6]]){ const l=grp(g,x,0.6,z); mb(l,0.32,0.6,0.32,w,0,-0.3,0); legs.push(l); } return {g,hd,legs}; }
+function elRevolver(par){ const g=grp(par,0,0,0); mcyl(g,0.08,0.08,2.8,mm(0x8a6a2a),0,1.4,0,8); mcyl(g,1.5,1.5,0.15,mm(0x8a6a2a),0,2.85,0,20); const wings=grp(g,0,0,0); const gl=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.4,depthWrite:false});
+  for(let i=0;i<4;i++){ const p=mb(wings,1.4,2.6,0.05,gl,0.72,1.35,0); const w=grp(wings,0,0,0); w.rotation.y=i*Math.PI/2; w.add(p); mb(w,0.05,2.6,0.08,mm(0x8a6a2a),1.42,1.35,0); } return {g,wings}; }
+function elEscalator(par){ const g=grp(par,0,0,0), m=mm(0x8a8a90), st=[]; const L=10, Hh=7; const side=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.35,depthWrite:false});
+  for(const s of[-1,1]){ const r=mb(g,0.08,1.0,Math.hypot(L,Hh)+1,side,s*0.7,Hh/2+0.5,-L/2); r.rotation.x=Math.atan2(Hh,L); const h=mb(g,0.12,0.1,Math.hypot(L,Hh)+1,mm(0x1a1a1a),s*0.7,Hh/2+1.05,-L/2); h.rotation.x=Math.atan2(Hh,L); }
+  for(let i=0;i<20;i++){ const b=mb(g,1.3,0.12,0.6,m,0,0,0); st.push(b); } return {g,st,L,Hh}; }
+// the shimmering northern lights over the North Pole
+function elAurora(par){ const c=canvasTex(64,128); const x=c.x, gr=x.createLinearGradient(0,0,0,128); gr.addColorStop(0,'rgba(80,255,170,0)'); gr.addColorStop(0.5,'rgba(80,255,170,0.7)'); gr.addColorStop(1,'rgba(120,80,255,0)'); x.fillStyle=gr; x.fillRect(0,0,64,128); c.t.needsUpdate=true; const out=[];
+  for(let i=0;i<3;i++){ const m=new THREE.Mesh(new THREE.PlaneGeometry(150,22,20,1),new THREE.MeshBasicMaterial({map:c.t,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false})); m.position.set(80,ELC.G+48+i*4,-20+i*12); m.rotation.x=-0.3; par.add(m); out.push(m); } return out; }
+let elK=null;
+function onElf(){ return curPlace()==='elf'&&!!elK; }
+const EL_DECO=[[20,4,56],[50,4,56],[110,4,56],[140,4,56],[66,4,90],[90,4,90],[130,4,101],[60,4,146]];
+const EL_GIFTS=[[22,4,20],[30,4,47],[58,4,60],[118,4,34],[146,4,22],[80,ELC.G+15.1,22],[79.5,4,78],[12,4,100.5],[134,ELC.G+14.1,112],[66,4,153],[118,4,154],[46,ELC.G+8.1,118]];
+function elSave(){ try{ localStorage.setItem('blockstar_elf',JSON.stringify({spirit:elK.spirit,gifts:elK.giftsGot,deco:elK.decoDone})); }catch(e){} }
+function elLoad(){ try{ return JSON.parse(localStorage.getItem('blockstar_elf')||'null')||{}; }catch(e){ return {}; } }
+function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add(root); const G=ELC.G, sv=elLoad(); const K=elK={root,t:0,speak:[],elves:[],walkers:[],taxis:[],kids:[],balls:[],gifts:[],deco:[],spirit:Math.max(0,Math.min(100,+sv.spirit||0)),giftsGot:Array.isArray(sv.gifts)?sv.gifts:[],decoDone:Array.isArray(sv.deco)?sv.deco:[]};
+  K.aurora=elAurora(root); K.bigTree=elTree(root,80,G,48,12); for(let z=40;z<=68;z+=7)for(const x of [74,86])elCane(root,x,G,z);
+  // elves busy in the village, carrying presents
+  for(let i=0;i<14;i++){ const e=elElf(root,0,G,0,0); const gift=elGift(e.R.armL,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); gift.position.set(0.18,-0.75,-0.2); gift.scale.setScalar(0.7); e.R.armL.rotation.x=e.R.armR.rotation.x=0.9;
+    K.elves.push({a:e,a0:Math.random()*6.28,r:8+Math.random()*16,c:[i%2?30:126,30],sp:(0.15+Math.random()*0.2)*(i%3?1:-1)}); }
+  // the workshop's toy table, and Santa's sleigh in the snow
+  { const T=ELC.toy, d=grp(root,T[0],T[1],T[2]); mb(d,6,0.9,1.4,mm(0x6a4a2a),0,0.45,0); const belt=mb(d,6.2,0.05,1.0,mm(0x2a2a2e),0,0.93,0); K.beltToys=[]; for(let i=0;i<6;i++){ const g2=elGift(d,[0xc81a2a,0x2a5ac8,0x1a8a3a][i%3]); g2.scale.setScalar(0.5); g2.position.set(-3+i,0.95,0); K.beltToys.push(g2); }
+    for(let i=0;i<3;i++){ const e=elElf(d,-2+i*2,0,-1.1,0); e.R.armL.rotation.x=e.R.armR.rotation.x=1.1; K.elves.push({a:e,work:true}); } mb(d,1.6,0.6,0.05,mm(0x2a1a10),0,2.6,0.75); }
+  { const s=elSleighMesh(root); K.sleigh=Object.assign(s,{x:ELC.sleigh[0],y:ELC.sleigh[1],z:ELC.sleigh[2],h:0,vx:0,vy:0,vz:0,ride:false,film:false}); }
+  // the forest: snowy pines all along the mountains
+  { const pts=[]; for(let i=0;i<260;i++){ const x=2+Math.random()*156, z=58+Math.random()*30; if(x>70&&x<90)continue; pts.push([x,z,2.5+Math.random()*2.5]); } const geo=new THREE.ConeGeometry(1,1,7), M=new THREE.InstancedMesh(geo,mm(0x1a5a34),pts.length), S2=new THREE.InstancedMesh(geo,mm(0xf6f6f6),pts.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion();
+    pts.forEach(([x,z,h],k)=>{ const y=standY(Math.floor(x),Math.floor(z)); m4.compose(new THREE.Vector3(x,y+h*0.9,z),q,new THREE.Vector3(h*0.45,h*1.8,h*0.45)); M.setMatrixAt(k,m4); m4.compose(new THREE.Vector3(x,y+h*1.6,z),q,new THREE.Vector3(h*0.2,h*0.5,h*0.2)); S2.setMatrixAt(k,m4); }); root.add(M,S2); }
+  K.bear=elBear(root); K.bear.g.position.set(70,G,64); K.bear.g.rotation.y=-Math.PI/2;
+  // the tunnel's magic arches
+  K.arches=[]; for(const z of [ELC.ridge[0]-4.5,ELC.ridge[1]+4.5]){ const g=grp(root,80,G,z); const ring=new THREE.Mesh(new THREE.TorusGeometry(4.2,0.3,8,24,Math.PI),glowM(0xff3a6a)); ring.position.y=0.2; g.add(ring); for(let i=0;i<9;i++){ const a=i/8*Math.PI; msph(g,0.25,glowM(i%2?0xffffff:0x3aff8a),Math.cos(a)*4.2,Math.sin(a)*4.2+0.2,0); } K.arches.push(g); }
+  // New York: the store's sign, its window displays, the revolving door and the escalator, the giant tree, lamps, cocoa, taxis and people
+  { const G0=G, sc=canvasTex(512,64); sc.x.fillStyle='#8a0a1a'; sc.x.fillRect(0,0,512,64); sc.x.fillStyle='#ffe8a0'; sc.x.font='bold 44px Georgia,serif'; sc.x.textAlign='center'; sc.x.fillText("MERRIWETHER'S",256,48); sc.t.needsUpdate=true;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(20,2.5),new THREE.MeshBasicMaterial({map:sc.t})); m.position.set(36,G0+6.6,101.4); m.rotation.y=Math.PI; root.add(m);
+    for(const x of [23.5,48.5]){ const w=grp(root,x,G0,104); elTree(w,-3,0,0,3.2); for(let i=0;i<5;i++){ const g2=elGift(w,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.position.set(-1+i*1.1,0,-0.8); } const tr=grp(w,2.6,0,0); for(let i=0;i<6;i++)mb(tr,0.5,0.4,0.6,mm(i%2?0xd81a2a:0x2a5ac8),i*0.55-1.4,0.3,0.6); K.winTrain=K.winTrain||[]; K.winTrain.push(tr); }
+    K.rev=elRevolver(root); K.rev.g.position.set(36.5,G0,101); K.esc=elEscalator(root); K.esc.g.position.set(24,G0,114);
+    for(let i=0;i<4;i++){ for(const [x,z] of [[18+i*10,118],[18+i*10,110]]){ mb(root,6,1.8,0.8,mm(0x6a4a2a),x,G0+0.9,z); for(let k=0;k<6;k++){ const g2=elGift(root,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][(k+i)%4]); g2.scale.setScalar(0.6); g2.position.set(x-2.5+k,G0+1.8,z); } } }
+    K.storeTree=elTree(root,46,G0,111,6.5); }
+  K.plazaTree=elTree(root,...ELC.tree,22); for(const x of [10,26,42,58,90,106,122,138,150])for(const z of [90.5,101.3]){ const p=grp(root,x,G,z); mcyl(p,0.08,0.1,4.6,mm(0x2a3a2a),0,2.3,0,6); msph(p,0.25,glowM(0xfff2c0),0,4.7,0); mb(p,0.9,0.1,0.06,mm(0xd81a2a),0,3.8,0); }
+  { const cart=grp(root,70,G,101.2); mb(cart,2,1,1,mm(0xc8102a),0,0.8,0); mb(cart,2.4,0.1,1.4,mm(0xf6f6f6),0,2.3,0); for(const s of[-1,1])mcyl(cart,0.04,0.04,1.3,mm(0x2a2a2a),s*1.1,1.65,0,5); for(let i=0;i<3;i++)mcyl(cart,0.08,0.07,0.16,mm(0xf2f2f2),-0.5+i*0.5,1.38,0,8);
+    const sg=canvasTex(256,64); sg.x.fillStyle='#fff'; sg.x.fillRect(0,0,256,64); sg.x.fillStyle='#8a1a1a'; sg.x.font='bold 30px sans-serif'; sg.x.textAlign='center'; sg.x.fillText('HOT COCOA ☕',128,44); sg.t.needsUpdate=true; const sp=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5),new THREE.MeshBasicMaterial({map:sg.t})); sp.position.set(0,2.0,-0.52); sp.rotation.y=Math.PI; cart.add(sp); K.cocoa=elPerson(root,'walter',70,G,102.2,Math.PI); dressRig(K.cocoa.R,mxLook({top:'jacket',topC:'#5a3a2a',hat:'beanie',hatC:'#c81a2a',hair:'short',hairC:'#2a1a10'})); }
+  for(let i=0;i<5;i++){ const c=mxCar(root,0xf2c21a); mb(c,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); K.taxis.push({c,x:i*32,z:i%2?94:97.5,dir:i%2?1:-1,sp:7+i}); c.visible=!!demo; }
+  for(let i=0;i<14;i++){ const a=odPerson(root,0,G,0,0,mxLook({top:['jacket','hoodie','long'][i%3],topC:['#c81a2a','#2a3a6a','#1a6a3a','#5a3a2a','#3a3a3a'][i%5],bottom:'pants',bottomC:'#2a2a2e',hat:i%3?'beanie':'none',hatC:['#c81a2a','#f2f2f2','#1a6a3a'][i%3],hair:['short','long','bun','curly'][i%4]}));
+    if(i%2){ const bag=mb(a.R.armR,0.3,0.36,0.14,mm([0xc81a2a,0x1a8a3a,0xd8a020][i%3]),0,-0.85,0); } K.walkers.push({a,x:Math.random()*150+4,z:i%2?90.4:100.6,dir:i%2?1:-1,sp:1+Math.random()*0.6}); }
+  // snowball kids behind their forts in the park
+  for(const [x,z] of [[18.5,141.6],[58.5,141.6],[24.5,152.6],[54.5,152.6],[41,139.6]]){ const a=odPerson(root,x,G,z,Math.PI,mxLook({top:'hoodie',topC:['#c81a2a','#2a5ac8','#d8a020','#1a8a3a','#8a2ad8'][K.kids.length],bottom:'pants',bottomC:'#2a3a5a',hat:'beanie',hatC:'#f2f2f2',hair:'short'})); a.g.scale.setScalar(0.75);
+    K.kids.push({a,p:[x,G+0.2,z],hw:0.35,h:1.3,down:0,throwT:1+Math.random()*3}); }
+  // trees to decorate and presents to find
+  EL_DECO.forEach((p,i)=>{ const done=K.decoDone.includes(i), t=elTree(root,p[0],p[1],p[2],3.4,done); const glow=msph(t.g,0.25,glowM(0xfff6c0),0,4.2,0); glow.visible=!done; K.deco.push({t,p,i,done,glow}); });
+  EL_GIFTS.forEach((p,i)=>{ const g=elGift(root,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020,0x8a2ad8][i%5]); g.position.set(...p); g.visible=!K.giftsGot.includes(i); K.gifts.push({g,p,i}); });
+  if(!demo)for(const [x,z,ry] of [[120,97.5,Math.PI/2],[140,94,-Math.PI/2]]){ if(VEH.taxi){ const v=makeVehicle('taxi',x,G,z,ry); freeVehicles.push(v); } }
+  elBuildSets(K); }
+function clearElfLife(){ elStageClear(); const K=elK; if(!K)return; scene.remove(K.root); odFree(K.root); elK=null; elToyClose(); elHud(false); if(elSplatEl)elSplatEl.style.opacity=0; }
+// skies: the twilight North Pole under the northern lights, a snowy city day, and the night
+function elSky(k){ const S={np:[0x1a2a5a,[0.8,0.84,1],40,190],day:[0xbcd0e4,[1,1,1],50,200],night:[0x0c1430,[0.62,0.66,0.86],34,170],in:[0x2a1a10,[1,0.92,0.82],30,120]}[k]||[0x1a2a5a,[0.8,0.84,1],40,190];
+  scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false; scene.fog.near=S[2]; scene.fog.far=S[3];
+  if(camera.far<340){ camera.far=340; camera.updateProjectionMatrix(); } setWeather(k==='in'?'clear':'snow'); if(elK)elK.aurora.forEach(a=>a.visible=k==='np'||k==='night'); }
+function elTick(dt){ const K=elK; K.t+=dt; const t=K.t, G=ELC.G;
+  K.aurora.forEach((a,i)=>{ a.material.opacity=0.55+Math.sin(t*0.4+i*2)*0.3; a.position.x=80+Math.sin(t*0.07+i)*12; const P=a.geometry.attributes.position; for(let v=0;v<P.count;v++){ P.setZ(v,Math.sin(P.getX(v)*0.06+t*0.5+i)*6); } P.needsUpdate=true; });
+  for(const T of [K.bigTree,K.plazaTree,K.storeTree])T.orn.forEach((o,i)=>o.material.color.setHex(Math.floor(t*2+i)%3===0?0xffffff:[0xff3a3a,0xffd23a,0x3a8aff,0xff7ae8,0x3aff6a][i%5])); [K.bigTree,K.plazaTree,K.storeTree].forEach(T=>T.star.rotation.y+=dt);
+  for(const e of K.elves){ if(e.work){ e.a.R.armL.rotation.x=1.1+Math.sin(t*12+e.a.ph)*0.3; e.a.R.armR.rotation.x=1.1-Math.sin(t*12+e.a.ph)*0.3; animRig(e.a.R,dt,0); continue; } if(e.film)continue;
+    e.a0+=e.sp*dt; const x=e.c[0]+Math.cos(e.a0)*e.r, z=e.c[1]+Math.sin(e.a0)*e.r*0.9; e.a.g.position.set(x,G,z); e.a.g.rotation.y=Math.atan2(Math.sin(e.a0)*e.sp,-Math.cos(e.a0)*e.sp*0.9)+Math.PI; odWalk(e.a,dt,true,10); e.a.R.armL.rotation.x=e.a.R.armR.rotation.x=0.9; }
+  K.beltToys.forEach((g,i)=>{ g.position.x=-3+((t*0.8+i)%6); });
+  for(const w of K.walkers){ w.x+=w.dir*w.sp*dt; if(w.x>156)w.x=2; if(w.x<2)w.x=156; w.a.g.position.set(w.x,G,w.z); w.a.g.rotation.y=w.dir>0?-Math.PI/2:Math.PI/2; odWalk(w.a,dt,true,7); }
+  for(const c of K.taxis){ c.c.visible=!!demo; if(c.film)continue; c.x+=c.dir*c.sp*dt; if(c.x>165)c.x=-5; if(c.x<-5)c.x=165; c.c.position.set(c.x,G,c.z); c.c.rotation.y=c.dir>0?-Math.PI/2:Math.PI/2; }
+  K.rev.wings.rotation.y+=dt*(K.revSp||0.6); K.esc.st.forEach((b,i)=>{ const u=((i/20)+t*0.08)%1, L=K.esc.L, Hh=K.esc.Hh; b.position.set(0,0.1+u*Hh,-u*L); }); (K.winTrain||[]).forEach((tr,i)=>tr.position.x=2.6+Math.sin(t*0.8+i)*0.4);
+  K.arches.forEach(g=>g.children.forEach((c,i)=>{ if(i>0)c.material.color.setHex(Math.floor(t*3+i)%2?0xffffff:0x3aff8a); }));
+  K.deco.forEach(d=>{ if(!d.done){ d.glow.scale.setScalar(1+Math.sin(t*4)*0.3); } else d.t.orn.forEach((o,i)=>o.material.color.setHex(Math.floor(t*2+i)%3===0?0xffffff:[0xff3a3a,0xffd23a,0x3a8aff,0xff7ae8,0x3aff6a][i%5])); });
+  for(const g of K.gifts){ if(!g.g.visible)continue; g.g.rotation.y+=dt; g.g.position.y=g.p[1]+Math.abs(Math.sin(t*2+g.i))*0.15; if(!demo&&onElf()&&Math.hypot(pl.p[0]-g.p[0],pl.p[2]-g.p[2])<1.5&&Math.abs(pl.p[1]-g.p[1])<2.2)elGiftGet(g); }
+  for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
+  K.bear.g.position.y=G; if(!demo){ K.bear.hd.rotation.y=Math.sin(t*0.5)*0.5; }
+  elSleighTick(dt); elKidsTick(dt); elHud(!demo&&onElf()); if(!demo&&onElf()&&owned&&!owned.includes('snowball'))elGiveSnow();
+  if(!demo&&onElf()&&!K.tip&&K.t>3){ K.tip=true; toast('🎄 Welcome to the North Pole! Santa\'s sleigh is parked by the big tree (press E to fly it). Find presents and decorate glowing trees to raise the Christmas Spirit!'); }
+  if(!demo&&onElf()&&!K.tip2&&Math.hypot(pl.p[0]-ELC.toy[0],pl.p[2]-ELC.toy[2])<7){ K.tip2=true; toast('🧸 The toy line! Stand at the table and press E to build toys with the elves.'); }
+  if(!demo&&onElf()&&!K.tip3&&pl.p[2]>132&&pl.p[0]<72){ K.tip3=true; toast('❄️ A snowball fight in the park! Throw snowballs at the kids, and duck their throws!'); }
+  if(wxPts&&!demo)updateWeather(dt); if(demo&&wxPts)updateWeather(dt); if((demo&&demo.sc&&isElf(demo.sc))||(!demo&&onElf()))elMusicTick(dt); }
+// --- presents, decorations and the Christmas Spirit meter
+let elHudEl=null;
+function elHud(show){ if(!elHudEl){ if(!show)return; elHudEl=document.createElement('div'); elHudEl.className='ui'; elHudEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:6;font:800 13px sans-serif;color:#fff;background:rgba(120,10,20,.82);border:2px solid #fff;border-radius:12px;padding:5px 10px;display:none;pointer-events:none;white-space:nowrap'; document.body.appendChild(elHudEl); }
+  elHudEl.style.display=show?'block':'none'; if(show&&elK){ const v=Math.round(elK.spirit), key=v+'|'+elK.giftsGot.length; if(elHudEl.dataset.k!==key){ elHudEl.dataset.k=key; elHudEl.innerHTML='🎄 Christmas Spirit '+'<span style="display:inline-block;width:70px;height:9px;background:#3a0a10;border-radius:5px;vertical-align:middle;overflow:hidden"><span style="display:block;height:100%;width:'+v+'%;background:#3aff8a"></span></span> '+v+'% · 🎁 '+elK.giftsGot.length+'/'+EL_GIFTS.length; } } }
+function elSpirit(n,why){ const K=elK, was=K.spirit; K.spirit=Math.min(100,K.spirit+n); elSave(); if(was<100&&K.spirit>=100)setTimeout(()=>toast('🌟 Christmas Spirit is at 100%! Santa\'s sleigh flies at top speed now!'),2300); }
+function elGiftGet(g){ g.g.visible=false; const K=elK; if(!K.giftsGot.includes(g.i))K.giftsGot.push(g.i); coins+=5; updateHUD(); sfx('coin'); burst(g.p[0]-0.5,g.p[1]+0.4,g.p[2]-0.5,new THREE.Color(0xffd23a),14); elSpirit(6); toast('🎁 You found a present! +5 coins, +6 Christmas Spirit ('+K.giftsGot.length+' of '+EL_GIFTS.length+')'); queueSave(); }
+function elDecorate(d){ d.done=true; d.glow.visible=false; d.t.orn.forEach(o=>o.visible=true); d.t.star.visible=true; elK.decoDone.push(d.i); coins+=3; updateHUD(); sfx('coin'); burst(d.p[0]-0.5,d.p[1]+3,d.p[2]-0.5,new THREE.Color(0xffe23a),18); elSpirit(10); toast('🎄 Beautiful! You decorated the tree. +10 Christmas Spirit'); queueSave(); }
+// --- Santa's sleigh: walk up, press E, and fly (more Christmas Spirit = faster)
+function elSleighTick(dt){ const H=elK.sleigh; if(!H)return; const t=elK.t; elDeerRun(H,t,H.ride||H.film); if(H.ride){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.9; if(Math.random()<dt*6)snd(()=>noise(7000,0.05,0.03,'highpass')); }
+  if(!H.film){ H.g.position.set(H.x,H.y+(H.ride&&H.y>ELC.G+1?Math.sin(t*2)*0.08:0),H.z); H.g.rotation.set(H.tilt||0,H.h,H.roll||0,'YXZ'); } }
+function elSleighUpdate(dt){ const H=elK.sleigh; let ix=joy.x, iz=joy.y; if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
+  const P=padRead(); ix+=P.lx; iz+=P.ly; const up=(keys.Space||upHeld||P.a)?1:0, down=(keys.ShiftLeft||keys.ShiftRight||demoDown||P.b)?1:0, c=Math.cos(yaw), sn=Math.sin(yaw), fwd=-iz, top=9+elK.spirit*0.07;
+  H.vx+=((-sn*fwd+c*ix)*top-H.vx)*Math.min(1,dt*1.3); H.vz+=((-c*fwd-sn*ix)*top-H.vz)*Math.min(1,dt*1.3); H.vy+=((up-down)*6-H.vy)*Math.min(1,dt*2);
+  const sp=Math.hypot(H.vx,H.vz); if(sp>0.4){ let dh=Math.atan2(-H.vx,-H.vz)-H.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; H.h+=dh*Math.min(1,dt*2.4); } H.tilt=-Math.min(0.18,H.vy*0.03); H.roll=-ix*0.15;
+  const gy=(x,z)=>standY(Math.floor(x),Math.floor(z)), nx=Math.max(2,Math.min(W-2,H.x+H.vx*dt)), nz=Math.max(2,Math.min(D-2,H.z+H.vz*dt)); if(gy(nx,nz)<=H.y+0.3){ H.x=nx; H.z=nz; } else { H.vx*=-0.3; H.vz*=-0.3; }
+  const gr=gy(H.x,H.z); H.y=Math.min(60,H.y+H.vy*dt); if(H.y<gr){ H.y=gr; H.vy=Math.max(0,H.vy); }
+  pl.p=[H.x+Math.sin(H.h)*0.3,H.y+0.75,H.z+Math.cos(H.h)*0.3]; pl.v=[0,0,0]; $('tint').style.opacity=0; return {hs:0}; }
+function elSleighBoard(){ const H=elK.sleigh; H.ride=true; H.vx=H.vz=H.vy=0; yaw=H.h; if(camMode===1)camMode=3; toast('🛷 Up, up and away! Move to fly where you look, Space to climb, Shift to dive. E to get out once you land.'); }
+function elSleighOff(){ const H=elK.sleigh; if(H.y-standY(Math.floor(H.x),Math.floor(H.z))>1.4){ toast('🛷 Land first! Hold Shift to go down.'); return; } H.ride=false; const c=Math.cos(H.h), s=Math.sin(H.h); pl.p=[H.x+c*1.8,H.y+0.2,H.z-s*1.8]; pl.v=[0,0,0]; unstick(pl); }
+function elAction(){ const K=elK; if(!K||!onElf()||demo)return null; const H=K.sleigh; if(H&&H.ride)return {label:'🛷 Get out',fn:elSleighOff};
+  if(H&&Math.hypot(pl.p[0]-H.x,pl.p[2]-H.z)<3&&Math.abs(pl.p[1]-H.y)<2.2)return {label:'🛷 Fly Santa\'s sleigh',fn:elSleighBoard};
+  if(!elToy&&Math.hypot(pl.p[0]-ELC.toy[0],pl.p[2]-(ELC.toy[2]+1.4))<3.2&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'🧸 Build toys',fn:elToyOpen};
+  for(const d of K.deco)if(!d.done&&Math.hypot(pl.p[0]-d.p[0],pl.p[2]-d.p[2])<2.6&&Math.abs(pl.p[1]-d.p[1])<2)return {label:'🎄 Decorate this tree',fn:()=>elDecorate(d)}; return null; }
+// --- snowballs: throw them at the kids in the park (they fall over laughing, then pop back up), and duck theirs
+WP.snowball={id:'snowball',name:'Snowballs',icon:'❄️',dmg:1,cd:0.35,ranged:true,spd:24,grav:9,range:40,fact:'Snow packs into a good snowball when it is close to melting, around 0 °C. Very cold snow is too dry to stick together.'}; WEAPON_IDS.push('snowball');
+function elGiveSnow(){ if(demo||!owned||owned.includes('snowball'))return; owned.push('snowball'); weapon='snowball'; refreshWeapon(); queueSave(); }
+function elSnowMesh(){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,6),new THREE.MeshLambertMaterial({color:0xffffff})); m.userData.own=true; const g=new THREE.Group(); g.add(m); return g; }
+function elKidAt(x,y,z){ if(!elK)return null; for(const k of elK.kids)if(k.down<=0&&boxHit(k,x,y,z,0.2))return k; return null; }
+function elKidHit(k){ k.down=4; burst(k.p[0]-0.5,k.p[1]+1,k.p[2]-0.5,new THREE.Color(1,1,1),14); coins+=1; updateHUD(); sfx('coin'); snd(()=>{ tone('sine',700,300,0.2,0.06); tone('sine',900,500,0.2,0.05,0.15); }); if(Math.random()<0.4)npcSay(k.a,['Hahaha! Got me!','No fair, you\'re too good!','Whoa! Nice throw!'][Math.floor(Math.random()*3)]); elK.speak.includes(k.a)||elK.speak.push(k.a); }
+let elSplatEl=null;
+function elSplat(){ if(!elSplatEl){ elSplatEl=document.createElement('div'); elSplatEl.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:5;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.95) 0,rgba(255,255,255,.8) 18%,rgba(255,255,255,0) 45%);opacity:0;transition:opacity .9s'; document.body.appendChild(elSplatEl); }
+  elSplatEl.style.transition='none'; elSplatEl.style.opacity=1; requestAnimationFrame(()=>{ elSplatEl.style.transition='opacity 1.2s'; elSplatEl.style.opacity=0; }); snd(()=>noise(900,0.3,0.25,'lowpass')); toast('❄️ SPLAT! You got hit!'); }
+function elKidsTick(dt){ const K=elK; for(const k of K.kids){ const A=k.a; if(k.down>0){ k.down-=dt; A.g.rotation.x=-Math.min(1.4,(4-k.down)*5)*(k.down>0.4?1:k.down/0.4); A.g.position.y=ELC.G; animRig(A.R,dt,0); continue; } A.g.rotation.x=0;
+    const dx=pl.p[0]-k.p[0], dz=pl.p[2]-k.p[2], d=Math.hypot(dx,dz); k.throwT-=dt; const ducking=k.throwT>1.2; A.g.position.set(k.p[0],ELC.G-(ducking?0.45:0),k.p[2]); if(d<24)A.g.rotation.y=Math.atan2(-dx,-dz);
+    A.R.armR.rotation.x=k.throwT<0.4?2.6:0.3; animRig(A.R,dt,0);
+    if(k.throwT<=0){ k.throwT=2.2+Math.random()*2.5; if(!demo&&onElf()&&d<22&&!dead){ const from=[k.p[0],ELC.G+1.9,k.p[2]], to=[pl.p[0]+(Math.random()-0.5)*1.2,pl.p[1]+1.2,pl.p[2]+(Math.random()-0.5)*1.2], T=Math.max(0.5,d/14), v=[(to[0]-from[0])/T,(to[1]-from[1])/T+4.9*T,(to[2]-from[2])/T];
+      const m=elSnowMesh(); K.root.add(m); m.position.set(...from); K.balls.push({m,p:from,v,t:0}); snd(()=>noise(1500,0.12,0.06,'bandpass')); } } }
+  for(const b of K.balls.slice()){ b.t+=dt; b.v[1]-=9.8*dt; for(let i=0;i<3;i++)b.p[i]+=b.v[i]*dt; b.m.position.set(...b.p); const hitMe=Math.hypot(b.p[0]-pl.p[0],b.p[2]-pl.p[2])<0.7&&b.p[1]>pl.p[1]&&b.p[1]<pl.p[1]+2;
+    if(hitMe||b.p[1]<ELC.G||b.t>4||solidAt(Math.floor(b.p[0]),Math.floor(b.p[1]),Math.floor(b.p[2]))){ if(hitMe&&!demo)elSplat(); burst(b.p[0]-0.5,b.p[1],b.p[2]-0.5,new THREE.Color(1,1,1),6); K.root.remove(b.m); b.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); K.balls.splice(K.balls.indexOf(b),1); } } }
+// --- the toy line: grab the right parts off the belt, in order, to build as many toys as you can before the whistle
+let elToy=null;
+const EL_TOYS=[{n:'🚂 Toy train',parts:['🟥 Engine','⚫ Wheels','🔔 Bell']},{n:'🧸 Teddy bear',parts:['🟫 Body','🐻 Head','🎀 Bow']},{n:'🤖 Robot',parts:['⬜ Body','🔩 Bolts','📡 Antenna']},{n:'🪁 Kite',parts:['🔷 Sail','🧵 String','🎀 Bow']},{n:'🥁 Drum',parts:['🟨 Drum','⚪ Top','🥢 Sticks']}];
+function elToyOpen(){ if(elToy)return; if(document.pointerLockElement)document.exitPointerLock(); const el=document.createElement('div'); el.className='ui'; el.style.cssText='position:fixed;inset:0;z-index:30;background:rgba(20,8,10,0.85);display:flex;align-items:center;justify-content:center;padding:14px;font:600 15px sans-serif;color:#fff';
+  el.innerHTML='<div style="max-width:520px;width:100%;background:#7a1020;border:3px solid #f2c230;border-radius:16px;padding:14px;text-align:center"><b style="font-size:19px">🧸 Santa\'s Toy Line</b><div id="tyT" style="margin:4px 0">Time: 40 · Toys built: 0</div>'+
+    '<div id="tyN" style="font-size:17px;margin:8px 0;min-height:44px"></div><div id="tyB" style="position:relative;height:66px;background:#2a2a2e;border-radius:10px;overflow:hidden;border:2px solid #111"></div><div id="tyM" style="min-height:22px;margin-top:6px;font-size:13px"></div><button id="tyX" class="ibtn gray" style="margin-top:8px">Stop</button></div>';
+  document.body.appendChild(el); elToy={el,time:40,built:0,toy:null,step:0,spawnT:0,items:[]}; el.querySelector('#tyX').addEventListener('click',()=>elToyEnd()); elToyNew(); }
+function elToyNew(){ const T=elToy; T.toy=EL_TOYS[Math.floor(Math.random()*EL_TOYS.length)]; T.step=0; elToyShow(); }
+function elToyShow(){ const T=elToy, n=$('tyN'); if(!n)return; n.innerHTML='Build a <b>'+T.toy.n+'</b>: '+T.toy.parts.map((p,i)=>'<span style="padding:2px 6px;border-radius:6px;background:'+(i<T.step?'#2a8a3a':i===T.step?'#f2c230;color:#111':'#3a1018')+'">'+p+'</span>').join(' '); }
+function elToyTick(dt){ const T=elToy; if(!T)return; T.time-=dt; const tt=$('tyT'); if(tt)tt.textContent='Time: '+Math.max(0,Math.ceil(T.time))+' · Toys built: '+T.built; if(T.time<=0){ elToyEnd(); return; }
+  const B=$('tyB'); if(!B)return; T.spawnT-=dt; if(T.spawnT<=0){ T.spawnT=0.75; const all=EL_TOYS.flatMap(x=>x.parts), want=T.toy.parts[T.step], lab=Math.random()<0.4?want:all[Math.floor(Math.random()*all.length)];
+    const b=document.createElement('button'); b.className='ibtn'; b.textContent=lab; b.style.cssText='position:absolute;top:12px;left:100%;white-space:nowrap;font-size:13px;padding:6px 8px'; B.appendChild(b); const it={b,x:B.clientWidth,lab}; T.items.push(it);
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); if(!elToy)return; const want=T.toy.parts[T.step]; if(it.lab===want){ T.step++; b.remove(); T.items.splice(T.items.indexOf(it),1); snd(()=>tone('square',880,1320,0.08,0.05)); if(T.step>=T.toy.parts.length){ T.built++; $('tyM').textContent='🎉 '+T.toy.n+' done! The elves cheer!'; snd(()=>{ tone('square',1047,1047,0.1,0.05); tone('square',1319,1319,0.15,0.05,0.1); }); elToyNew(); } else elToyShow(); }
+      else { $('tyM').textContent='Oops! That\'s not the '+want+'. The elves giggle.'; snd(()=>tone('square',300,200,0.15,0.05)); } }); }
+  for(const it of T.items.slice()){ it.x-=dt*110; it.b.style.left=it.x+'px'; if(it.x<-140){ it.b.remove(); T.items.splice(T.items.indexOf(it),1); } } }
+function elToyEnd(){ const T=elToy; if(!T)return; elToyClose(); if(T.built>0){ coins+=T.built*3; updateHUD(); sfx('coin'); if(elK)elSpirit(T.built*3); toast('🧸 You built '+T.built+' toy'+(T.built>1?'s':'')+'! +'+(T.built*3)+' coins'); queueSave(); } else toast('🧸 No toys this time. Try again!'); }
+function elToyClose(){ if(!elToy)return; elToy.el.remove(); elToy=null; }
+// --- the soundtrack: old Christmas carols (free for anyone to use) as chiptunes, with sleigh bells.
+// Each song is a list of [note, length in eighth notes]; bass: one root note per bar.
+const EL_SONGS={
+  jingle:{bpm:168,bar:8,bells:1,mel:[[64,2],[64,2],[64,4],[64,2],[64,2],[64,4],[64,2],[67,2],[60,3],[62,1],[64,8],[65,2],[65,2],[65,3],[65,1],[65,2],[64,2],[64,2],[64,1],[64,1],[64,2],[62,2],[62,2],[64,2],[62,4],[67,4],
+    [64,2],[64,2],[64,4],[64,2],[64,2],[64,4],[64,2],[67,2],[60,3],[62,1],[64,8],[65,2],[65,2],[65,3],[65,1],[65,2],[64,2],[64,2],[64,1],[64,1],[67,2],[67,2],[65,2],[62,2],[60,8]],bass:[48,48,48,48,53,48,55,55,48,48,48,48,53,48,55,48]},
+  deck:{bpm:150,bar:8,bells:1,mel:[[67,3],[65,1],[64,2],[62,2],[60,2],[62,2],[64,2],[60,2],[62,1],[64,1],[65,1],[62,1],[64,3],[62,1],[60,2],[59,2],[60,4],[67,3],[65,1],[64,2],[62,2],[60,2],[62,2],[64,2],[60,2],[62,1],[64,1],[65,1],[62,1],[64,3],[62,1],[60,2],[59,2],[60,4],
+    [62,3],[64,1],[65,2],[62,2],[64,3],[65,1],[67,2],[62,2],[64,1],[66,1],[67,2],[69,1],[71,1],[72,2],[71,2],[69,2],[67,4],[67,3],[65,1],[64,2],[62,2],[60,2],[62,2],[64,2],[60,2],[69,1],[69,1],[69,1],[69,1],[67,3],[65,1],[64,2],[62,2],[60,4]],bass:[48,48,55,48,48,48,55,48,55,48,50,55,48,48,53,48]},
+  silent:{bpm:110,bar:6,bells:0,mel:[[67,3],[69,1],[67,2],[64,6],[67,3],[69,1],[67,2],[64,6],[74,4],[74,2],[71,6],[72,4],[72,2],[67,6],[69,4],[69,2],[72,3],[71,1],[69,2],[67,3],[69,1],[67,2],[64,6],[69,4],[69,2],[72,3],[71,1],[69,2],[67,3],[69,1],[67,2],[64,6],
+    [74,4],[74,2],[77,3],[74,1],[71,2],[72,6],[76,6],[72,3],[67,1],[64,2],[67,3],[65,1],[62,2],[60,12]],bass:[48,48,48,48,55,55,48,48,53,53,48,48,53,53,48,48,55,55,48,52,48,55,48,48]}};
+let elMood='jingle', elOut=null;
+function elOutNode(){ if(elOut)return elOut; elOut=AC.createGain(); elOut.gain.value=0.9; elOut.connect(AC.destination); return elOut; }
+function elNote(kind,f,t,dur,vol){ const o=AC.createOscillator(), g=AC.createGain(); if(kind==='tri')o.type='triangle'; else o.setPeriodicWave(mxPulseWave(kind)); o.frequency.value=f; g.gain.setValueAtTime(vol,t); g.gain.setValueAtTime(vol,t+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(elOutNode()); o.start(t); o.stop(t+dur+0.02); }
+function elBells(t,vol){ for(let i=0;i<3;i++){ const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=noiseBuf; f.type='bandpass'; f.frequency.value=6500+i*900; f.Q.value=6; g.gain.setValueAtTime(vol,t+i*0.02); g.gain.exponentialRampToValueAtTime(0.0006,t+i*0.02+0.12); s.connect(f); f.connect(g); g.connect(elOutNode()); s.start(t+i*0.02); s.stop(t+i*0.02+0.15); } }
+function elMusicTick(dt){ if(odUserSong()||!AC||!sfxOn||!noiseBuf)return; if(!demo&&musOnNow)return; const K=elK, S=EL_SONGS[elMood]||EL_SONGS.jingle;
+  if(K.song!==S){ K.song=S; K.e=0; K.next=AC.currentTime+0.06; S.starts=S.starts||(()=>{ const m={}; let p=0; for(const [n,d] of S.mel){ m[p]=[n,d]; p+=d; } S.len=p; return m; })(); }
+  const sp=60/S.bpm/2; if(K.next<AC.currentTime-0.25)K.next=AC.currentTime+0.03;
+  try{ while(K.next<AC.currentTime+0.2){ const e=K.e%S.len, t=K.next, n=S.starts[e]; if(n){ elNote(0.25,midiF(n[0]),t,sp*n[1]*0.92,0.045); elNote(0.5,midiF(n[0]+12),t,sp*Math.min(1,n[1])*0.5,0.012); }
+      if(e%S.bar===0){ const root=S.bass[Math.floor(e/S.bar)%S.bass.length]; elNote('tri',midiF(root-12),t,sp*S.bar*0.45,0.1); elNote('tri',midiF(root-5),t+sp*S.bar/2,sp*S.bar*0.4,0.08); }
+      if(S.bells&&e%2===0)elBells(t,e%4===0?0.05:0.03); if(!S.bells&&e%S.bar===0)elNote(0.125,midiF(S.bass[Math.floor(e/S.bar)%S.bass.length]+24),t,sp*2,0.015);
+      K.e++; K.next+=sp; } }catch(e){} }
+const EL_SFX={bonk:v=>{ tone('square',300,120,0.15,0.08*v); noise(800,0.1,0.15*v,'lowpass'); }, pop:v=>{ tone('sine',300,900,0.15,0.1*v); }, ho:v=>{ for(let i=0;i<3;i++)tone('sawtooth',130,110,0.22,0.06*v,i*0.28); }, gasp:v=>noise(1500,0.4,0.15*v,'bandpass'),
+  squish:v=>{ tone('sine',200,60,0.3,0.12*v); noise(400,0.2,0.15*v,'lowpass'); }, boing:v=>tone('sine',150,600,0.35,0.12*v), whoosh:v=>noise(600,0.9,0.18*v,'lowpass'), magic:v=>{ for(let i=0;i<6;i++)tone('sine',880+i*220,880+i*220,0.18,0.04*v,i*0.06); }, honk:v=>{ tone('square',420,420,0.25,0.06*v); tone('square',350,350,0.25,0.06*v); }, roar:v=>{ tone('sawtooth',120,80,0.6,0.08*v); noise(300,0.6,0.15*v,'lowpass'); }, slide:v=>noise(3000,1.2,0.06*v,'bandpass')};
+function elSfx(k){ odS(EL_SFX[k]); }
+
+// --- the movie's rooms, far below the world: the orphanage, the inside of Santa's workshop, and Papa Elf's cottage
+const ELS={orph:[80,-40,80],wks:[80,-70,80],papa:[80,-100,80]};
+const ORP=(x,y,z)=>[ELS.orph[0]+x,ELS.orph[1]+y,ELS.orph[2]+z], WKS=(x,y,z)=>[ELS.wks[0]+x,ELS.wks[1]+y,ELS.wks[2]+z], PAP=(x,y,z)=>[ELS.papa[0]+x,ELS.papa[1]+y,ELS.papa[2]+z];
+function elFire(par){ const g=grp(par,0,0,0); mb(g,2.2,1.6,0.6,mm(0x8a3a2a),0,0.8,0); mb(g,1.3,0.9,0.4,mm(0x1a0a05),0,0.55,-0.12); mb(g,2.6,0.15,0.8,mm(0x5a2a1a),0,1.65,0); const f=[]; for(let i=0;i<3;i++){ const c=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,6),glowM([0xff7a1a,0xffc83a,0xff4a1a][i])); c.position.set(-0.3+i*0.3,0.35,-0.25); g.add(c); f.push(c); }
+  const l=new THREE.PointLight(0xffa040,1.3,9); l.position.set(0,0.8,-1); g.add(l); return {g,f}; }
+function elLights(par,x0,x1,y,z){ const out=[]; for(let x=x0;x<=x1;x+=0.6){ out.push(msph(par,0.07,glowM([0xff3a3a,0x3aff6a,0xffd23a,0x3a8aff][out.length%4]),x,y-Math.sin((x-x0)*0.9)*0.15,z)); } return out; }
+function elBuildSets(K){ const root=K.root, sets=K.sets={};
+  { const s=sets.orph=grp(root,...ELS.orph); mxRoom(s,9,3.4,8,0x3a4a6a,0x5a3a2a); K.oFire=elFire(s); K.oFire.g.position.set(0,0,-3.7); elTree(s,3,0,-2.6,2.6);
+    for(const x of [-3,-1.4]){ const c=grp(s,x,0,1.6); mb(c,1.0,0.1,1.4,mm(0xe8e0d0),0,0.55,0); for(const sx of[-1,1])for(let i=0;i<5;i++)mb(c,0.04,0.55,0.04,mm(0xf2f2f2),sx*0.48,0.8,-0.6+i*0.3); for(const sz of[-1,1])mb(c,1.0,0.6,0.04,mm(0xf2f2f2),0,0.8,sz*0.7); mb(c,0.9,0.12,1.3,mm(0x9ac8e8),0,0.65,0); }
+    const win=canvasTex(64,64); win.x.fillStyle='#0c1a3a'; win.x.fillRect(0,0,64,64); win.x.fillStyle='#fff'; for(let i=0;i<30;i++)win.x.fillRect((i*23)%64,(i*37)%64,2,2); win.x.fillStyle='#6a4a2a'; win.x.fillRect(30,0,4,64); win.x.fillRect(0,30,64,4); win.t.needsUpdate=true;
+    const w=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.6),new THREE.MeshBasicMaterial({map:win.t})); w.position.set(-4.45,1.8,-1); w.rotation.y=Math.PI/2; s.add(w); mb(s,0.4,0.5,0.4,mm(0x8a5a32),-2.2,0.25,-3); K.oLight=new THREE.PointLight(0xfff0d0,0.8,12); K.oLight.position.set(0,3,1); s.add(K.oLight); }
+  { const s=sets.wks=grp(root,...ELS.wks); mxRoom(s,22,6,14,0x8a4a2a,0x6a4a2a); K.wkLights=[...elLights(s,-10,10,5.6,-6.8),...elLights(s,-10,10,5.6,6.8)]; const wl=new THREE.PointLight(0xfff0d0,1.2,30); wl.position.set(0,5,0); s.add(wl);
+    K.belts=[]; for(const z of [-3,1.5]){ mb(s,16,0.75,1.0,mm(0x5a3a1a),0,0.37,z); const b=mb(s,16.2,0.04,0.8,mm(0x2a2a2e),0,0.77,z); const toys=[]; for(let i=0;i<10;i++){ const g2=elGift(s,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.scale.setScalar(0.45); g2.position.set(-8+i*1.6,0.79,z); toys.push(g2); } K.belts.push(toys); }
+    for(let i=0;i<5;i++)mb(s,2.4,3.2,0.5,mm(0x6a4a2a),-9+i*4.4,1.6,-6.7); for(let i=0;i<5;i++)for(let k=0;k<3;k++){ const g2=elGift(s,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][(i+k)%4]); g2.scale.setScalar(0.4); g2.position.set(-9.6+i*4.4+k*0.6,1.2+k*0.9,-6.5); }
+    // the tiny elf doorway, the tiny chair and the tiny bed (for the years when Buddy kept growing)
+    const dw=grp(s,10.9,0,-1); mb(dw,0.15,1.45,0.15,mm(0x2a8a3a),0,0.72,-0.5); mb(dw,0.15,1.45,0.15,mm(0x2a8a3a),0,0.72,0.5); mb(dw,0.15,0.15,1.15,mm(0x2a8a3a),0,1.45,0); mb(dw,0.05,1.35,0.85,mm(0x5a3a1a),0.06,0.68,0); K.tinyDoor=dw;
+    K.tinyChair=grp(s,6,0,4.6); mb(K.tinyChair,0.5,0.06,0.5,mm(0xc81a2a),0,0.35,0); mb(K.tinyChair,0.5,0.45,0.06,mm(0xc81a2a),0,0.6,0.22); for(const [x,z] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])mb(K.tinyChair,0.05,0.35,0.05,mm(0x8a1a1a),x,0.17,z);
+    K.tinyBed=grp(s,-7,0,4.8); mb(K.tinyBed,1.0,0.35,1.5,mm(0x6a4a2a),0,0.18,0); mb(K.tinyBed,0.95,0.1,1.45,mm(0xf2f2f2),0,0.4,0); mb(K.tinyBed,0.96,0.08,0.9,mm(0xc81a2a),0,0.46,0.25); mb(K.tinyBed,1.0,0.6,0.08,mm(0x6a4a2a),0,0.4,-0.75);
+    K.box=grp(s,0,0,-0.6); for(let i=0;i<4;i++){ const g2=elGift(K.box,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i]); g2.scale.setScalar(0.6); g2.position.set(-0.6+i*0.4,0,0.5*(i%2)); }
+    const cal=canvasTex(64,80); K.cal=cal; const cm=new THREE.Mesh(new THREE.PlaneGeometry(1,1.25),new THREE.MeshBasicMaterial({map:cal.t})); cm.position.set(-3,3.3,-6.94); s.add(cm); }
+  { const s=sets.papa=grp(root,...ELS.papa); mxRoom(s,8,3,7,0x6a3a24,0x5a3a1e); K.pFire=elFire(s); K.pFire.g.position.set(0,0,-3.2); K.pFire.g.scale.setScalar(0.8); mxChair(s,-1.6,0,-1.2,Math.PI*0.8,0x2a7a3a).scale.set(0.6,0.6,0.6); mb(s,0.4,0.36,0.4,mm(0x8a5a32),1.2,0.18,-0.6);
+    for(let i=0;i<3;i++)mb(s,1.4,0.06,0.4,mm(0x5a3a1a),3.6,0.6+i*0.7,-2); K.photo=canvasTex(64,80); const px=K.photo.x; px.fillStyle='#e8dcc0'; px.fillRect(0,0,64,80); px.fillStyle='#8ab0d8'; px.fillRect(6,6,52,58); px.fillStyle='#e8c4a0'; px.fillRect(22,16,20,22); px.fillStyle='#6a6a6a'; px.fillRect(22,12,20,6); px.fillStyle='#2a2a34'; px.fillRect(14,38,36,26); px.fillStyle='#111'; px.font='bold 9px sans-serif'; px.fillText('W. HOBBS',10,76); K.photo.t.needsUpdate=true;
+    K.photoM=new THREE.Mesh(new THREE.PlaneGeometry(0.35,0.44),new THREE.MeshBasicMaterial({map:K.photo.t})); K.photoM.visible=false; s.add(K.photoM); elLights(s,-3.6,3.6,2.8,-3.4); }
+  for(const k in sets)sets[k].visible=false; }
+function elShow(...names){ const K=elK; for(const k in K.sets)K.sets[k].visible=names.includes(k); }
+// ================= ELF IN DEMO MODE =================
+let elStage=null;
+const isElf=sc=>!!sc&&/^el\d+$/.test(sc.act||'');
+function demoElfSetup(sc,P){ if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.ranchWorld){ clearRanchLife(); clearApples(); demo.ranchWorld=false; }
+  if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; } if(demo.petWorld){ clearPetShopLife(); demo.petWorld=false; } if(demo.mxWorld){ clearMxLife(); demo.mxWorld=false; } if(demo.rkWorld){ clearRkLife(); demo.rkWorld=false; } if(demo.brWorld){ clearBrLife(); demo.brWorld=false; } clearCityLife(); clearInteriorLife();
+  demo.vplace='elf'; demo.cityKey=null; if(!demo.elWorld||!elK){ demo.elWorld=true; clearApples(); setWorldSize(...PLACES.elf.dims); generateElf(dmCfg.seed+97); rebuildAll(); refreshPortals(); buildElfLife(); }
+  elStageClear(); elDefaults(); const ch=OD_CH[sc.act]; const S={t:0,done:{},grp:new THREE.Group(),speak:[],ch,hs:0,hero:{g:model},el:true,bits:[]}; elK.root.add(S.grp); elStage=S; P.S=S;
+  demo.puppet=true; P.hs=0; camMode=3; setFly(false,false); pl.v=[0,0,0]; elMood=ch.mood||'jingle'; elSky(ch.sky||'np'); ch.init(S); demo.cam=null; }
+function elStageClear(){ const S=elStage; if(!S)return; odBubOff(model,S.hero); for(const b of S.bits)b.parent&&b.parent.remove(b); if(elK)elK.root.remove(S.grp); odFree(S.grp); elStage=null;
+  model.rotation.x=model.rotation.y=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=head.rotation.y=0; $('dmFade').style.background=''; rkTitle('',false); canvas.style.transform=''; if(elK)elDefaults(); }
+function elDefaults(){ const K=elK; for(const k in K.sets)K.sets[k].visible=false; K.gifts.forEach(g=>g.g.visible=!demo&&!K.giftsGot.includes(g.i)); K.deco.forEach(d=>{ d.glow.visible=!demo&&!d.done; const on=demo||d.done; d.t.orn.forEach(o=>o.visible=on); d.t.star.visible=on; });
+  K.sleigh.film=false; K.sleigh.ride=false; K.sleigh.g.visible=true; [K.sleigh.x,K.sleigh.y,K.sleigh.z]=ELC.sleigh; K.sleigh.h=0; K.sleigh.tilt=K.sleigh.roll=0; K.elves.forEach(e=>{ e.film=false; e.a.g.visible=true; }); K.taxis.forEach(c=>c.film=false); K.revSp=0.6;
+  K.tinyChair.scale.set(1,1,1); K.tinyDoor.rotation.set(0,0,0); K.box.visible=true; K.photoM.visible=false; K.bear.g.position.set(70,ELC.G,64); K.bear.g.rotation.set(0,-Math.PI/2,0); K.bear.hd.rotation.set(0,0,0); K.kids.forEach(k=>k.down=0); }
+function elCal(K,txt){ const x=K.cal.x; x.fillStyle='#fff'; x.fillRect(0,0,64,80); x.fillStyle='#c81a2a'; x.fillRect(0,0,64,20); x.fillStyle='#fff'; x.font='bold 12px sans-serif'; x.textAlign='center'; x.fillText('YEAR',32,15); x.fillStyle='#111'; x.font='bold 34px sans-serif'; x.fillText(txt,32,60); K.cal.t.needsUpdate=true; }
+function elFilmSleigh(S){ const s=elSleighMesh(S.grp); S.santaIn=elPerson(s.g,'santa',0,0.5,0.4,0); odSit(S.santaIn); s.g.visible=false; return s; }
+function elFace(a,p){ const dx=p[0]-a.g.position.x, dz=p[2]-a.g.position.z; a.g.rotation.y=Math.atan2(-dx,-dz); }
+
+// ---------- 1. THE NORTH POLE AND THE MYSTERIOUS BABY ----------
+OD_CH.el1={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; S.hideHero=true; elBuddy(S); S.sl=elFilmSleigh(S); S.sa=elPerson(S.grp,'santa',...ORP(2.6,0,1),Math.PI/2); S.sa.g.visible=false;
+    S.sack=msph(S.grp,0.5,mm(0x8a1a1a),...ORP(1.2,0.45,-0.4),1,1.1,1); S.sack.visible=false; S.baby=odPerson(S.grp,...ORP(-3,0.62,1.6),0,mxLook({hair:'curly',hairC:'#6a4a2a',top:'long',topC:'#bfe0f0',bottom:'pants',bottomC:'#bfe0f0',shoes:'bare'})); S.baby.g.scale.setScalar(0.4);
+    S.pa=elPerson(S.grp,'papa',...WKS(-1.6,0,1.2),Math.PI*0.2); S.wel=[]; for(let i=0;i<7;i++){ const a=0.25+i*(Math.PI-0.5)/6, e=elElf(S.grp,...WKS(0.4+Math.cos(a)*2.6,0,0.3-Math.sin(a)*2.2),0); S.wel.push(e); }
+    S.kb=elPerson(S.grp,'kidbuddy',...WKS(0,0,0),0); S.kb.g.visible=false; },
+  tick(S,dt){ const K=elK, t=S.t, G=ELC.G, sl=S.sl, sa=S.sa;
+    // over the North Pole, under the northern lights
+    if(t<7){ K.elves.forEach(e=>e.a.g.visible=true); }
+    // Santa's sleigh over New York on Christmas Eve, landing on a rooftop
+    odAt(S,7,'nyc',()=>{ elSky('night'); elMood='deck'; }); if(t>=7&&t<12.4){ const k=odE(odSeg(S,7,12)); sl.g.visible=true; const a=[10,G+30,96], b=[134,G+14.2,111], p=odL(a,b,k); p[1]+=Math.sin(k*Math.PI)*6; sl.g.position.set(...p); sl.g.rotation.y=Math.atan2(-(b[0]-a[0]),-(b[2]-a[2])); elDeerRun(sl,t,k<1); odAt(S,7.2,'jb',()=>elSfx('magic')); } else sl.g.visible=false;
+    // inside the orphanage: Santa leaves presents, and a curious baby crawls into his sack
+    odAt(S,12.4,'orph',()=>{ elShow('orph'); elSky('in'); scene.background.setHex(0x1a1a2a); S.sack.visible=true; sa.g.visible=true; elMood='silent'; });
+    if(t>=12.4&&t<19.2){ K.oFire.f.forEach((c,i)=>c.scale.y=1+Math.sin(t*12+i)*0.3); sa.R.armL.rotation.x=sa.R.armR.rotation.x=t<15?1.2+Math.sin(t*4)*0.3:0; animRig(sa.R,dt,0); if(t>=16.6){ odMove(sa,ORP(2.6,0,1),ORP(0,0,-3.2),odSeg(S,16.6,18.2)); odWalk(sa,dt,t<18.2,7); if(t>18.2)sa.g.position.y=ELS.orph[1]+(t-18.2)*4; }
+      const B=S.baby, k=odSeg(S,13.4,15.6); if(t<13.4)B.g.position.set(...ORP(-3,0.62,1.6)); else if(t<15.6){ const p=odL(ORP(-3,0.62,1.6),ORP(-3,0,0.4),Math.min(1,k*3)); if(k>0.33){ const q=odL(ORP(-3,0,0.4),ORP(1.2,0,-0.2),(k-0.33)/0.67); B.g.position.set(...q); B.g.rotation.y=-Math.PI/2; B.g.rotation.x=0.9; B.R.legL.rotation.x=Math.sin(t*10)*0.6; B.R.legR.rotation.x=-Math.sin(t*10)*0.6; } else B.g.position.set(...p); }
+      else { B.g.visible=t<16.2; B.g.position.set(...ORP(1.2,0.2+(t-15.6)*0.5,-0.4)); } S.sack.visible=t<18.2; if(t>=18.2)S.sack.visible=false; S.sack.position.set(...(t<16.6?ORP(1.2,0.45,-0.4):odL(ORP(1.9,1.2,0.8),ORP(0,1.2,-3.4),odSeg(S,16.6,18.2)))); }
+    odAt(S,13.8,'b1',()=>odSay(S,S.baby,'Goo?')); odAt(S,16.4,'s1',()=>{ odSay(S,sa,'Ho ho ho! Merry Christmas, everyone!'); elSfx('ho'); });
+    // back at the North Pole: out of the sack pops... a baby!
+    odAt(S,19.2,'wks',()=>{ elShow('wks'); elSky('in'); scene.background.setHex(0x2a1a10); elMood='jingle'; sa.g.position.set(...WKS(1.6,0,-1.4)); sa.g.rotation.y=0; S.sack.visible=true; S.sack.position.set(...WKS(0.4,0.5,0.3)); S.baby.g.visible=false; });
+    if(t>=19.2&&t<26){ K.box.visible=false; const B=S.baby; if(t>=20.4){ B.g.visible=true; B.g.rotation.set(0,Math.PI,0); B.g.position.set(...WKS(0.4,0.9+Math.sin(Math.min(1,(t-20.4)*3)*Math.PI)*0.6,0.3)); }
+      if(t>=23)B.g.position.set(...odLW(S.pa.R.armL,[0.2,-0.7,-0.3])); S.pa.R.armL.rotation.x=S.pa.R.armR.rotation.x=t>=23?1.4:0; odMove(S.pa,WKS(-1.6,0,1.2),WKS(-0.2,0,1.0),odSeg(S,21.8,22.8)); odWalk(S.pa,dt,t>21.8&&t<22.8,8);
+      S.wel.forEach((e,i)=>{ const jump=t>20.4&&t<21.4?Math.abs(Math.sin((t-20.4)*Math.PI*2+i))*0.3:0; e.g.position.y=ELS.wks[1]+jump; elFace(e,WKS(0.4,0,0.3)); e.R.armL.rotation.z=t>20.4?-2.4:0; e.R.armR.rotation.z=t>20.4?2.4:0; elFace(e,WKS(0.4,0,0.3)); animRig(e.R,dt,0); }); }
+    odAt(S,20.4,'pop',()=>{ elSfx('pop'); elSfx('gasp'); }); odAt(S,20.8,'b2',()=>odSay(S,S.baby,'Goo goo!')); odAt(S,21.4,'e1',()=>odSay(S,S.wel[3],'A BABY?!'));
+    odAt(S,23.2,'p1',()=>odSay(S,S.pa,'Well, hello there, little one!')); odAt(S,25,'p2',()=>odSay(S,S.pa,"I'll raise him myself. We'll call him... Buddy."));
+    // the years go by: Buddy grows and grows, and the elf-sized world gets very small
+    odAt(S,26.6,'yrs',()=>{ S.baby.g.visible=false; S.pa.R.armL.rotation.x=S.pa.R.armR.rotation.x=0; rkTitle('<div style="font-size:.55em">The years went by...</div>',true); }); odAt(S,28.4,'yx',()=>rkTitle('',false));
+    if(t>=26.6&&t<36){ const kb=S.kb, k=odSeg(S,26.6,35.4); kb.g.visible=true; kb.g.scale.setScalar(0.4+k*0.62); elCal(K,String(1+Math.floor(k*29))); sa.g.visible=false; S.sack.visible=false;
+      if(t<30.2){ const w=odSeg(S,28.6,30); odMove(kb,WKS(6,0,-1),WKS(10.3,0,-1),w); odWalk(kb,dt,w>0&&w<1,9); if(t>=30){ kb.g.rotation.z=0.4; kb.R.head.rotation.x=-0.4; } }
+      else if(t<33.2){ kb.g.rotation.z=0; kb.R.head.rotation.x=0; kb.g.position.set(...WKS(6,t>31?-0.12:0,4.6)); kb.g.rotation.y=0; odSit(kb); K.tinyChair.scale.set(1.3,t>31?0.25:1,1.3); }
+      else { odRest(kb); kb.g.position.set(...WKS(-7,0.5,4.8)); kb.g.rotation.set(-Math.PI/2,0,0,'YXZ'); kb.g.position.z=ELS.wks[2]+4.2; } animRig(kb.R,dt,0); S.pa.g.position.set(...WKS(2,0,3)); elFace(S.pa,kb.g.position.toArray()); }
+    odAt(S,30,'bonk',()=>{ elSfx('bonk'); odSay(S,S.kb,'Ow! Little doors!'); }); odAt(S,31,'sq',()=>{ elSfx('squish'); odSay(S,S.kb,'Oops! Sorry, chair!'); }); odAt(S,33.4,'zz',()=>odSay(S,S.kb,'Zzz... my feet are cold...'));
+    // grown up: Buddy, much taller than everyone
+    if(t>=36){ S.kb.g.visible=false; S.hideHero=false; odHeroTo(S,WKS(0,0,1),Math.PI,false); S.wel.forEach((e,i)=>{ e.g.position.set(...WKS(-3.2+i*1.07,0,-0.6+Math.abs(i-3)*0.3)); elFace(e,WKS(0,1.6,1)); e.R.head.rotation.x=-0.5; e.R.armL.rotation.z=e.R.armR.rotation.z=0; animRig(e.R,dt,0); }); S.pa.g.position.set(...WKS(1.4,0,-0.4)); elFace(S.pa,WKS(0,0,1)); S.pa.R.head.rotation.x=-0.5; }
+    odAt(S,36.6,'bd',()=>odSay(S,S.hero,'Good morning, everybody! Happy almost-Christmas!')); odAt(S,39.2,'e2',()=>odSay(S,S.wel[5],'He keeps getting TALLER...')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t>=36){ armL.rotation.z=-2.4-Math.sin(t*8)*0.3; armR.rotation.z=2.4+Math.sin(t*8)*0.3; } },
+  cam(S){ const t=S.t, G=ELC.G, sp=S.sl.g.position; if(t<7){ const k=t/7; return [[34+k*80,G+30-k*8,62-k*10],[80,G+4,26],0]; } if(t<12.4)return [[sp.x-10,sp.y+5,sp.z+9],[sp.x,sp.y,sp.z],1];
+    if(t<15.6)return [ORP(-2.0,2.3,3.4),ORP(-3,0.7,1.2),2]; if(t<19.2)return [ORP(-2.6,2.2,3.4),ORP(1.2,1,-1),3]; if(t<23)return [WKS(0.4,1.8,5.4),WKS(0.4,0.9,0.3),4]; if(t<26.6)return [WKS(-0.4,1.5,3.6),WKS(-0.4,1.0,1.0),5];
+    if(t<30.2)return [WKS(7.6,1.6,2.6),WKS(10.2,0.9,-1),6]; if(t<33.2)return [WKS(6,1.4,2.2),WKS(6,0.5,4.6),7]; if(t<36)return [WKS(-7,1.8,1.8),WKS(-7,0.4,4.6),8]; return [WKS(0,1.5,-3.4),WKS(0,1.3,1),9]; } };
+
+// ---------- 2. BUDDY DISCOVERS THE TRUTH ----------
+OD_CH.el2={secs:42,sky:'in',mood:'deck',init(S){ const K=elK, G=ELC.G; elShow('wks'); scene.background.setHex(0x2a1a10); S.wel=[]; for(let i=0;i<5;i++)S.wel.push(elElf(S.grp,...WKS(-6+i*2.2,0,-2.2),Math.PI));
+    S.fo=elElf(S.grp,...WKS(4,0,3.4),Math.PI,{topC:'#2a5ac8'}); const cb=mb(S.fo.R.armR,0.3,0.4,0.04,mm(0x8a5a32),0,-0.75,-0.1); S.gos=[elElf(S.grp,...WKS(-8,0,3),0),elElf(S.grp,...WKS(-7.2,0,3),0)];
+    elBuddy(S,true); S.pack.visible=false; S.pa=elPerson(S.grp,'papa',...PAP(-1.6,0,-1.2),Math.PI*0.8); S.jack=grp(S.grp,...WKS(0.9,0.79,1.5)); mb(S.jack,0.3,0.3,0.3,mm(0xd8a020),0,0.15,0); S.jackHead=grp(S.jack,0,0.3,0); msph(S.jackHead,0.14,mm(0xf2d0b8),0,0.3,0); mb(S.jackHead,0.04,0.3,0.04,mm(0x8a8a90),0,0.1,0); S.jackHead.visible=false;
+    S.fly=[]; for(let i=0;i<5;i++){ const g2=elGift(S.grp,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.scale.setScalar(0.45); g2.visible=false; S.fly.push(g2); }
+    S.bear=elBear(S.grp); S.bear.g.scale.setScalar(1.6); S.bear.g.visible=false; S.el2=[]; for(let i=0;i<6;i++){ const e=elElf(S.grp,0,G,0,0); e.g.visible=false; S.el2.push(e); } S.sa=elPerson(S.grp,'santa',0,G,0,0); S.sa.g.visible=false; },
+  tick(S,dt){ const K=elK, t=S.t, G=ELC.G; K.belts.forEach((b,j)=>b.forEach((g,i)=>g.position.x=-8+((i*1.6+t*(j?2.4:1.6))%16)));
+    // on the toy line: the elves are fast, Buddy is... not
+    if(t<12){ odHeroTo(S,WKS(1,0,2.4),0,false); S.wel.forEach((e,i)=>{ e.R.armL.rotation.x=1.2+Math.sin(t*14+i)*0.4; e.R.armR.rotation.x=1.2-Math.sin(t*14+i)*0.4; animRig(e.R,dt,0); }); S.jackHead.visible=t>=4.6; S.jackHead.position.y=0.3+Math.min(0.5,(t-4.6)*3)*(t>=4.6?1:0); S.jackHead.scale.setScalar(1+(t>4.6&&t<5?Math.sin((t-4.6)*20)*0.2:0)); }
+    odAt(S,1,'b1',()=>odSay(S,S.hero,'One toy... done! Woo-hoo!')); odAt(S,4.6,'jk',()=>{ elSfx('boing'); odSay(S,S.hero,'Whoa! It bit me!'); });
+    if(t>=2&&t<12){ S.fo.R.armR.rotation.x=0.9; animRig(S.fo.R,dt,0); elFace(S.fo,WKS(1,0,2.4)); } odAt(S,6.6,'f1',()=>odSay(S,S.fo,'Buddy... you built 12 toys. We needed one THOUSAND.')); odAt(S,9.2,'b2',()=>odSay(S,S.hero,"I'll go faster! FASTERRR!"));
+    if(t>=9.8&&t<12){ S.fly.forEach((g,i)=>{ const k=Math.min(1,(t-9.8-i*0.2)*1.4); g.visible=k>0; g.position.set(...WKS(1+Math.sin(i*2)*k*4,0.9+Math.sin(k*Math.PI)*2.4,1.5+k*3)); g.rotation.set(k*6,k*4,0); }); } if(t>=12)S.fly.forEach(g=>g.visible=false);
+    // two elves whisper... and Buddy hears everything
+    if(t>=12&&t<18){ odHeroTo(S,WKS(-5,0,1.2),Math.atan2(2.6,-1.8),false); S.gos.forEach((e,i)=>{ elFace(e,WKS(-7.6+(i?-0.6:0.6),0,3)); animRig(e.R,dt,0); }); }
+    odAt(S,12.6,'g1',()=>odSay(S,S.gos[0],"Shh! He doesn't know he's a HUMAN!")); odAt(S,15.2,'b3',()=>odSay(S,S.hero,'A... HUMAN?!',1.2));
+    // Papa Elf tells him the truth, by the fire
+    odAt(S,18,'papa',()=>{ elShow('papa'); elMood='silent'; S.pa.g.position.set(...PAP(-1.6,0,-1.2)); odSit(S.pa); S.pa.g.position.y=ELS.papa[1]-0.1; }); if(t>=18&&t<29){ odHeroTo(S,PAP(1.2,-0.05,-0.6),Math.atan2(2.8,0.6),false); K.pFire.f.forEach((c,i)=>c.scale.y=1+Math.sin(t*12+i)*0.3); elFace(S.pa,PAP(1.2,0,-0.6)); S.pa.g.rotation.y+=0; animRig(S.pa.R,dt,0);
+      if(t>=22.6){ K.photoM.visible=true; K.photoM.position.set(...odLW(S.pa.R.armR,[0,-0.7,-0.2]).map((v,i)=>v-ELS.papa[i])); K.photoM.lookAt(new THREE.Vector3(...PAP(1.2,1.4,-0.6))); S.pa.R.armR.rotation.x=1.3; } }
+    odAt(S,18.6,'p1',()=>odSay(S,S.pa,'Buddy... you came here in Santa\'s sack, when you were just a baby.')); odAt(S,21.6,'p2',()=>odSay(S,S.pa,'Your real father is Walter Hobbs. He lives in New York City.'));
+    odAt(S,24.8,'b4',()=>odSay(S,S.hero,'I have a DAD?! I have to go meet him!')); odAt(S,27.2,'p3',()=>odSay(S,S.pa,'...Pack lots of snacks.'));
+    // packing up and saying goodbye in the village
+    odAt(S,29,'out',()=>{ elShow(); elSky('np'); elMood='jingle'; S.pack.visible=true; S.sa.g.visible=true; S.sa.g.position.set(78,G,40); S.pa.g.position.set(82.6,G,40.4); S.pa.g.rotation.set(0,0,0); odRest(S.pa); S.el2.forEach((e,i)=>{ e.g.visible=true; e.g.position.set(76+i*1.4,G,37.6+Math.abs(i-2.5)*0.4); }); });
+    if(t>=29&&t<35){ odHeroPath(S,[80,G,42],[80,G,52],31.5,35); if(t<31.5)odHeroTo(S,[80,G,42],Math.PI,false); for(const e of [...S.el2,S.pa,S.sa]){ elFace(e,pl.p); e.R.armR.rotation.z=2.4+Math.sin(t*8)*0.4; animRig(e.R,dt,0); } }
+    odAt(S,29.4,'s1',()=>odSay(S,S.sa,'Be good down there, Buddy! And look both ways!')); odAt(S,31.6,'b5',()=>odSay(S,S.hero,'Bye, everybody! Bye, Papa! I\'ll write!'));
+    // through the snowy forest: a polar bear, a big hug, and the magic tunnel
+    if(t>=35){ S.sa.g.visible=false; S.pa.g.visible=false; S.el2.forEach(e=>e.g.visible=false); const B=S.bear; B.g.visible=true; B.g.position.set(78,G,65); B.g.rotation.y=Math.PI*0.75; if(t<37.4)odHeroPath(S,[80,G,58],[79.6,G,63.6],35,37.4); else if(t<40)odHeroTo(S,[79.6,G,63.6],Math.PI*0.75+Math.PI,false); else odHeroPath(S,[79.6,G,63.6],[80,G,68.2],40,42);
+      B.hd.rotation.y=t>37&&t<40?0.3:0; B.legs.forEach((l,i)=>l.rotation.x=t>38&&t<40&&i<2?-1.2:0); odAt(S,38,'hug',()=>{ for(let k=0;k<3;k++)burst(79-0.5,G+2+k*0.3,64-0.5,new THREE.Color(0xff5a9a),6); }); }
+    odAt(S,36.2,'r',()=>elSfx('roar')); odAt(S,37.4,'b6',()=>odSay(S,S.hero,'Hi, Mr. Polar Bear! Want a hug?')); odAt(S,40.4,'b7',()=>odSay(S,S.hero,'Bye! New York, here I come!')); odAt(S,41,'mg',()=>elSfx('magic')); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<12){ armL.rotation.x=armR.rotation.x=1.2+(t>9.8?Math.sin(t*20)*0.6:Math.sin(t*3)*0.2); if(t>4.6&&t<5.4)model.rotation.x=-0.3; }
+    if(t>=15&&t<17){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=18&&t<29){ mxSitPose(); } if(t>=24.8&&t<26.6){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=31.5&&t<33.6)armR.rotation.z=2.4+Math.sin(t*8)*0.4; if(t>=38&&t<40){ armL.rotation.x=armR.rotation.x=1.5; armL.rotation.z=0.3; armR.rotation.z=-0.3; } },
+  cam(S){ const t=S.t, G=ELC.G; if(t<4.4)return [WKS(1,2.2,6),WKS(0,1,0),0]; if(t<6.4)return [WKS(1.9,1.7,0.9),WKS(1,1.4,2.4),1]; if(t<9.6)return [WKS(5.6,2.2,5.6),WKS(2,1.0,2.2),2]; if(t<12)return [WKS(1,2.4,7),WKS(1,1.4,2.2),3];
+    if(t<15)return [WKS(-6.2,1.4,5.6),WKS(-7.4,0.7,3),4]; if(t<18)return [WKS(-6.2,1.7,2.1),WKS(-5,1.5,1.2),5]; if(t<22.6)return [PAP(0.2,1.3,0.9),PAP(-1.6,0.8,-1.2),6]; if(t<25)return [PAP(-0.4,1.3,0.6),PAP(-1.2,1.0,-0.8),7]; if(t<29)return [PAP(-1.2,1.4,0.8),PAP(1.2,1.2,-0.6),8];
+    if(t<31.5)return [[83.6,G+2.2,36.8],[80,G+1.3,41.6],9]; if(t<35)return [[80,G+2.6,34],[pl.p[0],G+1.4,pl.p[2]],10]; if(t<40)return [[83.6,G+2.4,61.4],[79,G+1.3,64],11]; return [[80,G+2.6,58],[80,G+2,72],12]; } };
+
+// ---------- 3. THE JOURNEY TO NEW YORK ----------
+OD_CH.el3={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy(S,true); S.st=grp(S.grp,0,0,0); for(let i=0;i<3;i++)msph(S.st,0.08,glowM(0xffe23a),Math.cos(i*2.1)*0.35,0,Math.sin(i*2.1)*0.35); S.st.visible=false;
+    S.ny=[]; for(let i=0;i<2;i++)S.ny.push(odPerson(S.grp,0,G,0,0,mxLook({top:'jacket',topC:['#2a3a6a','#6a2a2a'][i],bottom:'pants',bottomC:'#2a2a2e',hat:'beanie',hatC:'#f2f2f2',hair:'short'}))); },
+  tick(S,dt){ const K=elK, t=S.t, G=ELC.G;
+    // whooshing through the icy tunnel on his belly
+    if(t<7.4){ const k=odSeg(S,0.4,7); odHeroTo(S,[80,G+0.3,ELC.ridge[0]-5+k*(ELC.ridge[1]-ELC.ridge[0]+12)],0+Math.PI,false); odAt(S,0.5,'sl',()=>elSfx('slide')); if(t>6.4)odAt(S,6.4,'out',()=>{ elSky('day'); elMood='deck'; }); }
+    // New York! Skyscrapers, taxis, crowds, and lights everywhere
+    if(t>=7.4&&t<14){ odHeroTo(S,[80,G,90.5],Math.PI,false); S.hideHero=t>=9.4; } else S.hideHero=false; odAt(S,7.6,'w1',()=>odSay(S,S.hero,'Wowww... New York!',1.1)); odAt(S,9.4,'hk',()=>elSfx('honk'));
+    // the giant tree
+    if(t>=14&&t<20){ odHeroPath(S,[86,G,131],[99,G,136.4],14,17); if(t>=17)odHeroTo(S,[99,G,136.4],Math.atan2(-(104-99),-(146-136.4)),false); } odAt(S,17.4,'w2',()=>odSay(S,S.hero,"It's the BIGGEST tree I've ever seen!",1.1));
+    // the cocoa cart: asking about Santa
+    if(t>=20&&t<27){ odHeroTo(S,[70,G,99.8],0,false); K.cocoa.R.armR.rotation.x=t>22.6&&t<24.6?1.4:0; K.cocoa.R.armR.rotation.z=t>22.6&&t<24.6?-0.6:0; animRig(K.cocoa.R,dt,0); }
+    odAt(S,20.4,'b1',()=>odSay(S,S.hero,'Excuse me! Have you seen Santa? Big, jolly, red suit?')); odAt(S,23,'c1',()=>{ odSay(S,K.cocoa,"Santa? Try Merriwether's, pal. Right down the street."); elK.speak.includes(K.cocoa)||elK.speak.push(K.cocoa); }); odAt(S,25.4,'b2',()=>odSay(S,S.hero,'Thank you, new friend!'));
+    // the revolving door: round and round and round
+    if(t>=27&&t<34){ K.revSp=t<32.4?4.5:0.6; const a=K.rev.wings.rotation.y+Math.PI/4; if(t<32.4)odHeroTo(S,[36.5+Math.cos(a)*0.75,G,101+Math.sin(a)*0.75],-a,false); else { odHeroTo(S,[36.5,G,99.2],Math.PI+Math.sin(t*6)*0.4,false); S.st.visible=true; S.st.position.set(pl.p[0],pl.p[1]+2.3,pl.p[2]); S.st.rotation.y=t*5; } }
+    odAt(S,27.6,'b3',()=>odSay(S,S.hero,'Wheee! Again! AGAIN!')); odAt(S,32.6,'b4',()=>odSay(S,S.hero,'Whoa... the floor is spinning...'));
+    // the escalator: up and down, up and down
+    if(t>=34){ S.st.visible=false; K.revSp=0.6; const k=((t-34)*0.22)%1, up=k<0.5, u=up?k*2:2-k*2; odHeroTo(S,[24,G+0.2+u*K.esc.Hh,114-u*K.esc.L],up?0:Math.PI,false); }
+    odAt(S,35,'b5',()=>odSay(S,S.hero,'Moving stairs! Hee hee hee!')); odAt(S,39,'b6',()=>odSay(S,S.hero,"Santa, I'm coming!"));
+    S.ny.forEach((a,i)=>{ if(t>=7.4&&t<14){ a.g.visible=true; const k=odSeg(S,7.4,14); a.g.position.set(70+i*22+k*(i?-8:8),G,90.2+i*0.4); a.g.rotation.y=i?Math.PI/2:-Math.PI/2; odWalk(a,dt,true,7); } else a.g.visible=false; }); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<7.4){ model.rotation.x=-Math.PI/2; model.position.y+=0.3; armL.rotation.z=-2.8; armR.rotation.z=2.8; }
+    if(t>=7.4&&t<14){ armL.rotation.z=-1.2; armR.rotation.z=1.2; } if(t>=17&&t<20){ armL.rotation.z=-2.6; armR.rotation.z=2.6; } if(t>=27&&t<32.4){ armL.rotation.z=-1.5; armR.rotation.z=1.5; } if(t>=32.4&&t<34)model.rotation.z=Math.sin(t*5)*0.2;
+    if(t>=34){ legL.rotation.x=0.6; legR.rotation.x=-0.6; armL.rotation.z=-1.6; armR.rotation.z=1.6; } },
+  cam(S){ const t=S.t, G=ELC.G; if(t<7.4){ return [[pl.p[0],G+2.2,pl.p[2]-3.6],[pl.p[0],G+0.6,pl.p[2]+2],0]; }
+    if(t<9.4)return [[80,G+1.8,94.4],[80,G+1.5,90.5],7]; if(t<14){ const a=Math.PI-0.9+odE(odSeg(S,9.6,13.8))*1.8, e=[80,G+1.62,90.5]; return [e,[e[0]-Math.sin(a)*10,G+4+odSeg(S,8,10)*8,e[2]-Math.cos(a)*10],1]; }
+    if(t<17)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],2]; if(t<20){ const k=odSeg(S,17,20); return [[94.6,G+2,130.6],[104,G+6+k*10,146],3]; }
+    if(t<27)return [[72.4,G+1.9,97.4],[70,G+1.4,100.4],4]; if(t<34)return [[38.6,G+2.3,97.2],[36.5,G+1.1,100.6],5]; return [[pl.p[0]+3.2,pl.p[1]+1.7,pl.p[2]+1.6],[pl.p[0],pl.p[1]+1.2,pl.p[2]],6]; } };
+const EL_NAMES=['The North Pole and the Mysterious Baby','Buddy Discovers the Truth','The Journey to New York'];
+function loadElf(){ dmCfg.scenes=EL_NAMES.map((n,i)=>cleanScene({act:'el'+(i+1),time:'day',wx:'snow',land:'normal',cam:'cine',secs:OD_CH['el'+(i+1)].secs,cap:''})); saveDemo(); }
+
 // --- more of Philadelphia: the ice rink, the meat plant, the arena, and a plaza for the champion's announcement
 RK.rink={x0:87,x1:104,z0:55,z1:72}; RK.meat={x0:23,x1:40,z0:55,z1:72}; RK.arena={x0:118,x1:137,z0:118,z1:137,cx:127.5,cz:127.5}; RK.bell=[133,68.5];
 Object.assign(RK_LOTS,{
@@ -9454,7 +9839,7 @@ petsLoad(); fishBagLoad(); hadSave=loadCurrent(); if(!hadSave) startSurvival();
 $('bCam').textContent=camMode===1?'👁 1st':'👁 3rd'; $('bCam').classList.toggle('on',camMode===3);
 $('bFly').classList.toggle('on',fly); document.body.classList.toggle('fly',fly);
 showTitle();
-window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},get mxK(){return mxK;},get brK(){return brK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
+window.__bs={get cityK(){return cityK;},get dragK(){return dragK;},get mansionK(){return mansionK;},get odyK(){return odyK;},get rkK(){return rkK;},get mxK(){return mxK;},get brK(){return brK;},get elK(){return elK;},OD,get pets(){return pets;},get fishes(){return fishes;},get fishBag(){return fishBag;},fishingHit,get fishK(){return fishK;},get petEnts(){return petEnts;},petTap,openPetShop,MN,DR,dash,makeVehicle,get drive(){return drive;},get target(){return target;},get cam(){return camera;},get outfit(){return look;},rig,get paused(){return paused;},pl,mobs,spawnMob,MOBT,setBlock,get,ID,get coins(){return coins;},set coins(v){coins=v;updateHUD();},get hp(){return hp;},set hp(v){hp=v;updateHUD();},fires,lavaSet,surfaceAt,
   look(y,p){yaw=y;pitch=p;}, get yaw(){return yaw;}, tick:(dt)=>update(dt), get arrows(){return arrows;}, get arrowSel(){return arrowSel;}, openArrows, appleTrees, get aimFruit(){return aimFruit;}, get shots(){return shots;}, get mode(){return mode;}, hit:hitAction, place:placeAction, select, openShop, startSurvival, damageMob, get titleOn(){return titleOn;}, get demo(){return demo;}, get campK(){return campK;}, get ranchK(){return ranchK;}, goCity, mount, dismount, ranchHit, giveApple, openWardrobe, nearAction:()=>nearAction(), set camMode(v){camMode=v;}, get dmCfg(){return dmCfg;}, set ccSpin(v){ ccSpin=v; ccIdle=-99; }, demoStart, demoStop, ccOpen, ccClose, setLook(L){ look=cleanLook(L); applyLook(); }, randomLook, get dead(){return dead;}}; // a handle for testing in the browser console
 requestAnimationFrame(frame);
 })();
