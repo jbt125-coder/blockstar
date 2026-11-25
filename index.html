@@ -9479,7 +9479,7 @@ let elMood='jingle', elOut=null;
 function elOutNode(){ if(elOut)return elOut; elOut=AC.createGain(); elOut.gain.value=0.9; elOut.connect(AC.destination); return elOut; }
 function elNote(kind,f,t,dur,vol){ const o=AC.createOscillator(), g=AC.createGain(); if(kind==='tri')o.type='triangle'; else o.setPeriodicWave(mxPulseWave(kind)); o.frequency.value=f; g.gain.setValueAtTime(vol,t); g.gain.setValueAtTime(vol,t+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(elOutNode()); o.start(t); o.stop(t+dur+0.02); }
 function elBells(t,vol){ for(let i=0;i<3;i++){ const s=AC.createBufferSource(), f=AC.createBiquadFilter(), g=AC.createGain(); s.buffer=noiseBuf; f.type='bandpass'; f.frequency.value=6500+i*900; f.Q.value=6; g.gain.setValueAtTime(vol,t+i*0.02); g.gain.exponentialRampToValueAtTime(0.0006,t+i*0.02+0.12); s.connect(f); f.connect(g); g.connect(elOutNode()); s.start(t+i*0.02); s.stop(t+i*0.02+0.15); } }
-function elMusicTick(dt){ if(odUserSong()||!AC||!sfxOn||!noiseBuf)return; if(!demo&&musOnNow)return; const K=elK, S=EL_SONGS[elMood]||EL_SONGS.jingle;
+function elMusicTick(dt){ if(odUserSong()||!AC||!sfxOn||!noiseBuf)return; if(!demo&&musOnNow)return; const K=elK, S=(demo&&demo.sc&&isElf(demo.sc)?EL_SONGS.xmas:EL_SONGS[elMood])||EL_SONGS.jingle; // the movie keeps one song all the way through
   if(K.song!==S){ K.song=S; K.e=0; K.next=AC.currentTime+0.06; S.starts=S.starts||(()=>{ const m={}; let p=0; for(const [n,d] of S.mel){ m[p]=[n,d]; p+=d; } S.len=p; return m; })(); }
   const sp=60/S.bpm/2; if(K.next<AC.currentTime-0.25)K.next=AC.currentTime+0.03;
   try{ while(K.next<AC.currentTime+0.2){ const e=K.e%S.len, t=K.next, n=S.starts[e]; if(n&&n[0]>0){ elNote(0.25,midiF(n[0]),t,sp*n[1]*0.92,0.045); elNote(0.5,midiF(n[0]+12),t,sp*Math.min(1,n[1])*0.5,0.012); }
@@ -9737,6 +9737,17 @@ Object.assign(EL_SFX,{burp:v=>{ const t0=AC.currentTime, o=AC.createOscillator()
     g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(0.4*v,t0+0.15); g.gain.setValueAtTime(0.4*v,t0+4.4); g.gain.exponentialRampToValueAtTime(0.0008,t0+5); o.connect(f); f.connect(g); g.connect(AC.destination); o.start(t0); lf.start(t0); o.stop(t0+5.1); lf.stop(t0+5.1); },
   knock:v=>{ for(let i=0;i<3;i++)tone('sine',160,70,0.1,0.3*v,i*0.2); }, zip:v=>{ noise(3000,0.18,0.08*v,'bandpass'); tone('sine',900,1600,0.12,0.03*v); }, crash:v=>{ noise(300,1.0,0.4*v,'lowpass'); tone('sawtooth',90,30,0.8,0.1*v); }, gulp:v=>{ for(let i=0;i<4;i++)tone('sine',260,120,0.14,0.08*v,i*0.32); },
   cheer:v=>noise(1500,1.4,0.18*v,'bandpass'), kiss:v=>{ tone('sine',900,1500,0.08,0.06*v); tone('sine',1400,2000,0.08,0.05*v,0.1); }, sputter:v=>{ for(let i=0;i<5;i++)tone('square',120,80,0.08,0.05*v,i*0.12); }, rip:v=>noise(2400,0.3,0.15*v,'highpass')});
+// "Snowlight Express": an original Christmas chiptune written for the Elf movie (our own melody, not any existing song). It plays straight
+// through all ten chapters so the music never jumps around: a bright, bouncy opening with sleigh bells, a gentle middle like a quiet
+// snowy night, then the bright tune again building to a big finish. 24 bars of 4/4, looping.
+EL_SONGS.xmas={bpm:128,bar:8,bells:1,mel:[
+  [76,2],[79,2],[79,1],[81,1],[79,2], [76,3],[74,1],[72,4], [69,2],[72,2],[77,2],[76,1],[74,1], [74,6],[67,2],
+  [76,2],[79,2],[84,2],[83,1],[81,1], [81,2],[79,2],[76,4], [77,2],[76,1],[74,1],[81,2],[79,1],[77,1], [76,4],[74,4],
+  [72,3],[74,1],[76,2],[77,2], [79,6],[76,2], [77,2],[76,2],[74,2],[72,2], [71,4],[67,4],
+  [67,2],[71,2],[76,3],[74,1], [72,4],[69,4], [69,2],[72,2],[77,2],[81,2], [79,6],[0,2],
+  [76,2],[79,2],[79,1],[81,1],[79,2], [76,3],[74,1],[72,4], [69,2],[72,2],[77,2],[76,1],[74,1], [74,6],[67,2],
+  [76,2],[79,2],[84,4], [83,2],[81,2],[76,4], [77,2],[81,2],[79,2],[74,2], [72,8]],
+  bass:[48,45,41,43,48,45,50,43, 41,48,50,43,52,45,41,43, 48,45,41,43,48,45,41,48]};
 EL_SONGS.wish={bpm:150,bar:6,bells:1,mel:[[0,4],[67,2],[72,2],[72,1],[74,1],[72,1],[71,1],[69,2],[69,2],[69,2],[74,2],[74,1],[76,1],[74,1],[72,1],[71,2],[67,2],[67,2],[76,2],[76,1],[77,1],[76,1],[74,1],[72,2],[69,2],[67,1],[67,1],[69,2],[74,2],[71,2],[72,6]],bass:[48,48,53,50,55,48,53,55,48]};
 
 // ---------- 4. THE DEPARTMENT STORE ----------
