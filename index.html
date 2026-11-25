@@ -9321,6 +9321,8 @@ function elSleighMesh(par){ const g=grp(par,0,0,0), red=mm(0xc8102a), gold=mm(0x
   const sack=msph(g,0.55,mm(0x8a1a1a),0,1.45,0.75,1,0.9,0.9); const deer=[]; for(let i=0;i<4;i++){ const d=elDeer(g); d.g.position.set((i%2?0.45:-0.45),-0.1,-3.0-Math.floor(i/2)*1.6); deer.push(d); }
   for(const s of[-1,1])mb(g,0.03,0.03,3.6,gold,s*0.45,1.1,-2.9); return {g,deer,sack}; }
 function elDeerRun(S,t,on){ for(const d of S.deer)d.legs.forEach((l,k)=>l.rotation.x=on?Math.sin(t*12+k*1.6+(k>1?Math.PI:0))*0.6:0); }
+function elDriver(car){ const d=odPerson(car,-0.42,0.12,-0.3,0,mxLook({top:'jacket',topC:['#3a3a3a','#5a3a2a','#2a3a6a'][Math.floor(Math.random()*3)],bottom:'pants',bottomC:'#2a2a2e',hat:'beanie',hatC:'#2a2a2e',hair:'short',hairC:'#2a1a10'})); d.g.scale.setScalar(0.85); odSit(d); car.drv=d; return d; } // a cabbie at the wheel (left seat)
+function elDriverMad(d,t,on,p){ d.R.armL.rotation.z=on?-1.45+Math.sin(t*16)*0.3:0; d.R.armL.rotation.x=on?0.3:0.7; if(on&&p){ const w=new THREE.Vector3(); d.g.getWorldPosition(w); const yaw=Math.atan2(-(p[0]-w.x),-(p[2]-w.z)); let par=0; for(let o=d.g.parent;o;o=o.parent)par+=o.rotation.y; d.R.head.rotation.y=Math.max(-1.4,Math.min(1.4,((yaw-par+Math.PI*3)%(Math.PI*2))-Math.PI)); } else d.R.head.rotation.y=0; d.R.head.rotation.z=on?Math.sin(t*12)*0.12:0; } // shaking a fist out the window and yelling
 function elRaccoon(par){ const g=grp(par,0,0,0), gr=mm(0x7a7a80), dk=mm(0x2a2a2e), wh=mm(0xe8e8e8); mb(g,0.5,0.4,0.8,gr,0,0.42,0); const hd=grp(g,0,0.62,-0.42); mb(hd,0.4,0.32,0.32,gr,0,0,0); mb(hd,0.42,0.1,0.06,dk,0,0.03,-0.165); mb(hd,0.16,0.12,0.16,wh,0,-0.06,-0.2); mb(hd,0.06,0.05,0.04,dk,0,-0.04,-0.29);
   for(const sx of[-1,1]){ msph(hd,0.035,mm(0xffffff),sx*0.1,0.04,-0.2); mb(hd,0.1,0.12,0.06,gr,sx*0.14,0.2,0); }
   const tail=grp(g,0,0.5,0.4); for(let i=0;i<5;i++)mb(tail,0.18,0.18,0.16,i%2?dk:gr,0,0.06*i,0.14*i); const legs=[]; for(const [x,z] of [[-0.17,-0.28],[0.17,-0.28],[-0.17,0.28],[0.17,0.28]]){ const l=grp(g,x,0.28,z); mb(l,0.12,0.28,0.12,dk,0,-0.14,0); legs.push(l); } return {g,hd,tail,legs}; }
@@ -9384,7 +9386,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
   K.plazaTree=elTree(root,...ELC.tree,22); for(const x of [10,26,42,58,90,106,122,138,150])for(const z of [90.5,101.3]){ const p=grp(root,x,G,z); mcyl(p,0.08,0.1,4.6,mm(0x2a3a2a),0,2.3,0,6); msph(p,0.25,glowM(0xfff2c0),0,4.7,0); mb(p,0.9,0.1,0.06,mm(0xd81a2a),0,3.8,0); }
   { const cart=grp(root,70,G,101.2); mb(cart,2,1,1,mm(0xc8102a),0,0.8,0); mb(cart,2.4,0.1,1.4,mm(0xf6f6f6),0,2.3,0); for(const s of[-1,1])mcyl(cart,0.04,0.04,1.3,mm(0x2a2a2a),s*1.1,1.65,0,5); for(let i=0;i<3;i++)mcyl(cart,0.08,0.07,0.16,mm(0xf2f2f2),-0.5+i*0.5,1.38,0,8);
     const sg=canvasTex(256,64); sg.x.fillStyle='#fff'; sg.x.fillRect(0,0,256,64); sg.x.fillStyle='#8a1a1a'; sg.x.font='bold 30px sans-serif'; sg.x.textAlign='center'; sg.x.fillText('HOT COCOA ☕',128,44); sg.t.needsUpdate=true; const sp=new THREE.Mesh(new THREE.PlaneGeometry(2,0.5),new THREE.MeshBasicMaterial({map:sg.t})); sp.position.set(0,2.72,0); sp.rotation.y=Math.PI; cart.add(sp); const sp2=sp.clone(); sp2.rotation.y=0; sp2.position.z=0.01; cart.add(sp2); K.cocoa=elPerson(root,'walter',70,G,102.2,0); /* behind the cart, facing the street; the sign sits up on top */ dressRig(K.cocoa.R,mxLook({top:'jacket',topC:'#5a3a2a',hat:'beanie',hatC:'#c81a2a',hair:'short',hairC:'#2a1a10'})); }
-  for(let i=0;i<5;i++){ const c=mxCar(root,0xf2c21a); mb(c,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); K.taxis.push({c,x:i*32,z:i%2?94:97.5,dir:i%2?1:-1,sp:7+i}); c.visible=!!demo; }
+  for(let i=0;i<5;i++){ const c=mxCar(root,0xf2c21a); mb(c,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); elDriver(c); K.taxis.push({c,x:i*32,z:i%2?94:97.5,dir:i%2?1:-1,sp:7+i}); c.visible=!!demo; }
   for(let i=0;i<14;i++){ const a=odPerson(root,0,G,0,0,mxLook({top:['jacket','hoodie','long'][i%3],topC:['#c81a2a','#2a3a6a','#1a6a3a','#5a3a2a','#3a3a3a'][i%5],bottom:'pants',bottomC:'#2a2a2e',hat:i%3?'beanie':'none',hatC:['#c81a2a','#f2f2f2','#1a6a3a'][i%3],hair:['short','long','bun','curly'][i%4]}));
     if(i%2){ const bag=mb(a.R.armR,0.3,0.36,0.14,mm([0xc81a2a,0x1a8a3a,0xd8a020][i%3]),0,-0.85,0); } K.walkers.push({a,x:Math.random()*150+4,z:i%2?90.4:100.6,dir:i%2?1:-1,sp:1+Math.random()*0.6}); }
   // snowball kids behind their forts in the park
@@ -9598,11 +9600,11 @@ OD_CH.el1={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; S.hideH
       if(t>=17.3&&t<17.9){ elFace(sa,ORP(0,0,-3.7)); sa.R.armR.rotation.x=1.6; if(Math.random()<dt*40)burst(...ORP(-0.5,0.6,-3.3),new THREE.Color([0xffffff,0x9ad8ff,0xffe23a][Math.floor(Math.random()*3)]),3); }
       if(t>=17.9&&t<18.7){ odMove(sa,ORP(1.6,0,-1.2),ORP(0,0,-2.9),odSeg(S,17.9,18.7)); odWalk(sa,dt,true,7); }
       if(t>=18.7){ const k=odSeg(S,18.7,19.15); sa.g.scale.setScalar(1-k*0.6); sa.g.position.set(...odL(ORP(0,0,-2.9),ORP(0,0.05,-3.55),k)); sa.g.rotation.y=0; if(Math.random()<dt*30)burst(...ORP(-0.5,0.4+k,-3.3),new THREE.Color(0xffe23a),2); }
-      const B=S.baby; B.R.armL.rotation.x=B.R.armR.rotation.x=0;
+      const B=S.baby; B.R.armL.rotation.x=B.R.armR.rotation.x=0; B.R.legL.rotation.x=B.R.legR.rotation.x=0; B.R.head.rotation.x=0;
       if(t<13){ B.g.position.set(...ORP(-3,0.62,1.6)); B.g.rotation.set(0,0,0); }
       else if(t<13.7){ const k=odSeg(S,13,13.7); B.g.position.set(...ORP(-3,0.62+Math.sin(k*Math.PI*0.5)*0.55,1.6-k*0.62)); B.g.rotation.set(0,0,0); B.R.armL.rotation.x=B.R.armR.rotation.x=2.4+Math.sin(t*12)*0.3; }
       else if(t<14.2){ const k=odSeg(S,13.7,14.2); B.g.position.set(...ORP(-3,1.17*(1-k*k),0.98-k*0.5)); }
-      else if(t<16.6){ const k=odSeg(S,14.2,16.6); B.g.position.set(...odL(ORP(-3,0,0.48),ORP(0.9,0,0.5),k)); B.g.rotation.set(0.9,-Math.PI/2,0,'YXZ'); B.R.legL.rotation.x=Math.sin(t*7)*0.6; B.R.legR.rotation.x=-Math.sin(t*7)*0.6; B.R.armL.rotation.x=1.6+Math.sin(t*7)*0.5; B.R.armR.rotation.x=1.6-Math.sin(t*7)*0.5; }
+      else if(t<16.6){ const k=odSeg(S,14.2,16.6); B.g.position.set(...odL(ORP(-3,0,0.48),ORP(0.9,0,0.5),k)); B.g.position.y+=0.24+Math.abs(Math.sin(t*7))*0.02; B.g.rotation.set(-1.3,-Math.PI/2,0,'YXZ'); /* tipped forward onto hands and knees */ const w=Math.sin(t*7)*0.45; B.R.armL.rotation.x=1.3+w; B.R.armR.rotation.x=1.3-w; B.R.legL.rotation.x=1.3-w; B.R.legR.rotation.x=1.3+w; B.R.head.rotation.x=1.0; }
       else if(t<17.1){ const k=odSeg(S,16.6,17.1); B.g.rotation.set(0,0,0); B.g.position.set(...ORP(0.9,Math.sin(k*Math.PI*0.5)*1.0,0.5-k*0.5)); B.R.armL.rotation.x=B.R.armR.rotation.x=2.6+Math.sin(t*14)*0.3; }
       else { const k=odSeg(S,17.1,17.5); B.g.position.set(...ORP(0.9,1.0-k*0.6,-0.1)); B.g.scale.setScalar(0.4*(1-k*0.6)); B.g.visible=k<1; }
       const sp=t<17.9?ORP(0.9,0.45,-0.2):[sa.g.position.x,sa.g.position.y+1.2*sa.g.scale.x,sa.g.position.z+0.35*sa.g.scale.x]; S.sack.position.set(...sp); S.sack.scale.set(sa.g.scale.x,sa.g.scale.x*1.1,sa.g.scale.x); S.sack.rotation.z=t>17.5&&t<17.9?Math.sin(t*30)*0.12:0; S.sack.visible=t<19.15; sa.g.visible=t<19.15; }
@@ -9675,8 +9677,8 @@ OD_CH.el2={secs:44,sky:'in',mood:'deck',init(S){ const K=elK, G=ELC.G; elShow('w
 
 // ---------- 3. THE JOURNEY TO NEW YORK ----------
 OD_CH.el3={secs:50,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy(S,true); K.rac.g.visible=false; S.st=grp(S.grp,0,0,0); for(let i=0;i<3;i++)msph(S.st,0.08,glowM(0xffe23a),Math.cos(i*2.1)*0.35,0,Math.sin(i*2.1)*0.35); S.st.visible=false;
-    S.rac=elRaccoon(S.grp); S.rac.g.position.set(80.4,G,91); S.taxi=mxCar(S.grp,0xf2c21a); mb(S.taxi,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.taxi.position.set(48,G,94.4); S.taxi.rotation.y=-Math.PI/2;
-    S.taxi2=mxCar(S.grp,0xf2c21a); mb(S.taxi2,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.taxi2.position.set(130,G,127.6); S.taxi2.rotation.y=Math.PI/2; S.tSay={g:S.taxi2}; },
+    S.rac=elRaccoon(S.grp); S.rac.g.position.set(80.4,G,91); S.taxi=mxCar(S.grp,0xf2c21a); mb(S.taxi,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.drv1=elDriver(S.taxi); S.taxi.position.set(48,G,94.4); S.taxi.rotation.y=-Math.PI/2;
+    S.taxi2=mxCar(S.grp,0xf2c21a); mb(S.taxi2,0.6,0.25,0.3,mm(0x111111),0,1.95,0.2); S.taxi2.position.set(130,G,127.6); S.taxi2.rotation.y=Math.PI/2; S.drv2=elDriver(S.taxi2); },
   tick(S,dt){ const K=elK, t=S.t, G=ELC.G, R=S.rac;
     // floating through the candy-cane tunnel, past gumdrops and rainbow rings
     if(t<6){ const k=odSeg(S,0.2,6); odHeroTo(S,[80+Math.sin(t*2)*0.9,G+0.9+Math.sin(t*3)*0.4,64+k*24],Math.PI,false); odAt(S,0.3,'mg',()=>elSfx('magic')); odAt(S,5.6,'out',()=>{ elSky('day'); }); }
@@ -9692,12 +9694,12 @@ OD_CH.el3={secs:50,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy
     // stepping off the curb... BEEP! A taxi bumps him
     if(t>=15&&t<18.6){ const T=S.taxi; if(t<16.2){ odHeroPath(S,[80,G,90.4],[80,G,93.4],15,16.2); T.position.x=48+odSeg(S,15,16.2)*30.4; } else if(t<16.9){ const k=odSeg(S,16.2,16.8); odHeroTo(S,odL([80,G,93.4],[80,G,91.2],k),Math.PI,false); }
       else { odHeroTo(S,[80,G,91.2],Math.PI,false); T.position.x=78.4+Math.max(0,t-17.8)*14; } }
-    odAt(S,15.8,'hk',()=>elSfx('honk')); odAt(S,16.2,'bmp',()=>elSfx('bonk')); odAt(S,17,'b3',()=>odSay(S,S.hero,'SORRY!!! Sorry, Mr. Taxi!',1.1));
+    odAt(S,15.8,'hk',()=>elSfx('honk')); odAt(S,16.2,'bmp',()=>elSfx('bonk')); odAt(S,16.4,'d1',()=>odSay(S,S.drv1,"HEY! Watch where you're walkin', pal!")); odAt(S,17.3,'b3',()=>{ if(S.drv1.bub)odBubOff(S.drv1.g,S.drv1); odSay(S,S.hero,'SORRY!!! Sorry, Mr. Taxi!',1.1); }); elDriverMad(S.drv1,t,t>=16.3&&t<18.4,pl.p); animRig(S.drv1.R,dt,0); K.taxis.forEach(c=>{ c.film=t>=14.6&&t<18.8; if(c.film)c.c.position.y=-60; }); /* clear the street for the bump */
     // the giant tree
     if(t>=18.6&&t<24){ odHeroPath(S,[92,G,131.6],[99,G,136.4],18.6,21); if(t>=21)odHeroTo(S,[99,G,136.4],Math.atan2(-(104-99),-(146-136.4)),false); } odAt(S,21.4,'w2',()=>odSay(S,S.hero,"It's the BIGGEST tree I've ever seen!",1.1));
     // hopscotch across the crosswalk, one white stripe at a time (a taxi waits and beeps)
     if(t>=24&&t<28.4){ const u=odSeg(S,24.2,28), n=6, z=132.2-u*9.2; odHeroTo(S,[88,G+Math.abs(Math.sin(u*n*Math.PI))*0.7,z],0,false); S.hopU=u; const T2=S.taxi2; T2.position.x=Math.max(92.6,130-odSeg(S,24,25.6)*37.4); if(t>27.6)T2.position.x=92.6-(t-27.6)*14; }
-    odAt(S,25.6,'hk2',()=>{ elSfx('honk'); odSay(S,S.tSay,'BEEP BEEP!'); }); odAt(S,26.4,'b4',()=>odSay(S,S.hero,'Hop! Hop! Hippity-hop!'));
+    odAt(S,25.6,'hk2',()=>{ elSfx('honk'); odSay(S,S.drv2,'BEEP BEEP! Get outta the road!'); }); odAt(S,26.8,'hk3',()=>elSfx('honk')); elDriverMad(S.drv2,t,t>=25.5&&t<27.8,pl.p); animRig(S.drv2.R,dt,0); odAt(S,26.4,'b4',()=>odSay(S,S.hero,'Hop! Hop! Sorry, mister! Hop!'));
     // the cocoa cart: asking about Santa
     if(t>=28.4&&t<35){ odHeroTo(S,[70,G,99.8],Math.PI,false); K.cocoa.R.armR.rotation.x=t>32&&t<34?1.4:0; K.cocoa.R.armR.rotation.z=t>32&&t<34?0.6:0; animRig(K.cocoa.R,dt,0); }
     odAt(S,28.8,'b5',()=>odSay(S,S.hero,'Excuse me! Have you seen Santa? Big, jolly, red suit?')); odAt(S,32.2,'c1',()=>{ if(S.hero.bub)odBubOff(model,S.hero); odSay(S,K.cocoa,"Santa? Try Merriwether's, pal. Right down the street."); elK.speak.includes(K.cocoa)||elK.speak.push(K.cocoa); }); odAt(S,34.4,'b6',()=>{ if(K.cocoa.bub)odBubOff(K.cocoa.g,K.cocoa); odSay(S,S.hero,'Thank you, new friend!'); });
@@ -9714,7 +9716,7 @@ OD_CH.el3={secs:50,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy
     if(t>=35&&t<40.4){ armL.rotation.z=-1.5; armR.rotation.z=1.5; } if(t>=40.4&&t<42)model.rotation.z=Math.sin(t*5)*0.2; if(t>=42){ legL.rotation.x=0.6; legR.rotation.x=-0.6; armL.rotation.z=-1.6; armR.rotation.z=1.6; } },
   cam(S){ const t=S.t, G=ELC.G; if(t<6)return [[pl.p[0]+1.2,pl.p[1]+1.3,pl.p[2]+4.4],[pl.p[0],pl.p[1]+1.2,pl.p[2]-1.5],0];
     if(t<11.4)return [[81.8,G+1.7,93.2],[80.2,G+0.9,90.0],1]; if(t<12.6)return [[80,G+1.8,93.4],[80,G+1.5,90.4],2]; if(t<15){ const a=Math.PI-0.9+odE(odSeg(S,12.8,14.8))*1.8, e=[80,G+1.62,90.4]; return [e,[e[0]-Math.sin(a)*10,G+4+odSeg(S,12.6,14)*8,e[2]-Math.cos(a)*10],3]; }
-    if(t<18.6)return [[73.4,G+2.2,90],[80,G+1,93.4],4]; if(t<21)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],5]; if(t<24){ const k=odSeg(S,21,24); return [[94.6,G+2,130.6],[104,G+6+k*10,146],6]; }
+    if(t>=16.4&&t<17.3)return [[82.6,G+1.9,90.6],[78.8,G+1.4,93.8],4.5]; if(t<18.6)return [[73.4,G+2.2,90],[80,G+1,93.4],4]; if(t<21)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],5]; if(t<24){ const k=odSeg(S,21,24); return [[94.6,G+2,130.6],[104,G+6+k*10,146],6]; }
     if(t<28.4)return [[82.8,G+2.2,127.6],[88,G+1,127.4],7]; if(t<35)return [[75.4,G+2.5,99.0],[70,G+1.8,101.2],8]; if(t<42)return [[38.6,G+2.3,97.2],[36.5,G+1.1,100.6],9]; return [[pl.p[0]+3.2,pl.p[1]+1.7,pl.p[2]+1.6],[pl.p[0],pl.p[1]+1.2,pl.p[2]],10]; } };
 const EL_NAMES=['The North Pole and the Mysterious Baby','Buddy Discovers the Truth','The Journey to New York'];
 // ================= MERRIWETHER'S SECOND FLOOR =================
