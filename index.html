@@ -5147,7 +5147,8 @@ function updatePlayer(dt){
   if(odyK&&odyK.ride)return odRideUpdate(dt); // sailing a ship on the Odyssey's sea
   if(mxK&&mxK.heli&&mxK.heli.ride)return mxHeliUpdate(dt);
   if(brK&&brK.spin&&brK.spin.ride)return brSpinUpdate(dt);
-  if(elK&&elK.sleigh&&elK.sleigh.ride)return elSleighUpdate(dt); // flying Santa's sleigh // flying a police spinner over Los Angeles 2019 // flying the helicopter over Matrix City
+  if(elK&&elK.sleigh&&elK.sleigh.ride)return elSleighUpdate(dt); // flying Santa's sleigh
+  if(elK&&elK.escRide)return elEscUpdate(dt); // riding the store's escalator // flying a police spinner over Los Angeles 2019 // flying the helicopter over Matrix City
   if(mansionK&&(mansionK.slide||mansionK.ride||mansionK.seated))$('tint').style.opacity=0; // never underwater while sliding, floating or at the table
   if(mansionK&&mansionK.slide)return slideUpdate(dt); if(mansionK&&mansionK.ride)return rideUpdate2(dt);
   if(mansionK&&mansionK.hold){ $('tint').style.opacity=0; if(demo){ demoInput(dt); if(!demo.user)demoPilot(dt); } if(mansionK.hold)pl.p=mansionK.hold.slice(); pl.v=[0,0,0]; return {hs:0}; } // up a ladder (in a demo)
@@ -9319,7 +9320,7 @@ function elBear(par){ const g=grp(par,0,0,0), w=mm(0xf2f2ee); mb(g,1.0,0.9,1.8,w
   const legs=[]; for(const [x,z] of [[-0.32,-0.6],[0.32,-0.6],[-0.32,0.6],[0.32,0.6]]){ const l=grp(g,x,0.6,z); mb(l,0.32,0.6,0.32,w,0,-0.3,0); legs.push(l); } return {g,hd,legs}; }
 function elRevolver(par){ const g=grp(par,0,0,0); mcyl(g,0.08,0.08,2.8,mm(0x8a6a2a),0,1.4,0,8); mcyl(g,1.5,1.5,0.15,mm(0x8a6a2a),0,2.85,0,20); const wings=grp(g,0,0,0); const gl=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.4,depthWrite:false});
   for(let i=0;i<4;i++){ const p=mb(wings,1.4,2.6,0.05,gl,0.72,1.35,0); const w=grp(wings,0,0,0); w.rotation.y=i*Math.PI/2; w.add(p); mb(w,0.05,2.6,0.08,mm(0x8a6a2a),1.42,1.35,0); } return {g,wings}; }
-function elEscalator(par){ const g=grp(par,0,0,0), m=mm(0x8a8a90), st=[]; const L=10, Hh=7; const side=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.35,depthWrite:false});
+function elEscalator(par){ const g=grp(par,0,0,0), m=mm(0x8a8a90), st=[]; const L=10, Hh=8; const side=new THREE.MeshLambertMaterial({color:0xbfe0f0,transparent:true,opacity:0.35,depthWrite:false});
   for(const s of[-1,1]){ const r=mb(g,0.08,1.0,Math.hypot(L,Hh)+1,side,s*0.7,Hh/2+0.5,-L/2); r.rotation.x=Math.atan2(Hh,L); const h=mb(g,0.12,0.1,Math.hypot(L,Hh)+1,mm(0x1a1a1a),s*0.7,Hh/2+1.05,-L/2); h.rotation.x=Math.atan2(Hh,L); }
   for(let i=0;i<20;i++){ const b=mb(g,1.3,0.12,0.6,m,0,0,0); st.push(b); } return {g,st,L,Hh}; }
 // the shimmering northern lights over the North Pole
@@ -9338,7 +9339,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
     K.elves.push({a:e,a0:Math.random()*6.28,r:8+Math.random()*16,c:[i%2?30:126,30],sp:(0.15+Math.random()*0.2)*(i%3?1:-1)}); }
   // the workshop's toy table, and Santa's sleigh in the snow
   { const T=ELC.toy, d=grp(root,T[0],T[1],T[2]); mb(d,6,0.9,1.4,mm(0x6a4a2a),0,0.45,0); const belt=mb(d,6.2,0.05,1.0,mm(0x2a2a2e),0,0.93,0); K.beltToys=[]; for(let i=0;i<6;i++){ const g2=elGift(d,[0xc81a2a,0x2a5ac8,0x1a8a3a][i%3]); g2.scale.setScalar(0.5); g2.position.set(-3+i,0.95,0); K.beltToys.push(g2); }
-    for(let i=0;i<3;i++){ const e=elElf(d,-2+i*2,0,-1.1,0); e.R.armL.rotation.x=e.R.armR.rotation.x=1.1; K.elves.push({a:e,work:true}); } mb(d,1.6,0.6,0.05,mm(0x2a1a10),0,2.6,0.75); }
+    for(let i=0;i<3;i++){ const e=elElf(d,-2+i*2,0,-1.1,Math.PI); const tb=elGift(e.R.armR,[0xc81a2a,0x2a5ac8,0x1a8a3a][i]); tb.scale.setScalar(0.35); tb.position.set(0,-0.72,-0.12); e.R.armL.rotation.x=e.R.armR.rotation.x=1.1; K.elves.push({a:e,work:true}); } mb(d,1.6,0.6,0.05,mm(0x2a1a10),0,2.6,0.75); }
   { const s=elSleighMesh(root); K.sleigh=Object.assign(s,{x:ELC.sleigh[0],y:ELC.sleigh[1],z:ELC.sleigh[2],h:0,vx:0,vy:0,vz:0,ride:false,film:false}); }
   // the forest: snowy pines all along the mountains
   { const pts=[]; for(let i=0;i<260;i++){ const x=2+Math.random()*156, z=58+Math.random()*30; if(x>70&&x<90)continue; pts.push([x,z,2.5+Math.random()*2.5]); } const geo=new THREE.ConeGeometry(1,1,7), M=new THREE.InstancedMesh(geo,mm(0x1a5a34),pts.length), S2=new THREE.InstancedMesh(geo,mm(0xf6f6f6),pts.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion();
@@ -9350,7 +9351,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
   { const G0=G, sc=canvasTex(512,64); sc.x.fillStyle='#8a0a1a'; sc.x.fillRect(0,0,512,64); sc.x.fillStyle='#ffe8a0'; sc.x.font='bold 44px Georgia,serif'; sc.x.textAlign='center'; sc.x.fillText("MERRIWETHER'S",256,48); sc.t.needsUpdate=true;
     const m=new THREE.Mesh(new THREE.PlaneGeometry(20,2.5),new THREE.MeshBasicMaterial({map:sc.t})); m.position.set(36,G0+6.6,101.4); m.rotation.y=Math.PI; root.add(m);
     for(const x of [23.5,48.5]){ const w=grp(root,x,G0,104); elTree(w,-3,0,0,3.2); for(let i=0;i<5;i++){ const g2=elGift(w,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][i%4]); g2.position.set(-1+i*1.1,0,-0.8); } const tr=grp(w,2.6,0,0); for(let i=0;i<6;i++)mb(tr,0.5,0.4,0.6,mm(i%2?0xd81a2a:0x2a5ac8),i*0.55-1.4,0.3,0.6); K.winTrain=K.winTrain||[]; K.winTrain.push(tr); }
-    K.rev=elRevolver(root); K.rev.g.position.set(36.5,G0,101); K.esc=elEscalator(root); K.esc.g.position.set(24,G0,114);
+    K.rev=elRevolver(root); K.rev.g.position.set(36.5,G0,101); K.esc=elEscalator(root); K.esc.g.position.set(24,G0,104.5); K.esc.g.rotation.y=Math.PI; /* bottom by the doors, top lands on the second floor */
     for(let i=0;i<4;i++){ for(const [x,z] of [[18+i*10,118],[18+i*10,110]]){ mb(root,6,1.8,0.8,mm(0x6a4a2a),x,G0+0.9,z); for(let k=0;k<6;k++){ const g2=elGift(root,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020][(k+i)%4]); g2.scale.setScalar(0.6); g2.position.set(x-2.5+k,G0+1.8,z); } } }
     K.storeTree=elTree(root,46,G0,111,6.5); }
   K.plazaTree=elTree(root,...ELC.tree,22); for(const x of [10,26,42,58,90,106,122,138,150])for(const z of [90.5,101.3]){ const p=grp(root,x,G,z); mcyl(p,0.08,0.1,4.6,mm(0x2a3a2a),0,2.3,0,6); msph(p,0.25,glowM(0xfff2c0),0,4.7,0); mb(p,0.9,0.1,0.06,mm(0xd81a2a),0,3.8,0); }
@@ -9367,7 +9368,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
   EL_GIFTS.forEach((p,i)=>{ const g=elGift(root,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020,0x8a2ad8][i%5]); g.position.set(...p); g.visible=!K.giftsGot.includes(i); K.gifts.push({g,p,i}); });
   if(!demo)for(const [x,z,ry] of [[120,97.5,Math.PI/2],[140,94,-Math.PI/2]]){ if(VEH.taxi){ const v=makeVehicle('taxi',x,G,z,ry); freeVehicles.push(v); } }
   elBuildSets(K); }
-function clearElfLife(){ elStageClear(); const K=elK; if(!K)return; scene.remove(K.root); odFree(K.root); elK=null; elToyClose(); elHud(false); if(elSplatEl)elSplatEl.style.opacity=0; }
+function clearElfLife(){ elStageClear(); const K=elK; if(!K)return; if(K.cup&&K.cup.parent)K.cup.parent.remove(K.cup); scene.remove(K.root); odFree(K.root); elK=null; elToyClose(); elHud(false); if(elSplatEl)elSplatEl.style.opacity=0; }
 // skies: the twilight North Pole under the northern lights, a snowy city day, and the night
 function elSky(k){ const S={np:[0x1a2a5a,[0.8,0.84,1],40,190],day:[0xbcd0e4,[1,1,1],50,200],night:[0x0c1430,[0.62,0.66,0.86],34,170],in:[0x2a1a10,[1,0.92,0.82],30,120]}[k]||[0x1a2a5a,[0.8,0.84,1],40,190];
   scene.background.setHex(S[0]); scene.fog.color.setHex(S[0]); blockMat.color.setRGB(...S[1]); waterMat.color.setRGB(...S[1]); for(const c of clouds)c.visible=false; scene.fog.near=S[2]; scene.fog.far=S[3];
@@ -9386,6 +9387,7 @@ function elTick(dt){ const K=elK; K.t+=dt; const t=K.t, G=ELC.G;
   for(const g of K.gifts){ if(!g.g.visible)continue; g.g.rotation.y+=dt; g.g.position.y=g.p[1]+Math.abs(Math.sin(t*2+g.i))*0.15; if(!demo&&onElf()&&Math.hypot(pl.p[0]-g.p[0],pl.p[2]-g.p[2])<1.5&&Math.abs(pl.p[1]-g.p[1])<2.2)elGiftGet(g); }
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   K.bear.g.position.y=G; if(!demo){ K.bear.hd.rotation.y=Math.sin(t*0.5)*0.5; }
+  if(K.cupT>0){ K.cupT-=dt; if(K.cupT<=0&&K.cup)K.cup.visible=false; }
   elSleighTick(dt); elKidsTick(dt); elHud(!demo&&onElf()); if(!demo&&onElf()&&owned&&!owned.includes('snowball'))elGiveSnow();
   if(!demo&&onElf()&&!K.tip&&K.t>3){ K.tip=true; toast('🎄 Welcome to the North Pole! Santa\'s sleigh is parked by the big tree (press E to fly it). Find presents and decorate glowing trees to raise the Christmas Spirit!'); }
   if(!demo&&onElf()&&!K.tip2&&Math.hypot(pl.p[0]-ELC.toy[0],pl.p[2]-ELC.toy[2])<7){ K.tip2=true; toast('🧸 The toy line! Stand at the table and press E to build toys with the elves.'); }
@@ -9393,11 +9395,19 @@ function elTick(dt){ const K=elK; K.t+=dt; const t=K.t, G=ELC.G;
   if(wxPts&&!demo)updateWeather(dt); if(demo&&wxPts)updateWeather(dt); if((demo&&demo.sc&&isElf(demo.sc))||(!demo&&onElf()))elMusicTick(dt); }
 // --- presents, decorations and the Christmas Spirit meter
 let elHudEl=null;
-function elHud(show){ if(!elHudEl){ if(!show)return; elHudEl=document.createElement('div'); elHudEl.className='ui'; elHudEl.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(58px + env(safe-area-inset-top));z-index:6;font:800 13px sans-serif;color:#fff;background:rgba(120,10,20,.82);border:2px solid #fff;border-radius:12px;padding:5px 10px;display:none;pointer-events:none;white-space:nowrap'; document.body.appendChild(elHudEl); }
+function elHud(show){ if(!elHudEl){ if(!show)return; elHudEl=document.createElement('div'); elHudEl.className='ui'; elHudEl.style.cssText='position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(98px + env(safe-area-inset-top));z-index:6;font:800 12px sans-serif;color:#fff;background:rgba(120,10,20,.82);border:2px solid #fff;border-radius:12px;padding:5px 10px;display:none;pointer-events:none;white-space:nowrap'; document.body.appendChild(elHudEl); }
   elHudEl.style.display=show?'block':'none'; if(show&&elK){ const v=Math.round(elK.spirit), key=v+'|'+elK.giftsGot.length; if(elHudEl.dataset.k!==key){ elHudEl.dataset.k=key; elHudEl.innerHTML='🎄 Christmas Spirit '+'<span style="display:inline-block;width:70px;height:9px;background:#3a0a10;border-radius:5px;vertical-align:middle;overflow:hidden"><span style="display:block;height:100%;width:'+v+'%;background:#3aff8a"></span></span> '+v+'% · 🎁 '+elK.giftsGot.length+'/'+EL_GIFTS.length; } } }
 function elSpirit(n,why){ const K=elK, was=K.spirit; K.spirit=Math.min(100,K.spirit+n); elSave(); if(was<100&&K.spirit>=100)setTimeout(()=>toast('🌟 Christmas Spirit is at 100%! Santa\'s sleigh flies at top speed now!'),2300); }
 function elGiftGet(g){ g.g.visible=false; const K=elK; if(!K.giftsGot.includes(g.i))K.giftsGot.push(g.i); coins+=5; updateHUD(); sfx('coin'); burst(g.p[0]-0.5,g.p[1]+0.4,g.p[2]-0.5,new THREE.Color(0xffd23a),14); elSpirit(6); toast('🎁 You found a present! +5 coins, +6 Christmas Spirit ('+K.giftsGot.length+' of '+EL_GIFTS.length+')'); queueSave(); }
 function elDecorate(d){ d.done=true; d.glow.visible=false; d.t.orn.forEach(o=>o.visible=true); d.t.star.visible=true; elK.decoDone.push(d.i); coins+=3; updateHUD(); sfx('coin'); burst(d.p[0]-0.5,d.p[1]+3,d.p[2]-0.5,new THREE.Color(0xffe23a),18); elSpirit(10); toast('🎄 Beautiful! You decorated the tree. +10 Christmas Spirit'); queueSave(); }
+// --- hot cocoa from the cart (3 coins, and a little more Christmas Spirit)
+function elCocoa(){ const K=elK; if(coins<3){ toast('☕ Hot cocoa is 3 coins.'); return; } coins-=3; updateHUD(); sfx('buy'); elSpirit(4); K.cocoa.R.armR.rotation.x=1.3; setTimeout(()=>{ if(elK)elK.cocoa.R.armR.rotation.x=0; },900);
+  if(!K.cup){ K.cup=grp(armR,0,-0.72,-0.12); mcyl(K.cup,0.07,0.06,0.14,mm(0xf2f2f2),0,0,0,10); mcyl(K.cup,0.062,0.062,0.01,mm(0x5a2a10),0,0.07,0,10); } K.cup.visible=true; K.cupT=4; for(let i=0;i<3;i++)puff(pl.p[0]-0.5,pl.p[1]+1.9,pl.p[2]-0.5,false);
+  toast('☕ Mmm, hot cocoa! +4 Christmas Spirit'); queueSave(); }
+// --- the store's escalator: step on at the bottom (or the top) and ride it
+function elEscStart(dir){ const K=elK; K.escRide={dir,u:dir>0?0:1}; pl.v=[0,0,0]; }
+function elEscUpdate(dt){ const K=elK, R=K.escRide, G=ELC.G, E=K.esc; R.u+=R.dir*dt*0.2; if(R.u>=1||R.u<=0){ K.escRide=null; pl.p=R.dir>0?[24,G+8,116.6]:[24,G,103.7]; pl.v=[0,0,0]; unstick(pl); return {hs:0}; }
+  pl.p=[24,G+0.12+R.u*E.Hh,104.5+R.u*E.L]; pl.v=[0,0,0]; yaw=R.dir>0?Math.PI:0; $('tint').style.opacity=0; return {hs:0}; }
 // --- Santa's sleigh: walk up, press E, and fly (more Christmas Spirit = faster)
 function elSleighTick(dt){ const H=elK.sleigh; if(!H)return; const t=elK.t; elDeerRun(H,t,H.ride||H.film); if(H.ride){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.9; if(Math.random()<dt*6)snd(()=>noise(7000,0.05,0.03,'highpass')); }
   if(!H.film){ H.g.position.set(H.x,H.y+(H.ride&&H.y>ELC.G+1?Math.sin(t*2)*0.08:0),H.z); H.g.rotation.set(H.tilt||0,H.h,H.roll||0,'YXZ'); } }
@@ -9413,6 +9423,9 @@ function elSleighOff(){ const H=elK.sleigh; if(H.y-standY(Math.floor(H.x),Math.f
 function elAction(){ const K=elK; if(!K||!onElf()||demo)return null; const H=K.sleigh; if(H&&H.ride)return {label:'🛷 Get out',fn:elSleighOff};
   if(H&&Math.hypot(pl.p[0]-H.x,pl.p[2]-H.z)<3&&Math.abs(pl.p[1]-H.y)<2.2)return {label:'🛷 Fly Santa\'s sleigh',fn:elSleighBoard};
   if(!elToy&&Math.hypot(pl.p[0]-ELC.toy[0],pl.p[2]-(ELC.toy[2]+1.4))<3.2&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'🧸 Build toys',fn:elToyOpen};
+  if(Math.hypot(pl.p[0]-70,pl.p[2]-100.4)<2.4&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'☕ Buy hot cocoa (🪙3)',fn:elCocoa};
+  if(!K.escRide&&Math.hypot(pl.p[0]-24,pl.p[2]-103.4)<1.8&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'🛗 Ride the escalator up',fn:()=>elEscStart(1)};
+  if(!K.escRide&&Math.hypot(pl.p[0]-24,pl.p[2]-116.4)<1.8&&Math.abs(pl.p[1]-(ELC.G+8))<1.5)return {label:'🛗 Ride the escalator down',fn:()=>elEscStart(-1)};
   for(const d of K.deco)if(!d.done&&Math.hypot(pl.p[0]-d.p[0],pl.p[2]-d.p[2])<2.6&&Math.abs(pl.p[1]-d.p[1])<2)return {label:'🎄 Decorate this tree',fn:()=>elDecorate(d)}; return null; }
 // --- snowballs: throw them at the kids in the park (they fall over laughing, then pop back up), and duck theirs
 WP.snowball={id:'snowball',name:'Snowballs',icon:'❄️',dmg:1,cd:0.35,ranged:true,spd:24,grav:9,range:40,fact:'Snow packs into a good snowball when it is close to melting, around 0 °C. Very cold snow is too dry to stick together.'}; WEAPON_IDS.push('snowball');
@@ -9602,7 +9615,7 @@ OD_CH.el3={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy
     if(t>=27&&t<34){ K.revSp=t<32.4?4.5:0.6; const a=K.rev.wings.rotation.y+Math.PI/4; if(t<32.4)odHeroTo(S,[36.5+Math.cos(a)*0.75,G,101+Math.sin(a)*0.75],-a,false); else { odHeroTo(S,[36.5,G,99.2],Math.PI+Math.sin(t*6)*0.4,false); S.st.visible=true; S.st.position.set(pl.p[0],pl.p[1]+2.3,pl.p[2]); S.st.rotation.y=t*5; } }
     odAt(S,27.6,'b3',()=>odSay(S,S.hero,'Wheee! Again! AGAIN!')); odAt(S,32.6,'b4',()=>odSay(S,S.hero,'Whoa... the floor is spinning...'));
     // the escalator: up and down, up and down
-    if(t>=34){ S.st.visible=false; K.revSp=0.6; const k=((t-34)*0.22)%1, up=k<0.5, u=up?k*2:2-k*2; odHeroTo(S,[24,G+0.2+u*K.esc.Hh,114-u*K.esc.L],up?0:Math.PI,false); }
+    if(t>=34){ S.st.visible=false; K.revSp=0.6; const k=((t-34)*0.22)%1, up=k<0.5, u=up?k*2:2-k*2; odHeroTo(S,[24,G+0.2+u*K.esc.Hh,104.5+u*K.esc.L],up?Math.PI:0,false); }
     odAt(S,35,'b5',()=>odSay(S,S.hero,'Moving stairs! Hee hee hee!')); odAt(S,39,'b6',()=>odSay(S,S.hero,"Santa, I'm coming!"));
     S.ny.forEach((a,i)=>{ if(t>=7.4&&t<14){ a.g.visible=true; const k=odSeg(S,7.4,14); a.g.position.set(70+i*22+k*(i?-8:8),G,90.2+i*0.4); a.g.rotation.y=i?Math.PI/2:-Math.PI/2; odWalk(a,dt,true,7); } else a.g.visible=false; }); },
   pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; armL.rotation.z=armR.rotation.z=0; if(t<7.4){ model.rotation.x=-Math.PI/2; model.position.y+=0.3; armL.rotation.z=-2.8; armR.rotation.z=2.8; }
