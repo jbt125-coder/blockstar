@@ -7405,7 +7405,7 @@ function generateMatrix(s){ seed=s; world=new Uint8Array(N); meta=new Uint8Array
   { const V=MXC.gov; shell(V.x0,V.z0,V.x1,V.z1,G,G+16,ID.concrete); for(const y of [9,14])F(V.x0+1,y,V.z0+1,V.x1-1,y,V.z1-1,ID.concrete); F(V.x0,G+17,V.z0,V.x1,G+17,V.z1,ID.steel);
     for(const y0 of [10,15])for(const y of [y0,y0+1])wins(V.x0,V.z0,V.x1,V.z1,y,ID.window,2); F(51,G,V.z0,53,G+2,V.z0,0);
     shell(46,50,56,60,G+6,G+9,ID.concrete); F(49,G+7,50,53,G+8,50,ID.obsidian); F(47,G+5,51,55,G+5,59,ID.slate); F(V.x0+1,G-1,V.z0+1,V.x1-1,G-1,V.z1-1,ID.marble);
-    for(const x of [46,49,55,58])for(const z of [50,54,58,62])F(x,G,z,x,G+4,z,ID.marble); F(50,G+11,V.z0,52,G+12,V.z0,ID.glass);
+    F(50,G+11,V.z0,52,G+12,V.z0,ID.glass);
     for(let k=0;k<=17;k++)F(63,G,47+k,64,G+k,47+k,ID.concrete); }
   // the rest of the skyline
   const tower=(x0,z0,x1,z1,h,id)=>{ F(x0,G,z0,x1,G+h,z1,id); for(let y=G+1;y<G+h;y++)if((y-G)%3)wins(x0,z0,x1,z1,y,ID.window,2); F(x0+2,G+h+1,z0+2,x1-2,G+h+2,z1-2,ID.steel); };
@@ -7420,7 +7420,7 @@ const MX_CAST={
   morpheus:{skin:'#5a3a26',hair:'bald',eyes:'#2a1a10',top:'long',topC:'#3a2030',bottom:'pants',bottomC:'#1a1418',shoes:'boots',shoeC:'#0a0a0a',glasses:'round',coat:0x2a1620},
   switch:{skin:'#f2dcc8',hair:'short',hairC:'#f4f0e0',top:'long',topC:'#f2f2f2',bottom:'pants',bottomC:'#e8e8e8',shoes:'boots',shoeC:'#d8d8d8'},
   apoc:{skin:'#e0b898',hair:'long',hairC:'#2a1a10',top:'tee',topC:'#3a3a3a',bottom:'pants',bottomC:'#2a2a2a',shoes:'boots',shoeC:'#1a1a1a'},
-  cypher:{skin:'#e8c0a0',hair:'short',hairC:'#1a1208',beard:'short',top:'long',topC:'#4a4038',bottom:'pants',bottomC:'#2a2420',shoes:'boots',shoeC:'#1a1a1a'},
+  cypher:{skin:'#e8c0a0',hair:'bald',hairC:'#1a1208',beard:'short',top:'long',topC:'#4a4038',bottom:'pants',bottomC:'#2a2420',shoes:'boots',shoeC:'#1a1a1a'},
   choi:{skin:'#e8c8a0',hair:'spiky',hairC:'#1a1a1a',top:'jacket',topC:'#2a2a2e',bottom:'jeans',bottomC:'#2a3a5a',shoes:'sneakers',shoeC:'#f2f2f2'},
   dujour:{skin:'#f4dcc8',hair:'ponytail',hairC:'#f0f0f0',top:'tank',topC:'#151515',bottom:'skirt',bottomC:'#151515',shoes:'boots',shoeC:'#0a0a0a'},
   pal:{skin:'#a8704a',hair:'mohawk',hairC:'#8a2ad8',top:'tee',topC:'#d8202a',bottom:'jeans',bottomC:'#1a1a2a',shoes:'sneakers',shoeC:'#1a1a1a'},
@@ -7432,7 +7432,7 @@ function mxAgent(par,x,y,z,ry,kind){ const a=odPerson(par,x,y,z,ry,mxLook({skin:
 function mxBunny(par){ const g=grp(par,0,0,0), w=mm(0xf6f6f6), p=mm(0xffb0c0); mb(g,0.34,0.3,0.5,w,0,0.22,0); mb(g,0.26,0.26,0.26,w,0,0.42,-0.3);
   for(const s of[-1,1]){ mb(g,0.07,0.34,0.05,w,s*0.07,0.7,-0.28); mb(g,0.04,0.26,0.02,p,s*0.07,0.7,-0.305); mb(g,0.04,0.04,0.02,glowM(0xd81a2a),s*0.08,0.46,-0.435); } msph(g,0.08,w,0,0.3,0.27); mb(g,0.04,0.03,0.02,p,0,0.39,-0.435); return g; }
 function mxPhone(par){ const g=grp(par,0,0,0); mb(g,0.07,0.17,0.035,mm(0x1a1a1e),0,0,0); mb(g,0.05,0.05,0.01,glowM(0x6aff8a),0,0.04,-0.02); return g; }
-function mxBug(par){ const g=grp(par,0,0,0), s=mm(0xc8ccd4); msph(g,0.09,s,0,0.06,0,1,0.6,1.5); mb(g,0.03,0.03,0.03,glowM(0xff2a2a),0,0.09,-0.13); for(let i=0;i<3;i++)for(const k of[-1,1]){ const l=mb(g,0.16,0.015,0.015,s,k*0.1,0.03,-0.06+i*0.06); l.rotation.z=k*0.4; } return g; }
+function mxBug(par){ const g=grp(par,0,0,0), s=mm(0xc8ccd4); msph(g,0.09,s,0,0.06,0,1,0.6,1.5); g.eye=mb(g,0.03,0.03,0.03,glowM(0xff2a2a),0,0.09,-0.13); for(let i=0;i<3;i++)for(const k of[-1,1]){ const l=mb(g,0.16,0.015,0.015,s,k*0.1,0.03,-0.06+i*0.06); l.rotation.z=k*0.4; } return g; }
 function mxCar(par,col){ const g=new THREE.Group(); par.add(g); const b=mm(col), dk=mm(0x101014), gl=new THREE.MeshLambertMaterial({color:0x223038,transparent:true,opacity:0.35,depthWrite:false});
   mb(g,1.9,0.55,4.4,b,0,0.58,0); mb(g,1.76,0.95,2.5,gl,0,1.33,0.2); mb(g,1.8,0.06,2.4,b,0,1.83,0.2); for(const [x,z] of [[-0.95,-1.4],[0.95,-1.4],[-0.95,1.4],[0.95,1.4]]){ const w=mcyl(g,0.36,0.36,0.25,dk,x,0.36,z,12); w.rotation.z=Math.PI/2; }
   for(const s of[-1,1]){ mb(g,0.3,0.15,0.05,glowM(0xfff2c0),s*0.65,0.66,-2.21); mb(g,0.3,0.15,0.05,glowM(0xd81a1a),s*0.65,0.66,2.21); mb(g,0.06,0.9,0.06,b,s*0.88,1.33,-1.05); }
@@ -7547,7 +7547,8 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
   // Morpheus's room: two red armchairs, a little table, a tall mirror, and the crew's machines
   { const f=MXC.mor.f; mxChair(root,75,f,12.6,Math.PI,0x8a1a1a); mxChair(root,75,f,18.2,0,0x8a1a1a); const tb=grp(root,75,f,15.4); mcyl(tb,0.4,0.4,0.05,mm(0x3a2a1a),0,0.62,0,14); mcyl(tb,0.05,0.05,0.6,mm(0x3a2a1a),0,0.3,0,6);
     mcyl(tb,0.06,0.05,0.18,new THREE.MeshLambertMaterial({color:0xd8f0ff,transparent:true,opacity:0.6}),0.15,0.74,0,10);
-    K.mir=canvasTex(64,128); K.mirM=new THREE.MeshBasicMaterial({map:K.mir.t}); mxMirror(K,0); const mf=grp(root,84.85,f,19.6); mb(mf,0.12,2.6,1.5,mm(0x2a1a10),0,1.3,0); const mp=new THREE.Mesh(new THREE.PlaneGeometry(1.25,2.3),K.mirM); mp.position.set(-0.07,1.3,0); mp.rotation.y=-Math.PI/2; mf.add(mp);
+    K.mir=canvasTex(64,128); K.mirM=new THREE.MeshBasicMaterial({map:K.mir.t}); mxMirror(K,0); const mf=grp(root,84.85,f,19.6); mb(mf,0.12,2.6,1.5,mm(0x2a1a10),0,1.3,0); const mp=new THREE.Mesh(new THREE.PlaneGeometry(1.25,2.3),K.mirM); mp.position.set(-0.07,1.3,0); mp.rotation.y=-Math.PI/2; mf.add(mp); K.mirPlane=mp;
+    K.mirRT=new THREE.WebGLRenderTarget(256,512); K.mirRT.texture.wrapS=THREE.RepeatWrapping; K.mirRT.texture.repeat.x=-1; K.mirRT.texture.offset.x=1; K.mirRTM=new THREE.MeshBasicMaterial({map:K.mirRT.texture}); K.mirCam=new THREE.PerspectiveCamera(62,0.54,0.1,40); K.mirCam.position.set(84.6,f+1.35,19.6); K.mirCam.lookAt(70,f+1.2,19.6); /* a real reflection: the room seen from the mirror, flipped */
     const rack=grp(root,80.2,f,10.2); mb(rack,3,0.8,1,mm(0x3a3a40),0,0.4,0); for(let i=0;i<3;i++){ const c=mxCRT(rack,-1+i,0.8,0,0,scrMat(K.code)); c.scale.setScalar(0.9); } mb(rack,0.5,1.8,0.5,mm(0x2a2a30),1.9,0.9,0);
     K.mdoor=grp(root,75,f,23.5); mb(K.mdoor,2,2,0.12,mm(0x4a2a1a),1,1,0); }
   // the real world, far below: a black sky full of lightning over endless towers of pods
@@ -7564,7 +7565,8 @@ function buildMxLife(){ clearMxLife(); const root=new THREE.Group(); scene.add(r
     K.goo=mcyl(pod,0.74,0.74,1.5,new THREE.MeshBasicMaterial({color:0xd83a6a,transparent:true,opacity:0.35,depthWrite:false}),0,0.8,0,14);
     K.cables=[]; for(const [y,z] of [[1.8,0],[1.3,0.25],[1.0,-0.25]]){ const c=mb(pod,1.8,0.08,0.08,mm(0x101014),-1.5,y,z); K.cables.push(c); } K.neck=mb(pod,0.6,0.07,0.07,mm(0x101014),-0.45,1.72,0);
     const dr=grp(RW,9,34,6); K.drone=dr; msph(dr,0.9,mm(0x141418),0,0,0,1.3,0.8,1); for(let i=0;i<5;i++)mb(dr,0.1,0.1,0.05,glowM(0xff2020),-0.6+i*0.3,0.1,-0.95); for(let i=0;i<6;i++){ const l=mb(dr,0.12,2.2,0.12,mm(0x1a1a1e),Math.cos(i)*0.8,-1.2,Math.sin(i)*0.8); l.rotation.z=Math.cos(i)*0.4; l.rotation.x=Math.sin(i)*0.4; } dr.visible=false;
-    K.rwLight=new THREE.PointLight(0xff6a9a,1.2,14); K.rwLight.position.set(6,31,2); RW.add(K.rwLight); } mxBuildSets(K); }
+    K.rwLight=new THREE.PointLight(0xff6a9a,1.2,14); K.rwLight.position.set(6,31,2); RW.add(K.rwLight);
+    const hole=new THREE.Mesh(new THREE.CircleGeometry(1.6,16),new THREE.MeshBasicMaterial({color:0x020103})); hole.rotation.x=-Math.PI/2; hole.position.set(16.6,0.04,12); RW.add(hole); RW.updateMatrixWorld(true); const ca=new THREE.Vector3(3.2,27.4,0.4), cb=new THREE.Vector3(16.6,0.4,12), ch=box(1.3,0.15,ca.distanceTo(cb),mm(0x2a2430)); ch.position.copy(ca).add(cb).multiplyScalar(0.5); RW.add(ch); ch.lookAt(RW.localToWorld(cb.clone())); } mxBuildSets(K); }
 function mxMirror(K,k){ const x=K.mir.x; const g=x.createLinearGradient(0,0,64,128); g.addColorStop(0,'#e8f0f4'); g.addColorStop(0.5,'#8a9aa4'); g.addColorStop(1,'#d8e0e8'); x.fillStyle=g; x.fillRect(0,0,64,128);
   if(k>0){ x.strokeStyle='rgba(255,255,255,0.8)'; x.lineWidth=2; for(let i=0;i<6;i++){ x.beginPath(); x.arc(20,60,(i*12+k*40)%70,0,Math.PI*2); x.stroke(); } } K.mir.t.needsUpdate=true; }
 function clearMxLife(){ mxStageClear(); mxShotButton(false); const K=mxK; if(!K){ mxGrade(false); return; } scene.remove(K.root); odFree(K.root); mxK=null; mxRainOff(); mxGrade(false); }
@@ -7596,8 +7598,8 @@ function mxStageClear(){ const S=mxStage; if(!S)return; odBubOff(model,S.hero); 
   model.rotation.x=model.rotation.z=0; model.scale.setScalar(1); model.visible=true; head.rotation.x=0; if(S.silver)dressHero(); canvas.style.transform=''; mxRain(0); $('dmFade').style.background=''; rkTitle('',false); }
 function mxDefaults(){ const K=mxK; K.door.rotation.y=0; K.mdoor.rotation.y=0; K.elev.forEach((p,i)=>p.position.x=28.75+(i?0.5:-0.5)); K.rw.visible=false; K.drone.visible=false; K.podShell.visible=true; K.podShell.material.opacity=0.45; K.neck.visible=true;
   K.bunny.visible=false; mxMirror(K,0); mxScreen(K,'',false); K.homePhone.rotation.set(0,0,0); K.folder.visible=true;
-  for(const k in K.sets)K.sets[k].visible=false; const H=K.heli; H.film=false; H.ride=false; [H.x,H.y,H.z]=MXC.pad; H.h=Math.PI; H.spin=0; K.ship.position.set(0,8,0); K.claw.position.set(0,30,0); K.emp.visible=false; K.emp.scale.setScalar(1); K.sentinels.forEach(s=>s.g.visible=false);
-  K.bricks.forEach(b=>b.visible=false); K.wallHole.visible=false; K.vase.visible=true; K.vase.position.set(23.4,MXS.oracle+0.9,18.6); K.vase.rotation.set(0,0,0); K.street.scale.y=1; K.street.position.y=-30; K.train.position.x=-60; K.deckLight.intensity=0; K.cables.forEach(c=>c.visible=true); K.drone.position.set(9,34,6);
+  for(const k in K.sets)K.sets[k].visible=false; const H=K.heli; H.film=false; H.ride=false; [H.x,H.y,H.z]=MXC.pad; H.h=Math.PI; H.spin=0; K.ship.position.set(0,8,0); mxClaw(0.3); K.mirPlane.material=K.mirM; K.pillars.forEach(P=>{ P.gone=false; P.parts.forEach((b,k)=>{ b.position.set(0,0.5+k,0); b.rotation.set(0,0,0); }); }); K.wallPhone.rotation.set(0,0,0); K.emp.visible=false; K.emp.scale.setScalar(1); K.sentinels.forEach(s=>s.g.visible=false);
+  K.bricks.forEach(b=>b.visible=false); K.wallHole.visible=false; K.vase.visible=true; K.vase.position.set(25.6,MXS.oracle+0.9,16.4); K.vase.rotation.set(0,0,0); K.street.scale.y=1; K.street.position.y=-30; K.train.position.x=-60; K.deckLight.intensity=0; K.cables.forEach(c=>c.visible=true); K.drone.position.set(9,34,6);
   for(let x=50;x<=52;x++)for(let y=MXC.G+11;y<=MXC.G+12;y++)if(get(x,y,MXC.gov.z0)!==ID.glass)setBlock(x,y,MXC.gov.z0,ID.glass); }
 function mxBit(S,par,obj){ par.add(obj); S.bits.push(obj); return obj; } // something stuck onto your hero for this chapter only
 function mxGroup(x,y,z){ const g=new THREE.Group(); g.position.set(x,y,z); return g; }
@@ -7701,17 +7703,18 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
     // in the car, in the rain: getting the bug out
     if(t<9){ odHeroTo(S,odLW(S.car,[0.45,0.36,0.6]),-Math.PI/2,false); S.tri.R.armR.rotation.x=t>5.2?1.3:0.7; S.sw.R.armR.rotation.x=t>2.2&&t<8?1.45:0.7; [S.tri,S.sw,S.ap].forEach(a=>animRig(a.R,dt,0)); }
     odAt(S,2.4,'sw',()=>odSay(S,S.sw,'Sit still, Anderson.')); odAt(S,4.2,'t1',()=>odSay(S,S.tri,"You're bugged. Hold still."));
-    if(t>=5.6&&t<8.4){ S.bug.visible=true; const tip=odLW(S.tube,[0,-0.4,0]), belly=odLW(model,[0,0.95,-0.1]), k=odSeg(S,5.8,6.8); if(t<7.4)S.bug.position.set(...odL(belly,tip,odE(k))); else { const k2=odSeg(S,7.4,8.4); S.bug.position.set(tip[0]+k2*0.2,tip[1]+k2*1.5,tip[2]+k2*3.6); S.bug.rotation.x+=dt*14; } }
-    else if(t>=8.4)S.bug.visible=false;
+    if(t>=5.6&&t<9){ S.bug.visible=true; const tip=odLW(S.tube,[0,-0.4,0]), belly=odLW(model,[0,0.95,-0.1]), k=odSeg(S,5.8,6.8); if(t<7.4)S.bug.position.set(...odL(belly,tip,odE(k))); else { const k2=odSeg(S,7.4,8.1), land=[53.6,MXC.G+0.03,38.4]; S.bug.position.set(...odL(tip,land,k2)); S.bug.position.y+=Math.sin(k2*Math.PI)*1.2; if(k2<1)S.bug.rotation.x+=dt*14; else S.bug.rotation.set(0,0.6,0); }
+      if(t>=8.2){ const d=odSeg(S,8.2,8.9); S.bug.eye.material.color.setRGB(1-d*0.9,0.16*(1-d),0.16*(1-d)); } }
+    else if(t>=9)S.bug.visible=false;
     odAt(S,6.2,'sq',()=>mxSfx('squeal')); odAt(S,7.1,'t2',()=>odSay(S,S.tri,"Got it! You're clean.")); odAt(S,8.3,'n1',()=>odSay(S,S.hero,'That thing was REAL?!'));
     odAt(S,9,'hall',()=>{ S.car.visible=false; S.grp.add(S.tri.g); S.tri.g.scale.setScalar(1); odRest(S.tri); S.tri.R.armR.remove(S.tube); mxSky('night'); });
     if(t>=9&&t<12){ odHeroPath(S,[70.5,f,27.6],[76,f,24.8],9,11); const k=odSeg(S,9,11); odMove(S.tri,[69.2,f,26.6],[74.4,f,25.1],k); odWalk(S.tri,dt,k<1); if(k>=1){ S.tri.g.rotation.y=-Math.PI/2; animRig(S.tri.R,dt,0); } }
     odAt(S,10.4,'t3',()=>odSay(S,S.tri,"He's waiting for you. Be honest with him.")); K.mdoor.rotation.y=1.6*odE(odSeg(S,11.2,12)); odAt(S,11.2,'door',()=>mxSfx('door'));
     // Morpheus's room
     odAt(S,12,'room',()=>{ S.tri.g.position.set(81.5,f,15.6); S.tri.g.rotation.y=Math.PI*0.75; });
-    if(t>=12&&t<14.6)odHeroPath(S,[76,f,24.6],[75.6,f,20.6],12,14); if(t>=14.6&&t<27.4)odHeroPath(S,[75.6,f,20.6],[75,f,18.2],14.6,15.6);
-    if(t<14.4){ M.g.position.set(75,f,10.4); M.g.rotation.y=t<12.6?0:Math.PI; odRest(M); animRig(M.R,dt,0); }
-    else if(t<27.4){ const k=odSeg(S,14.4,15.6); if(k<1){ odMove(M,[75,f,10.4],[75,f,12.6],k); M.g.rotation.y=Math.PI; odWalk(M,dt,true); } else { M.g.position.set(75,f-OD_SEAT,12.6); M.g.rotation.y=Math.PI; odSit(M); if(t>20.4&&t<26){ M.R.armL.rotation.x=M.R.armR.rotation.x=1.35; M.R.armL.rotation.z=-0.25; M.R.armR.rotation.z=0.25; } animRig(M.R,dt,0); } }
+    if(t>=12&&t<15.6){ const k=odSeg(S,12,15.2); if(k<1)odPathHero(S,[[76,f,24.6],[76.6,f,20.4],[76.6,f,17.4],[75,f,17.3]],k); else odHeroTo(S,[75,f,18.2],0,false); } if(t>=15.6&&t<27.4)odHeroTo(S,[75,f,18.2],0,false); /* round the chair, not through it */
+    if(t<13.8){ M.g.position.set(75,f,10.4); M.g.rotation.y=t<12.6?0:Math.PI; odRest(M); animRig(M.R,dt,0); }
+    else if(t<27.4){ const k=odSeg(S,13.8,15.6); if(k<1){ odPathMove(M,[[75,f,10.4],[73.5,f,11.2],[73.5,f,13.6],[75,f,13.6]],k); odWalk(M,dt,true); } /* round his chair */ else { M.g.position.set(75,f-OD_SEAT,12.6); M.g.rotation.y=Math.PI; odSit(M); if(t>20.4&&t<26){ M.R.armL.rotation.x=M.R.armR.rotation.x=1.35; M.R.armL.rotation.z=-0.25; M.R.armR.rotation.z=0.25; } animRig(M.R,dt,0); } }
     S.thT=(S.thT||0)-dt; if(t>=12&&t<34&&S.thT<=0){ S.thT=3+Math.random()*2.5; mxSfx('thunder'); S.flash=0.18; } S.flash=Math.max(0,(S.flash||0)-dt); if(t>=12&&t<34)scene.background.setHex(S.flash>0?0xd8f0e0:mxGreen()?0x060c08:0x0c1220);
     odAt(S,12.8,'m1',()=>odSay(S,M,'At last. Welcome, Neo.'));
     odAt(S,16,'m2',()=>odSay(S,M,"You've felt it your whole life. Something is wrong with the world.")); odAt(S,18.8,'n2',()=>odSay(S,S.hero,'Every day. Like nothing is real.'));
@@ -7721,8 +7724,9 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
     odAt(S,20.6,'m3',()=>odSay(S,M,'Blue pill: you wake up in bed and forget.')); odAt(S,23,'m4',()=>odSay(S,M,'Red pill: I show you the truth.'));
     odAt(S,26.3,'gulp',()=>mxSfx('gulp')); odAt(S,26.6,'m5',()=>odSay(S,M,'Follow me.'));
     // the mirror
-    if(t>=27.4&&t<34.6){ const k=odSeg(S,27.4,29.4); odHeroPath(S,[75,f,18.2],[83.5,f,19.6],27.4,29.4); if(k>=1)odHeroTo(S,[83.5,f,19.6],-Math.PI/2,false); const mk=odSeg(S,27.6,29.4); M.g.position.set(...odL([75,f,12.6],[80.6,f,17.6],mk)); M.R.armL.rotation.x=M.R.armR.rotation.x=0; if(mk<1)odWalk(M,dt,mk>0); else { M.g.rotation.y=-Math.PI*0.6; animRig(M.R,dt,0); } }
+    if(t>=27.4&&t<34.6){ const k=odSeg(S,27.4,29.4); if(k<1)odPathHero(S,[[75,f,18.2],[75,f,17.2],[79.4,f,17.2],[83.5,f,19.6]],k); if(k>=1)odHeroTo(S,[83.5,f,19.6],-Math.PI/2,false); const mk=odSeg(S,27.6,29.4); M.g.position.set(...odL([75,f,12.6],[80.6,f,17.6],mk)); M.R.armL.rotation.x=M.R.armR.rotation.x=0; if(mk<1)odWalk(M,dt,mk>0); else { M.g.rotation.y=-Math.PI*0.6; animRig(M.R,dt,0); } }
     odAt(S,28.2,'c1',()=>odSay(S,S.cy,'Hold on to something, new guy!')); if(t>=29.6&&t<34)mxMirror(K,t-29.6);
+    if(t>=26&&t<29.6){ K.mirPlane.material=K.mirRTM; renderer.setRenderTarget(K.mirRT); renderer.render(scene,K.mirCam); renderer.setRenderTarget(null); } else K.mirPlane.material=K.mirM; /* Neo sees himself in the mirror */
     for(const [tt,part] of [[30,'armR'],[30.8,'torso'],[31.2,'armL'],[31.6,'legL'],[31.7,'legR'],[32.1,'head']])odAt(S,tt,'sv'+part,()=>mxSilver(S,part));
     odAt(S,30.3,'n3',()=>odSay(S,S.hero,"It's... COLD!")); odAt(S,31.6,'m6',()=>odSay(S,M,'Stay with us, Neo!')); odAt(S,32.4,'n4',()=>{ odSay(S,S.hero,'AAAAH!'); mxSfx('glitch'); });
     if(t>=32.4&&t<34.6){ mxRain(1.4); canvas.style.transform='translate('+((Math.random()-0.5)*14).toFixed(1)+'px,'+((Math.random()-0.5)*8).toFixed(1)+'px)'; if(Math.random()<dt*10){ const p=model.position; burst(p.x-0.5+(Math.random()-0.5),p.y+Math.random()*2,p.z-0.5+(Math.random()-0.5),new THREE.Color(0x3aff6a),8); } }
@@ -7738,7 +7742,7 @@ OD_CH.mx3={secs:40,sky:'rain',mood:'myst',init(S){ const f=MXC.mor.f, G=MXC.G;
     if(t>=14.6&&t<27.4){ if(t>=15.6)mxSitPose(); if(t>=25&&t<25.8)armR.rotation.x=1.4; else if(t>=25.8&&t<26.4){ armR.rotation.x=2.5; armR.rotation.z=0.4; } }
     if(t>=29.6&&t<33)armR.rotation.x=1.55; if(t>=32.4&&t<34.6){ armL.rotation.z=-1-Math.sin(t*20)*0.4; armR.rotation.z=1+Math.sin(t*21)*0.4; }
     if(t>=34.6){ if(t<35.9){ head.rotation.x=-0.6; } else if(t<37.6){ armL.rotation.z=-0.7-Math.sin(t*9)*0.5; armR.rotation.z=0.7+Math.sin(t*10)*0.5; } else if(t<38.2){ armR.rotation.x=2.8; armR.rotation.z=0.6; } } },
-  cam(S){ const t=S.t, R=MXC.real; if(t<3)return [[47,6.4,47],[53,4.6,41],0]; if(t<9)return [odLW(S.car,[0,1.5,-1.05]),odLW(S.car,[0.2,1.2,0.7]),1]; if(t<12)return [[69.5,16.2,28.4],[76,15,24],2];
+  cam(S){ const t=S.t, R=MXC.real; if(t<3)return [[47,6.4,47],[53,4.6,41],0]; if(t>=8.1&&t<9)return [[54.2,MXC.G+0.5,37.5],[53.6,MXC.G+0.06,38.4],10]; if(t<9)return [odLW(S.car,[0,1.5,-1.05]),odLW(S.car,[0.2,1.2,0.7]),1]; if(t<12)return [[69.5,16.2,28.4],[76,15,24],2];
     if(t<16)return [[75.6,16.4,21.9],[75,15.3,12],3]; if(t<20.4)return [[76,16.1,20.2],[75,15.3,12.8],4]; if(t<25)return [[75.2,15.55,14.7],[75,15.1,13.2],5]; if(t<27.4)return [[76.8,15.7,16.4],[75,15.3,18.2],6];
     if(t<34.6)return [[80.2,16,21.4],[83.6,15.4,19.6],7]; if(t<37.4)return [[R[0]+6.4,R[1]+30.3,R[2]+0.8],[R[0]+2.6,R[1]+30,R[2]],8];
     const k=odE(odSeg(S,37.4,40)); return [odL([R[0]+6.4,R[1]+30.3,R[2]+0.8],[R[0]-6,R[1]+46,R[2]+5.5],k),[R[0]+2.6,R[1]+29.6,R[2]],9]; } };
@@ -7797,7 +7801,8 @@ function mxHeli(par){ const g=grp(par,0,0,0), c=mm(0x2a3038), d=mm(0x1a1e24), gl
   for(const s of[-1,1]){ mb(g,0.1,0.1,3.6,d,s*0.85,0.08,0); for(const z of [-1,1])mb(g,0.08,0.5,0.08,d,s*0.85,0.32,z); } mb(g,0.3,0.4,0.3,d,0,2.05,0);
   const rotor=grp(g,0,2.3,0); for(let i=0;i<2;i++){ const b=mb(rotor,8,0.06,0.3,d,0,0,0); b.rotation.y=i*Math.PI/2; } const tail=grp(g,0.12,2,5.5); for(let i=0;i<2;i++){ const b=mb(tail,0.04,1.4,0.18,d,0,0,0); b.rotation.x=i*Math.PI/2; }
   mb(g,0.3,0.15,0.02,glowM(0xff2a2a),0,2.6,-0.2); return {g,rotor,tail}; }
-function mxHeliTick(dt){ const H=mxK&&mxK.heli; if(!H)return; H.spin=Math.max(H.ride||H.film?1:0,H.spin-(H.ride||H.film?0:dt*0.25)); H.rotor.rotation.y+=dt*28*H.spin; H.tail.rotation.x+=dt*40*H.spin;
+function mxHeliTick(dt){ const H=mxK&&mxK.heli; if(!H)return; const K=mxK; if(K.beacon){ K.beacon.visible=!demo; K.beaconTop.visible=!demo&&Math.floor(K.t*2)%2===0; } if(H.ride){ legL.rotation.x=legR.rotation.x=1.45; armL.rotation.x=armR.rotation.x=0.9; }
+  if(!demo&&onMatrix()&&!K.heliTip&&K.t>6){ K.heliTip=true; toast('🚁 A helicopter waits on the roof of the agents\' building. Look for the green light beam, and take the outside stairs!'); } H.spin=Math.max(H.ride||H.film?1:0,H.spin-(H.ride||H.film?0:dt*0.25)); H.rotor.rotation.y+=dt*28*H.spin; H.tail.rotation.x+=dt*40*H.spin;
   if(!H.film)H.g.position.set(H.x,H.y,H.z), H.g.rotation.set(H.tilt||0,H.h,H.roll||0,'YXZ'); if(H.ride&&Math.random()<dt*6)snd(()=>noise(220,0.12,0.05,'lowpass')); }
 function mxHeliGround(x,z){ return standY(Math.floor(x),Math.floor(z)); }
 function mxHeliUpdate(dt){ const H=mxK.heli; let ix=joy.x, iz=joy.y; if(keys.KeyW||keys.ArrowUp)iz-=1; if(keys.KeyS||keys.ArrowDown)iz+=1; if(keys.KeyA||keys.ArrowLeft)ix-=1; if(keys.KeyD||keys.ArrowRight)ix+=1;
@@ -7806,7 +7811,7 @@ function mxHeliUpdate(dt){ const H=mxK.heli; let ix=joy.x, iz=joy.y; if(keys.Key
   const sp=Math.hypot(H.vx,H.vz); if(sp>0.4){ let dh=Math.atan2(-H.vx,-H.vz)-H.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; H.h+=dh*Math.min(1,dt*2); } H.tilt=Math.min(0.3,sp/40); H.roll=-ix*0.12;
   const nx=Math.max(2,Math.min(W-2,H.x+H.vx*dt)), nz=Math.max(2,Math.min(D-2,H.z+H.vz*dt)); if(mxHeliGround(nx,nz)<=H.y+0.3){ H.x=nx; H.z=nz; } else { H.vx*=-0.3; H.vz*=-0.3; } // a building in the way: bump off it
   const gr=mxHeliGround(H.x,H.z); H.y=Math.min(62,H.y+H.vy*dt); if(H.y<gr){ H.y=gr; H.vy=Math.max(0,H.vy); }
-  const f=[-Math.sin(H.h),-Math.cos(H.h)]; pl.p=[H.x+f[0]*1.1,H.y+0.75,H.z+f[1]*1.1]; pl.v=[0,0,0]; $('tint').style.opacity=0; return {hs:0}; }
+  const f=[-Math.sin(H.h),-Math.cos(H.h)]; pl.p=[H.x+f[0]*1.1,H.y+0.5,H.z+f[1]*1.1]; pl.v=[0,0,0]; $('tint').style.opacity=0; return {hs:0}; }
 function mxHeliBoard(){ const H=mxK.heli; H.ride=true; H.vx=H.vz=H.vy=0; yaw=H.h; if(camMode===1)camMode=3; toast('🚁 You climb into the helicopter! Move to fly where you look, Space to go up, Shift to go down. E to get out once you land.'); }
 function mxHeliOff(){ const H=mxK.heli; if(H.y-mxHeliGround(H.x,H.z)>1.3){ toast('🚁 Land first! Hold Shift to go down.'); return; } H.ride=false; const c=Math.cos(H.h), s=Math.sin(H.h); pl.p=[H.x+c*2.2,H.y+0.2,H.z-s*2.2]; pl.v=[0,0,0]; unstick(pl); }
 function mxAction(){ const K=mxK; if(!K||!onMatrix()||demo)return null; const H=K.heli; if(H&&H.ride)return {label:'🚁 Get out',fn:mxHeliOff};
@@ -7825,11 +7830,11 @@ function mxJackChair(par,x,y,z,ry){ const g=grp(par,x,y,z,ry), m=mm(0x5a5048), d
 function mxBuildSets(K){ const root=K.root, sets=K.sets={};
   // the hovercraft in its sewer tunnel, and the Sentinels that hunt it
   { const T=grp(root,...MXS.tun); sets.tun=T; const tube=new THREE.Mesh(new THREE.CylinderGeometry(11,11,120,20,1,true),new THREE.MeshLambertMaterial({color:0x2a2620,side:THREE.BackSide})); tube.rotation.z=Math.PI/2; tube.position.y=8; T.add(tube);
-    const wt=new THREE.Mesh(new THREE.PlaneGeometry(120,14),new THREE.MeshLambertMaterial({color:0x1a2a22,emissive:0x061008})); wt.rotation.x=-Math.PI/2; wt.position.y=0; T.add(wt); for(let i=0;i<12;i++)mb(T,0.4,22,0.4,mm(0x3a3228),-55+i*10,8,-8.5);
-    const ship=grp(T,0,8,0); K.ship=ship; const hm=mm(0x5a5a60), hd=mm(0x3a3a40); mb(ship,3.2,2.4,14,hm,0,0,0); mb(ship,2.6,1.6,4,hd,0,0.6,-8.2); mb(ship,4.6,0.6,10,hd,0,-0.9,0.6); for(const s of[-1,1]){ mb(ship,1.2,1.2,6,hd,s*2.4,-0.3,1.6); for(let k=0;k<3;k++)mb(ship,0.9,0.9,0.1,glowM(0x5ad8ff),s*2.4,-0.3,-1.4+k*2.2+1.6); }
+    const wt=new THREE.Mesh(new THREE.PlaneGeometry(120,14),new THREE.MeshLambertMaterial({color:0x2a7a3a,emissive:0x0a2a10})); const pipe=mcyl(T,1.2,1.2,2.4,mm(0x3a3228),-6,6,-9.8,14); pipe.rotation.x=Math.PI/2; const pin=mcyl(T,0.95,0.95,2.5,mm(0x050403),-6,6,-9.8,14); pin.rotation.x=Math.PI/2; wt.rotation.x=-Math.PI/2; wt.position.y=0; T.add(wt); for(let i=0;i<12;i++)mb(T,0.4,22,0.4,mm(0x3a3228),-55+i*10,8,-8.5);
+    const ship=grp(T,0,8,0,Math.PI/2); K.ship=ship; const hm=mm(0x5a5a60), hd=mm(0x3a3a40); mb(ship,3.2,2.4,14,hm,0,0,0); mb(ship,2.6,1.6,4,hd,0,0.6,-8.2); mb(ship,4.6,0.6,10,hd,0,-0.9,0.6); for(const s of[-1,1]){ mb(ship,1.2,1.2,6,hd,s*2.4,-0.3,1.6); for(let k=0;k<3;k++)mb(ship,0.9,0.9,0.1,glowM(0x5ad8ff),s*2.4,-0.3,-1.4+k*2.2+1.6); }
     mb(ship,1.6,0.5,0.1,glowM(0xffe08a),0,0.7,-10.21); for(let k=0;k<4;k++)mb(ship,3.3,0.06,0.3,mm(0x8a8a90),0,1.2,-5+k*3.4); rkSign(ship,'NEBUCHADNEZZAR',3,0.4,'#3a3a40','#c8c8d0',1.62,0.4,0,Math.PI/2);
     K.sentinels=[]; for(let i=0;i<6;i++){ const s=mxSentinel(T); s.g.visible=false; K.sentinels.push(s); } K.emp=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xd8f0ff,transparent:true,opacity:0.7,side:THREE.DoubleSide,depthWrite:false})); K.emp.visible=false; T.add(K.emp);
-    K.claw=grp(T,0,30,0); mcyl(K.claw,0.08,0.08,20,mm(0x2a2a2a),0,10,0,6); for(let i=0;i<4;i++){ const f=mb(K.claw,0.15,1.4,0.15,mm(0x5a5a60),Math.cos(i*Math.PI/2)*0.5,-0.6,Math.sin(i*Math.PI/2)*0.5); f.rotation.z=Math.cos(i*Math.PI/2)*0.4; f.rotation.x=-Math.sin(i*Math.PI/2)*0.4; } K.clawLight=new THREE.SpotLight(0xffffff,1.2,40,0.5); K.claw.add(K.clawLight); K.clawLight.target.position.set(0,-20,0); K.claw.add(K.clawLight.target); }
+    K.clawCable=mcyl(ship,0.06,0.06,1,mm(0x2a2a2a),0,-1.5,0,6); K.claw=grp(ship,0,-1.8,0); mb(K.claw,0.6,0.25,0.6,mm(0x3a3a40),0,0.1,0); for(let i=0;i<4;i++){ const f=mb(K.claw,0.15,1.4,0.15,mm(0x5a5a60),Math.cos(i*Math.PI/2)*0.5,-0.6,Math.sin(i*Math.PI/2)*0.5); f.rotation.z=Math.cos(i*Math.PI/2)*0.4; f.rotation.x=-Math.sin(i*Math.PI/2)*0.4; } K.clawLight=new THREE.PointLight(0xfff2d0,0.8,10); K.claw.add(K.clawLight); }
   // the hovercraft's main deck: the chairs you jack in from, the screens of falling code, a medical bed
   { const Dk=grp(root,...MXS.deck); sets.deck=Dk; Dk.add(mxRoom(Dk,12,4,9,0x4a4a50,0x3a3a3e)); for(let x=-5;x<=5;x+=2.5)mb(Dk,0.15,4,0.15,mm(0x2a2a30),x,2,-4.4);
     K.chairs=[]; for(let i=0;i<4;i++)K.chairs.push(mxJackChair(Dk,-3.6+i*2.4,0,1.6,Math.PI)); const cons=grp(Dk,0,0,-3.6); mb(cons,6,0.9,1,mm(0x2a2a30),0,0.45,0); for(let i=0;i<5;i++){ const c=mxCRT(cons,-2.4+i*1.2,0.9,0,0,new THREE.MeshBasicMaterial({map:K.code.t})); c.scale.setScalar(1.3); }
@@ -7850,24 +7855,35 @@ function mxBuildSets(K){ const root=K.root, sets=K.sets={};
   // the subway station: tiled walls, a platform, the tracks, and a train
   { const Sb=grp(root,...MXS.sub); sets.sub=Sb; const tile=mxCanvasTex(64,64,(x,w,h)=>{ x.fillStyle='#d8dcc8'; x.fillRect(0,0,w,h); x.strokeStyle='#8a9a7a'; x.lineWidth=2; for(let i=0;i<=8;i++){ x.beginPath(); x.moveTo(i*8,0); x.lineTo(i*8,h); x.stroke(); x.beginPath(); x.moveTo(0,i*8); x.lineTo(w,i*8); x.stroke(); } });
     tile.wrapS=tile.wrapT=THREE.RepeatWrapping; tile.repeat.set(10,2); const room=new THREE.Mesh(new THREE.BoxGeometry(40,6,14),new THREE.MeshLambertMaterial({map:tile,side:THREE.BackSide})); room.position.y=3; Sb.add(room);
-    mb(Sb,40,1,7,mm(0x8a8a80),0,0.5,-3.5); mb(Sb,40,0.08,0.5,mm(0xd8c02a),0,1.02,-0.3); for(const z of [2,4.5])mb(Sb,40,0.12,0.12,mm(0x6a6a6a),0,0.06,z); for(let x=-18;x<=18;x+=6)mb(Sb,0.5,5,0.5,mm(0x3a5a3a),x,3.5,-1.4);
+    mb(Sb,40,1,7,mm(0x8a8a80),0,0.5,-3.5); mb(Sb,40,0.08,0.5,mm(0xd8c02a),0,1.02,-0.3); for(const z of [2,4.5])mb(Sb,40,0.12,0.12,mm(0x6a6a6a),0,0.06,z); for(const x of [-18,-12,12,18])mb(Sb,0.5,5,0.5,mm(0x3a5a3a),x,3.5,-1.4); K.wallPhone=grp(Sb,-7.4,1.9,-6.85); mb(K.wallPhone,0.35,0.5,0.12,mm(0x2a2a30),0,0,0); mb(K.wallPhone,0.09,0.36,0.09,mm(0x111111),0.24,0.05,0.06); /* the phone on the wall */
     rkSign(Sb,'ADAMS STREET',4,0.6,'#1a3a1a','#f2f2f2',0,4.2,-6.9,0); for(let x=-15;x<=15;x+=10)mb(Sb,2,0.4,0.5,mm(0x5a3a1a),x,1.2,-6); for(let x=-16;x<=16;x+=8)mb(Sb,1.2,0.1,0.3,glowM(0xf2f8d8),x,5.9,-2);
     const tr=grp(Sb,-60,0,3.2); K.train=tr; mb(tr,30,3,2.8,mm(0x8a9aa8),15,1.7,0); for(let k=0;k<8;k++)mb(tr,1.4,0.9,0.05,glowM(0xfff2c0),2+k*3.6,2.3,-1.42); mb(tr,0.1,1,2,glowM(0xffffff),0.02,1.6,0); }
   // the Oracle's kitchen and waiting room, the restaurant, the lobby, Morpheus's cell, the phone booth, the helipad
-  { const f=MXS.oracle; const kt=grp(root,28,f,14); mb(kt,4,0.9,0.7,mm(0xe8e0c8),0,0.45,0); mb(kt,0.9,0.9,0.7,mm(0x8a8a90),2.4,0.45,0); K.oven=mb(kt,0.7,0.4,0.05,glowM(0xff8a3a),2.4,0.5,-0.36);
-    K.cookies=grp(kt,-1,0.92,0); mb(K.cookies,0.6,0.03,0.4,mm(0x8a8a90),0,0,0); for(let i=0;i<6;i++)mcyl(K.cookies,0.07,0.07,0.03,mm(0xc89050),-0.2+(i%3)*0.2,0.03,-0.1+Math.floor(i/3)*0.2,8);
-    K.vase=grp(root,23.4,f+0.9,18.6); mcyl(K.vase,0.14,0.1,0.4,mm(0x3a6ad8),0,0.2,0,10); mb(root,0.6,0.9,0.5,mm(0x6a4a2a),23.4,f+0.45,18.6);
-    const sofa=grp(root,13,f,24,Math.PI/2); mb(sofa,3,0.45,0.9,mm(0x6a5a3a),0,0.25,0); mb(sofa,3,0.6,0.25,mm(0x6a5a3a),0,0.75,0.35); K.spoon=grp(root,12.6,f+1,22.8); mb(K.spoon,0.04,0.3,0.02,mm(0xd8d8e0),0,0.15,0); msph(K.spoon,0.05,mm(0xd8d8e0),0,0.32,0,1,1.4,0.4);
-    K.blocks=[0,1,2].map(i=>mb(root,0.18,0.18,0.18,mm([0xd82a2a,0x2a8ad8,0xf2c02a][i]),16+i*0.4,f+0.5,25)); }
+  { const f=MXS.oracle, wood=mm(0xd8b04a), dkw=mm(0xb88a2a); /* the Oracle's kitchen: yellow wooden cabinets, an old green fridge, an oven of cookies, a little table */
+    mb(root,8.6,0.9,0.7,wood,28,f+0.45,9.75); mb(root,8.7,0.06,0.78,mm(0xe8e0c8),28,f+0.93,9.75); for(let x=24.4;x<=31.6;x+=1.2)mb(root,0.02,0.7,0.02,dkw,x,f+0.45,10.11); mb(root,8.6,0.8,0.4,wood,28,f+2.3,9.4); for(let x=24.4;x<=31.6;x+=1.2)mb(root,0.02,0.6,0.02,dkw,x,f+2.3,9.61);
+    const fr=grp(root,33.4,f,10.1); mb(fr,1,2,0.8,mm(0x9ac8a8),0,1,0); mb(fr,0.98,0.04,0.02,mm(0x5a7a6a),0,1.35,-0.41); mb(fr,0.06,0.4,0.06,mm(0xd8d8d8),0.38,1.6,-0.43); mb(fr,0.06,0.3,0.06,mm(0xd8d8d8),0.38,1.0,-0.43);
+    const ov=grp(root,30.8,f,9.75); mb(ov,0.9,0.9,0.72,mm(0xe8e8e0),0,0.45,0); K.oven=mb(ov,0.6,0.35,0.02,glowM(0xff8a3a),0,0.45,-0.37); for(let i=0;i<4;i++)mcyl(ov,0.12,0.12,0.02,mm(0x2a2a2a),-0.2+(i%2)*0.4,0.92,-0.15+Math.floor(i/2)*0.3,10);
+    K.cookies=grp(root,26,f+0.97,9.8); mb(K.cookies,0.6,0.03,0.4,mm(0x8a8a90),0,0,0); for(let i=0;i<6;i++)mcyl(K.cookies,0.07,0.07,0.03,mm(0xc89050),-0.2+(i%3)*0.2,0.03,-0.1+Math.floor(i/3)*0.2,8);
+    const tb=grp(root,30.6,f,13.4); mcyl(tb,0.5,0.5,0.05,mm(0xd8c890),0,0.75,0,12); mcyl(tb,0.06,0.06,0.75,mm(0x8a8a8a),0,0.37,0,6); mb(root,0.5,0.9,1.4,mm(0x6a8a5a),24.3,f+0.45,12.6);
+    K.vase=grp(root,25.6,f+0.9,16.4); mcyl(K.vase,0.14,0.1,0.4,mm(0x3a6ad8),0,0.2,0,10); mb(root,0.6,0.9,0.5,mm(0x6a4a2a),25.6,f+0.45,16.4);
+    const sofa=grp(root,11.2,f,23.8,-Math.PI/2); mb(sofa,3,0.45,0.9,mm(0x6a5a3a),0,0.25,0); mb(sofa,3,0.6,0.25,mm(0x6a5a3a),0,0.75,0.35); mb(root,0.5,0.45,0.5,mm(0x5a4a3a),14,f+0.22,23.8); /* the sofa, turned toward the visitors' stool */
+    K.spoon=grp(root,12.62,f+0.95,23.8); K.spoon.scale.setScalar(1.8); mb(K.spoon,0.03,0.16,0.02,mm(0xd8d8e0),0,0.08,0); K.spoonTop=grp(K.spoon,0,0.16,0); mb(K.spoonTop,0.03,0.14,0.02,mm(0xd8d8e0),0,0.07,0); msph(K.spoonTop,0.05,mm(0xd8d8e0),0,0.2,0,1,1.4,0.4);
+    K.blocks=[0,1,2].map(i=>mb(root,0.18,0.18,0.18,mm([0xd82a2a,0x2a8ad8,0xf2c02a][i]),13.4+i*0.4,f+0.5,26.6)); }
   { const G=MXC.G; for(const [x,z] of [[69,13],[73,19],[80,14],[84,22],[70,24]]){ const t=grp(root,x,G,z); mcyl(t,0.8,0.8,0.08,mm(0xf2f2f2),0,0.78,0,14); mcyl(t,0.1,0.1,0.78,mm(0x3a2a1a),0,0.39,0,6); mcyl(t,0.04,0.04,0.2,glowM(0xffe08a),0.2,0.92,0,6); } // the restaurant on the hotel's ground floor
     K.steak=grp(root,73,G+0.82,19); mcyl(K.steak,0.3,0.3,0.03,mm(0xf2f2f2),0,0,0,12); mb(K.steak,0.3,0.06,0.2,mm(0x7a3a1a),0,0.04,0); const pi=grp(root,86,G,12); mb(pi,1.6,1,0.8,mm(0x0a0a0a),0,0.5,0); mb(pi,1.4,0.05,0.3,mm(0xf2f2f2),0,1.02,-0.3);
+    const ch2=grp(root,73,G+3.2,19); for(let i=0;i<8;i++){ msph(ch2,0.08,glowM(0xfff2c0),Math.cos(i*0.785)*0.5,-0.2,Math.sin(i*0.785)*0.5); } mb(ch2,1.2,0.05,0.05,mm(0xd8b040),0,0,0); mcyl(ch2,0.02,0.02,0.8,mm(0xd8b040),0,0.4,0,4); /* a chandelier */
+    const rug=new THREE.Mesh(new THREE.PlaneGeometry(6,6),mm(0x7a1a2a)); rug.rotation.x=-Math.PI/2; rug.position.set(73,G+0.02,19); root.add(rug); for(const x of [72.6,73.4])mcyl(root,0.03,0.04,0.18,new THREE.MeshLambertMaterial({color:0xd8f0ff,transparent:true,opacity:0.6}),x,G+0.92,x<73?20:18,8);
+    for(const [x,z] of [[66,10],[66,28],[88,10],[88,28]]){ const pl2=grp(root,x,G,z); mcyl(pl2,0.3,0.25,0.5,mm(0x8a5a3a),0,0.25,0,8); msph(pl2,0.6,mm(0x2a7a3a),0,1.1,0,1,1.4,1); } for(const z of [13,19,25])rkSign(root,'~',1.2,0.9,'#5a3a1a','#d8b040',65.1,G+2,z,Math.PI/2);
     K.bricks=[]; for(let x=66;x<=83;x++)if(x%4){ const b=mb(root,1,3,0.12,mm(0x8a3a2a),x+0.5,MXC.mor.f+2.5,MXC.mor.z0+1.08); b.visible=false; K.bricks.push(b); } // the windows bricked up
     K.wallHole=mb(root,2.6,2.4,0.3,mm(0xd8d0c0),70,MXC.mor.f+1.2,MXC.mor.z0+14.9); K.wallHole.visible=false;
+    K.pillars=[]; for(const x of [45.5,58.5])for(const z of [50.5,54.5,58.5,62.5]){ const pg=grp(root,x,G,z), parts=[]; for(let k=0;k<5;k++)parts.push(mb(pg,0.98,0.98,0.98,mm(0xf2f0ea),0,0.5+k,0)); K.pillars.push({g:pg,parts}); } /* the lobby's marble pillars (they can be shot to pieces) */
     const desk=grp(root,52,G,49.4); mb(desk,5,1.1,0.9,mm(0x5a5a60),0,0.55,0); const det=grp(root,52,G,52.5); for(const s of[-1,1])mb(det,0.2,2.2,0.5,mm(0x8a8a90),s*0.8,1.1,0); mb(det,1.8,0.2,0.5,mm(0x8a8a90),0,2.2,0);
     const R3=MXS.room3; const cell=grp(root,R3[0],R3[1],R3[2]); K.cell=cell; mxChair(cell,0,0,0.4,0,0x3a3a40).scale.set(0.6,0.7,0.6); for(const s of[-1,1])mb(cell,0.06,0.06,0.6,mm(0x8a8a8a),s*0.35,1.1,0.3);
     const pb=grp(root,60,G,44.2,Math.PI); K.booth=pb; const gl=new THREE.MeshLambertMaterial({color:0x9ad0e8,transparent:true,opacity:0.35,depthWrite:false}); mb(pb,1.2,2.4,0.06,gl,0,1.2,-0.6); for(const s of[-1,1])mb(pb,0.06,2.4,1.2,gl,s*0.6,1.2,0); mb(pb,1.3,0.2,1.3,mm(0x2a5ad8),0,2.5,0); for(const [x,z] of [[-0.6,-0.6],[0.6,-0.6],[-0.6,0.6],[0.6,0.6]])mb(pb,0.08,2.5,0.08,mm(0x8a8a90),x,1.25,z);
     K.boothPhone=grp(pb,0,1.4,-0.5); mb(K.boothPhone,0.3,0.45,0.12,mm(0x3a3a40),0,0,0); mb(K.boothPhone,0.08,0.3,0.08,mm(0x111111),0.2,0.05,0.05); rkSign(pb,'PHONE',1,0.25,'#2a5ad8','#ffffff',0,2.5,0.66,0);
-    const P=MXC.pad; const pad=new THREE.Mesh(new THREE.CircleGeometry(3,24),mm(0xf2c02a)); pad.rotation.x=-Math.PI/2; pad.position.set(P[0],P[1]+0.02,P[2]); root.add(pad); const inner=new THREE.Mesh(new THREE.CircleGeometry(2.6,24),mm(0x2a2e34)); inner.rotation.x=-Math.PI/2; inner.position.set(P[0],P[1]+0.03,P[2]); root.add(inner);
+    const P=MXC.pad; K.beacon=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,40,8,1,true),new THREE.MeshBasicMaterial({color:0x7aff9a,transparent:true,opacity:0.22,depthWrite:false})); K.beacon.position.set(P[0]-3.2,P[1]+20,P[2]-3.2); root.add(K.beacon); K.beaconTop=msph(root,0.3,glowM(0xff2a2a),P[0]-3.2,P[1]+1.2,P[2]-3.2); mcyl(root,0.06,0.06,1.2,mm(0x8a8a8a),P[0]-3.2,P[1]+0.6,P[2]-3.2,6); /* a light beam over the helipad, seen from across the city */
+    const st=grp(root,65.4,G,45.6); mcyl(st,0.06,0.06,2.6,mm(0x5a5a60),0,1.3,0,6); rkSign(st,'🚁 HELIPAD ↑',1.6,0.5,'#1a5a2a','#ffffff',0,2.5,0.04,Math.PI); rkSign(st,'🚁 HELIPAD ↑',1.6,0.5,'#1a5a2a','#ffffff',0,2.5,-0.04,0);
+    const pad=new THREE.Mesh(new THREE.CircleGeometry(3,24),mm(0xf2c02a)); pad.rotation.x=-Math.PI/2; pad.position.set(P[0],P[1]+0.02,P[2]); root.add(pad); const inner=new THREE.Mesh(new THREE.CircleGeometry(2.6,24),mm(0x2a2e34)); inner.rotation.x=-Math.PI/2; inner.position.set(P[0],P[1]+0.03,P[2]); root.add(inner);
     for(const [w,d,x,z] of [[0.35,1.8,-0.6,0],[0.35,1.8,0.6,0],[0.9,0.3,0,0]])mb(root,w,0.02,d,mm(0xf2f2f2),P[0]+x,P[1]+0.05,P[2]+z);
     const H=mxHeli(root); K.heli=Object.assign(H,{x:P[0],y:P[1],z:P[2],h:Math.PI,vx:0,vy:0,vz:0,spin:0,ride:false,film:false}); }
   for(const k in sets)sets[k].visible=false; }
@@ -7904,178 +7920,229 @@ const RWP=(x,y,z)=>[MXC.real[0]+x,MXC.real[1]+y,MXC.real[2]+z], TUN=(x,y,z)=>[MX
 function mxCrew(S,on){ const K=mxK; S.cm=mxRW(S.grp,'morpheus',...DECK(0.8,0,-0.6),Math.PI); S.ct=mxRW(S.grp,'trinity',...DECK(-1.4,0,-1),Math.PI*0.8); S.tk=odPerson(S.grp,...DECK(-0.6,0,-2.8),0,mxLook(MX_CAST.tank)); S.cy=mxRW(S.grp,'cypher',...DECK(2.6,0,-2.8),0); S.mo=odPerson(S.grp,...DECK(-3,0,0.4),Math.PI*0.6,mxLook(MX_CAST.mouse)); return [S.cm,S.ct,S.tk,S.cy,S.mo]; }
 
 // ---------- 4. THE REAL WORLD ----------
+function mxFaceHero(a){ const p=a.g.position; a.g.rotation.y=Math.atan2(-(pl.p[0]-p.x),-(pl.p[2]-p.z)); } // look at Neo
+function mxClaw(L){ const K=mxK; K.claw.position.y=-1.6-L; K.clawCable.scale.y=Math.max(0.05,L+0.2); K.clawCable.position.y=-1.5-L/2; } // the ship's claw, hanging L below the hull
 OD_CH.mx4={secs:38,sky:'real',mood:'real',init(S){ const K=mxK; mxShow('tun','deck'); K.rw.visible=true; K.podShell.material.opacity=0; K.neck.visible=false; K.drone.visible=true; mxCrew(S); K.medbed.rotation.y=0; },
-  tick(S,dt){ const K=mxK, t=S.t, R=MXC.real; mxShotsTick(S,dt); S.real=true;
-    // the pod: a machine comes, unplugs him, and he's flushed away
-    if(t<5){ const k=odE(odSeg(S,0,1.6)); K.drone.position.set(7-3*k,34-2.5*k,4-3.4*k); K.drone.rotation.y=Math.sin(t)*0.2; odHeroTo(S,RWP(2.6,28.55,0),-Math.PI/2,false); }
-    odAt(S,1.8,'grab',()=>{ K.cables.forEach(c=>c.visible=false); mxSfx('pop'); burst(R[0]+3,R[1]+30.5,R[2]-0.5,new THREE.Color(0xff3a6a),10); }); odAt(S,2.6,'flush',()=>{ mxSfx('whoosh'); });
-    if(t>=2.6&&t<5){ const k=odSeg(S,2.6,5); odHeroTo(S,RWP(2.6+k*14,28.55-k*27,k*12),-Math.PI/2,false); }
-    // the sewer: a splash, then the ship's claw lifts him out
-    odAt(S,5,'tun',()=>{ K.rw.visible=false; mxSky('real'); scene.background.setHex(0x0a0806); mxSfx('splat'); const p=TUN(0,0.3,2); burst(p[0]-0.5,p[1]+0.5,p[2]-0.5,new THREE.Color(0xa8c8b0),16); });
-    if(t>=5&&t<11){ const cy=t<8?30-22*odE(odSeg(S,6,8)):t<8.6?8:8+0*1; const lift=t>=8.6?odE(odSeg(S,8.6,10.6)):0; K.claw.position.set(0,(t<8.6?cy:1.4)+lift*5.2,2); if(t<8)K.claw.position.y=Math.max(1.4,cy);
-      odHeroTo(S,TUN(0,t<8.6?0.15+Math.sin(t*3)*0.08:0.2+lift*5.2,2),0,false); }
-    if(t>=11&&t<13.6){ K.ship.position.x=-(t-11)*6; odHeroTo(S,DECK(4.2,0.77,-2.3),0,false); }
-    // aboard the Nebuchadnezzar
-    odAt(S,13.6,'deck',()=>{ K.ship.position.x=0; scene.background.setHex(0x1a1a20); });
-    if(t>=13.6&&t<17.6)odHeroTo(S,DECK(4.2,0.77,-2.3),0,false); if(t>=17.6){ const k=odSeg(S,17.6,19); odHeroTo(S,odL(DECK(3.4,0,-0.4),DECK(2.6,0,0.6),k),Math.PI*0.75,k>0&&k<1); }
-    odAt(S,15,'n1',()=>odSay(S,S.hero,'Why do my eyes hurt?')); odAt(S,16.4,'m1',()=>odSay(S,S.cm,'Because this is the first time you ever opened them, Neo.'));
-    odAt(S,19.4,'tk',()=>odSay(S,S.tk,"Hi! I'm Tank. I'm your operator!")); odAt(S,21,'mo',()=>odSay(S,S.mo,'Welcome aboard, newbie!')); odAt(S,22.6,'tr',()=>odSay(S,S.ct,"Hi, Neo. It's good to see you."));
-    odAt(S,24.6,'m2',()=>odSay(S,S.cm,'This is the real world. The machines grow people in fields... like crops.')); odAt(S,27.8,'cy',()=>odSay(S,S.cy,'After a while, the code just looks like... people.'));
-    odAt(S,30.6,'n2',()=>odSay(S,S.hero,"No... NO! I don't believe it!")); odAt(S,33.6,'m3',()=>odSay(S,S.cm,"...He'll be fine. They always do that."));
-    [S.cm,S.ct,S.tk,S.cy,S.mo].forEach(a=>animRig(a.R,dt,0)); S.cm.R.armR.rotation.x=t>24.6&&t<27.6?1.4:0.2; },
-  pose(S){ const t=S.t; model.rotation.x=0; if(t<2.6)head.rotation.x=t<1.8?0:-0.6; else head.rotation.x=0; if(t>=2.6&&t<5)model.rotation.x=-1.2;
-    if(t>=5&&t<11){ armL.rotation.z=-1.2-Math.sin(t*6)*0.4; armR.rotation.z=1.2+Math.sin(t*6)*0.4; } if(t>=11&&t<17.6)model.rotation.x=Math.PI/2; if(t>=32.4){ const k=Math.min(1,(t-32.4)/0.6); model.rotation.x=k*Math.PI/2; } },
-  cam(S){ const t=S.t, R=MXC.real; if(t<2.6)return [RWP(6.4,30.3,0.8),RWP(2.6,30,0),0]; if(t<5)return [[pl.p[0]-4,pl.p[1]+3,pl.p[2]-4],[pl.p[0],pl.p[1],pl.p[2]],1];
-    if(t<11)return [TUN(7,4,8),TUN(0,1.5+(t>8.6?(t-8.6)*2.2:0),2),2]; if(t<13.6)return [TUN(-2-(t-11)*6+10,4,14),TUN(-(t-11)*6,8,0),3]; if(t<19)return [DECK(1.6,2.4,-4),DECK(4.2,0.9,-1.4),4];
-    if(t<24.6)return [DECK(-1,2.2,3.4),DECK(1,1.2,-1),5]; if(t<30.6)return [DECK(4.4,2.2,2.6),DECK(0.6,1.4,-1.6),6]; return [DECK(0.4,2,3),DECK(2.6,1,0.6),7]; } };
+  tick(S,dt){ const K=mxK, t=S.t, R=MXC.real; S.real=true; mxShotsTick(S,dt); S.hideHero=t>=4.4&&t<4.9||(t>=9.8&&t<13.6);
+    // the pod: a machine unplugs him, and he slides down a chute into a hole
+    if(t<2.6){ const k=odE(odSeg(S,0,1.6)); K.drone.position.set(7-3*k,34-2.5*k,4-3.4*k); K.drone.rotation.y=Math.sin(t)*0.2; odHeroTo(S,RWP(2.6,28.55,0),-Math.PI/2,false); }
+    odAt(S,1.8,'grab',()=>{ K.cables.forEach(c=>c.visible=false); mxSfx('pop'); burst(R[0]+3,R[1]+30.5,R[2]-0.5,new THREE.Color(0xff3a6a),10); }); odAt(S,2.6,'flush',()=>mxSfx('whoosh'));
+    if(t>=2.6&&t<4.4){ const k=odSeg(S,2.6,4.1); const p=odL(RWP(3.2,28.2,0.4),RWP(16.6,0.6,12),k); if(t>=4.1)p[1]-=odSeg(S,4.1,4.4)*3; odHeroTo(S,p,-Math.PI*0.75,false); }
+    // ...and shoots out of a pipe into the green sewer
+    odAt(S,4.6,'tun',()=>{ K.rw.visible=false; scene.background.setHex(0x0a0806); K.ship.position.set(-3,8.6,-2); mxClaw(0.2); });
+    if(t>=4.6&&t<5.6){ const k=odSeg(S,4.6,5.5), a=TUN(-6,6,-9.2), b=TUN(-3,0.15,-2); const p=odL(a,b,k); p[1]+=Math.sin(k*Math.PI)*1.6; odHeroTo(S,p,Math.PI,false); }
+    odAt(S,5.5,'splash',()=>{ mxSfx('splat'); const p=TUN(-3,0.4,-2); burst(p[0]-0.5,p[1],p[2]-0.5,new THREE.Color(0x6aff8a),18); });
+    // the ship's claw comes down, grabs him and lifts him up into the hull
+    if(t>=5.6&&t<10){ const L=t<7.6?0.2+6.2*odE(odSeg(S,6,7.6)):6.4-6*odE(odSeg(S,7.8,9.6)); mxClaw(L); const cy=8.6-1.6-L; odHeroTo(S,TUN(-3,t<7.6?0.15+Math.sin(t*3)*0.08:Math.max(0.15,cy-2.1),-2),Math.PI,false); }
+    if(t>=10&&t<13.6){ mxClaw(0.3); K.ship.position.x=-3-(t-10)*7; }
+    // aboard: Neo wakes on the medical bed; the crew gathers round and looks at him
+    odAt(S,13.6,'deck',()=>{ K.ship.position.set(0,8,0); scene.background.setHex(0x1a1a20); });
+    if(t>=13.6&&t<19)odHeroTo(S,DECK(4.2,0.77,-2.3),0,false); if(t>=19){ const k=odSeg(S,19,20.2); odHeroTo(S,odL(DECK(3.4,0,-0.4),DECK(2.6,0,0.6),k),k<1?Math.PI*0.75:0.98,k>0&&k<1); }
+    if(t>=13.6&&t<19){ S.cm.g.position.set(...DECK(3.1,0,-1.1)); } else if(t>=19)S.cm.g.position.set(...DECK(0.8,0,-0.6));
+    if(t>=13.6)[S.cm,S.ct,S.tk,S.cy,S.mo].forEach(a=>{ mxFaceHero(a); animRig(a.R,dt,0); }); S.cm.R.armR.rotation.x=t>24.6&&t<27.6?1.4:0.2;
+    odAt(S,15,'n1',()=>odSay(S,S.hero,'Why do my eyes hurt?')); odAt(S,16.6,'m1',()=>odSay(S,S.cm,'Because this is the first time you ever opened them, Neo.'));
+    odAt(S,20.4,'tk',()=>odSay(S,S.tk,"Hi! I'm Tank. I'm your operator!")); odAt(S,21.8,'mo',()=>odSay(S,S.mo,'Welcome aboard, newbie!')); odAt(S,23.2,'tr',()=>odSay(S,S.ct,"Hi, Neo. It's good to see you."));
+    odAt(S,24.8,'m2',()=>odSay(S,S.cm,'This is the real world. The machines grow people in fields... like crops.')); odAt(S,28,'cy',()=>odSay(S,S.cy,'After a while, the code just looks like... people.'));
+    odAt(S,30.6,'n2',()=>odSay(S,S.hero,"No... NO! I don't believe it!")); odAt(S,33.6,'m3',()=>odSay(S,S.cm,"...He'll be fine. They always do that.")); },
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; head.rotation.x=t<1.8?0:t<2.6?-0.6:0; if(t>=2.6&&t<4.4)model.rotation.x=-1.1;
+    if(t>=5.5&&t<7.8){ armL.rotation.z=-1.2-Math.sin(t*6)*0.4; armR.rotation.z=1.2+Math.sin(t*6)*0.4; } if(t>=7.8&&t<10){ armL.rotation.x=armR.rotation.x=2.9; }
+    if(t>=13.6&&t<19)model.rotation.x=Math.PI/2; if(t>=32.4){ model.rotation.z=Math.min(1,(t-32.4)/0.6)*Math.PI/2; } },
+  cam(S){ const t=S.t; if(t<2.6)return [RWP(7.6,32.6,-2.4),RWP(3.2,30,0.2),0]; if(t<4.6)return [RWP(9,13,24),[pl.p[0],pl.p[1],pl.p[2]],1];
+    if(t<5.6)return [TUN(3.4,3.2,4),TUN(-4.4,3,-5.4),2]; if(t<10)return [TUN(6.6,3.4,7),TUN(-3,3+Math.max(0,(t-7.8))*1.8,-2),3]; if(t<13.6)return [TUN(-3-(t-10)*7+13,5,9),[MXS.tun[0]+K_shipX(),MXS.tun[1]+8.6,MXS.tun[2]-2],4];
+    if(t<19)return [DECK(5.8,2.6,0.4),DECK(4.2,0.9,-0.8),5]; if(t<24.6)return [DECK(4.9,2,-2.6),DECK(1.4,1.4,0),6]; if(t<30.6)return [DECK(3.9,2,1.8),DECK(0.8,1.5,-0.6),7]; return [DECK(-2.6,2.1,2.8),DECK(1.8,1.3,0),8]; } };
+function K_shipX(){ return mxK.ship.position.x; }
 
 // ---------- 5. TRAINING ----------
-OD_CH.mx5={secs:40,sky:'real',mood:'myst',init(S){ const K=mxK; mxShow('deck','dojo','roofs'); mxCrew(S); S.mor=mxRW(S.grp,'morpheus',...DOJO(0,0,-2),0,{topC:'#1a1a1e',bottomC:'#1a1a1e'}); S.mr2=mxPerson(S.grp,'morpheus',...ROOF(-12,0.3,0)); S.load=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.5),new THREE.MeshBasicMaterial({map:K.load.t})); S.load.position.set(...DECK(0,1.9,-3.1)); S.grp.add(S.load); },
+OD_CH.mx5={secs:40,sky:'real',mood:'myst',init(S){ const K=mxK; mxShow('deck','dojo','roofs'); mxCrew(S); S.mor=mxRW(S.grp,'morpheus',...DOJO(0,0,-2),0,{topC:'#1a1a1e',bottomC:'#1a1a1e'}); S.mr2=mxPerson(S.grp,'morpheus',...ROOF(-12,0.3,0)); S.load=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.5),new THREE.MeshBasicMaterial({map:K.load.t})); S.load.position.set(...DECK(0,1.9,-3.1)); S.grp.add(S.load);
+    S.red=odPerson(S.grp,...ROOF(16,-29.75,-9),Math.PI/2,mxLook({skin:'#f2d8c4',hair:'long',hairC:'#e8c060',top:'long',topC:'#d81a2a',bottom:'dress',bottomC:'#d81a2a',shoes:'shoes',shoeC:'#d81a2a'})); },
   tick(S,dt){ const K=mxK, t=S.t, M=S.mor; S.real=true; [S.cm,S.ct,S.tk,S.cy,S.mo].forEach(a=>animRig(a.R,dt,0));
-    // jacking in, and loading kung fu
+    // jacking in: he shakes in the chair while kung fu loads
     if(t<6.4){ odHeroTo(S,DECK(-1.2,0,1.6),Math.PI,false); const L=K.load, x=L.x, k=Math.min(1,odSeg(S,1,4)); x.fillStyle='#020802'; x.fillRect(0,0,256,96); x.fillStyle='#3aff6a'; x.font='bold 22px monospace'; x.fillText(k<1?'LOADING: KUNG FU':'KUNG FU: DONE!',12,34); x.strokeStyle='#3aff6a'; x.strokeRect(12,52,232,24); x.fillRect(14,54,228*k,20); L.t.needsUpdate=true; }
     odAt(S,0.8,'tk',()=>odSay(S,S.tk,'Kung fu... coming right up!')); odAt(S,4.4,'n1',()=>odSay(S,S.hero,'Whoa. I know kung fu!')); odAt(S,5.6,'m1',()=>odSay(S,S.cm,'Show me.'));
-    // the dojo
-    odAt(S,6.4,'dojo',()=>{ mxSky('real'); scene.background.setHex(0xf2ead8); rkMood='gym'; mxMood='tense'; });
-    if(t>=6.4&&t<22){ let nx=0, nz=1.6; if(t>=13&&t<14.4)nz=1.6+odE(odSeg(S,13,13.6))*2.4; else if(t>=14.4)nz=4-odE(odSeg(S,14.4,15.4))*2.4; odHeroTo(S,DOJO(nx,0,nz),0,false); M.g.position.set(...DOJO(0,0,-0.4)); M.g.rotation.set(0,Math.PI,0);
-      rkFists(M.R.armL,M.R.armR,t,t<12?3:t<17?4.5:2,0.5,1.3,0.5); if(t>=12.6&&t<13.2){ M.R.legR.rotation.x=1.6; } animRig(M.R,dt,0); if(t>=20.4&&t<21.4){ M.R.armL.rotation.x=1.6; M.R.armL.rotation.z=0.2; } }
-    S.hitT=(S.hitT||0)-dt; if(t>=7&&t<20&&S.hitT<=0){ S.hitT=0.22; snd(()=>tone('square',220+Math.random()*120,120,0.05,0.06)); }
+    // the dojo: they circle and trade blows side to side, and the camera turns slowly round them
+    odAt(S,6.4,'dojo',()=>{ scene.background.setHex(0xf2ead8); mxMood='tense'; });
+    if(t>=6.4&&t<22){ const sx=Math.sin((t-6.4)*1.1)*1.3; let nz=1.6; if(t>=13&&t<14.4)nz=1.6+odE(odSeg(S,13,13.6))*2.4; else if(t>=14.4)nz=4-odE(odSeg(S,14.4,15.4))*2.4; S.sx=sx; odHeroTo(S,DOJO(sx,0,nz),0,Math.abs(Math.cos((t-6.4)*1.1))>0.3);
+      M.g.position.set(...DOJO(sx*0.92,0,-0.4)); M.g.rotation.set(0,Math.PI,0); rkFists(M.R.armL,M.R.armR,t,t<12?3:t<17?1.6:2,0.5,1.3,0.5); if(t>=12.6&&t<13.2){ M.R.legR.rotation.x=1.6; } animRig(M.R,dt,0); if(t>=20.4&&t<21.4){ M.R.armL.rotation.x=1.6; M.R.armL.rotation.z=0.2; } }
+    S.hitT=(S.hitT||0)-dt; if(t>=7&&t<20&&S.hitT<=0){ S.hitT=t>=12&&t<17?0.5:0.22; snd(()=>tone('square',220+Math.random()*120,120,0.05,0.06)); }
     odAt(S,12.8,'kick',()=>{ rkSfx('thud'); odSay(S,M,'Hah!'); }); odAt(S,15.6,'m2',()=>odSay(S,M,"Stop TRYING to be fast. BE fast.")); odAt(S,20.6,'m3',()=>odSay(S,M,'...Good.'));
     // the jump program
     odAt(S,22,'roofs',()=>{ scene.background.setHex(0x06140a); mxMood='hack'; }); const M2=S.mr2;
-    if(t>=22){ if(t<26){ const k=odSeg(S,23,25.4); M2.g.position.set(...ROOF(-12+k*24,0.3+Math.sin(k*Math.PI)*6,0)); M2.g.rotation.y=-Math.PI/2; if(k>0&&k<1){ M2.R.legL.rotation.x=0.8; M2.R.legR.rotation.x=-0.6; } else odRest(M2); animRig(M2.R,dt,0); } }
+    if(t>=22&&t<26){ const k=odSeg(S,23,25.4); M2.g.position.set(...ROOF(-12+k*24,0.3+Math.sin(k*Math.PI)*6,0)); M2.g.rotation.y=-Math.PI/2; if(k>0&&k<1){ M2.R.legL.rotation.x=0.8; M2.R.legR.rotation.x=-0.6; } else odRest(M2); animRig(M2.R,dt,0); }
     odAt(S,26,'m4',()=>odSay(S,M2,'Free your mind, Neo. Jump!'));
     if(t>=22){ if(t<28)odHeroTo(S,ROOF(-14,0.3,0),-Math.PI/2,false); else if(t<29.2)odHeroTo(S,ROOF(-14+odSeg(S,28,29.2)*9.5,0.3,0),-Math.PI/2,true); else if(t<33.6){ const k=odSeg(S,29.2,31.6); let y=0.3+Math.sin(Math.min(1,k*3)*Math.PI*0.5)*2-Math.max(0,k*3-1)/2*30.05; if(t>=31.6){ const b=odSeg(S,31.6,33.6); y=-29.75+Math.sin(b*Math.PI)*9*(1-b*0.5); } odHeroTo(S,ROOF(-4.5+Math.min(1,k)*4,Math.max(-29.75,y),0),-Math.PI/2,false); } else odHeroTo(S,ROOF(-0.5,-29.75,0),-Math.PI/2,false); }
     if(t>=31.6&&t<33){ const b=odSeg(S,31.6,32.4); K.street.scale.y=1-Math.sin(b*Math.PI)*0.8; K.street.position.y=-30-Math.sin(b*Math.PI)*1.2; } odAt(S,31.6,'boing',()=>snd(()=>tone('sine',120,520,0.5,0.25)));
+    // the woman in the red dress walks by, glances over, and keeps walking
+    if(t>=31.6){ const k=odSeg(S,31.6,39.6); S.red.g.position.set(...ROOF(16-k*32,-29.75,-9)); S.red.g.rotation.y=Math.PI/2; odWalk(S.red,dt,true,6); S.red.R.head.rotation.y=t>34&&t<36.4?-0.9:0; }
     odAt(S,29.8,'n2',()=>odSay(S,S.hero,'Whoaaaa!')); odAt(S,34.4,'mo',()=>odSay(S,S.mo,'📞 Nobody makes the first jump!')); odAt(S,36.6,'n3',()=>odSay(S,S.hero,'...Ow.')); },
-  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t<6.4){ mxSitPose(); if(t>3.8&&t<4.2)head.rotation.x=0.3; }
-    if(t>=6.4&&t<22){ rkFists(armL,armR,t,t<12?3.2:t<17?4.2:5,0,1.3,0.5); if(t>=13&&t<14.4)model.rotation.x=0.3; if(t>=17&&t<18){ model.rotation.z=Math.sin((t-17)*Math.PI*2)*Math.PI; } }
+  pose(S){ const t=S.t; model.rotation.x=model.rotation.z=0; if(t<6.4){ mxSitPose(); if(t>1&&t<4.2){ model.position.x+=Math.sin(t*42)*0.04; head.rotation.x=Math.sin(t*31)*0.18; armL.rotation.z=-0.2+Math.sin(t*37)*0.15; armR.rotation.z=0.2+Math.sin(t*33)*0.15; } else head.rotation.x=0; }
+    if(t>=6.4&&t<22){ rkFists(armL,armR,t,t<12?3.2:t<17?1.8:5,0,1.3,0.5); if(t>=13&&t<14.4)model.rotation.x=0.3; if(t>=17&&t<18){ model.rotation.z=Math.sin((t-17)*Math.PI*2)*Math.PI; } }
     if(t>=29.2&&t<31.6){ armL.rotation.z=-2.2-Math.sin(t*14)*0.5; armR.rotation.z=2.2+Math.sin(t*14)*0.5; } if(t>=33.6){ model.rotation.x=Math.PI/2; } },
-  cam(S){ const t=S.t; if(t<6.4)return [DECK(-1.2,2.2,-1),DECK(-1.2,1.3,1.6),0]; if(t<12)return [DOJO(4.4,1.8,0.6),DOJO(0,1.3,0.6),1]; if(t<17){ const a=(t-12)*0.4; return [DOJO(Math.sin(a)*4.6,1.7,0.6+Math.cos(a)*4.6),DOJO(0,1.3,0.6),2]; } if(t<22)return [DOJO(-3.4,1.6,3.6),DOJO(0,1.4,0.6),3];
-    if(t<28)return [ROOF(0,9,26),ROOF(0,1,0),4]; if(t<31.6)return [ROOF(-1,6,24),[pl.p[0],pl.p[1]+1,pl.p[2]],5]; if(t<34)return [ROOF(2,-26,10),ROOF(-0.5,-28,0),6]; return [ROOF(1.8,-28.6,3.4),ROOF(-0.6,-29.4,0),7]; } };
+  cam(S){ const t=S.t, sx=S.sx||0; if(t<6.4)return [DECK(1.6,1.5,1.4),DECK(-1.2,1.3,1.6),0];
+    if(t<22){ const a=-0.9+(t-6.4)*0.32, c=DOJO(sx*0.96,1.3,0.6); return [[c[0]+Math.sin(a)*5,c[1]+0.5,c[2]+Math.cos(a)*5],c,1]; }
+    if(t<28)return [ROOF(0,9,26),ROOF(0,1,0),4]; if(t<31.6)return [ROOF(-1,6,24),[pl.p[0],pl.p[1]+1,pl.p[2]],5]; return [ROOF(3,-27.4,7),ROOF(-1,-28.6,-4),6]; } };
 
 // ---------- 6. THE ORACLE ----------
-OD_CH.mx6={secs:36,sky:'day',mood:'myst',init(S){ const f=MXS.oracle; mxNeo(S,'coat'); S.mor=mxPerson(S.grp,'morpheus',33,f,27,Math.PI/2); S.boy=odPerson(S.grp,12.6,f,23.6,Math.PI,mxLook(MX_CAST.spoon)); S.boy.g.scale.setScalar(0.72); S.girl=odPerson(S.grp,16.4,f,26,Math.PI,mxLook({skin:'#c8946a',hair:'braids',hairC:'#1a1a1a',top:'long',topC:'#e8dcc0',bottom:'skirt',bottomC:'#e8dcc0'})); S.girl.g.scale.setScalar(0.72);
-    S.or=odPerson(S.grp,27.4,f,15,Math.PI,mxLook(MX_CAST.oracle)); S.cookie=mcyl(S.grp,0.07,0.07,0.03,mm(0xc89050),0,0,0,8); S.cookie.visible=false; },
-  tick(S,dt){ const K=mxK, t=S.t, f=MXS.oracle, M=S.mor, O=S.or;
-    if(t<4){ const k=odSeg(S,0.4,3.6); odHeroTo(S,odL([34,f,25.4],[19,f,24.6],k),Math.PI/2,k>0&&k<1); odMove(M,[34.4,f,26.6],[20.4,f,26.2],k); odWalk(M,dt,k>0&&k<1); }
-    if(t>=3.6&&t<12)M.g.rotation.y=Math.PI/2; odAt(S,3.8,'m1',()=>odSay(S,M,'Wait here. The Oracle will see you soon.'));
-    // the waiting room: a boy bending a spoon, a girl floating blocks
-    S.boy.R.armR.rotation.x=1.2; animRig(S.boy.R,dt,0); odSit(S.girl); S.girl.g.position.y=f-0.1; animRig(S.girl.R,dt,0); K.blocks.forEach((b,i)=>{ const a=t*1.2+i*2.1; b.position.set(16.4+Math.cos(a)*0.6,f+1.3+Math.sin(t*2+i)*0.2,25.4+Math.sin(a)*0.6); b.rotation.set(t,t*1.3,0); });
-    if(t<12)odHeroTo(S,[13.6,f,23.8],Math.PI/2,false); if(t>=4&&t<12){ const k=odSeg(S,4.2,5.4); if(k<1)odHeroTo(S,odL([19,f,24.6],[13.6,f,23.8],k),Math.PI/2,true); }
-    K.spoon.rotation.z=t>7&&t<12?Math.min(1.3,(t-7)*0.5):0; K.spoon.position.set(12.6,f+1+Math.sin(t*2)*0.03,23);
-    odAt(S,7.6,'b1',()=>odSay(S,S.boy,"Psst. The trick is... there's no spoon.")); odAt(S,10,'n1',()=>odSay(S,S.hero,'...No spoon?'));
-    // the kitchen
-    if(t>=12&&t<34){ const k=odSeg(S,12,14); odHeroTo(S,odL([13.6,f,23.8],[24.4,f,17.4],k),k<1?-1.0:Math.PI*0.75,k<1); if(t>=14.6&&t<15.6){ odHeroTo(S,[24.4,f,17.4],0.6,false); } }
-    O.g.position.set(27.4,f,15); O.g.rotation.y=t<16.8?0:Math.PI*0.8; O.R.armR.rotation.x=t<16?0.9+Math.sin(t*4)*0.3:0.3; animRig(O.R,dt,0); K.oven.material.color.setHSL(0.07,1,0.5+Math.sin(t*4)*0.1);
-    odAt(S,13.2,'o1',()=>odSay(S,O,"I know. You're Neo. Be right with you.")); odAt(S,14.2,'o2',()=>odSay(S,O,'Mind the vase.'));
-    if(t>=15&&t<17){ const k=odSeg(S,15,15.6); K.vase.rotation.z=k*1.6; K.vase.position.set(23.4+k*0.6,f+0.9-k*0.9,18.6); } odAt(S,15.6,'crash',()=>{ mxSfx('splat'); snd(()=>noise(4000,0.4,0.25,'highpass')); burst(23.5,f+0.2,18.1,new THREE.Color(0x3a6ad8),12); K.vase.visible=false; });
-    odAt(S,16.6,'o3',()=>odSay(S,O,"Would you still have broken it if I hadn't said anything?")); odAt(S,20,'o4',()=>odSay(S,O,"Let's have a look at you."));
-    odAt(S,22.6,'o5',()=>odSay(S,O,"Sorry, kiddo. You've got the gift...")); odAt(S,25.2,'o6',()=>odSay(S,O,"...but it looks like you're waiting for something."));
-    if(t>=27.4&&t<31.6){ S.cookie.visible=true; S.cookie.position.set(...odLW(t<29?O.R.armR:armR,[0,-0.8,0])); } else S.cookie.visible=false; odAt(S,27.4,'o7',()=>odSay(S,O,"Here, have a cookie. You'll feel better by the time it's gone."));
-    odAt(S,31.8,'n2',()=>odSay(S,S.hero,'...So I\'m not the One.')); odAt(S,33.8,'o8',()=>odSay(S,O,'Mm-hmm. Off you go now.')); },
-  pose(S){ const t=S.t; if(t>=27.4&&t<29)armR.rotation.x=0.3; if(t>=29&&t<31.6){ armR.rotation.x=t<30.6?1.3:2.4; armR.rotation.z=t<30.6?0:-0.3; } },
-  cam(S){ const t=S.t, f=MXS.oracle; if(t<4)return [[17,f+2.4,28.6],[26,f+1.4,25],0]; if(t<7.4)return [[16.6,f+2,21.2],[13.4,f+1.2,24],1]; if(t<12)return [[14.4,f+1.6,21.8],[12.8,f+1.1,23.4],2];
-    if(t<15)return [[21,f+2.4,20.6],[26,f+1.3,15.6],3]; if(t<17)return [[22,f+1.6,19.6],[23.8,f+0.6,18.4],4]; if(t<27.4)return [[23,f+2,14.4],[25.6,f+1.6,16.4],5]; return [[26.4,f+2,19.6],[25.6,f+1.4,16],6]; } };
+OD_CH.mx6={secs:36,sky:'day',mood:'myst',init(S){ const f=MXS.oracle; mxNeo(S,'coat'); S.mor=mxPerson(S.grp,'morpheus',33,f,27,Math.PI/2);
+    S.boy=odPerson(S.grp,11.75,f,23.8,-Math.PI/2,mxLook(MX_CAST.spoon)); S.boy.g.scale.setScalar(0.72); S.girl=odPerson(S.grp,12.6,f,26.6,-Math.PI/2,mxLook({skin:'#c8946a',hair:'braids',hairC:'#1a1a1a',top:'long',topC:'#e8dcc0',bottom:'skirt',bottomC:'#e8dcc0'})); S.girl.g.scale.setScalar(0.72);
+    S.or=odPerson(S.grp,30.8,f,10.9,0,mxLook(MX_CAST.oracle)); S.cig=grp(S.or.R.armR,0,-0.78,-0.12); mb(S.cig,0.03,0.03,0.16,mm(0xf2f2f2),0,0,0); mb(S.cig,0.035,0.035,0.03,glowM(0xff6a2a),0,0,-0.09);
+    S.cookie=mcyl(S.grp,0.07,0.07,0.03,mm(0xc89050),0,0,0,8); S.cookie.visible=false; },
+  tick(S,dt){ const K=mxK, t=S.t, f=MXS.oracle, M=S.mor, O=S.or, B=S.boy;
+    // into the waiting room
+    if(t<4.4){ const k=odSeg(S,0.4,3.8); odHeroTo(S,odL([34,f,25.4],[18,f,24.6],k),Math.PI/2,k>0&&k<1); odMove(M,[34.4,f,26.6],[19.6,f,26.4],k); odWalk(M,dt,k>0&&k<1); }
+    if(t>=3.8){ M.g.position.set(19.6,f,26.4); M.g.rotation.y=Math.PI*0.6; odRest(M); animRig(M.R,dt,0); } odAt(S,3.9,'m1',()=>odSay(S,M,'Wait here. The Oracle will see you soon.'));
+    // the spoon boy, on the sofa, turned toward Neo; the spoon really bends
+    odSit(B); B.g.position.set(11.75,f-0.07,23.8); B.g.rotation.y=-Math.PI/2; B.R.armR.rotation.x=1.25; B.R.armR.rotation.z=0.15; animRig(B.R,dt,0);
+    odSit(S.girl); S.girl.g.position.y=f-0.1; animRig(S.girl.R,dt,0); K.blocks.forEach((b,i)=>{ const a=t*1.2+i*2.1; b.position.set(13.4+Math.cos(a)*0.5,f+1.2+Math.sin(t*2+i)*0.2,26.6+Math.sin(a)*0.5); b.rotation.set(t,t*1.3,0); });
+    if(t>=4.4&&t<12){ const k=odSeg(S,4.4,5.8); if(k<1)odHeroTo(S,odL([18,f,24.6],[13.85,f,23.8],k),Math.PI/2,true); else odHeroTo(S,[13.85,f,23.8],Math.PI/2,false); }
+    K.spoon.position.set(12.62,f+0.9,23.8); K.spoon.rotation.set(0,0,0); K.spoonTop.rotation.z=t>8.6&&t<12?-Math.min(1.4,(t-8.6)*0.6):0;
+    odAt(S,7.4,'b1',()=>odSay(S,B,"Don't try to bend the spoon...")); odAt(S,9.2,'b2',()=>odSay(S,B,"Psst. The trick is... there's no spoon.")); odAt(S,11,'n1',()=>odSay(S,S.hero,'...No spoon.'));
+    // the kitchen: yellow wooden cabinets, an old green fridge, cookies in the oven
+    if(t>=12&&t<36){ const k=odSeg(S,12,14.4), P=[[13.85,f,23.8],[20,f,20],[26.6,f,16]]; if(k<1){ odPathHero(S,P,k); } else if(t<16)odHeroTo(S,[26.6,f,16],t<14.9?-0.4:2.2,false); else { const k2=odSeg(S,16.2,17); odHeroTo(S,odL([26.6,f,16],[28.4,f,15.2],k2),k2<1?-1.2:0,k2>0&&k2<1); } }
+    if(t<16.6){ O.g.position.set(30.8,f,10.9); O.g.rotation.y=t<15?0:Math.PI*0.8; O.R.armR.rotation.x=t<14?0.9+Math.sin(t*4)*0.3:0.4; }
+    else { const k=odSeg(S,16.6,17.6); O.g.position.set(...odL([30.8,f,10.9],[28.4,f,12.6],k)); O.g.rotation.y=k<1?Math.atan2(2.4,-1.7):Math.PI; if(k<1)odWalk(O,dt,true); else { odRest(O); O.R.armR.rotation.x=Math.sin(t*0.9)>0.2?1.9:0.5; O.R.armR.rotation.z=-0.2; } }
+    animRig(O.R,dt,0); K.oven.material.color.setHSL(0.07,1,0.5+Math.sin(t*4)*0.1);
+    S.smT=(S.smT||0)-dt; if(t>=15&&S.smT<=0){ S.smT=0.7; const p=odLW(S.cig,[0,0,-0.1]); puff(p[0],p[1]+0.15,p[2],false); }
+    odAt(S,13.2,'o1',()=>odSay(S,O,"I know. You're Neo. Be right with you.")); odAt(S,14.4,'o2',()=>odSay(S,O,'Mind the vase.'));
+    if(t>=14.9&&t<17){ const k=odSeg(S,14.9,15.5); K.vase.rotation.z=k*1.6; K.vase.position.set(25.6+k*0.6,f+0.9-k*0.9,16.4); } odAt(S,15.5,'crash',()=>{ mxSfx('splat'); snd(()=>noise(4000,0.4,0.25,'highpass')); burst(25.7,f+0.2,15.9,new THREE.Color(0x3a6ad8),12); K.vase.visible=false; });
+    odAt(S,17.8,'o3',()=>odSay(S,O,"Would you still have broken it if I hadn't said anything?")); odAt(S,20.6,'o4',()=>odSay(S,O,"Let's have a look at you."));
+    odAt(S,23,'o5',()=>odSay(S,O,"Sorry, kiddo. You've got the gift...")); odAt(S,25.4,'o6',()=>odSay(S,O,"...but it looks like you're waiting for something."));
+    if(t>=27.6&&t<31.6){ S.cookie.visible=true; S.cookie.position.set(...odLW(t<29?O.R.armL:armR,[0,-0.8,0])); } else S.cookie.visible=false; odAt(S,27.6,'o7',()=>odSay(S,O,"Here, have a cookie. You'll feel better by the time it's gone."));
+    if(t>=27.6&&t<29){ O.R.armL.rotation.x=1.4; } odAt(S,31.8,'n2',()=>odSay(S,S.hero,"...So I'm not the One.")); odAt(S,33.8,'o8',()=>odSay(S,O,'Mm-hmm. Off you go now.')); },
+  pose(S){ const t=S.t; if(t>=29&&t<31.6){ armR.rotation.x=t<30.6?1.3:2.4; armR.rotation.z=t<30.6?0:-0.3; } if(t>=4.4&&t<12&&t>5.8){ head.rotation.x=-0.2; } else head.rotation.x=0; },
+  cam(S){ const t=S.t, f=MXS.oracle; if(t<4.4)return [[16,f+2.4,28.6],[26,f+1.4,25],0]; if(t<7.4)return [[17.6,f+2,27.2],[12.8,f+1,24],1]; if(t<9.4)return [[12.8,f+1.5,20.6],[12.8,f+1,23.8],2];
+    if(t<11)return [[12.95,f+1.35,22.6],[12.62,f+1.1,23.8],3]; if(t<12)return [[12.8,f+1.5,20.6],[12.8,f+1,23.8],2]; if(t<14.6)return [[31.6,f+2.4,20],[26,f+1.2,15],4]; if(t<17)return [[23.4,f+1.7,18.2],[26,f+0.8,16],5];
+    if(t<27.6)return [[32.8,f+1.7,13.9],[28.4,f+1.4,13.9],6]; if(t<31.6)return [[30.6,f+1.6,14.8],[28.4,f+1.4,13.9],7]; return [[32.8,f+1.7,13.9],[28.4,f+1.4,13.9],6]; } };
+function odPathHero(S,P,k){ const n=P.length-1, u=Math.min(n-0.0001,Math.max(0,k)*n), j=Math.floor(u), a=P[j], b=P[j+1]; odHeroTo(S,odL(a,b,u-j),Math.atan2(-(b[0]-a[0]),-(b[2]-a[2])),k>0&&k<1); }
+function odPathMove(a,P,k){ const n=P.length-1, u=Math.min(n-0.0001,Math.max(0,k)*n), j=Math.floor(u); odMove(a,P[j],P[j+1],u-j); }
 
 // ---------- 7. THE TRAP ----------
-OD_CH.mx7={secs:38,sky:'night',mood:'tense',init(S){ const G=MXC.G, f=MXC.mor.f; mxNeo(S,'coat'); S.cy=mxPerson(S.grp,'cypher',73,G,20.3,0); S.sm=mxAgent(S.grp,73,G,17.7,Math.PI,'smith'); S.wt=odPerson(S.grp,76,G,16,-Math.PI/2,mxLook(MX_CAST.waiter));
+OD_CH.mx7={secs:38,sky:'night',mood:'tense',init(S){ const G=MXC.G, f=MXC.mor.f; mxNeo(S,'coat'); S.cy=mxPerson(S.grp,'cypher',73,G,20.3,0); S.sm=mxAgent(S.grp,73,G,17.7,Math.PI,'smith'); S.wt=odPerson(S.grp,75.6,G,17.2,Math.PI/2,mxLook(MX_CAST.waiter));
+    mxChair(S.grp,73,G,20.45,0,0x6a1a2a).scale.set(0.6,0.75,0.6); mxChair(S.grp,73,G,17.55,Math.PI,0x6a1a2a).scale.set(0.6,0.75,0.6);
     S.mor=mxPerson(S.grp,'morpheus',78,f,26.6,Math.PI/2); S.tri=mxPerson(S.grp,'trinity',79.4,f,27,Math.PI/2); S.cy2=mxPerson(S.grp,'cypher',81,f,26.6,Math.PI/2); S.ag=[mxAgent(S.grp,70,f,20,0,'brown'),mxAgent(S.grp,71.4,f,21,0,'jones')]; S.ag.forEach(a=>a.g.visible=false); S.cat=mxCatMesh(S.grp); S.cat.g.scale.setScalar(1.6); S.cat.g.visible=false; },
-  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, f=MXC.mor.f, M=S.mor, Sm=S.sm; mxShotsTick(S,dt); mxDownTick(S,dt);
-    // dinner with Agent Smith
-    if(t<12){ odHeroTo(S,[88,G,28],0,false); odSit(S.cy); S.cy.g.position.y=G-OD_SEAT; odSit(Sm); Sm.g.position.y=G-OD_SEAT; S.cy.R.armR.rotation.x=0.9+Math.max(0,Math.sin(t*3))*0.4; animRig(S.cy.R,dt,0); animRig(Sm.R,dt,0); S.wt.R.armR.rotation.x=1.2; animRig(S.wt.R,dt,0); }
+  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, f=MXC.mor.f, M=S.mor, Sm=S.sm, T=S.tri; mxShotsTick(S,dt); mxDownTick(S,dt);
+    // dinner with Agent Smith, in a fancy restaurant
+    if(t<12){ odHeroTo(S,[88,G,28],0,false); odSit(S.cy); S.cy.g.position.set(73,G-0.12,20.45); odSit(Sm); Sm.g.position.set(73,G-0.12,17.55); S.cy.R.armR.rotation.x=0.9+Math.max(0,Math.sin(t*3))*0.4; animRig(S.cy.R,dt,0); animRig(Sm.R,dt,0); S.wt.R.armR.rotation.x=1.2; animRig(S.wt.R,dt,0); }
     odAt(S,1.4,'c1',()=>odSay(S,S.cy,"I know this steak isn't real...")); odAt(S,3.4,'c2',()=>odSay(S,S.cy,'...but it sure tastes good.')); odAt(S,5.6,'s1',()=>odSay(S,Sm,'Then we have a deal, Mr. Reagan?'));
     odAt(S,7.8,'c3',()=>odSay(S,S.cy,"Make me rich and famous... and you'll get Morpheus.")); odAt(S,10.2,'s2',()=>odSay(S,Sm,'...Deal.'));
     // déjà vu: a black cat walks by... twice
     odAt(S,12,'hall',()=>{ S.cy.g.visible=Sm.g.visible=S.wt.g.visible=false; });
-    if(t>=12&&t<20){ const k=odSeg(S,12,13.6); odHeroTo(S,odL([86,f,26.4],[83.4,f,26.4],k),Math.PI/2,k<1); [[M,78],[S.tri,79.4],[S.cy2,81]].forEach(([a,x])=>{ odMove(a,[x+3,f,a.g.position.z],[x,f,a.g.position.z],k); odWalk(a,dt,k<1); if(k>=1){ a.g.rotation.y=-Math.PI/2; odRest(a); animRig(a.R,dt,0); } }); }
+    if(t>=12&&t<20){ const k=odSeg(S,12,13.6); odHeroTo(S,odL([86,f,26.4],[83.4,f,26.4],k),Math.PI/2,k<1); [[M,78],[T,79.4],[S.cy2,81]].forEach(([a,x])=>{ odMove(a,[x+3,f,a.g.position.z],[x,f,a.g.position.z],k); odWalk(a,dt,k<1); if(k>=1){ a.g.rotation.y=-Math.PI/2; odRest(a); animRig(a.R,dt,0); } }); }
     for(const [a,b] of [[13.4,15],[15.4,17]])if(t>=a&&t<b){ S.cat.g.visible=true; const k=odSeg(S,a,b); S.cat.g.position.set(78-k*8,f,28.2); S.cat.g.rotation.y=Math.PI/2; rkDogTick(S.cat,dt,true,false); } if(t>=17&&t<20)S.cat.g.visible=false;
-    odAt(S,15.6,'n1',()=>odSay(S,S.hero,'Whoa... déjà vu.')); odAt(S,17.2,'t1',()=>odSay(S,S.tri,'What did you just see?!')); odAt(S,18.4,'n2',()=>odSay(S,S.hero,'A black cat... twice.')); odAt(S,19.4,'t2',()=>odSay(S,S.tri,"It's a glitch! It's a TRAP!"));
-    // the agents come through the wall
-    odAt(S,20,'room',()=>{ K.bricks.forEach(b=>b.visible=true); mxSfx('glitch'); M.g.position.set(74,f,16); M.g.rotation.y=Math.PI; S.tri.g.position.set(77,f,18); S.cy2.g.position.set(80,f,20.6); S.cy2.g.rotation.y=Math.PI*0.75; });
-    if(t>=20)odHeroTo(S,[76,f,18.6],Math.PI*0.8,false); odAt(S,21.6,'wall',()=>{ K.wallHole.visible=true; mxSfx('slam'); burst(70,f+1.4,22.4,new THREE.Color(0xd8d0c0),20); S.ag.forEach(a=>a.g.visible=true); Sm.g.visible=true; Sm.g.position.set(71,f,21); Sm.g.rotation.set(0,0,0); odRest(Sm); });
+    odAt(S,15.6,'n1',()=>odSay(S,S.hero,'Whoa... déjà vu.')); odAt(S,17.2,'t1',()=>odSay(S,T,'What did you just see?!')); odAt(S,18.4,'n2',()=>odSay(S,S.hero,'A black cat... twice.')); odAt(S,19.4,'t2',()=>odSay(S,T,"It's a glitch! It's a TRAP!"));
+    // the agents come through the wall, and everybody fights
+    odAt(S,20,'room',()=>{ K.bricks.forEach(b=>b.visible=true); mxSfx('glitch'); M.g.position.set(74,f,16); T.g.position.set(77.2,f,18.2); S.cy2.g.position.set(80,f,20.6); });
+    odAt(S,21.6,'wall',()=>{ K.wallHole.visible=true; mxSfx('slam'); burst(70,f+1.4,22.4,new THREE.Color(0xd8d0c0),20); S.ag.forEach(a=>a.g.visible=true); Sm.g.visible=true; Sm.g.position.set(71,f,21); Sm.g.rotation.set(0,0,0); odRest(Sm); });
     odAt(S,22.8,'m1',()=>odSay(S,M,"Neo! Trinity! Get out! I'll hold them off!"));
-    if(t>=21.6&&t<30){ const k=odSeg(S,22,23.4); Sm.g.position.set(...odL([71,f,21],[73.4,f,17.4],k)); Sm.g.rotation.y=Math.atan2(-(74-73.4),-(16-17.4)); if(t>23.4&&t<28.6){ rkFists(Sm.R.armL,Sm.R.armR,t,2.4,0,1.3,0.45); rkFists(M.R.armL,M.R.armR,t,2,1,1.3,0.45); M.g.rotation.y=Math.atan2(-(73.4-74),-(17.4-16)); } animRig(Sm.R,dt,0); animRig(M.R,dt,0);
-      S.ag.forEach((a,i)=>{ a.R.armR.rotation.x=1.5; animRig(a.R,dt,0); a.g.rotation.y=Math.atan2(-(76-a.g.position.x),-(18.6-a.g.position.z)); }); }
-    for(const tt of [24.2,25.6,26.8])odAt(S,tt,'p'+tt,()=>rkSfx('thud')); for(const tt of [23.8,25,26.4]){ odAt(S,tt,'sh'+tt,()=>{ const a=S.ag[Math.floor(tt)%2]; const p=a.g.position; mxFire(S,[p.x,p.y+1.4,p.z],[77+Math.random()*2,f+1+Math.random()*1.5,8.2],40,()=>burst(77.5,f+1.6,8.6,new THREE.Color(0xd8d0c0),6)); }); }
-    odAt(S,28.6,'grab',()=>{ odSay(S,Sm,'Got you, Morpheus.'); M.g.rotation.x=0.4; rkSfx('thud'); }); if(t>=28.6){ M.g.position.set(73.6,f,15.4); S.ag[0].g.position.set(72.8,f,15.8); S.ag[1].g.position.set(74.4,f,15.6); }
-    odAt(S,30.6,'cy',()=>odSay(S,S.cy2,'Sorry, Morpheus. I was tired of the real world.')); odAt(S,33.6,'n3',()=>odSay(S,S.hero,'MORPHEUS!!')); odAt(S,35.4,'t3',()=>odSay(S,S.tri,"Neo, come on! We'll get him back!")); },
-  pose(S){ const t=S.t; if(t>=33.4){ armR.rotation.x=1.6; } },
-  cam(S){ const t=S.t, G=MXC.G, f=MXC.mor.f; if(t<5.4)return [[75.6,G+2,22.2],[73,G+1.3,19],0]; if(t<10)return [[73.3,G+1.6,22],[73,G+1.5,17.8],1]; if(t<12)return [[73.2,G+1.7,15.4],[73,G+1.2,20.2],2];
-    if(t<20)return [[84.6,f+1.2,27.4],[76,f+0.5,28],3]; if(t<24)return [[78.6,f+2.6,21.6],[72,f+1.6,19],4]; if(t<30.6)return [[76.8,f+2.3,13.4],[73.6,f+1.4,17],5]; return [[78.4,f+2.4,20.6],[74,f+1.4,16],6]; } };
+    if(t>=20){ const face=(a,x,z)=>{ a.g.rotation.y=Math.atan2(-(x-a.g.position.x),-(z-a.g.position.z)); };
+      const k=odSeg(S,21.8,23.2), A0=S.ag[0], A1=S.ag[1]; Sm.g.position.set(...odL([71,f,21],[73.4,f,17.4],k)); A0.g.position.set(...odL([70,f,20],[74.8,f,19.9],k)); A1.g.position.set(...odL([71.4,f,21],[76,f,19.6],k));
+      odHeroTo(S,[75.6,f,18.4],0,false); face(Sm,74,16); face(M,Sm.g.position.x,Sm.g.position.z); face(A0,75.6,18.4); face(A1,77.2,18.2); face(T,A1.g.position.x,A1.g.position.z); face(S.cy2,74,16);
+      if(t>=21.8&&t<23.2)[Sm,A0,A1].forEach(a=>odWalk(a,dt,true));
+      if(t>=23.2&&t<28.6){ for(const [a,ph] of [[Sm,0],[M,1],[A0,0.4],[A1,1.2],[T,0.7]])rkFists(a.R.armL,a.R.armR,t,2.2,ph,1.3,0.45); }
+      [Sm,M,A0,A1,T,S.cy2].forEach(a=>animRig(a.R,dt,0)); S.heroFace=Math.atan2(-(A0.g.position.x-75.6),-(A0.g.position.z-18.4)); if(t>=23.2)odHeroTo(S,[75.6,f,18.4],S.heroFace,false); }
+    for(const tt of [24.2,25.6,26.8])odAt(S,tt,'p'+tt,()=>rkSfx('thud'));
+    odAt(S,28.6,'grab',()=>{ odSay(S,Sm,'Got you, Morpheus.'); rkSfx('thud'); }); if(t>=28.6){ M.g.rotation.x=0.35; S.ag[0].g.position.set(72.8,f,15.6); S.ag[1].g.position.set(74.8,f,15.4); for(const a of S.ag){ a.R.armL.rotation.x=a.R.armR.rotation.x=1.2; a.g.rotation.y=Math.atan2(-(74-a.g.position.x),-(16-a.g.position.z)); } T.R.armL.rotation.x=T.R.armR.rotation.x=0.3; }
+    odAt(S,30.6,'cy',()=>odSay(S,S.cy2,'Sorry, Morpheus. I was tired of the real world.')); odAt(S,33.6,'n3',()=>odSay(S,S.hero,'MORPHEUS!!')); odAt(S,35.4,'t3',()=>odSay(S,T,"Neo, come on! We'll get him back!")); },
+  pose(S){ const t=S.t; if(t>=23.2&&t<28.6)rkFists(armL,armR,t,2.4,0.2,1.3,0.45); if(t>=33.4){ armR.rotation.x=1.6; } },
+  cam(S){ const t=S.t, G=MXC.G, f=MXC.mor.f; if(t<5.4)return [[77.2,G+2,21.4],[73,G+1.2,19],0]; if(t<10)return [[75.8,G+1.5,19],[73,G+1.35,19],1]; if(t<12)return [[70.2,G+1.5,19.1],[73,G+1.35,19],2];
+    if(t<20)return [[84.6,f+1.2,27.4],[76,f+0.5,28],3]; if(t<24)return [[78.8,f+2.6,13.6],[73.6,f+1.4,19],4]; if(t<30.6)return [[79.4,f+2.4,15.2],[74.6,f+1.3,18],5]; return [[78.4,f+2.4,21.4],[74,f+1.4,16.4],6]; } };
 
 // ---------- 8. THE RESCUE ----------
-OD_CH.mx8={secs:48,sky:'day',mood:'tense',init(S){ const K=mxK, G=MXC.G; mxNeo(S,'coat'); S.tri=mxPerson(S.grp,'trinity',53.2,G,39,0); S.gd=[[50,G,49.9,0],[54,G,49.9,0],[46.5,G,56,-Math.PI/2],[57.5,G,56,Math.PI/2],[52,G,60,0]].map(([x,y,z,r])=>odPerson(S.grp,x,y,z,r,mxLook(MX_CAST.guard)));
-    S.ag=mxAgent(S.grp,52,G+18,63,0,'jones'); S.mor=mxPerson(S.grp,'morpheus',...MXS.room3,Math.PI); S.cg=[mxAgent(S.grp,49.4,G+11,50.4,0,'brown'),mxAgent(S.grp,52.8,G+11,50.6,0,'smith')]; const H=K.heli; H.film=true; H.g.position.set(...MXC.pad); H.g.rotation.set(0,Math.PI,0); },
-  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, H=K.heli, T=S.tri, P=MXC.pad; mxShotsTick(S,dt); mxDownTick(S,dt);
-    // into the lobby
-    if(t<8.6){ const k=odSeg(S,0.4,4.6); odHeroTo(S,odL([51,G,39],[51.6,G,51.6],k),0,k>0&&k<1); odMove(T,[53.2,G,39],[53.2,G,51.4],k); odWalk(T,dt,k>0&&k<1); }
-    odAt(S,5,'g1',()=>odSay(S,S.gd[0],'Please remove any metal objects.')); odAt(S,6.4,'beep',()=>{ for(let i=0;i<3;i++)tone&&snd(()=>tone('square',1200,1200,0.12,0.06,i*0.18)); }); odAt(S,7.2,'g2',()=>odSay(S,S.gd[1],'...Uh oh.'));
-    S.gd.forEach((g,i)=>{ if(!g.down){ g.R.armR.rotation.x=t>7.4?1.5:0.3; animRig(g.R,dt,0); } });
-    // the shootout
-    if(t>=8.6&&t<20){ odHeroTo(S,[t<12?51.6:48.6,G,t<12?51.6:54],t<12?0:-Math.PI*0.2,t>=12&&t<12.6); T.g.position.set(t<12?53.2:55.4,G,t<12?51.4:54.4); T.g.rotation.y=t<12?0:Math.PI*0.2; T.R.armR.rotation.x=1.5; animRig(T.R,dt,0); }
-    const targets=[[9.2,0],[9.8,1],[13.2,2],[14.6,3],[16.4,4]]; for(const [tt,i] of targets)odAt(S,tt,'f'+i,()=>{ const g=S.gd[i], p=g.g.position, from=i%2?[T.g.position.x,G+1.4,T.g.position.z]:[pl.p[0],G+1.4,pl.p[2]]; mxFire(S,from,[p.x,G+1.3,p.z],45,()=>mxHitNpc(S,g,p.x-from[0],p.z-from[2])); });
-    S.pT=(S.pT||0)-dt; if(t>=9&&t<18&&S.pT<=0){ S.pT=0.35; const px=[46,49,55,58][Math.floor(Math.random()*4)], pz=[50,54,58,62][Math.floor(Math.random()*4)]; burst(px,G+1+Math.random()*2.5,pz,new THREE.Color(0xf2f2f2),6); snd(()=>noise(1800,0.12,0.12,'highpass')); }
+function mxPillarBlast(i){ const K=mxK, P=K.pillars[i]; if(!P||P.gone)return; P.gone=true; P.t=0; P.parts.forEach(b=>{ b.userData.v=[(Math.random()-0.5)*6,2+Math.random()*4,(Math.random()-0.5)*6]; b.userData.r=[(Math.random()-0.5)*8,(Math.random()-0.5)*8]; });
+  const p=P.g.position; for(let k=0;k<3;k++)burst(p.x-0.5,MXC.G+1+k,p.z-0.5,new THREE.Color(0xf2f2f2),12); snd(()=>{ noise(1500,0.4,0.3,'lowpass'); noise(4000,0.25,0.15,'highpass'); }); }
+function mxPillarTick(dt){ const K=mxK; if(!K.pillars)return; for(const P of K.pillars){ if(!P.gone)continue; P.t+=dt; for(const b of P.parts){ const v=b.userData.v; v[1]-=14*dt; b.position.x+=v[0]*dt; b.position.y=Math.max(0.3,b.position.y+v[1]*dt); b.position.z+=v[2]*dt; if(b.position.y<=0.31){ v[0]*=0.9; v[2]*=0.9; v[1]=0; } else { b.rotation.x+=b.userData.r[0]*dt; b.rotation.z+=b.userData.r[1]*dt; } } } }
+function mxHeliSeat(H,x,y,z){ return odLW(H.g,[x,y,z]); }
+OD_CH.mx8={secs:50,sky:'day',mood:'tense',init(S){ const K=mxK, G=MXC.G; mxNeo(S,'coat'); S.tri=mxPerson(S.grp,'trinity',53.2,G,39,0); S.gd=[[50,G,49.9,0],[54,G,49.9,0],[47.4,G,56,-Math.PI/2],[56.6,G,56,Math.PI/2],[52,G,61,0]].map(([x,y,z,r])=>odPerson(S.grp,x,y,z,r,mxLook(MX_CAST.guard)));
+    S.ag=mxAgent(S.grp,52,G+18,63,0,'jones'); S.mor=mxPerson(S.grp,'morpheus',...MXS.room3,Math.PI); S.cg=[mxAgent(S.grp,49.4,G+11,50.4,Math.PI,'brown'),mxAgent(S.grp,52.8,G+11,50.6,Math.PI,'smith')]; const H=K.heli; H.film=true; H.g.position.set(...MXC.pad); H.g.rotation.set(0,Math.PI,0); },
+  tick(S,dt){ const K=mxK, t=S.t, G=MXC.G, H=K.heli, T=S.tri, P=MXC.pad; mxShotsTick(S,dt); mxDownTick(S,dt); mxPillarTick(dt);
+    const face=(a,x,z)=>{ a.g.rotation.y=Math.atan2(-(x-a.g.position.x),-(z-a.g.position.z)); };
+    // into the lobby, through the metal detector
+    if(t<8.6){ const k=odSeg(S,0.4,4.8); odHeroTo(S,odL([51,G,39],[52,G,52.4],k),Math.PI,k>0&&k<1); const k2=odSeg(S,0.6,4.8); odMove(T,[53.2,G,39],[53.4,G,49.4],k2); odWalk(T,dt,k2>0&&k2<1); if(k2>=1){ T.g.rotation.y=Math.PI; odRest(T); animRig(T.R,dt,0); } }
+    odAt(S,5.2,'g1',()=>odSay(S,S.gd[0],'Please remove any metal objects.')); odAt(S,6.4,'beep',()=>snd(()=>{ for(let i=0;i<3;i++)tone('square',1200,1200,0.12,0.06,i*0.18); })); odAt(S,7.2,'g2',()=>odSay(S,S.gd[1],'...Uh oh.'));
+    S.gd.forEach((g,i)=>{ if(!g.down){ face(g,pl.p[0],pl.p[2]); g.R.armR.rotation.x=t>7.4?1.5:0.3; animRig(g.R,dt,0); } });
+    // the shootout: shots fly, guards go down, and the marble pillars blow apart
+    if(t>=8.6&&t<20){ odHeroTo(S,t<12?[52,G,52.4]:[50.6,G,55],t<12?Math.PI:Math.PI*0.6,t>=12&&t<12.6); T.g.position.set(t<12?53.4:54.6,G,t<12?50.6:55.2); face(T,52,58); T.R.armR.rotation.x=1.5; animRig(T.R,dt,0); }
+    for(const [tt,i] of [[9.2,0],[9.8,1],[13.2,2],[14.6,3],[16.4,4]])odAt(S,tt,'f'+i,()=>{ const g=S.gd[i], p=g.g.position, from=i%2?[T.g.position.x,G+1.4,T.g.position.z]:[pl.p[0],G+1.4,pl.p[2]]; mxFire(S,from,[p.x,G+1.3,p.z],45,()=>mxHitNpc(S,g,p.x-from[0],p.z-from[2])); });
+    for(const [tt,i] of [[10.6,1],[12.4,5],[15.4,2],[17.2,6]])odAt(S,tt,'pl'+i,()=>{ const q=K.pillars[i].g.position; mxFire(S,[pl.p[0],G+1.4,pl.p[2]],[q.x,G+1.6,q.z],45,()=>mxPillarBlast(i)); });
     odAt(S,18.6,'n1',()=>odSay(S,S.hero,"That's all of them.")); odAt(S,19.4,'t1',()=>odSay(S,T,'The roof. Now!'));
-    // the roof: an agent fires, and Neo bends back in bullet time
-    odAt(S,20,'roof',()=>{ T.g.position.set(54,G+18,58); T.g.rotation.y=0; odRest(T); });
-    if(t>=20&&t<31){ odHeroTo(S,[52.4,G+18,59.6],Math.PI,false); const A=S.ag; if(!A.down){ A.R.armR.rotation.x=1.5; animRig(A.R,dt,0); A.g.rotation.y=Math.PI; } }
+    // the roof: everyone faces each other; the agent fires and Neo bends back in bullet time
+    odAt(S,20,'roof',()=>{ T.g.position.set(55,G+18,60.6); odRest(T); });
+    if(t>=20&&t<31){ odHeroTo(S,[52.4,G+18,59.6],Math.PI,false); const A=S.ag; if(!A.down){ face(A,52.4,59.6); A.R.armR.rotation.x=1.5; animRig(A.R,dt,0); } if(t<25.6){ face(T,52.2,62); T.R.armR.rotation.x=1.5; animRig(T.R,dt,0); } }
     for(const [tt,dy] of [[20.6,1.5],[21.4,1.2],[22.2,1.6]])odAt(S,tt,'b'+tt,()=>mxFire(S,[52.2,G+18+1.5,62.6],[52.6,G+18+dy,56.4],1.9,null,true));
-    odAt(S,25.6,'t2',()=>{ T.g.position.set(53.6,G+18,61.6); odSay(S,T,'Gotcha.'); const p=S.ag.g.position; mxFire(S,[52.6,G+19.4,61.8],[p.x,p.y+1.6,p.z],30,()=>mxHitNpc(S,S.ag,0,1)); });
-    odAt(S,27.2,'t3',()=>odSay(S,T,'How did you move like that?')); odAt(S,28.8,'n2',()=>odSay(S,S.hero,"I... don't know."));
-    // the helicopter: up, over to the window, and Morpheus jumps for it
-    if(t>=31){ const k=odSeg(S,31.6,35.4), a=[P[0],P[1],P[2]], b=[51,G+11.4,42.2], up=[P[0],P[1]+6,P[2]-4]; const pos=k<0.5?odL(a,up,k*2):odL(up,b,(k-0.5)*2); H.g.position.set(...pos); H.g.rotation.set(0,Math.PI-(k<0.5?0:Math.PI*0.5*Math.min(1,(k-0.5)*3)),0,'YXZ'); H.spin=1;
-      if(t>=33.4)H.g.position.y+=Math.sin(t*2)*0.08; const f=odLW(H.g,[0,0.8,0]); odHeroTo(S,f,H.g.rotation.y+(t>=35.4?Math.PI/2:0),false); T.g.position.set(...odLW(H.g,[0.4,0.75,-1.6])); T.g.rotation.y=H.g.rotation.y; }
-    S.mor.g.position.set(...MXS.room3); if(t<39.6){ odSit(S.mor); S.mor.g.position.y=MXS.room3[1]-OD_SEAT; } animRig(S.mor.R,dt,0); S.cg.forEach(a=>{ if(!a.down){ a.g.rotation.y=Math.PI; a.R.armR.rotation.x=t>35?1.5:0.3; animRig(a.R,dt,0); } });
-    for(const [tt,i] of [[36,0],[37.2,1]])odAt(S,tt,'c'+i,()=>{ const a=S.cg[i], p=a.g.position; mxFire(S,[pl.p[0],pl.p[1]+1.3,pl.p[2]],[p.x,p.y+1.3,p.z],40,()=>mxHitNpc(S,a,0,1)); });
-    odAt(S,38.4,'m1',()=>{ odSay(S,S.mor,'Neo!'); }); odAt(S,39.6,'break',()=>{ rkSfx('thud'); odRest(S.mor); for(let x=50;x<=52;x++)for(let y=G+11;y<=G+12;y++)setBlock(x,y,MXC.gov.z0,0); burst(51,G+12,46,new THREE.Color(0xc8e8ff),16); snd(()=>noise(4000,0.5,0.3,'highpass')); });
-    if(t>=39.6){ const k=odSeg(S,39.8,42.2); const a=[51,G+11,48.6], b=odLW(H.g,[1.6,-0.6,0.4]); const p=odL(a,b,odE(k)); p[1]+=Math.sin(k*Math.PI)*1.6; S.mor.g.position.set(...p); S.mor.g.rotation.set(0,0,0); if(k>0&&k<1){ S.mor.R.armL.rotation.z=-2.4; S.mor.R.armR.rotation.z=2.4; } }
-    odAt(S,42.4,'m2',()=>odSay(S,S.mor,'I knew it, Neo! I KNEW it!')); if(t>=43.4){ const k=odSeg(S,43.4,48); const p=odL([51,G+11.4,42.2],[51,G+24,20],k); H.g.position.set(...p); S.mor.g.position.set(...odLW(H.g,[1.6,-0.6,0.4])); odHeroTo(S,odLW(H.g,[0,0.8,0]),H.g.rotation.y+Math.PI/2,false); T.g.position.set(...odLW(H.g,[0.4,0.75,-1.6])); } },
+    odAt(S,25.6,'t2',()=>{ T.g.position.set(53.6,G+18,61.6); face(T,52,63); odSay(S,T,'Gotcha.'); const p=S.ag.g.position; mxFire(S,[53.6,G+19.4,61.6],[p.x,p.y+1.6,p.z],30,()=>mxHitNpc(S,S.ag,0,1)); });
+    if(t>=25.6&&t<31){ face(T,52.4,59.6); animRig(T.R,dt,0); } odAt(S,27.2,'t3',()=>odSay(S,T,'How did you move like that?')); odAt(S,28.8,'n2',()=>odSay(S,S.hero,"I... don't know."));
+    // the helicopter: they sit down inside, it climbs clear of the roof, flies out past the edge, then comes down beside the window
+    if(t>=31){ const way=[[P[0],P[1],P[2]],[P[0],P[1]+7,P[2]],[51,P[1]+7,40.4],[51,G+11.6,41.4]], k=odSeg(S,31.6,36);
+      H.g.position.set(...(k>=1?way[3]:(()=>{ const n=3, u=Math.min(n-0.0001,k*n), j=Math.floor(u); return odL(way[j],way[j+1],odE(u-j)); })())); H.g.rotation.set(0,Math.PI-Math.PI*0.5*odSeg(S,33,35.2),0,'YXZ'); H.spin=1; if(t>=36)H.g.position.y+=Math.sin(t*2)*0.06;
+      odHeroTo(S,mxHeliSeat(H,-0.45,0.35,0.3),H.g.rotation.y+(t>=35.2?Math.PI/2:0),false); T.g.position.set(...mxHeliSeat(H,0.25,0.35-OD_SEAT,-1.3)); T.g.rotation.y=H.g.rotation.y; odSit(T); animRig(T.R,dt,0); }
+    // Morpheus in his cell; Neo fires through the window at the agents guarding him
+    if(t<41.6){ S.mor.g.position.set(...MXS.room3); S.mor.g.rotation.y=Math.PI; if(t<40.4){ odSit(S.mor); S.mor.g.position.y=MXS.room3[1]-OD_SEAT; } animRig(S.mor.R,dt,0); } S.cg.forEach(a=>{ if(!a.down){ a.g.rotation.y=Math.PI; a.R.armR.rotation.x=t>36?1.5:0.3; animRig(a.R,dt,0); } });
+    for(const [tt,i] of [[37,0],[38.2,1]])odAt(S,tt,'c'+i,()=>{ const a=S.cg[i], p=a.g.position; mxFire(S,[pl.p[0],pl.p[1]+1.3,pl.p[2]],[p.x,p.y+1.3,p.z],40,()=>mxHitNpc(S,a,0,1)); });
+    odAt(S,39.4,'m1',()=>odSay(S,S.mor,'Neo!')); odAt(S,40.4,'break',()=>{ rkSfx('thud'); odRest(S.mor); for(let x=50;x<=52;x++)for(let y=G+11;y<=G+12;y++)setBlock(x,y,MXC.gov.z0,0); burst(51,G+12,46,new THREE.Color(0xc8e8ff),16); snd(()=>noise(4000,0.5,0.3,'highpass')); });
+    // a short jump to the near side of the helicopter, and he hangs on underneath, clear of the blades
+    if(t>=40.4&&t<41.6){ const k=odSeg(S,40.4,41.4); S.mor.g.position.set(...odL([51,G+11,48.6],[51,G+11,46.8],k)); S.mor.g.rotation.y=0; odWalk(S.mor,dt,true,12); }
+    if(t>=41.6){ const k=odSeg(S,41.6,42.6), a=[51,G+11,46.8], b=mxHeliSeat(H,-1.05,-2.2,0), p=odL(a,b,odE(k)); p[1]+=Math.sin(k*Math.PI)*0.5; S.mor.g.position.set(...p); S.mor.g.rotation.y=H.g.rotation.y+Math.PI/2; S.mor.R.armL.rotation.z=-2.7; S.mor.R.armR.rotation.z=2.7; S.mor.R.armL.rotation.x=S.mor.R.armR.rotation.x=0; S.mor.R.legL.rotation.x=Math.sin(t*5)*0.3; S.mor.R.legR.rotation.x=-Math.sin(t*5)*0.3; }
+    odAt(S,43,'m2',()=>odSay(S,S.mor,'I knew it, Neo! I KNEW it!'));
+    if(t>=44){ const k=odSeg(S,44,50); H.g.position.set(...odL([51,G+11.6,41.4],[51,G+24,18],k)); S.mor.g.position.set(...mxHeliSeat(H,-1.05,-2.2,0)); odHeroTo(S,mxHeliSeat(H,-0.45,0.35,0.3),H.g.rotation.y+Math.PI/2,false); T.g.position.set(...mxHeliSeat(H,0.25,0.35-OD_SEAT,-1.3)); } },
   pose(S){ const t=S.t; model.rotation.x=0; if(t>=8.6&&t<18.4){ armR.rotation.x=1.55; armL.rotation.x=t>=12?1.55:0.3; }
-    if(t>=20.6&&t<24.6){ const k=t<21?odSeg(S,20.6,21):t<24.2?1:1-odSeg(S,24.2,24.6); model.rotation.x=k*1.05; legL.rotation.x=legR.rotation.x=-k*0.6; armL.rotation.z=-1.2*k-Math.sin(t*9)*0.6*k; armR.rotation.z=1.2*k+Math.sin(t*9+1)*0.6*k; } // bending back under the bullets
-    if(t>=35.6&&t<38){ armR.rotation.x=1.55; armL.rotation.x=1.55; } if(t>=41.6&&t<44){ armR.rotation.x=1.7; armR.rotation.z=-0.5; } },
-  cam(S){ const t=S.t, G=MXC.G; if(t<4.6)return [[55,G+2.4,36.4],[52,G+1.6,44],0]; if(t<8.6)return [[48.6,G+2.6,57.6],[52,G+1.2,51],1]; if(t<14)return [[44.6,G+2.4,58.8],[52,G+1.2,52.6],2]; if(t<20)return [[56.6,G+2.8,59.6],[49.6,G+1.2,52],3];
-    if(t<24.6){ const a=-0.6+(t-20.6)*0.55; return [[52.4+Math.sin(a)*3.4,G+18+1.6,59.6+Math.cos(a)*3.4],[52.4,G+18+1,59.6],4]; } if(t<31)return [[48.6,G+20.6,57.6],[52.8,G+18.8,60.8],5];
-    if(t<35.6)return [[44,G+22,42],[pl.p[0],pl.p[1],pl.p[2]],6]; if(t<39.6)return [[53.6,G+12.6,47.6],[51,G+12,50],7]; if(t<43.4)return [[44.6,G+12.8,40.6],[51,G+11.6,45],8]; return [[40,G+16,34],[pl.p[0],pl.p[1],pl.p[2]],9]; } };
+    if(t>=20.6&&t<24.6){ const k=t<21?odSeg(S,20.6,21):t<24.2?1:1-odSeg(S,24.2,24.6); model.rotation.x=k*1.05; legL.rotation.x=legR.rotation.x=-k*0.6; armL.rotation.z=-1.2*k-Math.sin(t*9)*0.6*k; armR.rotation.z=1.2*k+Math.sin(t*9+1)*0.6*k; }
+    if(t>=31){ mxSitPose(); if(t>=36.4&&t<39){ armR.rotation.x=armL.rotation.x=1.55; } if(t>=42.4&&t<45){ armR.rotation.x=1.2; } } },
+  cam(S){ const t=S.t, G=MXC.G; if(t<4.8)return [[54.6,G+2.2,36.6],[52,G+1.5,45],0]; if(t<8.6)return [[52,G+2.3,57.4],[52.4,G+1.4,51.4],1]; if(t<14)return [[52,G+3,60.6],[51,G+1.2,52.6],2]; if(t<20)return [[56.8,G+2.6,48.6],[49.6,G+1.3,57],3];
+    if(t<24.6){ const a=-0.6+(t-20.6)*0.55; return [[52.4+Math.sin(a)*3.4,G+18+1.6,59.6+Math.cos(a)*3.4],[52.4,G+18+1,59.6],4]; } if(t<31)return [[48.2,G+20.4,61.2],[53,G+18.8,61],5];
+    if(t<36.4)return [[42,G+23,47],[H_pos()[0],H_pos()[1]+1,H_pos()[2]],6]; if(t<40.4)return [[53.8,G+12.8,47.4],[51,G+12,50],7]; if(t<44)return [[57.4,G+12.4,40],[51,G+11.2,43.4],8]; return [[40,G+16,34],[pl.p[0],pl.p[1],pl.p[2]],9]; } };
+function H_pos(){ const p=mxK.heli.g.position; return [p.x,p.y,p.z]; }
 
 // ---------- 9. THE ONE ----------
-OD_CH.mx9={secs:50,sky:'night',mood:'tense',init(S){ const K=mxK, f=MXC.mor.f; mxNeo(S,'coat'); mxShow('sub','tun','deck'); S.sm=mxAgent(S.grp,...SUB(4,1,-3.4),Math.PI/2,'smith'); S.sm2=mxAgent(S.grp,86.6,f,26.6,Math.PI/2,'smith'); S.sm2.g.visible=false;
-    S.ag2=[mxAgent(S.grp,87.4,f,25.4,Math.PI/2,'brown'),mxAgent(S.grp,87.6,f,27.8,Math.PI/2,'jones')]; S.ag2.forEach(a=>a.g.visible=false); S.tri=mxRW(S.grp,'trinity',...DECK(-0.4,0,2.4),Math.PI); S.tk=odPerson(S.grp,...DECK(-0.6,0,-2.8),0,mxLook(MX_CAST.tank));
+OD_CH.mx9={secs:56,sky:'night',mood:'tense',init(S){ const K=mxK, f=MXC.mor.f; mxNeo(S,'coat'); mxShow('sub','tun','deck');
+    S.mor=mxPerson(S.grp,'morpheus',...SUB(-7.4,1,-6.2),0); S.tr=mxPerson(S.grp,'trinity',...SUB(-5.6,1,-6),0); S.sm=mxAgent(S.grp,...SUB(6,1,-3.4),Math.PI/2,'smith'); S.sm.g.visible=false;
+    S.cond=odPerson(K.train,28.4,1.1,-1.75,-Math.PI/2,mxLook({skin:'#e0b898',hair:'short',hairC:'#5a3a1a',top:'jacket',topC:'#2a3a6a',bottom:'pants',bottomC:'#1a2030',hat:'cap',hatC:'#2a3a6a'})); S.cond2=mxAgent(K.train,28.4,1.1,-1.75,-Math.PI/2,'smith'); S.cond2.g.visible=false; S.bits.push(S.cond.g,S.cond2.g);
+    S.sm2=mxAgent(S.grp,86.6,f,26.6,Math.PI/2,'smith'); S.sm2.g.visible=false; S.ag2=[mxAgent(S.grp,87.4,f,25.4,Math.PI/2,'brown'),mxAgent(S.grp,87.6,f,27.8,Math.PI/2,'jones')]; S.ag2.forEach(a=>a.g.visible=false);
+    S.tri=mxRW(S.grp,'trinity',...DECK(-0.4,0,2.4),Math.PI); S.mo2=mxRW(S.grp,'morpheus',...DECK(-2.2,0,2.6),Math.PI); S.tk=odPerson(S.grp,...DECK(-0.6,0,-2.8),0,mxLook(MX_CAST.tank));
     K.sentinels.forEach((s,i)=>{ s.g.visible=true; s.g.position.set(-8+i*3.2,14+Math.sin(i)*2,(i%2?7:-7)); }); },
-  tick(S,dt){ const K=mxK, t=S.t, f=MXC.mor.f, Sm=S.sm; mxShotsTick(S,dt); mxDownTick(S,dt); S.real=(t>=20&&t<32)||t>=46;
-    // the subway: Neo stands and fights
-    if(t<12.4){ const nx=t<4?-2:t<10?-2+Math.sin(t*2)*0.4:-2; odHeroTo(S,SUB(nx,1,-3.4),-Math.PI/2,false); Sm.g.position.set(...SUB(0.4,1,-3.4)); Sm.g.rotation.set(0,Math.PI/2,0); if(t>2.6&&t<9.4)rkFists(Sm.R.armL,Sm.R.armR,t,2.6,0.5,1.3,0.45); animRig(Sm.R,dt,0); }
-    odAt(S,1,'s1',()=>odSay(S,Sm,'Mr. Anderson. You can not win.')); odAt(S,2.4,'n1',()=>odSay(S,S.hero,'My name... is NEO.'));
-    S.hT=(S.hT||0)-dt; if(t>=3&&t<9.4&&S.hT<=0){ S.hT=0.4; rkSfx('thud'); }
-    odAt(S,9.4,'push',()=>{ rkSfx('thud'); odSay(S,S.hero,'HAH!'); }); if(t>=9.4&&t<12.4){ const k=odSeg(S,9.4,9.9); Sm.g.position.set(...SUB(0.4+k*2,1-k*0.7,-3.4+k*6.4)); Sm.g.rotation.x=-k*0.6; }
-    if(t>=9.6&&t<12.4){ K.train.position.x=-60+odSeg(S,9.6,11.6)*120; } odAt(S,10.2,'tr',()=>snd(()=>{ noise(300,1.6,0.35,'lowpass'); tone('sawtooth',80,60,1.5,0.08); })); odAt(S,10.6,'hit',()=>{ Sm.g.visible=false; burst(...SUB(2.4,2,3),new THREE.Color(0x3aff6a),20); });
+  tick(S,dt){ const K=mxK, t=S.t, f=MXC.mor.f, Sm=S.sm, ph=K.wallPhone; mxShotsTick(S,dt); mxDownTick(S,dt); S.real=(t>=24.6&&t<37)||t>=51;
+    // Adams Street: Morpheus and Trinity escape down the phone line; Smith shoots the phone
+    if(t<7.4){ odHeroTo(S,SUB(-3.4,1,-5),-Math.PI*0.25,false); [S.mor,S.tr].forEach(a=>{ a.g.rotation.y=0; animRig(a.R,dt,0); }); }
+    odAt(S,0.4,'ring',()=>mxSfx('ring')); odAt(S,1,'m1',()=>{ odSay(S,S.mor,'Tank, get us out of here!'); S.mor.R.armR.rotation.x=2.4; });
+    odAt(S,2.4,'mgo',()=>{ const p=S.mor.g.position; for(let k=0;k<3;k++)burst(p.x-0.5,p.y+0.6+k*0.5,p.z-0.5,new THREE.Color(0x3aff6a),10); S.mor.g.visible=false; mxSfx('glitch'); });
+    odAt(S,3,'tmove',()=>{ S.tr.g.position.set(...SUB(-7.4,1,-6.2)); S.tr.R.armR.rotation.x=2.4; }); odAt(S,3.4,'ring2',()=>mxSfx('ring')); odAt(S,4,'tgo',()=>{ const p=S.tr.g.position; for(let k=0;k<3;k++)burst(p.x-0.5,p.y+0.6+k*0.5,p.z-0.5,new THREE.Color(0x3aff6a),10); S.tr.g.visible=false; mxSfx('glitch'); });
+    odAt(S,4.6,'smith',()=>{ Sm.g.visible=true; Sm.R.armR.rotation.x=1.5; }); odAt(S,5,'shoot',()=>{ const p=SUB(-7.4,2.2,-6.7); mxFire(S,SUB(5.4,2.4,-3.4),p,45,()=>{ burst(p[0]-0.5,p[1],p[2],new THREE.Color(0xffd23a),16); ph.rotation.z=0.6; snd(()=>noise(3000,0.3,0.2,'highpass')); }); });
+    odAt(S,5.8,'s1',()=>odSay(S,Sm,'Mr. Anderson. You can not win.')); odAt(S,7,'n1',()=>odSay(S,S.hero,'My name... is NEO.'));
+    // they fight, fast, while the camera spins round them
+    if(t>=7.4&&t<13.4){ const c=-1.2, sw=Math.sin((t-7.4)*2.4)*0.9; odHeroTo(S,SUB(c-0.9+sw*0.3,1,-3.4+sw),-Math.PI/2,false); Sm.g.position.set(...SUB(c+0.9+sw*0.3,1,-3.4+sw)); Sm.g.rotation.set(0,Math.PI/2,0); rkFists(Sm.R.armL,Sm.R.armR,t,4,0.5,1.3,0.45); animRig(Sm.R,dt,0); }
+    S.hT=(S.hT||0)-dt; if(t>=7.6&&t<13.4&&S.hT<=0){ S.hT=0.3; rkSfx('thud'); }
+    // Neo throws Smith onto the tracks; the train hits him; the driver turns into another agent
+    odAt(S,13.4,'push',()=>{ rkSfx('thud'); odSay(S,S.hero,'HAH!'); }); if(t>=13.4&&t<15.6){ const k=odSeg(S,13.4,13.9); Sm.g.position.set(...SUB(-0.3+k*1.4,1-k*0.8,-3.4+k*6.6)); Sm.g.rotation.x=-k*0.4; if(t<14)odHeroTo(S,SUB(-2.1,1,-3.4),-Math.PI/2,false); }
+    if(t>=13.6&&t<17.6){ K.train.position.x=-60+32*odE(odSeg(S,13.6,15.2))+6*odSeg(S,15.2,16.4); } odAt(S,13.8,'tr',()=>snd(()=>{ noise(300,1.6,0.35,'lowpass'); tone('sawtooth',80,60,1.5,0.08); })); odAt(S,15,'hit',()=>{ Sm.g.visible=false; burst(...SUB(1.4,2,3),new THREE.Color(0x3aff6a),20); });
+    animRig(S.cond.R,dt,0); odAt(S,16.4,'morph',()=>{ glowAll(S.cond.g,0x3aff6a,1); mxSfx('glitch'); }); odAt(S,17,'morph2',()=>{ S.cond.g.visible=false; S.cond2.g.visible=true; });
     // the hallway: Smith is waiting
-    odAt(S,12.4,'hall',()=>{ mxShow('tun','deck'); });
-    if(t>=12.4&&t<20){ const k=odSeg(S,12.6,15.4); odHeroTo(S,odL([68,f,26.6],[80,f,26.6],k),-Math.PI/2,k<1); } odAt(S,15.2,'sm',()=>{ S.sm2.g.visible=true; odSay(S,S.sm2,'Goodbye, Mr. Anderson.'); });
-    S.sm2.R.armR.rotation.x=t>15&&t<44?1.5:0.3; animRig(S.sm2.R,dt,0); for(const tt of [16.4,16.8,17.2,17.6])odAt(S,tt,'z'+tt,()=>mxFire(S,[86,f+1.4,26.6],[80.4,f+1.2,26.6],60,()=>{ burst(80,f+1.2,26.1,new THREE.Color(mxShotMode()==='nerf'?0xff8a1a:0xffffff),6); S.neoHit=(S.neoHit||0)+1; }));
-    if(t>=17.8&&t<32)odHeroTo(S,[80,f,26.6],-Math.PI/2,false);
-    // aboard the ship: Sentinels break in. Trinity talks to Neo
-    if(t>=20&&t<33){ odHeroTo(S,t<32?(t<24?[80,f,26.6]:DECK(-1.2,0,1.6)):[80,f,26.6],t<24?-Math.PI/2:Math.PI,false); } if(t>=24&&t<32){ K.deckLight.intensity=Math.sin(t*8)>0?2:0.2; S.tri.g.position.set(...DECK(-1.2,0,2.6)); S.tri.g.rotation.y=Math.PI; S.tri.R.armR.rotation.x=1.1; animRig(S.tri.R,dt,0); animRig(S.tk.R,dt,0); }
-    K.sentinels.forEach((s,i)=>{ if(t<44.4){ s.g.position.x+=Math.sin(t+i)*dt*2; s.g.position.y=11+Math.sin(t*1.4+i)*1.2; s.g.lookAt(...TUN(0,8,0)); s.arms.forEach(A=>A.segs.forEach((g2,k)=>{ g2.rotation.z=-0.3+Math.sin(t*4+A.ph+k*0.7)*0.25; })); } });
-    odAt(S,21,'alarm',()=>{ mxSfx('glitch'); snd(()=>{ for(let i=0;i<6;i++)tone('square',800,800,0.18,0.05,i*0.35); }); }); odAt(S,22.2,'tk',()=>odSay(S,S.tk,"Sentinels! They're cutting through the hull!"));
-    odAt(S,25,'t1',()=>odSay(S,S.tri,"The Oracle said I'd fall in love with the One...")); odAt(S,27.6,'t2',()=>odSay(S,S.tri,"...so you can't be gone. I love you, Neo.")); odAt(S,30,'t3',()=>odSay(S,S.tri,'Now GET UP!'));
-    // he gets up. He stops the bullets. He sees the code
-    if(t>=32){ odHeroTo(S,[80,f,26.6],-Math.PI/2,false); S.ag2.forEach(a=>{ a.g.visible=true; a.R.armR.rotation.x=1.5; animRig(a.R,dt,0); }); }
-    odAt(S,34.4,'fire',()=>{ S.stops=[]; for(let i=0;i<6;i++){ const sh=mxFire(S,[87,f+1.2+Math.random()*0.6,25.4+Math.random()*2.4],[80,f+1.4,26.6],30); S.stops.push(sh); } }); odAt(S,35,'no',()=>{ odSay(S,S.hero,'No.'); (S.stops||[]).forEach(sh=>{ sh.frozen=true; }); });
-    if(t>=35.2&&t<36.6)(S.stops||[]).forEach((sh,i)=>{ sh.m.rotation.y+=dt*(1+i); }); odAt(S,36.6,'drop',()=>{ (S.stops||[]).forEach(sh=>{ sh.frozen=false; sh.to=[sh.p[0]+(Math.random()-0.5),f+0.05,sh.p[2]]; sh.spd=6; }); snd(()=>{ for(let i=0;i<6;i++)tone('sine',2400,2200,0.05,0.05,i*0.08); }); });
-    odAt(S,37.4,'code',()=>{ mxRain(1); mxGrade(true); scene.background.setHex(0x001a06); blockMat.color.setRGB(0.3,1,0.4); [S.sm2,...S.ag2].forEach(a=>glowAll(a.g,0x3aff6a,0.85)); });
-    if(t>=38.4&&t<42.6){ const k=odSeg(S,38.4,39.4); S.sm2.g.position.set(86.6-k*5.4,f,26.6); if(t>39.6)rkFists(S.sm2.R.armL,S.sm2.R.armR,t,3,0,1.3,0.45); }
-    odAt(S,42.6,'dive',()=>{ mxSfx('whoosh'); }); if(t>=42.6&&t<43.6){ const k=odSeg(S,42.6,43.4); odHeroTo(S,[80+k*1.2,f,26.6],-Math.PI/2,false); }
-    odAt(S,43.4,'boom',()=>{ S.sm2.g.visible=false; for(let k=0;k<6;k++)burst(81.2-0.5+(Math.random()-0.5),f+1+Math.random()*1.6,26.6-0.5+(Math.random()-0.5),new THREE.Color(0xd8ffd8),16); snd(()=>{ noise(800,0.8,0.4,'lowpass'); tone('sine',1600,200,0.8,0.12); }); });
-    if(t>=44){ S.ag2.forEach((a,i)=>{ const k=odSeg(S,44,46); a.g.position.x=87.4+k*6; a.g.rotation.y=-Math.PI/2; odWalk(a,dt,k<1,14); }); }
+    odAt(S,17.6,'hall',()=>{ mxShow('tun','deck'); });
+    if(t>=17.6&&t<24.6){ const k=odSeg(S,17.8,20.4); odHeroTo(S,odL([68,f,26.6],[80,f,26.6],k),-Math.PI/2,k<1); } odAt(S,20,'sm',()=>{ S.sm2.g.visible=true; odSay(S,S.sm2,'Goodbye, Mr. Anderson.'); });
+    S.sm2.R.armR.rotation.x=t>20&&t<48?1.5:0.3; animRig(S.sm2.R,dt,0); for(const tt of [21.2,21.6,22,22.4])odAt(S,tt,'z'+tt,()=>mxFire(S,[86,f+1.4,26.6],[80.4,f+1.2,26.6],60,()=>burst(80,f+1.2,26.1,new THREE.Color(mxShotMode()==='nerf'?0xff8a1a:0xffffff),6)));
+    // the ship: Sentinels cut in; Trinity and Morpheus tell Neo to keep fighting
+    if(t>=24.6&&t<37)odHeroTo(S,DECK(-1.2,0,1.6),Math.PI,false); else if(t>=22.6&&t<24.6)odHeroTo(S,[80,f,26.6],-Math.PI/2,false);
+    if(t>=24.6&&t<37){ K.deckLight.intensity=Math.sin(t*8)>0?2:0.2; S.tri.g.position.set(...DECK(-0.6,0,2.7)); S.mo2.g.position.set(...DECK(-2.2,0,2.6)); [S.tri,S.mo2,S.tk].forEach(a=>{ mxFaceHero(a); animRig(a.R,dt,0); }); S.tri.R.armR.rotation.x=1.1; }
+    K.sentinels.forEach((s,i)=>{ if(t<51.4){ s.g.position.x+=Math.sin(t+i)*dt*2; s.g.position.y=11+Math.sin(t*1.4+i)*1.2; s.g.lookAt(...TUN(0,8,0)); s.arms.forEach(A=>A.segs.forEach((g2,k)=>{ g2.rotation.z=-0.3+Math.sin(t*4+A.ph+k*0.7)*0.25; })); } });
+    odAt(S,25.4,'alarm',()=>{ mxSfx('glitch'); snd(()=>{ for(let i=0;i<6;i++)tone('square',800,800,0.18,0.05,i*0.35); }); }); odAt(S,27,'tk',()=>odSay(S,S.tk,"Sentinels! They're cutting through the hull!"));
+    odAt(S,29,'mo',()=>odSay(S,S.mo2,'Keep fighting, Neo!')); odAt(S,30.8,'t1',()=>odSay(S,S.tri,"The Oracle said I'd fall in love with the One...")); odAt(S,33.2,'t2',()=>odSay(S,S.tri,"...so you can't be gone. I love you, Neo."));
+    odAt(S,35.4,'t3',()=>{ odSay(S,S.tri,'Keep fighting! GET UP!'); });
+    // he gets up, and stops the bullets (seen from the side), and they drop
+    if(t>=37){ odHeroTo(S,[80,f,26.6],-Math.PI/2,false); S.ag2.forEach(a=>{ a.g.visible=true; if(!a.fled){ a.R.armR.rotation.x=1.5; animRig(a.R,dt,0); } }); }
+    odAt(S,39.4,'fire',()=>{ S.stops=[]; for(let i=0;i<6;i++){ const sh=mxFire(S,[87,f+1.2+Math.random()*0.6,25.6+Math.random()*2],[80,f+1.4,26.6],9,null,true); S.stops.push(sh); } }); odAt(S,40,'no',()=>{ odSay(S,S.hero,'No.'); (S.stops||[]).forEach(sh=>{ sh.frozen=true; }); });
+    if(t>=40.2&&t<41.6)(S.stops||[]).forEach((sh,i)=>{ sh.m.rotation.z+=dt*(1+i); }); odAt(S,41.6,'drop',()=>{ (S.stops||[]).forEach(sh=>{ sh.frozen=false; sh.to=[sh.p[0]+(Math.random()-0.5)*0.4,f+0.05,sh.p[2]]; sh.spd=5; }); snd(()=>{ for(let i=0;i<6;i++)tone('sine',2400,2200,0.05,0.05,i*0.08); }); });
+    odAt(S,42.6,'code',()=>{ mxRain(1); mxGrade(true); scene.background.setHex(0x001a06); blockMat.color.setRGB(0.3,1,0.4); [S.sm2,...S.ag2].forEach(a=>glowAll(a.g,0x3aff6a,0.85)); });
+    if(t>=43.4&&t<47.6){ const k=odSeg(S,43.4,44.4); S.sm2.g.position.set(86.6-k*5.4,f,26.6); if(t>44.6)rkFists(S.sm2.R.armL,S.sm2.R.armR,t,3,0,1.3,0.45); }
+    odAt(S,47.6,'dive',()=>mxSfx('whoosh')); if(t>=47.6&&t<48.6){ const k=odSeg(S,47.6,48.4); odHeroTo(S,[80+k*1.2,f,26.6],-Math.PI/2,false); }
+    odAt(S,48.4,'boom',()=>{ S.sm2.g.visible=false; for(let k=0;k<6;k++)burst(81.2-0.5+(Math.random()-0.5),f+1+Math.random()*1.6,26.6-0.5+(Math.random()-0.5),new THREE.Color(0xd8ffd8),16); snd(()=>{ noise(800,0.8,0.4,'lowpass'); tone('sine',1600,200,0.8,0.12); }); });
+    if(t>=49){ S.ag2.forEach(a=>{ a.fled=true; const k=odSeg(S,49,51); a.g.position.x=87.4+k*1.4; a.g.rotation.y=-Math.PI/2; odWalk(a,dt,k<1,14); if(k>=1)a.g.visible=false; }); }
     // the EMP: a flash of light, and the Sentinels drop
-    odAt(S,46,'emp',()=>{ mxRain(0); mxGrade(false); K.emp.visible=true; K.emp.position.set(0,8,0); snd(()=>{ tone('sine',60,30,1.5,0.3); noise(500,1.2,0.3,'lowpass'); }); });
-    if(t>=46){ const k=odSeg(S,46,47.4); K.emp.scale.setScalar(1+k*40); K.emp.material.opacity=0.7*(1-k); K.sentinels.forEach((s,i)=>{ s.g.position.y=Math.max(0.6,s.g.position.y-dt*(4+i)); }); } },
-  pose(S){ const t=S.t; model.rotation.x=0; if(t<12.4)rkFists(armL,armR,t,3,0.2,1.3,0.45); if(t>=12.6&&t<15.4){ armL.rotation.x=armR.rotation.x=0.4; }
-    if(t>=16.4&&t<32){ const k=Math.min(1,(t-17.6)/0.5); if(t>=17.6)model.rotation.x=Math.max(0,k)*Math.PI/2; } if(t>=24&&t<32){ model.rotation.x=0; mxSitPose(); } if(t>=32&&t<33.4){ model.rotation.x=(1-odSeg(S,32,33.4))*Math.PI/2; }
-    if(t>=35&&t<37){ armR.rotation.x=1.6; armR.rotation.z=0.1; } if(t>=39.6&&t<42.6){ armR.rotation.x=1.3+Math.sin(t*12)*0.2; } if(t>=42.6&&t<43.6){ armL.rotation.x=armR.rotation.x=2.9; } },
-  cam(S){ const t=S.t, f=MXC.mor.f; if(t<9.6)return [SUB(-0.8,2.6,0.8),SUB(-0.8,1.9,-3.4),0]; if(t<12.4)return [SUB(-8,2.4,-5.4),SUB(2,1.8,1),1]; if(t<16)return [[66.6,f+2.4,27.6],[pl.p[0],f+1.4,26.6],2]; if(t<20)return [[77.4,f+1.8,25.4],[83,f+1.2,26.6],3];
-    if(t<24)return [TUN(-14,12,16),TUN(0,9,0),4]; if(t<32)return [DECK(-0.2,2,4),DECK(-1.2,1.2,1.6),5]; if(t<37.4)return [[77.4,f+2,25.6],[86,f+1.4,26.4],6]; if(t<42.6)return [[78.6,f+1.9,27.8],[82,f+1.3,26.4],7]; if(t<46)return [[76.8,f+2.2,25],[82,f+1.4,26.6],8]; return [TUN(-16,10,18),TUN(0,8,0),9]; } };
+    odAt(S,51,'emp',()=>{ mxRain(0); mxGrade(false); K.emp.visible=true; K.emp.position.set(0,8,0); snd(()=>{ tone('sine',60,30,1.5,0.3); noise(500,1.2,0.3,'lowpass'); }); });
+    if(t>=51){ const k=odSeg(S,51,52.4); K.emp.scale.setScalar(1+k*40); K.emp.material.opacity=0.7*(1-k); K.sentinels.forEach((s,i)=>{ s.g.position.y=Math.max(0.6,s.g.position.y-dt*(4+i)); }); } },
+  pose(S){ const t=S.t; model.rotation.x=0; if(t>=7.4&&t<13.4)rkFists(armL,armR,t,4.4,0.2,1.3,0.45); if(t>=17.8&&t<20.4){ armL.rotation.x=armR.rotation.x=0.4; }
+    if(t>=22.4&&t<24.6){ model.rotation.x=Math.min(1,(t-22.4)/0.5)*Math.PI/2; } if(t>=24.6&&t<37){ mxSitPose(); if(t>36.4)head.rotation.x=Math.sin(t*20)*0.2; else head.rotation.x=0; } if(t>=37&&t<38.4){ model.rotation.x=(1-odSeg(S,37,38.4))*Math.PI/2; }
+    if(t>=40&&t<42){ armR.rotation.x=1.6; armR.rotation.z=0.1; } if(t>=44.6&&t<47.6){ armR.rotation.x=1.3+Math.sin(t*12)*0.2; } if(t>=47.6&&t<48.6){ armL.rotation.x=armR.rotation.x=2.9; } },
+  cam(S){ const t=S.t, f=MXC.mor.f; if(t<4.6)return [SUB(-3.6,2.2,-1.2),SUB(-6.6,1.8,-6),0]; if(t<7.4)return [SUB(-3.6,2.2,-0.4),SUB(-1,1.9,-4.6),1];
+    if(t<13.4){ const a=(t-7.4)*0.9, c=SUB(-1.2,1.9,-3.4); return [[c[0]+Math.sin(a)*3.4,c[1]+0.3,c[2]+Math.cos(a)*3.4],c,2]; } if(t<16)return [SUB(-9,2.4,-5.6),SUB(2,1.8,1.2),3]; if(t<17.6)return [SUB(9.4,2.4,-1.6),SUB(6.4,2.1,1.5),4];
+    if(t<20.8)return [[66.6,f+2.4,27.6],[pl.p[0],f+1.4,26.6],5]; if(t<24.6)return [[77.4,f+1.8,25.4],[83,f+1.2,26.6],6]; if(t<28)return [TUN(-14,12,16),TUN(0,9,0),7]; if(t<37)return [DECK(1.2,2.1,4.4),DECK(-1.2,1.2,1.6),8];
+    if(t<42.6)return [[82.4,f+1.5,24.4],[82.4,f+1.3,27.4],9]; if(t<47.6)return [[78.6,f+1.9,27.8],[82,f+1.3,26.4],10]; if(t<51)return [[76.8,f+2.2,25],[82,f+1.4,26.6],11]; return [TUN(-16,10,18),TUN(0,8,0),12]; } };
 
 // ---------- 10. FREE YOUR MIND ----------
 OD_CH.mx10={secs:36,sky:'night',mood:'myst',init(S){ mxNeo(S,'coat'); S.sh=[]; },
