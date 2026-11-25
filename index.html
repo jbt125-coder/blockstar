@@ -4651,7 +4651,7 @@ function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign
   if(curPlace()==='ranch'&&ranchK){ const L=Object.assign({},look); for(const [k] of GEAR)if(ranchK.gear[k])L[k]=COWBOY[k]; if(ranchK.gear.neck)L.neckC=COWBOY.neckC;
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
   return look; }
-function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); }
+function dressHero(){ dressRig(rig,heroLook()); hipCoil.visible=onRanch(); elfSuitSync(); }
 function clearRanchLife(){ if(!ranchK)return; if(ranchK.ride)dismount(true); for(const m of ranchK.decor||[])scene.remove(m); storyReset(); for(const c of ranchK.crops.slice())removeCrop(c); for(const q of ranchK.scare)scene.remove(q.m);
   if(weapon==='bow'&&ranchK.tool==='bow')weapon=ranchK.prevWeapon||'fists'; toolHand.clear(); toolChip.style.display='none'; refreshWeapon(); for(const a of ranchK.animals.slice())removeAnimal(a); ropeLine.visible=false; lassoLoop.visible=false; ranchK=null; hipCoil.visible=false; ranchSky.visible=false; dressRig(rig,look); }
 function ranchSave(){ const K=ranchK; return {own:K.own.map(o=>[o.breed,o.name]),pen:K.animals.filter(a=>a.st==='pen'&&a.kind==='steer').map(a=>a.breed),gear:K.gear,apples:K.apples,
@@ -9370,7 +9370,7 @@ function buildElfLife(){ clearElfLife(); const root=new THREE.Group(); scene.add
   EL_DECO.forEach((p,i)=>{ const done=K.decoDone.includes(i), t=elTree(root,p[0],p[1],p[2],3.4,done); const glow=msph(t.g,0.25,glowM(0xfff6c0),0,4.2,0); glow.visible=!done; K.deco.push({t,p,i,done,glow}); });
   EL_GIFTS.forEach((p,i)=>{ const g=elGift(root,[0xc81a2a,0x2a5ac8,0x1a8a3a,0xd8a020,0x8a2ad8][i%5]); g.position.set(...p); g.visible=!K.giftsGot.includes(i); K.gifts.push({g,p,i}); });
   if(!demo)for(const [x,z,ry] of [[120,97.5,Math.PI/2],[140,94,-Math.PI/2]]){ if(VEH.taxi){ const v=makeVehicle('taxi',x,G,z,ry); freeVehicles.push(v); } }
-  elBuildSets(K); elBuildSets2(K); }
+  elBuildSets(K); elBuildSets2(K); elStoreUp(K); }
 function clearElfLife(){ elStageClear(); const K=elK; if(!K)return; if(K.cup&&K.cup.parent)K.cup.parent.remove(K.cup); scene.remove(K.root); odFree(K.root); elK=null; elToyClose(); elHud(false); if(elSplatEl)elSplatEl.style.opacity=0; }
 // skies: the twilight North Pole under the northern lights, a snowy city day, and the night
 function elSky(k){ const S={np:[0x1a2a5a,[0.8,0.84,1],40,190],day:[0xbcd0e4,[1,1,1],50,200],night:[0x0c1430,[0.62,0.66,0.86],34,170],in:[0x2a1a10,[1,0.92,0.82],30,120]}[k]||[0x1a2a5a,[0.8,0.84,1],40,190];
@@ -9390,6 +9390,8 @@ function elTick(dt){ const K=elK; K.t+=dt; const t=K.t, G=ELC.G;
   for(const g of K.gifts){ if(!g.g.visible)continue; g.g.rotation.y+=dt; g.g.position.y=g.p[1]+Math.abs(Math.sin(t*2+g.i))*0.15; if(!demo&&onElf()&&Math.hypot(pl.p[0]-g.p[0],pl.p[2]-g.p[2])<1.5&&Math.abs(pl.p[1]-g.p[1])<2.2)elGiftGet(g); }
   for(const p of K.speak)if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0)odBubOff(p.g,p); }
   K.bear.g.position.y=G; if(!demo){ K.bear.hd.rotation.y=Math.sin(t*0.5)*0.5; }
+  elStoreUpTick(K,dt);
+  if(!demo&&onElf()){ const S0=ELC.store, inside=pl.p[0]>S0.x0&&pl.p[0]<S0.x1&&pl.p[2]>S0.z0&&pl.p[2]<S0.z1&&pl.p[1]<ELC.G+S0.h; if(inside!==!!K.inStore){ K.inStore=inside; setWeather(inside?'clear':'snow'); } } // no snow falling inside the store
   if(K.cupT>0){ K.cupT-=dt; if(K.cupT<=0&&K.cup)K.cup.visible=false; }
   elSleighTick(dt); elKidsTick(dt); elHud(!demo&&onElf()); if(!demo&&onElf()&&owned&&!owned.includes('snowball'))elGiveSnow();
   if(!demo&&onElf()&&!K.tip&&K.t>3){ K.tip=true; toast('🎄 Welcome to the North Pole! Santa\'s sleigh is parked by the big tree (press E to fly it). Find presents and decorate glowing trees to raise the Christmas Spirit!'); }
@@ -9426,6 +9428,7 @@ function elSleighOff(){ const H=elK.sleigh; if(H.y-standY(Math.floor(H.x),Math.f
 function elAction(){ const K=elK; if(!K||!onElf()||demo)return null; const H=K.sleigh; if(H&&H.ride)return {label:'🛷 Get out',fn:elSleighOff};
   if(H&&Math.hypot(pl.p[0]-H.x,pl.p[2]-H.z)<3&&Math.abs(pl.p[1]-H.y)<2.2)return {label:'🛷 Fly Santa\'s sleigh',fn:elSleighBoard};
   if(!elToy&&Math.hypot(pl.p[0]-ELC.toy[0],pl.p[2]-(ELC.toy[2]+1.4))<3.2&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'🧸 Build toys',fn:elToyOpen};
+  { const a=elStoreUpAction(K); if(a)return a; }
   if(Math.hypot(pl.p[0]-70,pl.p[2]-100.4)<2.4&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'☕ Buy hot cocoa (🪙3)',fn:elCocoa};
   if(!K.escRide&&Math.hypot(pl.p[0]-24,pl.p[2]-103.4)<1.8&&Math.abs(pl.p[1]-ELC.G)<1.5)return {label:'🛗 Ride the escalator up',fn:()=>elEscStart(1)};
   if(!K.escRide&&Math.hypot(pl.p[0]-24,pl.p[2]-116.4)<1.8&&Math.abs(pl.p[1]-(ELC.G+8))<1.5)return {label:'🛗 Ride the escalator down',fn:()=>elEscStart(-1)};
@@ -9630,6 +9633,44 @@ OD_CH.el3={secs:42,sky:'np',mood:'jingle',init(S){ const K=elK, G=ELC.G; elBuddy
     if(t<17)return [[92,G+2.4,128],[pl.p[0],G+1.4,pl.p[2]],2]; if(t<20){ const k=odSeg(S,17,20); return [[94.6,G+2,130.6],[104,G+6+k*10,146],3]; }
     if(t<27)return [[72.4,G+1.9,97.4],[70,G+1.4,100.4],4]; if(t<34)return [[38.6,G+2.3,97.2],[36.5,G+1.1,100.6],5]; return [[pl.p[0]+3.2,pl.p[1]+1.7,pl.p[2]+1.6],[pl.p[0],pl.p[1]+1.2,pl.p[2]],6]; } };
 const EL_NAMES=['The North Pole and the Mysterious Baby','Buddy Discovers the Truth','The Journey to New York'];
+// ================= MERRIWETHER'S SECOND FLOOR =================
+// Ride the escalator up: the store manager is dressed as Santa, with kids lining up for his lap and an elf helping out; a rack of
+// pajamas with a red nightgown; and a perfume counter where the perfume lady sprays you (it stings: you lose a heart). Talk to
+// the store Santa and he tells you to go get changed, and your clothes turn into Buddy's elf suit.
+const ELF_SUIT={top:'long',topC:'#1a8a3a',bottom:'pants',bottomC:'#f0d040',shoes:'boots',shoeC:'#1a1a1a',belt:'buckle',hat:'none',cape:'none',back:'none',helm:'none',chest:'none',legs:'none',boots:'none'};
+let elfSuitBits=null;
+function elfSuitOn(){ const L=heroLook(); return L.topC===ELF_SUIT.topC&&L.bottomC===ELF_SUIT.bottomC&&L.top==='long'; }
+function elfSuitSync(){ const on=elfSuitOn(); if(on&&!elfSuitBits){ const g=new THREE.Group(); head.add(g); elHat(g,0x1a8a3a,0.47); const t=new THREE.Group(); rig.torso.add(t); mb(t,0.62,0.1,0.36,mm(0xf6f6f6),0,0.6,0); mb(t,0.6,0.08,0.36,mm(0xf6f6f6),0,1.42,0); for(const a of [armL,armR]){ const c=mb(a,0.3,0.08,0.3,mm(0xf6f6f6),0,-0.6,0); t.userData.cuffs=(t.userData.cuffs||[]).concat(c); } elfSuitBits={g,t}; }
+  else if(!on&&elfSuitBits){ head.remove(elfSuitBits.g); rig.torso.remove(elfSuitBits.t); (elfSuitBits.t.userData.cuffs||[]).forEach(c=>c.parent&&c.parent.remove(c)); elfSuitBits=null; } }
+function elStoreUp(K){ const root=K.root, G=ELC.G, F=G+8, U=K.up={};
+  // the store Santa's corner: a throne, a red carpet, a line of kids and an elf helper
+  const th=grp(root,53,F,118.4); mb(th,1.6,0.55,1.1,mm(0xc8a030),0,0.27,0); mb(th,1.6,2,0.22,mm(0xc8a030),0,1.2,0.5); mb(th,1.4,0.12,1,mm(0x8a1a2a),0,0.6,-0.05); mb(root,1.6,0.03,6,mm(0xb81a2a),53,F+0.02,114.6);
+  for(const x of [51,55])elCane(root,x,F,116.4); U.boss=elP(root,'boss',53,F+0.2,118.2,0); odSit(U.boss); U.boss.g.position.y=F+0.38; U.helper=elElf(root,50.6,F,116.6,-Math.PI*0.4,{topC:'#1a8a3a'},0.9); const cc=elCane(U.helper.R.armR,0,0,0); cc.scale.setScalar(0.25); cc.position.set(0,-0.9,-0.1);
+  U.kids=[]; for(let i=0;i<4;i++){ const a=odPerson(root,53,F,114.8-i*1.2,Math.PI,mxLook({top:['hoodie','tee','long','hoodie'][i],topC:['#2a5ac8','#d8a020','#8a2ad8','#c81a2a'][i],bottom:i%2?'skirt':'pants',bottomC:'#2a3a5a',hair:['curly','ponytail','short','bun'][i]})); a.g.scale.setScalar(0.72); U.kids.push(a); } U.lapT=3; U.lapKid=null;
+  // the pajama rack, with a red nightgown in the middle
+  const rk=grp(root,36,F,108); for(const s2 of[-1,1])mcyl(rk,0.04,0.04,1.9,mm(0x8a8a90),s2*1.3,0.95,0,6); mcyl(rk,0.03,0.03,2.7,mm(0x8a8a90),0,1.88,0,6).rotation.z=Math.PI/2; for(const s2 of[-1,1])mb(rk,0.9,0.05,0.05,mm(0x8a8a90),s2*1.3,0.03,0);
+  [[-0.9,0x6a8ac8],[-0.45,0x8ac86a],[0,0xd81a2a],[0.45,0xe8a0c8],[0.9,0x8a6ac8]].forEach(([x,c])=>{ const h=grp(rk,x,1.84,0); mb(h,0.3,0.03,0.03,mm(0x5a5a60),0,0,0); const red=c===0xd81a2a; mb(h,0.32,red?0.5:0.7,0.1,mm(c),0,-0.32,0); if(red){ const sk=new THREE.Mesh(new THREE.ConeGeometry(0.34,0.75,10,1,true),new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide})); sk.position.set(0,-0.92,0); h.add(sk); mb(h,0.34,0.05,0.12,mm(0xffc8d8),0,-0.08,0); } });
+  const sg=canvasTex(256,64); sg.x.fillStyle='#fff'; sg.x.fillRect(0,0,256,64); sg.x.fillStyle='#b81a4a'; sg.x.font='bold 34px Georgia,serif'; sg.x.textAlign='center'; sg.x.fillText('Sleepwear',128,44); sg.t.needsUpdate=true; const sgm=new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.4),new THREE.MeshBasicMaterial({map:sg.t})); sgm.position.set(0,2.3,0); rk.add(sgm);
+  // the perfume counter and the perfume lady (spray, spray)
+  const ct=grp(root,31,F,117.6); mb(ct,2.4,1,0.8,mm(0xf2e8f0),0,0.5,0); mb(ct,2.5,0.06,0.9,mm(0xc8a0c8),0,1.02,0); for(let i=0;i<5;i++){ mcyl(ct,0.07,0.08,0.22,new THREE.MeshLambertMaterial({color:[0xffa0d0,0xa0d0ff,0xffd890,0xd0a0ff,0xa0ffd0][i],transparent:true,opacity:0.8}),-0.9+i*0.45,1.16,0.1,10); }
+  U.lady=odPerson(root,31,F,118.5,0,mxLook({top:'long',topC:'#8a2a6a',bottom:'skirt',bottomC:'#2a2a2e',hair:'bun',hairC:'#d8a850',skin:'#f2d4c0',shoes:'shoes',shoeC:'#111111'})); U.bottle=grp(U.lady.R.armR,0,-0.72,-0.1); mcyl(U.bottle,0.06,0.07,0.18,new THREE.MeshLambertMaterial({color:0xffa0d0,transparent:true,opacity:0.85}),0,0,0,10);
+  U.sprayCD=0; U.heroSay={g:model}; U.say=[]; }
+function elStoreUpAction(K){ const U=K.up, F=ELC.G+8; if(!U||Math.abs(pl.p[1]-F)>1.5)return null; if(Math.hypot(pl.p[0]-53,pl.p[2]-116.6)<2.6)return {label:'🎅 Talk to the store Santa',fn:()=>elBossTalk(K)}; return null; }
+function elBossTalk(K){ const U=K.up; if(elfSuitOn()){ elSaySimple(K,U.boss,"Now THAT'S an elf! Back to work!"); return; } elSaySimple(K,U.boss,'Hey! What are you doing up here? Go get CHANGED!');
+  setTimeout(()=>{ if(!elK||elK!==K)return; look=cleanLook(Object.assign({},look,ELF_SUIT)); saveLook(); dressHero(); for(let k=0;k<4;k++)burst(pl.p[0]-0.5,pl.p[1]+0.4+k*0.4,pl.p[2]-0.5,new THREE.Color([0x1a8a3a,0xf0d040,0xffffff,0xff3a3a][k]),10); sfx('buy');
+    toast("🧝 You're dressed as Buddy the elf! (Change back any time with the outfit editor.)"); },1400); }
+function elSaySimple(K,who,txt){ npcSay(who,txt); if(!K.speak.includes(who))K.speak.push(who); }
+function elStoreUpTick(K,dt){ const U=K.up; if(!U)return; const t=K.t, F=ELC.G+8;
+  // the line for the store Santa's lap: the front kid climbs up, then goes to the back of the line
+  U.lapT-=dt; if(U.lapT<=0){ if(U.lapKid){ const k=U.lapKid; U.kids.push(k); U.lapKid=null; U.lapT=2; } else { U.lapKid=U.kids.shift(); U.lapT=4; elSaySimple(K,U.lapKid,['I want a puppy!','A bike, please!','Can I have a robot?','A pony! A real one!'][Math.floor(Math.random()*4)]); } }
+  U.kids.forEach((a,i)=>{ const want=[53,F,114.8-i*1.2]; a.g.position.x+=(want[0]-a.g.position.x)*Math.min(1,dt*3); a.g.position.y=F; a.g.position.z+=(want[2]-a.g.position.z)*Math.min(1,dt*3); a.g.rotation.set(0,Math.PI,0); odRest(a); animRig(a.R,dt,0); });
+  if(U.lapKid){ const a=U.lapKid; a.g.position.set(53,F+0.75,117.7); a.g.rotation.set(0,0,0); odSit(a); animRig(a.R,dt,0); }
+  U.boss.R.armR.rotation.x=U.lapKid?1.2:0.6+Math.sin(t*1.3)*0.1; animRig(U.boss.R,dt,0); U.helper.R.armL.rotation.z=-0.4-Math.sin(t*2)*0.3; animRig(U.helper.R,dt,0);
+  // the perfume lady: come close and she sprays you
+  const L=U.lady; U.sprayCD-=dt; const d=Math.hypot(pl.p[0]-31,pl.p[2]-117.4), near=!demo&&onElf()&&Math.abs(pl.p[1]-F)<1.5&&d<2.6; elFace(L,near?pl.p:[31,0,110]); L.R.armR.rotation.x=U.sprayT>0?1.6:0.3; animRig(L.R,dt,0);
+  if(near&&U.sprayCD<=0&&!dead){ U.sprayCD=6; U.sprayT=0.6; elSaySimple(K,L,'Free sample? Spritz!'); snd(()=>{ noise(5000,0.35,0.12,'highpass'); }); const dx=pl.p[0]-31, dz=pl.p[2]-117.4, l=Math.hypot(dx,dz)||1;
+    for(let k=0;k<4;k++)burst(31+dx/l*(0.6+k*0.4)-0.5,F+1.5,117.4+dz/l*(0.6+k*0.4)-0.5,new THREE.Color(0xffa0d8),8); setTimeout(()=>{ if(!elK||elK!==K||dead)return; hurtPlayer(1,dx/l*0.4,dz/l*0.4,'The perfume lady'); U.yuckT=1.2; npcSay(U.heroSay,'Yuck! NO!'); U.heroSay.bubT=2.5; },350); }
+  U.sprayT=(U.sprayT||0)-dt; if(U.yuckT>0){ U.yuckT-=dt; head.rotation.y=Math.sin(U.yuckT*30)*0.5*Math.min(1,U.yuckT); if(U.yuckT<=0)head.rotation.y=0; } if(U.heroSay.bubT>0){ U.heroSay.bubT-=dt; if(U.heroSay.bubT<=0)odBubOff(model,U.heroSay); } }
 function loadElf(){ dmCfg.scenes=EL_NAMES.map((n,i)=>cleanScene({act:'el'+(i+1),time:'day',wx:'snow',land:'normal',cam:'cine',secs:OD_CH['el'+(i+1)].secs,cap:''})); saveDemo(); }
 
 // ================= ELF, CHAPTERS 4 TO 10 =================
@@ -9642,6 +9683,7 @@ Object.assign(EL_CAST,{miles:{skin:'#e8c0a0',hair:'short',hairC:'#3a2a1a',beard:
 function elP(par,kind,x,y,z,ry){ if(kind==='miles'){ const a=odPerson(par,x,y,z,ry||0,mxLook(EL_CAST.miles)); a.g.scale.setScalar(0.66); a.kind=kind; return a; }
   if(kind==='fakesanta'){ const a=odPerson(par,x,y,z,ry||0,mxLook(EL_CAST.fakesanta)); elHat(a.R.head,0xa8102a,0.47,1.05); a.beard=grp(a.R.head,0,0,0); mb(a.beard,0.5,0.34,0.08,mm(0xe8e4d8),0,-0.06,-0.26); mb(a.beard,0.36,0.14,0.06,mm(0xe8e4d8),0,-0.28,-0.25); mb(a.beard,0.03,0.4,0.03,mm(0xc8c0b0),0.27,0.16,-0.05); a.kind=kind; return a; }
   if(kind==='mailguy'){ const a=odPerson(par,x,y,z,ry||0,mxLook(EL_CAST.mailguy)); a.kind=kind; return a; }
+  if(kind==='boss'){ const a=odPerson(par,x,y,z,ry||0,mxLook(Object.assign({},EL_CAST.fakesanta,{skin:'#6a4028',eyes:'#2a1a10',hair:'short',hairC:'#141414'}))); elHat(a.R.head,0xc8102a,0.47,1.1); mb(a.R.head,0.5,0.3,0.08,mm(0xf2f2ee),0,-0.04,-0.26); for(const s2 of [a.R.armL,a.R.armR])mb(s2,0.3,0.1,0.3,mm(0xf6f6f6),0,-0.62,0); mb(a.R.torso,0.58,0.1,0.32,mm(0xf6f6f6),0,0.72,0); a.g.scale.set(1.3,1.08,1.3); a.kind=kind; return a; }
   const a=elPerson(par,kind,x,y,z,ry); if(kind==='jovie')elHat(a.R.head,0x1a8a3a,0.47,0.95); return a; }
 function elHeroCam(d,side,dy){ const fx=-Math.sin(yaw), fz=-Math.cos(yaw), s=side||0, h=1.62+(dy||0); return [[pl.p[0]+fx*d+s*fz,pl.p[1]+h,pl.p[2]+fz*d-s*fx],[pl.p[0],pl.p[1]+1.57,pl.p[2]]]; }
 // the Magic Sketch board: a red drawing toy with two white knobs; Buddy draws the Mona Lisa on it, one continuous line
