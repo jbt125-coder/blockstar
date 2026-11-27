@@ -10501,7 +10501,9 @@ function petMesh(p){ const g=new THREE.Group(), cat=p.kind==='cat', s=(cat?0.72:
     if(p.pat==='freckles'){ const G=new THREE.MeshLambertMaterial({color:p.col[1]}); add(head,0.06*s,0.05*s,0.02*s,G,-hs*0.16,-hs*0.16,-hs*1.235); add(head,0.035*s,0.035*s,0.02*s,G,-hs*0.12,hs*0.38,-hs*0.83); // a grey smudge beside her nose, a freckle on her forehead
       const W2=new THREE.MeshLambertMaterial({color:0xffffff}); add(head,hs*1.12,hs*0.55,hs*0.4,W2,0,-hs*0.5,-hs*0.05); } // a fluffy white ruff round her neck
     if(curly)msph(head,hs*0.42,M,0,hs*0.55,-hs*0.3); if(p.coat==='shaggy')add(head,hs*1.1,hs*0.3,hs*0.6,M,0,hs*0.45,-hs*0.3); }
-  const tail=new THREE.Group(); tail.position.set(0,by+bh*0.3,bl/2); g.add(tail); const tl=(cat?0.45:0.32)*s, tw=(fluffy?0.14:cat?0.06:0.08)*s; const tb=add(tail,tw,tw,tl,M,0,0,tl/2); if(p.pat==='freckles'){ add(tail,tw*1.05,tw*1.05,tl*0.3,new THREE.MeshLambertMaterial({color:p.col[1]}),0,0,tl*0.42); add(tail,tw*1.3,tw*1.2,tl*0.5,M,0,-0.01*s,tl*0.85); } tail.rotation.x=cat?-1.1:-0.6; if(curly)msph(tail,0.11*s,M,0,0,tl);
+  const tail=new THREE.Group(); tail.position.set(0,by+bh*0.3,bl/2); g.add(tail); const tl=(cat?0.45:0.32)*s, tw=(fluffy?0.14:cat?0.06:0.08)*s; if(p.pat==='freckles'){ const T2=0.62*s, G=new THREE.MeshLambertMaterial({color:p.col[1]}); add(tail,0.12*s,0.12*s,T2*0.3,M,0,0,T2*0.15); // Lucy's big plumed tail: it gets fluffier toward the tip, with a grey patch
+      add(tail,0.2*s,0.17*s,T2*0.35,M,0,-0.01*s,T2*0.46); add(tail,0.21*s,0.06*s,T2*0.2,G,0,0.06*s,T2*0.5); add(tail,0.26*s,0.2*s,T2*0.4,M,0,-0.02*s,T2*0.8); add(tail,0.14*s,0.12*s,T2*0.12,M,0,-0.03*s,T2*1.04); tail.userData.plume=1; }
+  else add(tail,tw,tw,tl,M,0,0,tl/2); tail.rotation.x=cat?-1.1:-0.6; if(curly)msph(tail,0.11*s,M,0,0,tl);
   if(cat){ const t2=new THREE.Group(); t2.position.set(0,0,tl); tail.add(t2); add(t2,tw,tw,tl*0.6,M,0,0,tl*0.3); t2.rotation.x=0.8; }
   return {g,body,head,legs,tail,legH,s,h:by+bh/2+hs*0.6,mat:M}; }
 // --- pets in the world
@@ -10570,7 +10572,7 @@ function petTick(e,dt){ const p=e.pet, M=e.M; e.t+=dt; if(e.bubT>0){ e.bubT-=dt;
   M.tail.rotation.y=e.wag>0.05?Math.sin(e.t*(p.kind==='cat'?5:16))*0.6*Math.min(1,e.wag):Math.sin(e.t*1.5)*0.08;
   const sit=pose==='sit', lie=pose==='lie', bgp=M.body.children[0].geometry.parameters, lift=sit?Math.sin(0.55)*bgp.depth*0.5:0; M.body.rotation.x=sit?0.55:0; M.body.position.y=(lie?M.legH*0.35:sit?M.legH*0.55:M.legH)+(bgp.height/2); // sitting: chest up, rump down
   M.legs[2].rotation.x=M.legs[3].rotation.x=sit?-1.3:lie?-1.4:M.legs[2].rotation.x; if(lie){ M.legs[0].rotation.x=M.legs[1].rotation.x=-1.4; } M.legs.forEach((L,i)=>L.position.y=lie?M.legH*0.3:sit&&i>1?M.legH*0.5:M.legH);
-  M.head.position.y=M.body.position.y+bgp.height*0.45+lift; M.head.position.z=-bgp.depth/2*(sit?Math.cos(0.55):1)-0.02*M.s; M.tail.position.y=M.body.position.y-lift+0.02; M.tail.position.z=bgp.depth/2*(sit?Math.cos(0.55):1);
+  M.head.position.y=M.body.position.y+bgp.height*0.45+lift; M.head.position.z=-bgp.depth/2*(sit?Math.cos(0.55):1)-0.02*M.s; M.tail.position.y=M.body.position.y-lift+0.02; M.tail.position.z=bgp.depth/2*(sit?Math.cos(0.55):1); if(M.tail.userData.plume){ M.tail.rotation.x=sit?0.08:lie?0.15:-0.25; if(sit)M.tail.position.y=Math.max(0.12*M.s,M.tail.position.y); }
   if(e.hurtT>0){ e.hurtT-=dt; M.g.visible=Math.floor(e.hurtT*20)%2===0; } else M.g.visible=true; }
 function petFaint(e){ const p=e.pet; p.hp=0; odPoofPet(e); if(e.demo){ petDespawn(e); return; } p.st='rest'; p.w=null; p.at=null; p.rest=Date.now()+60000; petsSave(); petDespawn(e); toast('🤕 '+p.name+' is hurt and goes to rest at the Pet Shop. Ready in 1 minute.'); }
 
