@@ -11,6 +11,9 @@
   html,body{margin:0;height:100%;overflow:hidden;background:#000;touch-action:none;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff}
   canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+  body.rec{background:#000} body.rec canvas#game{width:min(100vw,56.25vh);height:min(100vh,177.78vw);margin:auto} body.rec .ui:not(#dmFade){display:none!important}
+  #shortCap{position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:9;pointer-events:none;font:900 clamp(26px,5.2vh,56px)/1.1 Impact,'Arial Black',sans-serif;color:#fff;text-align:center;-webkit-text-stroke:2px #000;text-shadow:0 4px 0 #000;letter-spacing:.02em;white-space:pre-line;display:none}
+  #recBadge{position:fixed;right:12px;top:12px;z-index:10;background:#c81a1a;color:#fff;font:800 14px system-ui,sans-serif;padding:6px 10px;border-radius:20px;display:none;pointer-events:none}
   #touch{position:fixed;inset:0;z-index:1}
   .ui{position:fixed;z-index:5}
   #tint{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .2s}
@@ -230,7 +233,7 @@
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<canvas id="game"></canvas><div id="shortCap"></div><div id="recBadge"></div>
 <div id="tint"></div><div id="hurt"></div><div id="web"></div><div id="burn"></div>
 <div id="fxBox"><canvas id="fxGlitch"></canvas><canvas id="fxGrain" width="320" height="180"></canvas><div id="fxVig"></div><div id="fxStamp"><b>▶ PLAY</b><i></i></div></div>
 <div id="touch"></div>
@@ -549,7 +552,8 @@ function tileTex(name){ const c=document.createElement('canvas'); c.width=c.heig
   c.getContext('2d').drawImage(atlas,(id%COLS)*T,Math.floor(id/COLS)*T,T,T,0,0,16,16);
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
 
-function resize(){ const w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+let rec=null; // the Shorts recorder, while it's recording
+function resize(){ if(rec&&!rec.done){ renderer.setSize(1080,1920,false); camera.aspect=9/16; camera.updateProjectionMatrix(); return; } const w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize',resize); resize();
 
 // ================= MESHING =================
@@ -1317,7 +1321,8 @@ for(let i=0;i<10;i++){ const c=box(6+rand()*10,1.2,4+rand()*8,cMat); c.position.
 
 // ================= SOUND =================
 let AC=null, noiseBuf=null;
-function audioInit(){ if(AC)return; try{ AC=new (window.AudioContext||window.webkitAudioContext)();
+let recBus=null;
+function audioInit(){ if(AC)return; try{ AC=new (window.AudioContext||window.webkitAudioContext)(); recBus=AC.createGain(); { const oc=AudioNode.prototype.connect; AudioNode.prototype.connect=function(t){ const r=oc.apply(this,arguments); if(t===AC.destination&&this!==recBus){ try{ oc.call(this,recBus); }catch(e){} } return r; }; } // (so the Shorts recorder hears the game too)
   noiseBuf=AC.createBuffer(1,AC.sampleRate*0.4,AC.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1; }catch(e){} }
 function tone(type,f0,f1,dur,vol,delay){ const t=AC.currentTime+(delay||0), o=AC.createOscillator(), g=AC.createGain();
   o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
@@ -2390,7 +2395,7 @@ function autoSing(beat){ if(Math.floor(beat/16)%4===3)return 0;
 // Line up scenes, pick a song and the game plays itself (great for recording a video). A scene is: what the hero does,
 // the time of day, the weather, the land, the camera, how many seconds it lasts and an optional caption.
 const DEMO_KEY='blockstar_demo';
-const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',br4:'🌃 Blade Runner 4: The Hunt Through the City',br5:'🌃 Blade Runner 5: The Artificial Human',br6:'🌃 Blade Runner 6: The Strange World of J.F. Sebastian',br7:'🌃 Blade Runner 7: The Creator and His Creation',br8:'🌃 Blade Runner 8: The Final Hunt at the Bradbury',br9:'🌃 Blade Runner 9: The Rooftop and the Last Moments',br10:'🌃 Blade Runner 10: The Final Escape',el1:'🎄 Elf 1: The North Pole and the Mysterious Baby',el2:'🎄 Elf 2: Buddy Discovers the Truth',el3:'🎄 Elf 3: The Journey to New York',el4:'🎄 Elf 4: The Department Store',el5:'🎄 Elf 5: The Christmas Spaghetti',el6:'🎄 Elf 6: The Snowball Fight',el7:'🎄 Elf 7: The Mail Room and the Fake Santa',el8:'🎄 Elf 8: The Family Trouble',el9:"🎄 Elf 9: Santa's Sleigh Crashes",el10:'🎄 Elf 10: The Great Christmas Flight',fly:'🪽 Fly over the world',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
+const DM_ACT={showcase:'🕺 Show off my character',explore:'🚶 Explore',build:'🏠 Build a house',wonder:'🏛️ Build a wonder',chop:'🪓 Chop down trees',city:'🏙️ City life',fight:'⚔️ Fight monsters',concert:'🎤 Night club concert',stadium:'🏟️ Outdoor concert (giant band)',fire:'🔥 Fire concert (burn a giant statue)',ride:'🐴 Horse ride (mountain ranch)',drag:'🏁 Drag race (Car World)',thanks:'🦃 Thanksgiving dinner (mansion)',petshop:'🐾 Pet shop: make a pet',petranch:'🐶 A day at the ranch with your dog',od1:'🏛️ Odyssey 1: The Fall of Troy',od2:'🏛️ Odyssey 2: The Great Voyage',od3:'🏛️ Odyssey 3: The Land of the Cyclops',od4:'🏛️ Odyssey 4: Circe and the Pigs',od5:'🏛️ Odyssey 5: The Sirens',od6:'🏛️ Odyssey 6: The Underworld',od7:'🏛️ Odyssey 7: Scylla and Charybdis',od8:'🏛️ Odyssey 8: The Island of the Sun God',od9:'🏛️ Odyssey 9: Calypso\'s Island',od10:'🏛️ Odyssey 10: The Return to Ithaca',mx1:'💊 Matrix 1: Follow the White Rabbit',mx2:'💊 Matrix 2: The Agents',mx3:'💊 Matrix 3: The Red Pill',mx4:'💊 Matrix 4: The Real World',mx5:'💊 Matrix 5: Training',mx6:'💊 Matrix 6: The Oracle',mx7:'💊 Matrix 7: The Trap',mx8:'💊 Matrix 8: The Rescue',mx9:'💊 Matrix 9: The One',mx10:'💊 Matrix 10: Free Your Mind',rk1:"🥊 Rocky 1: Rocky's Neighborhood",rk2:'🥊 Rocky 2: Adrian and Butkus',rk3:"🥊 Rocky 3: Mickey's Gym",rk4:'🥊 Rocky 4: The Ice Rink',rk5:"🥊 Rocky 5: The Champion's Challenge",rk6:'🥊 Rocky 6: The Meat Locker',rk7:'🥊 Rocky 7: The Training Montage',rk8:'🥊 Rocky 8: The Museum Steps',rk9:'🥊 Rocky 9: Fight Night',rk10:'🥊 Rocky 10: The Last Round',br1:'🌃 Blade Runner 1: The Eye of the Future',br2:'🌃 Blade Runner 2: The Blade Runner Returns',br3:'🌃 Blade Runner 3: The Tyrell Corporation',br4:'🌃 Blade Runner 4: The Hunt Through the City',br5:'🌃 Blade Runner 5: The Artificial Human',br6:'🌃 Blade Runner 6: The Strange World of J.F. Sebastian',br7:'🌃 Blade Runner 7: The Creator and His Creation',br8:'🌃 Blade Runner 8: The Final Hunt at the Bradbury',br9:'🌃 Blade Runner 9: The Rooftop and the Last Moments',br10:'🌃 Blade Runner 10: The Final Escape',el1:'🎄 Elf 1: The North Pole and the Mysterious Baby',el2:'🎄 Elf 2: Buddy Discovers the Truth',el3:'🎄 Elf 3: The Journey to New York',el4:'🎄 Elf 4: The Department Store',el5:'🎄 Elf 5: The Christmas Spaghetti',el6:'🎄 Elf 6: The Snowball Fight',el7:'🎄 Elf 7: The Mail Room and the Fake Santa',el8:'🎄 Elf 8: The Family Trouble',el9:"🎄 Elf 9: Santa's Sleigh Crashes",el10:'🎄 Elf 10: The Great Christmas Flight',fly:'🪽 Fly over the world',shortmow:'🚜 Short: Mower vs. Everything',side:'🔭 Rock layers (side view)',flint:'🧔 Visit Flint\'s shop'};
 const DM_TIME={day:'☀️ Day',sunset:'🌅 Sunset',night:'🌙 Night'};
 const DM_WX={clear:'Clear',rain:'🌧️ Rain',snow:'❄️ Snow'};
 const DM_LAND={normal:'🌳 Green',snowy:'⛄ Snowy',desert:'🏜️ Desert'};
@@ -2447,6 +2452,9 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   const sel=(T,k,i,v)=>'<select data-i="'+i+'" data-k="'+k+'">'+Object.entries(T).map(([a,b])=>'<option value="'+a+'"'+(a===v?' selected':'')+'>'+b+'</option>').join('')+'</select>';
   const tot=dmCfg.scenes.reduce((a,s)=>a+s.secs,0);
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
+    '<h3>🎬 YouTube Shorts</h3><div class="item"><div class="ic">🚜</div><div class="tx"><b>Mower vs. Everything</b><div class="fx">The riding mower breaks out of the garage, races a dragster and a whale, and comes home. Lucy is hiding in every world. Records a tall 1080×1920 video with the game\'s sound, ready for YouTube Shorts.</div>'+
+    '<div class="chips" style="margin-top:6px">'+[30,45,60].map(n=>'<div class="chip'+(shortLen===n?' on':'')+'" data-slen="'+n+'">'+n+' s</div>').join('')+'</div></div></div>'+
+    '<div class="row"><button class="mbtn" id="shWatch">▶ Watch it</button><button class="mbtn gold" id="shRec">⏺ Record video</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlayTop">▶ Quick start: play the demo</button></div><h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
     '<div class="dmGrid"><label>What happens'+sel(DM_ACT,'act',i,s.act)+'</label>'+(s.act==='stadium'?'<label>Giant band shots'+sel(DM_GIANT,'giant',i,s.giant)+'</label>':'')+(s.act==='fire'?'<label>What burns'+sel(DM_FSTAT,'fstat',i,s.fstat)+'</label><label>Giant band at the edges'+sel(DM_FBAND,'fband',i,s.fband)+'</label><label>Crowd'+sel(DM_FCROWD,'fcrowd',i,s.fcrowd)+'</label><label>Singing'+sel(DM_MOUTH,'mouth',i,s.mouth)+'</label>':s.act==='concert'||s.act==='stadium'?
@@ -2479,8 +2487,10 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
     '<div class="row"><button class="mbtn gold" id="dmPlay">▶ Play demo</button><button class="mbtn gray" id="dmBack">Back</button></div>';
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
+  box2.querySelectorAll('[data-slen]').forEach(el=>onClick(el,()=>{ shortLen=+el.dataset.slen; try{ localStorage.setItem('blockstar_short_len',String(shortLen)); }catch(e){} redraw(); }));
+  onClick($('shWatch'),()=>shortRun(false)); onClick($('shRec'),()=>shortRun(true));
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
-    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:sc2.mstory==='hunt'?82:sc2.mstory==='mow'?46:95):sc2.act==='drag'?75:isFilm(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
+    dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:sc2.mstory==='hunt'?82:sc2.mstory==='mow'?46:95):sc2.act==='shortmow'?60:sc2.act==='drag'?75:isFilm(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
     saveDemo(); if(el.dataset.k==='act'||el.dataset.k==='mstory'){ redraw(); return; } const t2=box2.querySelector('.dmTot'); if(t2)t2.textContent='total '+dmTime(dmCfg.scenes.reduce((a,s2)=>a+s2.secs,0)); }); });
   box2.querySelectorAll('[data-mv]').forEach(el=>onClick(el,()=>{ const i=+el.dataset.mv, j=i+(+el.dataset.d); if(j<0||j>=dmCfg.scenes.length)return; const a=dmCfg.scenes; [a[i],a[j]]=[a[j],a[i]]; saveDemo(); redraw(); }));
   box2.querySelectorAll('[data-dup]').forEach(el=>onClick(el,()=>{ if(dmCfg.scenes.length>=30)return; const i=+el.dataset.dup; dmCfg.scenes.splice(i+1,0,cleanScene(dmCfg.scenes[i])); saveDemo(); redraw(); }));
@@ -2547,7 +2557,7 @@ function demoStart(){ if(document.pointerLockElement)document.exitPointerLock();
   if(dmCfg.world==='demo'){ placed.clear(); setWorldSize(96,48,96); generate(dmCfg.seed); rebuildAll(); refreshPortals(); }
   applyMode(); paused=false; document.body.classList.add('demo'); $('dmCap').classList.remove('on');
   if(mus.src!=='none')musicPlay(); demoNext(true); }
-function demoStop(){ if(!demo)return; if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; camp.visible=false; if(campK){ campK.mic.visible=false; campK.gl=null; } canvas.style.transform=''; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); mxRainOff(); setTime('day'); setLand('normal'); setWeather('clear');
+function demoStop(){ if(!demo)return; shortEnd(); if(drive)exitVehicle(true,true); mobsOn=demo.was.mobsOn; demo=null; document.body.classList.remove('duser','dconc'); clearFallen(); if(clubK)clubK.micHand.visible=false; if(document.pointerLockElement)document.exitPointerLock(); demoUp=demoDown=false; club.visible=false; arena.visible=false; camp.visible=false; if(campK){ campK.mic.visible=false; campK.gl=null; } canvas.style.transform=''; fxSet('normal'); singKeys.clear(); setMouth(rig,0); model.rotation.z=0; for(const b of brickPool){ b.on=false; b.m.visible=false; } viewF=-1; musicStop(); mxRainOff(); setTime('day'); setLand('normal'); setWeather('clear');
   document.body.classList.remove('demo'); $('dmFade').style.opacity=0; $('dmCap').classList.remove('on'); $('dmStop').classList.remove('on');
   for(const m of mobs.slice())removeMob(m); hadSave=loadCurrent(); if(!hadSave)startSurvival(); showTitle(); }
 function demoNext(first){ let i=demo.i+1; if(i>=dmCfg.scenes.length){ if(!dmCfg.loop){ demoStop(); return; } i=0; if(dmCfg.world==='demo'){ placed.clear(); clearEntities(); generate(dmCfg.seed); rebuildAll(); demo.odyWorld=demo.mxWorld=demo.brWorld=demo.elWorld=demo.rkWorld=demo.ranchWorld=demo.dragWorld=demo.mansionWorld=demo.petWorld=false; } }
@@ -2568,6 +2578,7 @@ function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOn
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
   clearFallen(); if(clubK)clubK.micHand.visible=false; document.body.classList.toggle('dconc',isConc(sc)); arena.visible=false; camp.visible=false; if(campK)campK.mic.visible=false; canvas.style.transform=''; for(const c of clouds)c.visible=true;
+  if(sc.act==='shortmow'){ shortSetup(sc,P); return; }
   if(sc.act==='city'){ demoCitySetup(sc,P); return; }
   if(sc.act==='concert'){ concertSetup(sc,P); return; }
   if(sc.act==='stadium'){ stadiumSetup(sc,P); return; }
@@ -2603,6 +2614,7 @@ function walkTo(tx,tz,dt,P){ const d=turnTo(tx,tz,dt,3), dist=Math.hypot(tx-pl.p
   P.side=Math.max(0,P.side-dt); if(P.side>0)return {ix:P.dir2,iz:-0.4};
   return {ix:0,iz:dist<0.6?0:Math.abs(d)<1.0?-1:-0.2}; }
 function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(!sc||demo.t<0.05)return {ix:0,iz:0};
+  if(sc.act==='shortmow')return shortPilot(dt,P);
   if(sc.act==='city')return demoCityPilot(dt,P);
   if(sc.act==='drag'){ dragPilot(dt,P); return {ix:0,iz:0}; }
   if(sc.act==='thanks')return mansionPilot(dt,P);
@@ -2629,7 +2641,7 @@ function demoPilot(dt){ const sc=demo.sc, P=demo.pil; demoUp=demoDown=false; if(
     turnTo(pl.p[0]-5,pl.p[2],dt,2); P.wave=true; return {ix:0,iz:0}; } // done: turn round and wave, with the house behind
   return {ix:0,iz:0}; }
 // the camera: smooth moves around the hero. Cinematic sways from side to side behind them (in front for show-off scenes)
-function demoCamera(dt){ if(isFilm(demo.sc)){ odyCam(dt); return; } if(demo.sc.act==='petshop'||demo.sc.act==='petranch'){ petDemoCam(dt); return; } if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
+function demoCamera(dt){ if(isFilm(demo.sc)){ odyCam(dt); return; } if(demo.sc.act==='petshop'||demo.sc.act==='petranch'){ petDemoCam(dt); return; } if(demo.sc.act==='drag'){ dragDemoCam(dt); return; } if(demo.sc.act==='thanks'){ mansionDemoCam(dt); return; } if(demo.sc.act==='shortmow'){ shortCam(dt); return; } if(demo.sc.act==='concert'){ concertCam(dt); return; } if(demo.sc.act==='stadium'){ stadiumCam(dt); return; } if(demo.sc.act==='fire'){ fireCam(dt); return; } if(demo.sc.act==='ride'){ const P=demo.pil; if(P.story&&!riding())storyCam(dt,P); else if(P.view>0)vistaCam(dt,P); else rideDemoCam(dt); return; } if(demo.sc.act==='wonder'&&demo.sc.cam!=='follow'&&demo.pil.phase!=='fight'){ wonderCam(dt); return; } // in the fight, the camera follows the hero
   const sc=demo.sc, T=demo.t, k=sc.cam, front=sc.act==='showcase'||(sc.act==='flint'&&demo.pil.wave)||(sc.act==='build'&&demo.pil.k>=demo.pil.plan.length);
   const tgt=new THREE.Vector3(pl.p[0],pl.p[1]+1.15,pl.p[2]); const base=yaw+(front?Math.PI:0);
   if(!demo.cam)demo.cam={a:base,p:null,l:tgt.clone(),orb:base};
@@ -2644,7 +2656,7 @@ function demoCamera(dt){ if(isFilm(demo.sc)){ odyCam(dt); return; } if(demo.sc.a
   want.lerpVectors(tgt,want,tt);
   if(!C.p)C.p=want.clone(); else C.p.lerp(want,Math.min(1,dt*(k==='follow'?4:2.2))); C.l.lerp(tgt,Math.min(1,dt*5));
   camera.position.copy(C.p); camera.lookAt(C.l); }
-function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!demo.user)demo.st+=dt; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock: it waits while you're driving
+function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!demo.user)demo.st+=dt; if(rec&&!rec.done&&shortK)demo.st=(performance.now()-rec.t0)/1000; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock (a Short being recorded follows the real clock, so the video is exactly its length): it waits while you're driving
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
   if((P.wave||sc.act==='showcase')&&!demo.user){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
   if(sc.act==='city')demoCityDance();
@@ -5404,11 +5416,11 @@ function animate(dt){
 }
 let last=performance.now();
 function frame(now){
-  const dt=Math.min(0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
+  const dt=Math.min(rec&&!rec.done?0.25:0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
   requestAnimationFrame(frame); // asked for first, so an error below can't stop the game from drawing
   try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
     let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
-    bubbleLayout(); renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); frameErrs=0; }
+    bubbleLayout(); renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); if(rec&&!rec.done)recDraw(); frameErrs=0; }
   catch(e){ console.error(e); $('dmFade').style.opacity=0; if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
 }
 let frameErrs=0;
@@ -5507,7 +5519,7 @@ let mowSp=null; function mowSpray(x,y,z,vx,vy,vz,c){ if(!mowSp){ const n=260, g=
 function mowSprayTick(dt){ const S=mowSp; if(!S)return; for(let i=0;i<S.n;i++){ const o=i*3; if(S.life[i]<=0){ S.pos[o+1]=-999; continue; } S.life[i]-=dt; S.v[o+1]-=9*dt; S.pos[o]+=S.v[o]*dt; S.pos[o+1]+=S.v[o+1]*dt; S.pos[o+2]+=S.v[o+2]*dt; }
   S.g.attributes.position.needsUpdate=true; S.g.attributes.color.needsUpdate=true; }
 function mowerTick(dt){ mowSprayTick(dt); if(traveling)return;
-  for(const v of vehList().slice()){ if(v.type!=='mower')continue; const look=mowerLookHere(v); if(look!==v.look)mowerLook(v,look);
+  for(const v of vehList().slice()){ if(v.type!=='mower')continue; const look=mowerLookHere(v); if(look!==v.look&&!v.lockLook)mowerLook(v,look);
     const sp=Math.abs(v.spd), f=vFwd(v.h), r=vRight(v.h), c=Math.cos(v.h), sn=Math.sin(v.h), at=q=>[v.p[0]+q[0]*c+q[2]*sn,v.p[1]+q[1],v.p[2]-q[0]*sn+q[2]*c];
     if(sp>1.2){ v.sprT=(v.sprT||0)-dt; if(v.sprT<=0){ v.sprT=0.03;
       if(v.look==='jet'){ const q=at(v.vm.spray); for(let k=0;k<3;k++)mowSpray(q[0],q[1],q[2],-f[0]*sp*0.4+(Math.random()-0.5)*2,2+Math.random()*2.5,-f[1]*sp*0.4+(Math.random()-0.5)*2,Math.random()<0.5?0xffffff:0x9ad8ff); }
@@ -6899,6 +6911,141 @@ function coralAction(){ if(!coralHeld||demo||!target||riding())return null; cons
   return {label:'🪸 Plant coral ('+coralHeld+')',fn:()=>{ setBlock(x,y,z,coralPick()); coralHeld--; coralSave(); if(coralW===world)coralList.push([x,y,z]); burst(x,y,z,new THREE.Color(1,0.5,0.7),8); sfx('place'); queueSave();
     toast(coralHeld?'🪸 Planted! It will grow and spread. '+coralHeld+' pieces left.':'🪸 Planted your last piece! Watch it grow and spread.'); }}; }
 
+// ================= THE SHORTS RECORDER =================
+// Records the game as a tall 1080×1920 video with its sound, for YouTube Shorts. The 3D view is drawn into a video canvas every
+// frame, with the captions, fades and flashes (which are page elements, not part of the 3D view) painted on top of it.
+let shortLen=60, shortSaved=null, shortK=null;
+try{ const n=+localStorage.getItem('blockstar_short_len'); if([30,45,60].includes(n))shortLen=n; }catch(e){}
+function shortRun(record){ audioInit(); if(record&&!(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream)){ toast('🎬 This browser can\'t record video. Try Chrome, Edge or Safari on a computer.'); return; }
+  shortSaved={scenes:dmCfg.scenes,loop:dmCfg.loop,fades:dmCfg.fades}; dmCfg.scenes=[Object.assign({},DM_SCENE0,{act:'shortmow',secs:shortLen,time:'day',cam:'cine'})]; dmCfg.loop=false; dmCfg.fades=false;
+  demoStart(); if(record)recStart(shortLen); }
+function recStart(len){ const cv=document.createElement('canvas'); cv.width=1080; cv.height=1920; rec={len,cv,x:cv.getContext('2d'),chunks:[],t0:performance.now(),done:false,pr:renderer.getPixelRatio()};
+  renderer.setPixelRatio(1); document.body.classList.add('rec'); resize(); const tracks=[...cv.captureStream(30).getVideoTracks()];
+  if(AC&&recBus){ try{ rec.dest=AC.createMediaStreamDestination(); recBus.connect(rec.dest); tracks.push(...rec.dest.stream.getAudioTracks()); }catch(e){} }
+  const types=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']; rec.type=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+  try{ rec.mr=new MediaRecorder(new MediaStream(tracks),rec.type?{mimeType:rec.type,videoBitsPerSecond:12e6,audioBitsPerSecond:192000}:undefined); }catch(e){ rec.mr=new MediaRecorder(new MediaStream(tracks)); rec.type=rec.mr.mimeType||'video/webm'; }
+  rec.mr.ondataavailable=e=>{ if(e.data&&e.data.size)rec.chunks.push(e.data); }; rec.mr.onstop=recDone; rec.mr.start(500); $('recBadge').style.display='block'; }
+function recDraw(){ const R=rec, x=R.x; x.drawImage(canvas,0,0,1080,1920);
+  const f=$('dmFade'); if(f){ const cs=getComputedStyle(f), op=+cs.opacity; if(op>0.01){ x.globalAlpha=Math.min(1,op); x.fillStyle=cs.backgroundColor&&cs.backgroundColor!=='rgba(0, 0, 0, 0)'?cs.backgroundColor:'#000'; x.fillRect(0,0,1080,1920); x.globalAlpha=1; } }
+  if(shortK&&shortK.cap&&shortK.capT>0){ x.save(); x.textAlign='center'; x.textBaseline='middle'; x.font='900 96px Impact, "Arial Black", sans-serif'; x.lineJoin='round'; const lines=shortK.cap.split('\n'), pop=Math.min(1,(shortK.capAge||0)*6); x.translate(540,340); x.scale(0.7+0.3*pop,0.7+0.3*pop);
+    lines.forEach((l,i)=>{ const y=(i-(lines.length-1)/2)*108; x.lineWidth=18; x.strokeStyle='#000'; x.strokeText(l,0,y); x.fillStyle='#fff'; x.fillText(l,0,y); }); x.restore(); }
+  const s=Math.max(0,(performance.now()-R.t0)/1000); $('recBadge').textContent='⏺ REC '+Math.floor(s)+' s / '+R.len+' s'; }
+function recDone(){ const R=rec; if(!R)return; R.done=true; renderer.setPixelRatio(R.pr); document.body.classList.remove('rec'); $('recBadge').style.display='none'; resize(); try{ if(R.dest)recBus.disconnect(R.dest); }catch(e){}
+  const type=(R.type||'video/webm').split(';')[0], ext=type.includes('mp4')?'mp4':'webm', blob=new Blob(R.chunks,{type}), url=URL.createObjectURL(blob), name='blockstar-mower-vs-everything-'+R.len+'s.'+ext; rec=null;
+  if(document.pointerLockElement)document.exitPointerLock(); paused=true;
+  $('mbox').innerHTML='<h2>🎬 Your Short is ready!</h2><div class="say">'+R.len+' seconds, 1080×1920, '+ext.toUpperCase()+' ('+(blob.size/1048576).toFixed(1)+' MB). Save it, then upload it to YouTube as a Short. Pin a comment: “Did you spot Lucy?” 🐶</div>'+
+    '<video src="'+url+'" controls playsinline style="display:block;margin:10px auto;max-height:52vh;max-width:100%;border-radius:10px;background:#000"></video><div class="row"><button class="mbtn gold" id="recSave">💾 Save video</button>'+(navigator.canShare?'<button class="mbtn" id="recShare">📤 Share</button>':'')+'<button class="mbtn gray" id="recClose">Done</button></div>';
+  $('modal').style.display='flex'; onClick($('recSave'),()=>{ const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('💾 Saved '+name); });
+  if($('recShare'))onClick($('recShare'),()=>{ const file=new File([blob],name,{type}); if(navigator.canShare({files:[file]}))navigator.share({files:[file],title:'Mower vs. Everything'}).catch(()=>{}); else toast('📤 This device can\'t share video files. Use 💾 Save video.'); });
+  onClick($('recClose'),()=>{ closeMenu(); URL.revokeObjectURL(url); }); }
+// ================= SHORT #1: MOWER VS. EVERYTHING =================
+// The riding mower bursts out of the mansion's garage with you on it, mows the front lawn and drives through a portal. On the drag
+// strip it gets a flame makeover and beats a dragster (whose parachute pops at the start). Through another portal it lands in the
+// Odyssey Sea as a wave runner and races a whale. Then it's back home, rolling into the garage as the door comes down, and your
+// brother looks up from his lemonade. The last shot matches the first, so it loops. Lucy hides in every world.
+// Each world is a segment of the Short; the segments shrink for the 45- and 30-second versions.
+const SHORT_SEGS={60:[0,12,31,50,60],45:[0,9,23,37,45],30:[0,7,16,24,30]};
+function shortCap(t){ const K=shortK; if(!K)return; K.cap=t||''; K.capT=t?2.4:0; K.capAge=0; const el=$('shortCap'); el.textContent=t||''; el.style.display=t?'block':'none'; }
+function shortFlash(){ odFlash(450); sfx('zap'); }
+function shortLucy(x,y,z){ const e=petSpawn(petClean(Object.assign({id:9001},LUCY)),x,y,z,'sit'); e.demoHero=1; e.demo=1; return e; }
+function shortWorld(k){ const K=shortK; if(drive)exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); petsClear(); if(K.root){ scene.remove(K.root); disposeG(K.root); } K.root=new THREE.Group(); scene.add(K.root);
+  if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.odyWorld&&k!=='odyssey'){ odStageClear(); clearOdyLife(); demo.odyWorld=false; }
+  clearCityLife(); clearInteriorLife(); clearApples(); demo.cityKey=null; demo.vplace=k;
+  if(k==='mansion'){ demo.mansionWorld=true; setWorldSize(...PLACES.mansion.dims); generateMansion(dmCfg.seed+31); rebuildAll(); refreshPortals(); buildMansionLife(null); }
+  else if(k==='drag'){ demo.dragWorld=true; setWorldSize(...PLACES.drag.dims); generateDrag(dmCfg.seed+23); rebuildAll(); refreshPortals(); buildDragLife(null); }
+  else { if(!demo.odyWorld||!odyK){ demo.odyWorld=true; setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); } odStageClear(); }
+  applyPlaceSky(); if(k==='odyssey'){ odSky('day'); odHeroGear(false); } K.world=k; demo.cam=null; }
+function shortMower(x,y,z,h,look){ const v=makeVehicle('mower',x,y,z,h); freeVehicles.push(v); if(look&&look!==v.look)mowerLook(v,look); v.lockLook=1; v.npc={script:1}; enterVehicle(v,true); camMode=3; chase.p=null; return v; }
+// move the mower along a path of points: f is how far along (0..1); it faces the way it's going and its wheels turn
+function shortAlong(pts,f){ let L=0; const seg=[]; for(let i=1;i<pts.length;i++){ const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(d); L+=d; }
+  let d=Math.max(0,Math.min(1,f))*L; for(let i=0;i<seg.length;i++){ if(d<=seg[i]||i===seg.length-1){ const k=seg[i]?Math.min(1,d/seg[i]):0, a=pts[i], b=pts[i+1]; return {x:a[0]+(b[0]-a[0])*k,z:a[1]+(b[1]-a[1])*k,h:Math.atan2(-(b[0]-a[0]),-(b[1]-a[1])),L}; } d-=seg[i]; } }
+function shortDrive(v,x,y,z,h,dt){ const moved=Math.hypot(x-v.p[0],z-v.p[2]); v.spd=dt>0?moved/dt:0; let dh=h-v.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; if(moved>0.001)v.h+=dh*Math.min(1,dt*10);
+  v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); pl.p=v.p.slice(); }
+function shortSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
+  const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:''}; Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
+function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
+  if(shortSaved){ dmCfg.scenes=shortSaved.scenes; dmCfg.loop=shortSaved.loop; dmCfg.fades=shortSaved.fades; shortSaved=null; } }
+function shortPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=demo.st, sg=K.seg; let i=0; while(i<3&&t>=sg[i+1])i++;
+  if(K.capT>0){ K.capT-=dt; K.capAge=(K.capAge||0)+dt; if(K.capT<=0)shortCap(''); }
+  if(i!==K.i){ K.i=i; K.done={}; ['shortA','shortB','shortC','shortD'][i]&&SHORT_INIT[i](K); }
+  const u=(t-sg[i])/(sg[i+1]-sg[i]), sl=sg[i+1]-sg[i]; SHORT_TICK[i](K,u,dt,sl); return {ix:0,iz:0}; }
+const at=(K,key,cond,fn)=>{ if(cond&&!K.done[key]){ K.done[key]=1; fn(); } };
+const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]];
+const SHORT_INIT=[
+  K=>{ shortWorld('mansion'); const F1=MN.F1, m=mansionK; m.mower&&removeVehicle(m.mower); m.mower=null;
+    const door=grp(K.root,94.5,F1,70.05); const dm=mm(0xe8e4dc); mb(door,15.8,4,0.22,dm,0,2,0); for(let k=0;k<4;k++)mb(door,15.6,0.06,0.25,mm(0xb8b4ac),0,0.6+k*0.9,0); mb(door,1.2,0.12,0.28,mm(0x6a6a70),0,0.5,0.05); K.door=door; K.dv=null;
+    K.bro=seatPerson(K.root,87.4,F1+0.47-0.72,73.2,Math.PI/2+0.35,''); { const ch=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b); }
+    K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother';
+    makeGateway(38,F1,78,false,'drag'); refreshPortals(); K.lucy=shortLucy(66.5,F1,82.6);
+    K.v=shortMower(MW_GAR.x,F1,MW_GAR.z0,Math.PI,'mower'); shortCap('SATURDAY\nCHORES...'); },
+  K=>{ shortWorld('drag'); const D=dragK, Z=DR.Z0; K.v=shortMower(45,DR.GY,Z+14,0,'mower'); K.rv=D.cars.find(c=>c.type==='dragster')||D.cars[0]; const a=K.rv; a.p=[52.5,DR.GY,Z+13]; a.h=0; a.spd=0; vehPlace(a); a.npc={script:1};
+    if(!a.drv){ a.drv=driverMesh(randomLook()); const st=a.vm.seat; a.drv.position.set(st[0],st[1]-0.7,st[2]); a.m.add(a.drv); } if(a.owner)a.owner.g.visible=false;
+    makeGateway(44,DR.GY,Z-150,true,'odyssey'); refreshPortals(); K.lucy=shortLucy(42.2,DR.GY,Z-70); K.rz=a.p[2]; },
+  K=>{ shortWorld('odyssey'); const S=odyK.sea; let best=null; for(let k=0;k<400&&!best;k++){ const x=40+Math.random()*176, z=40+Math.random()*176, h=Math.random()*6.28, f=[-Math.sin(h),-Math.cos(h)], r=[Math.cos(h),-Math.sin(h)]; let ok=true;
+      for(let d=-4;d<=95&&ok;d+=3)for(const o of [0,6])if(!seaOpen(x+f[0]*d+r[0]*o,z+f[1]*d+r[1]*o,3))ok=false; if(ok)best={x,z,h,f,r}; }
+    K.sea=best||{x:128,z:180,h:0,f:[0,-1],r:[1,0]}; const B2=K.sea; K.v=shortMower(B2.x,OD.SEA+7,B2.z,B2.h,'mower');
+    const wh=S.whale; K.lucyM=petMesh(petClean(Object.assign({id:9002},LUCY))); K.lucyM.g.position.set(0,1.05,0.6); K.lucyM.g.rotation.y=Math.PI/2; wh.g.add(K.lucyM.g); }, // Lucy surfs on the whale's back
+  K=>{ shortWorld('mansion'); const F1=MN.F1, m=mansionK; m.mower&&removeVehicle(m.mower); m.mower=null;
+    const door=grp(K.root,94.5,F1+3.6,70.05); mb(door,15.8,4,0.22,mm(0xe8e4dc),0,2,0); for(let k=0;k<4;k++)mb(door,15.6,0.06,0.25,mm(0xb8b4ac),0,0.6+k*0.9,0); mb(door,1.2,0.12,0.28,mm(0x6a6a70),0,0.5,0.05); K.door=door;
+    K.bro=seatPerson(K.root,87.4,F1+0.47-0.72,73.2,Math.PI/2+0.35,''); { const ch=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b); }
+    K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.lucy=shortLucy(84.2,F1,75.6);
+    K.v=shortMower(90.8,F1,96,0,'mower'); shortFlash(); } ];
+function broTick(K,dt,lookAt){ const B2=K.bro, R=B2.R; if(!B2)return; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=0.9; const sip=K.sip>0; R.armR.rotation.x=sip?2.2:1.0; if(K.sip>0)K.sip-=dt;
+  if(lookAt){ const w=Math.atan2(-(lookAt[0]-B2.g.position.x),-(lookAt[2]-B2.g.position.z))-B2.g.rotation.y; let d=w; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; R.head.rotation.y+=(Math.max(-1.2,Math.min(1.2,d))-R.head.rotation.y)*Math.min(1,dt*5); } else R.head.rotation.y*=Math.max(0,1-dt*4);
+  animRig(R,dt,0); if(B2.bubT>0){ B2.bubT-=dt; if(B2.bubT<=0&&B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } } }
+const SHORT_TICK=[
+  // the garage, the lawn and the portal
+  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1, s0=0.07*12/sl, sDoor=0.16, sLand=0.3; let d;
+    if(u<s0){ d=0; K.sip=u<s0*0.6?1:0; } else { const k=(u-s0)/(0.97-s0); d=k<0.12?6.1*(k/0.12)**2:6.1+(k-0.12)/0.88*(K.total||64-6.1); }
+    if(!K.total){ K.total=shortAlong(MW_PATH,1).L; } const f=Math.min(1,d/K.total), q=shortAlong(MW_PATH,f); let y=F1, pitch=0;
+    if(d>6.1&&d<13.7){ const a=(d-6.1)/7.6; y=F1+Math.sin(a*Math.PI)*2.4; pitch=-0.35*Math.cos(a*Math.PI); }
+    at(K,'burst',d>6.0,()=>{ K.dv=[0,5,10,3]; sfx('boom'); sfx('break'); burst(94.5,F1+2,70,new THREE.Color(0.9,0.9,0.85),20); shortCap('WAIT...\nWHAT?!'); npcSay(K.bro,'Hey!! My mower!'); });
+    at(K,'land',d>13.7,()=>{ burst(q.x-0.5,F1+0.2,q.z-0.5,new THREE.Color(0.45,0.75,0.3),14); sfx('thunk'); });
+    if(K.dv){ const D2=K.door; K.dv[1]-=14*dt; D2.position.x+=K.dv[0]*dt; D2.position.y=Math.max(F1-1.9,D2.position.y+K.dv[1]*dt); D2.position.z+=K.dv[2]*dt; if(D2.position.y>F1-1.9)D2.rotation.x+=K.dv[3]*dt; else { K.dv[2]*=0.9; } }
+    shortDrive(v,q.x,y,q.z,q.h,dt); v.pitch=pitch; vehPlace(v);
+    at(K,'portal',u>0.9,()=>{ shortCap(''); }); at(K,'flash',u>0.955,()=>shortFlash());
+    broTick(K,dt,u>s0?v.p:null); },
+  // the drag strip: the flame makeover, the countdown, the race and the portal
+  (K,u,dt,sl)=>{ const v=K.v, a=K.rv, Z=DR.Z0;
+    at(K,'flame',u>0.1,()=>{ v.lockLook=0; mowerLook(v,'flame'); v.lockLook=1; shortCap('UPGRADE!'); });
+    at(K,'c3',u>0.27,()=>{ shortCap('3'); sfx('click'); }); at(K,'c2',u>0.32,()=>{ shortCap('2'); sfx('click'); }); at(K,'c1',u>0.37,()=>{ shortCap('1'); sfx('click'); });
+    at(K,'go',u>0.42,()=>{ shortCap('GO!'); sfx('buy'); }); at(K,'chute',u>0.47,()=>{ a.chute=true; chuteShow(a,true); snd(()=>noise(900,0.5,0.25,'lowpass')); shortCap('OOPS'); });
+    at(K,'win',u>0.74,()=>shortCap('MOWER\nWINS?!')); at(K,'flash',u>0.955,()=>shortFlash());
+    let d=0; if(u>0.42){ const k=Math.min(1,(u-0.42)/0.55); d=(14+150+4)*Math.pow(k,1.5); } shortDrive(v,45,DR.GY,Z+14-d,0,dt); v.pitch=u>0.42&&u<0.6?-0.18:0; vehPlace(v);
+    let rz=Z+13; if(u>0.42){ const k=u-0.42; rz=Z+13-Math.min(26,k*sl*40)+(k>0.05?0:0); } const old=a.p[2]; a.p=[52.5,DR.GY,Math.min(old,rz)]; a.spd=dt?(old-a.p[2])/dt:0; vehPlace(a); a.wheel+=a.spd*dt/(a.vm.wr||0.4); for(const w of a.vm.wheels)w.rotation.x=-a.wheel;
+    if(K.lucy)K.lucy.hd=Math.atan2(-(v.p[0]-K.lucy.p[0]),-(v.p[2]-K.lucy.p[2])); },
+  // the Odyssey Sea: a splash, wave runner mode, racing the whale (Lucy on its back), a big jump
+  (K,u,dt,sl)=>{ const v=K.v, B2=K.sea, S=odyK.sea, wh=S.whale; const sp=0.1; let y, d;
+    if(u<sp){ const k=u/sp; y=OD.SEA+7-6.1*k*k; d=k*6; } else { d=6+(u-sp)/0.85*84; y=OD.SEA+0.9+Math.sin(demo.st*5)*0.06; }
+    at(K,'splash',u>=sp,()=>{ v.lockLook=0; mowerLook(v,'jet'); v.lockLook=1; odSfx('splash'); for(let k=0;k<4;k++)burst(v.p[0]-0.5+(Math.random()-0.5)*2,OD.SEA+0.5,v.p[2]-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd8f0ff),14); shortCap('WAVE RUNNER\nMODE'); });
+    at(K,'race',u>0.42,()=>{ shortCap('RACE YOU!'); wh.spout=2; seaSfx('spout',wh.p); });
+    if(u>0.8&&u<0.98){ const k=(u-0.8)/0.18; y+=Math.sin(Math.min(1,k)*Math.PI)*3.2; } at(K,'flash',u>0.955,()=>shortFlash());
+    const x=B2.x+B2.f[0]*d, z=B2.z+B2.f[1]*d; shortDrive(v,x,y,z,B2.h,dt); v.pitch=u>0.8&&u<0.9?-0.3:0; vehPlace(v);
+    const wd=Math.max(0,d-2.5+Math.sin(demo.st*0.8)*1.5); wh.p=[B2.x+B2.f[0]*wd+B2.r[0]*6,OD.SEA+0.1,B2.z+B2.f[1]*wd+B2.r[1]*6]; wh.h=B2.h; wh.tgt=null; wh.chase=false;
+    const pc=S.pod.c; pc[0]=x+B2.f[0]*10-B2.r[0]*5; pc[2]=z+B2.f[1]*10-B2.r[1]*5; },
+  // home: into the garage, the door comes down, and your brother wonders what he missed
+  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1; const k=Math.min(1,u/0.55), e=1-(1-k)*(1-k), z=96-(96-63.5)*e; shortDrive(v,90.8,F1,z,0,dt);
+    at(K,'what',u>0.18,()=>{ npcSay(K.bro,'...what did I miss?'); shortCap(''); }); at(K,'hush',u>0.8,()=>{ const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; }); at(K,'door',u>0.55,()=>sfx('click'));
+    if(u>0.55){ K.door.position.y=Math.max(F1,F1+3.6-(u-0.55)/0.2*3.6); } if(u>0.75)K.door.position.y=F1;
+    K.sip=u>0.86?1:0; broTick(K,dt,u<0.8?v.p:null); } ];
+// the camera for each part (tall 9:16 framing)
+function shortCam(dt){ const K=shortK; if(!K||K.i<0)return; const v=K.v, t=demo.st, sg=K.seg, i=K.i, u=(t-sg[i])/(sg[i+1]-sg[i]); let want, look, snap=false;
+  const f=vFwd(v.h), r=vRight(v.h), p=v.p;
+  if(i===0){ if(u<0.2){ want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } // the opening shot (the last shot matches it)
+    else if(u<0.62){ want=new THREE.Vector3(p[0]+r[0]*3.2-f[0]*4.2,p[1]+2.0,p[2]+r[1]*3.2-f[1]*4.2); look=new THREE.Vector3(p[0]+f[0]*3,p[1]+0.8,p[2]+f[1]*3); snap=true; }
+    else if(u<0.8){ want=new THREE.Vector3(p[0]-f[0]*5.5-r[0]*1.5,MN.F1+2.6,p[2]-f[1]*5.5-r[1]*1.5); look=new THREE.Vector3(p[0]+f[0]*6,MN.F1+1.2,p[2]+f[1]*6); snap=true; }
+    else { want=new THREE.Vector3(33.0,MN.F1+1.5,76.6); look=new THREE.Vector3(39,MN.F1+1.4,79.4); } } // through the portal, toward the camera
+  else if(i===1){ const Z=DR.Z0; if(u<0.25){ want=new THREE.Vector3(46.8,DR.GY+1.3,p[2]-3.2); look=new THREE.Vector3(p[0],DR.GY+0.7,p[2]); }
+    else if(u<0.5){ want=new THREE.Vector3(48.7,DR.GY+4.2,Z+23); look=new THREE.Vector3(48.7,DR.GY+0.6,Z+7); }
+    else { want=new THREE.Vector3(p[0]+3.4,DR.GY+1.3,p[2]+2.2); look=new THREE.Vector3(p[0]-0.5,DR.GY+0.8,p[2]-5); snap=true; } }
+  else if(i===2){ if(u<0.12){ want=new THREE.Vector3(p[0]+r[0]*5-f[0]*4,OD.SEA+4.5,p[2]+r[1]*5-f[1]*4); look=new THREE.Vector3(p[0],p[1],p[2]); }
+    else if(u<0.6){ want=new THREE.Vector3(p[0]-r[0]*3.5-f[0]*3.5,OD.SEA+2.6,p[2]-r[1]*3.5-f[1]*3.5); look=new THREE.Vector3(p[0]+r[0]*3+f[0]*5,OD.SEA+1,p[2]+r[1]*3+f[1]*5); snap=true; }
+    else { want=new THREE.Vector3(p[0]+f[0]*7+r[0]*2.5,OD.SEA+1.8,p[2]+f[1]*7+r[1]*2.5); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; }
+    const wh=odyK.sea.whale; seaPlace(wh,wh.g); wh.g.visible=true; }
+  else { if(u<0.6){ want=new THREE.Vector3(96.2,MN.F1+2.3,p[2]+6.5); look=new THREE.Vector3(91.2,MN.F1+1.3,p[2]-3); } else { want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } }
+  if(!demo.cam||demo.cam.k!=='short'||demo.cam.i!==i){ demo.cam={k:'short',i,p:want.clone(),l:look.clone()}; } const c=demo.cam; const kk=snap?7:3; c.p.lerp(want,Math.min(1,dt*kk)); c.l.lerp(look,Math.min(1,dt*(kk+1)));
+  if(i===3&&u>0.6||i===0&&(u<0.2||u>=0.8)){ c.p.copy(want); c.l.copy(look); } camera.position.copy(c.p); camera.lookAt(c.l); model.visible=true; }
+
 // --- the world's life: what you see when you visit (and what the story uses)
 let odyK=null;
 function onOdyssey(){ return curPlace()==='odyssey'&&!!odyK; }
@@ -7407,7 +7554,7 @@ function seaSteer(c,tgt,spd,dt,need,turn){ const dx=tgt[0]-c.p[0], dz=tgt[2]-c.p
   const nx=c.p[0]-Math.sin(c.h)*spd*dt, nz=c.p[2]-Math.cos(c.h)*spd*dt; if(seaOpen(nx-Math.sin(c.h)*1.5,nz-Math.cos(c.h)*1.5,need)){ c.p[0]=nx; c.p[2]=nz; return true; } c.tgt=null; return false; }
 function seaPlace(c,g,pitch,roll){ g.position.set(c.p[0],c.p[1],c.p[2]); g.rotation.set(pitch||0,c.h,roll||0,'YXZ'); }
 function seaNear(p,R){ return Math.hypot(p[0]-camera.position.x,p[2]-camera.position.z)<(R||70); }
-function odSeaTick(dt){ const K=odyK, S=K&&K.sea; if(!S)return; S.t+=dt; const t=S.t, d=new THREE.Object3D(), SEA=OD.SEA, big=!demo;
+function odSeaTick(dt){ const K=odyK, S=K&&K.sea; if(!S)return; S.t+=dt; const t=S.t, d=new THREE.Object3D(), SEA=OD.SEA, big=!demo||!!shortK;
   const swim=!demo&&onOdyssey()&&!K.ride&&inWater(pl.p[0],pl.p[1]+0.4,pl.p[2]), sailing=!demo&&!!K.ride, me=pl.p;
   // kelp sways
   let n=0; for(const k of S.kelp){ let x=k.p[0], z=k.p[2], y=k.p[1]; for(let j=0;j<k.n;j++){ const sw=Math.sin(t*1.1+k.ph+j*0.55)*0.12*(j+1); d.position.set(x+sw,y+0.47,z); d.rotation.set(0,k.ph,sw*0.6); d.scale.set(1,1,1); d.updateMatrix(); S.kelpM.setMatrixAt(n,d.matrix);
