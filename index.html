@@ -10461,10 +10461,13 @@ const PET_KEY='blockstar_pets';
 const CAT_COLS=[['Black','#1a1a1e'],['White','#f4f2ee'],['Orange','#e8902a'],['Grey','#8a8c94'],['Cream','#f0dcb0'],['Brown','#6a4428'],['Silver','#c8ccd4'],['Dark grey','#4a4c54']];
 const DOG_COLS=[['Black','#1c1c1e'],['White','#f4f2ee'],['Brown','#6a4428'],['Chocolate','#4a2e1a'],['Golden','#d8a040'],['Yellow','#ecd29a'],['Grey','#8a8a90'],['Red','#b0502a'],['Apricot','#f0c890']];
 const CAT_PATS=[['solid','Solid'],['tabby','Tabby stripes'],['tuxedo','Tuxedo'],['spots2','Spotted (2 colors)'],['spots3','Calico (3 colors)']];
-const DOG_PATS=[['solid','Solid'],['belly','Light belly'],['spots2','Spotted (2 colors)'],['spots3','Spotted (3 colors)']];
+const DOG_PATS=[['solid','Solid'],['belly','Light belly'],['spots2','Spotted (2 colors)'],['spots3','Spotted (3 colors)'],['freckles','Freckles & dark ears']];
 const DOG_BREEDS={mixed:{n:'🐕 Mixed breed'},lab:{n:'🦮 Labrador',coat:'short',ears:'flop',size:1,col:['#ecd29a','#f4f2ee','#1c1c1e'],pat:'solid'},golden:{n:'🐕 Golden Retriever',coat:'long',ears:'flop',size:1,col:['#d8a040','#f0d090','#6a4428'],pat:'solid'},
   poodle:{n:'🐩 Poodle',coat:'curly',ears:'flop',size:0.9,col:['#f4f2ee','#f0c890','#1c1c1e'],pat:'solid'},jack:{n:'🐶 Jack Russell',coat:'short',ears:'fold',size:0.72,col:['#f4f2ee','#8a5a2a','#1c1c1e'],pat:'spots3'},
-  wolf:{n:'🐺 Wolf',coat:'shaggy',ears:'up',size:1.2,col:['#8a8a90','#e0e0d8','#4a4a50'],pat:'belly'}};
+  wolf:{n:'🐺 Wolf',coat:'shaggy',ears:'up',size:1.2,col:['#8a8a90','#e0e0d8','#4a4a50'],pat:'belly'},
+  pyr:{n:'🐾 Pyrenees mix',coat:'long',ears:'flop',size:1.15,col:['#f2f0ea','#9a9aa2','#2e2e34'],pat:'freckles'}};
+// the channel's star: the hero's white dog Lucy (fluffy, with dark grey ear patches, a grey smudge by her nose and freckles)
+const LUCY={kind:'dog',name:'Lucy',breed:'pyr',coat:'long',ears:'flop',size:1.15,col:['#f2f0ea','#9a9aa2','#2e2e34'],pat:'freckles',seed:7};
 const PET_NAMES=['Max','Bella','Luna','Charlie','Cooper','Daisy','Milo','Lucy','Rocky','Coco','Oreo','Pepper','Shadow','Biscuit','Ziggy','Nala','Bear','Penny','Scout','Mochi','Tigger','Sunny','Pickles','Waffles'];
 let pets={list:[],next:1}, petEnts=[];
 function petsLoad(){ try{ const s=JSON.parse(localStorage.getItem(PET_KEY)||'null'); if(s&&Array.isArray(s.list)){ pets={list:s.list.filter(p=>p&&(p.kind==='cat'||p.kind==='dog')).slice(0,60).map(petClean),next:Math.max(1,s.next|0)}; } }catch(e){} }
@@ -10476,6 +10479,7 @@ function petClean(p){ const cat=p.kind==='cat', hex=/^#[0-9a-f]{6}$/i; const o={
 // --- the look: a blocky cat or dog, its coat colored and patterned with a little texture
 function petTex(p){ const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d'), r=mulberry32(p.seed||1); x.fillStyle=p.col[0]; x.fillRect(0,0,16,16);
   if(p.pat==='tabby'){ x.fillStyle=p.col[1]; for(let y=1;y<16;y+=4)x.fillRect(0,y,16,2); }
+  if(p.pat==='freckles'){ x.fillStyle=p.col[1]; x.globalAlpha=0.55; for(let i=0;i<4;i++)x.fillRect(Math.floor(r()*16),Math.floor(r()*16),1,1); x.globalAlpha=1; } // a few faint grey freckles
   if(p.pat==='spots2'||p.pat==='spots3'){ for(let i=0;i<(p.pat==='spots3'?7:5);i++){ x.fillStyle=p.col[p.pat==='spots3'?1+(i%2):1]; const w=2+Math.floor(r()*5), h=2+Math.floor(r()*4); x.fillRect(Math.floor(r()*16)-1,Math.floor(r()*16)-1,w,h); } }
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
 function petMesh(p){ const g=new THREE.Group(), cat=p.kind==='cat', s=(cat?0.72:1)*p.size, tex=petTex(p), M=new THREE.MeshLambertMaterial({map:tex}), C2=new THREE.MeshLambertMaterial({color:p.col[1]}), dk=new THREE.MeshLambertMaterial({color:0x1a1210}),
@@ -10487,14 +10491,19 @@ function petMesh(p){ const g=new THREE.Group(), cat=p.kind==='cat', s=(cat?0.72:
   if(curly){ add(body,bw*1.25,bh*1.15,bl*0.45,M,0,0.02,-bl*0.25); }
   const legs=[]; for(const [lx,lz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const L=new THREE.Group(); L.position.set(lx*bw*0.32,legH,lz*bl*0.36); g.add(L); add(L,0.12*s,legH,0.12*s,p.pat==='tuxedo'?C2:M,0,-legH/2,0); if(curly){ const pf=msph(L,0.09*s,M,0,-legH*0.8,0); } legs.push(L); }
   const head=new THREE.Group(); head.position.set(0,by+bh*0.45,-bl/2-0.02*s); g.add(head); const hs=(cat?0.3:0.36)*s; add(head,hs,hs*0.92,hs*0.95,M,0,0,-hs*0.35);
-  if(!cat){ add(head,hs*0.55,hs*0.45,hs*0.55,p.pat==='belly'?C2:M,0,-hs*0.18,-hs*0.95); add(head,0.09*s,0.07*s,0.05*s,dk,0,-hs*0.05,-hs*1.24); } else { add(head,hs*0.45,hs*0.3,0.06*s,p.pat==='tuxedo'?C2:M,0,-hs*0.22,-hs*0.84); add(head,0.05*s,0.04*s,0.03*s,new THREE.MeshLambertMaterial({color:0xff8aa0}),0,-hs*0.12,-hs*0.87); }
+  if(!cat){ add(head,hs*0.55,hs*0.45,hs*0.55,p.pat==='belly'?C2:M,0,-hs*0.18,-hs*0.95); if(p.pat==='freckles')add(head,0.075*s,0.055*s,0.05*s,dk,0,-hs*0.12,-hs*1.24); else add(head,0.09*s,0.07*s,0.05*s,dk,0,-hs*0.05,-hs*1.24); } else { add(head,hs*0.45,hs*0.3,0.06*s,p.pat==='tuxedo'?C2:M,0,-hs*0.22,-hs*0.84); add(head,0.05*s,0.04*s,0.03*s,new THREE.MeshLambertMaterial({color:0xff8aa0}),0,-hs*0.12,-hs*0.87); }
   for(const sx of[-1,1]){ add(head,0.05*s,0.06*s,0.03*s,dk,sx*hs*0.22,hs*0.12,-hs*0.83); }
   if(cat){ for(const sx of[-1,1]){ const e=new THREE.Mesh(new THREE.ConeGeometry(0.07*s,0.13*s,4),M); e.position.set(sx*hs*0.3,hs*0.5,-hs*0.3); e.rotation.y=Math.PI/4; head.add(e); } for(const sx of[-1,1])for(const dy of [-0.02,0.02])add(head,0.22*s,0.01,0.01,new THREE.MeshBasicMaterial({color:0xf2f2f2}),sx*hs*0.42,-hs*0.2+dy,-hs*0.82);
     if(p.coat==='long')add(head,hs*1.2,hs*0.5,hs*0.5,M,0,-hs*0.35,-hs*0.05); }
   else { const ears=p.ears||DOG_BREEDS[p.breed].ears||'flop'; for(const sx of[-1,1]){ if(ears==='up'){ const e=new THREE.Mesh(new THREE.ConeGeometry(0.08*s,0.18*s,4),M); e.position.set(sx*hs*0.3,hs*0.58,-hs*0.25); e.rotation.y=Math.PI/4; head.add(e); }
-      else { const e=add(head,0.07*s,(ears==='fold'?0.12:fluffy||curly?0.3:0.22)*s,0.14*s,curly?M:M,sx*hs*0.52,ears==='fold'?hs*0.35:hs*0.02,-hs*0.3); e.rotation.z=sx*(ears==='fold'?-0.6:0.12); } }
+      else { const fr=p.pat==='freckles', eh=(ears==='fold'?0.12:fluffy||curly?0.3:0.22)*s, e=add(head,0.07*s,eh,0.14*s,fr?new THREE.MeshLambertMaterial({color:p.col[2]}):M,sx*hs*0.52,ears==='fold'?hs*0.35:hs*0.02,-hs*0.3); e.rotation.z=sx*(ears==='fold'?-0.6:0.12);
+        if(fr){ const fringe=box(0.075*s,eh*0.3,0.15*s,M); fringe.position.set(0,-eh*0.42,0); e.add(fringe); const edge=box(0.075*s,eh*0.9,0.03*s,M); edge.position.set(0,0,-0.07*s); e.add(edge); } } } // dark ear patches with a white fluffy fringe
+    if(p.pat==='freckles'){ const G=new THREE.MeshLambertMaterial({color:p.col[1]}); add(head,0.06*s,0.05*s,0.02*s,G,-hs*0.16,-hs*0.16,-hs*1.235); add(head,0.035*s,0.035*s,0.02*s,G,-hs*0.12,hs*0.38,-hs*0.83); // a grey smudge beside her nose, a freckle on her forehead
+      const W2=new THREE.MeshLambertMaterial({color:0xffffff}); add(head,hs*1.12,hs*0.55,hs*0.4,W2,0,-hs*0.5,-hs*0.05); } // a fluffy white ruff round her neck
     if(curly)msph(head,hs*0.42,M,0,hs*0.55,-hs*0.3); if(p.coat==='shaggy')add(head,hs*1.1,hs*0.3,hs*0.6,M,0,hs*0.45,-hs*0.3); }
-  const tail=new THREE.Group(); tail.position.set(0,by+bh*0.3,bl/2); g.add(tail); const tl=(cat?0.45:0.32)*s, tw=(fluffy?0.14:cat?0.06:0.08)*s; const tb=add(tail,tw,tw,tl,M,0,0,tl/2); tail.rotation.x=cat?-1.1:-0.6; if(curly)msph(tail,0.11*s,M,0,0,tl);
+  const tail=new THREE.Group(); tail.position.set(0,by+bh*0.3,bl/2); g.add(tail); const tl=(cat?0.45:0.32)*s, tw=(fluffy?0.14:cat?0.06:0.08)*s; if(p.pat==='freckles'){ const T2=0.62*s, G=new THREE.MeshLambertMaterial({color:p.col[1]}); add(tail,0.12*s,0.12*s,T2*0.3,M,0,0,T2*0.15); // Lucy's big plumed tail: it gets fluffier toward the tip, with a grey patch
+      add(tail,0.2*s,0.17*s,T2*0.35,M,0,-0.01*s,T2*0.46); add(tail,0.21*s,0.06*s,T2*0.2,G,0,0.06*s,T2*0.5); add(tail,0.26*s,0.2*s,T2*0.4,M,0,-0.02*s,T2*0.8); add(tail,0.14*s,0.12*s,T2*0.12,M,0,-0.03*s,T2*1.04); tail.userData.plume=1; }
+  else add(tail,tw,tw,tl,M,0,0,tl/2); tail.rotation.x=cat?-1.1:-0.6; if(curly)msph(tail,0.11*s,M,0,0,tl);
   if(cat){ const t2=new THREE.Group(); t2.position.set(0,0,tl); tail.add(t2); add(t2,tw,tw,tl*0.6,M,0,0,tl*0.3); t2.rotation.x=0.8; }
   return {g,body,head,legs,tail,legH,s,h:by+bh/2+hs*0.6,mat:M}; }
 // --- pets in the world
@@ -10561,9 +10570,9 @@ function petTick(e,dt){ const p=e.pet, M=e.M; e.t+=dt; if(e.bubT>0){ e.bubT-=dt;
   const g=M.g; g.position.set(e.p[0],e.p[1]+e.yo,e.p[2]); g.rotation.y=e.hd+(e.lunge>0?0:0); if(e.lunge>0){ e.lunge-=dt; g.position.x+=-Math.sin(e.hd)*e.lunge*0.8; g.position.z+=-Math.cos(e.hd)*e.lunge*0.8; }
   e.ph+=dt*Math.abs(spd)*3.2; const sw=Math.abs(spd)>0.3?Math.sin(e.ph)*0.6:0; M.legs[0].rotation.x=M.legs[3].rotation.x=sw; M.legs[1].rotation.x=M.legs[2].rotation.x=-sw;
   M.tail.rotation.y=e.wag>0.05?Math.sin(e.t*(p.kind==='cat'?5:16))*0.6*Math.min(1,e.wag):Math.sin(e.t*1.5)*0.08;
-  const sit=pose==='sit', lie=pose==='lie'; M.body.rotation.x=sit?-0.45:0; M.body.position.y=(lie?M.legH*0.35:sit?M.legH*0.8:M.legH)+(M.body.children[0].geometry.parameters.height/2);
+  const sit=pose==='sit', lie=pose==='lie', bgp=M.body.children[0].geometry.parameters, lift=sit?Math.sin(0.55)*bgp.depth*0.5:0; M.body.rotation.x=sit?0.55:0; M.body.position.y=(lie?M.legH*0.35:sit?M.legH*0.55:M.legH)+(bgp.height/2); // sitting: chest up, rump down
   M.legs[2].rotation.x=M.legs[3].rotation.x=sit?-1.3:lie?-1.4:M.legs[2].rotation.x; if(lie){ M.legs[0].rotation.x=M.legs[1].rotation.x=-1.4; } M.legs.forEach((L,i)=>L.position.y=lie?M.legH*0.3:sit&&i>1?M.legH*0.5:M.legH);
-  M.head.position.y=M.body.position.y+(M.body.children[0].geometry.parameters.height)*0.45+(sit?0.06:0); M.tail.position.y=M.body.position.y-(sit?0.1:0)+0.02;
+  M.head.position.y=M.body.position.y+bgp.height*0.45+lift; M.head.position.z=-bgp.depth/2*(sit?Math.cos(0.55):1)-0.02*M.s; M.tail.position.y=M.body.position.y-lift+0.02; M.tail.position.z=bgp.depth/2*(sit?Math.cos(0.55):1); if(M.tail.userData.plume){ M.tail.rotation.x=sit?0.08:lie?0.15:-0.25; if(sit)M.tail.position.y=Math.max(0.12*M.s,M.tail.position.y); }
   if(e.hurtT>0){ e.hurtT-=dt; M.g.visible=Math.floor(e.hurtT*20)%2===0; } else M.g.visible=true; }
 function petFaint(e){ const p=e.pet; p.hp=0; odPoofPet(e); if(e.demo){ petDespawn(e); return; } p.st='rest'; p.w=null; p.at=null; p.rest=Date.now()+60000; petsSave(); petDespawn(e); toast('🤕 '+p.name+' is hurt and goes to rest at the Pet Shop. Ready in 1 minute.'); }
 
