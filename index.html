@@ -2006,8 +2006,10 @@ function buildTitle(){ titleRoot.clear(); const g=titleRoot, grass=lm(0x5fa03a),
     const post=box(0.14,1.5,0.14,lm(0x6b4a2a)); post.position.set(tx,0.75,tz); g.add(post); const disc=discMesh(0.5); disc.position.set(tx,1.75,tz); g.add(disc); disc.lookAt(TT.x+x,TT.y+y+1.5,TT.z+z); // its own bullseye
     skels.push({r,t:0.6+Math.random()*1.5,tg:new THREE.Vector3(tx,1.75,tz),disc}); }
   const mons=[{st:'wait',t:0.3,r:null},{st:'wait',t:2.4,r:null}]; // two monsters take turns walking up with a bullseye
-  titleK={hero,hr,lL,lR,aL,aR,skels,mons,arrows:[],shots:[],bits:[],R,t:0,aim:null,fireT:0}; }
+  const lucy=petMesh(petClean(Object.assign({id:9100},LUCY))); lucy.g.position.set(1.35,0,3.3); lucy.g.rotation.y=Math.PI+0.35; g.add(lucy.g); petSitPose(lucy); // Lucy sits beside him
+  titleK={hero,hr,lL,lR,aL,aR,skels,mons,arrows:[],shots:[],bits:[],R,t:0,aim:null,fireT:0,lucy}; }
 function updateTitle(dt){ const K=titleK; if(!K)return; K.t+=dt; animRig(K.hr,dt,0); titleA+=dt*0.12; const T=K.t, H=K.hero;
+  if(K.lucy){ const Lm=K.lucy; Lm.tail.rotation.y=Math.sin(T*9)*0.35; Lm.head.rotation.y=Math.sin(T*0.6)*0.45; Lm.head.rotation.z=Math.sin(T*0.37)*0.12; } // she wags and looks around
   const rad=camera.aspect<1?17:12, ang=0.25+Math.sin(titleA)*0.6, cx=TT.x+Math.sin(ang)*rad, cz=TT.z+Math.cos(ang)*rad+2; camera.position.set(cx,TT.y+(camera.aspect<1?5:3.8),cz); camera.lookAt(TT.x+1,TT.y+(camera.aspect<1?3.2:2.6),TT.z-0.5); // further back on tall phone screens
   // the hero shoots the bullseye a monster is carrying; hit monsters run away and a new one comes
   const tg=K.mons.find(M=>M.st==='stand'); let face=Math.PI*0.85;
@@ -2453,7 +2455,8 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   const tot=dmCfg.scenes.reduce((a,s)=>a+s.secs,0);
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
     '<h3>🎬 YouTube Shorts</h3><div class="item"><div class="ic">🚜</div><div class="tx"><b>Mower vs. Everything</b><div class="fx">The riding mower breaks out of the garage, races a dragster and a whale, and comes home. Lucy is hiding in every world. Records a tall 1080×1920 video with the game\'s sound, ready for YouTube Shorts.</div>'+
-    '<div class="chips" style="margin-top:6px">'+[30,45,60].map(n=>'<div class="chip'+(shortLen===n?' on':'')+'" data-slen="'+n+'">'+n+' s</div>').join('')+'</div></div></div>'+
+    '<div class="chips" style="margin-top:6px">'+[30,45,60].map(n=>'<div class="chip'+(shortLen===n?' on':'')+'" data-slen="'+n+'">'+n+' s</div>').join('')+'</div>'+
+    '<div class="fx" style="margin-top:8px">Hero\'s outfit</div><div class="chips" style="margin-top:4px">'+Object.entries(SHORT_OUTFITS).map(([k,l])=>'<div class="chip'+(shortOutfit===k?' on':'')+'" data-sout="'+k+'">'+l+'</div>').join('')+'</div></div></div>'+
     '<div class="row"><button class="mbtn" id="shWatch">▶ Watch it</button><button class="mbtn gold" id="shRec">⏺ Record video</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlayTop">▶ Quick start: play the demo</button></div><h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
   dmCfg.scenes.forEach((s,i)=>{ h+='<div class="dmScene"><div class="dmHead"><b>Scene '+(i+1)+'</b><span class="sbtns"><button class="ibtn gray" data-mv="'+i+'" data-d="-1"'+(i?'':' disabled')+'>▲</button><button class="ibtn gray" data-mv="'+i+'" data-d="1"'+(i<dmCfg.scenes.length-1?'':' disabled')+'>▼</button><button class="ibtn gray" data-dup="'+i+'" title="Copy this scene">⧉</button><button class="ibtn gray" data-rm="'+i+'">✕</button></span></div>'+
@@ -2488,6 +2491,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-slen]').forEach(el=>onClick(el,()=>{ shortLen=+el.dataset.slen; try{ localStorage.setItem('blockstar_short_len',String(shortLen)); }catch(e){} redraw(); }));
+  box2.querySelectorAll('[data-sout]').forEach(el=>onClick(el,()=>{ shortOutfit=el.dataset.sout; try{ localStorage.setItem('blockstar_short_outfit',shortOutfit); }catch(e){} redraw(); }));
   onClick($('shWatch'),()=>shortRun(false)); onClick($('shRec'),()=>shortRun(true));
   box2.querySelectorAll('[data-i]').forEach(el=>{ const ev=el.tagName==='SELECT'?'change':'input'; el.addEventListener(ev,()=>{ const s=dmCfg.scenes[+el.dataset.i]; s[el.dataset.k]=el.dataset.k==='secs'?el.value:el.value;
     dmCfg.scenes[+el.dataset.i]=cleanScene(s); if(el.dataset.k==='secs')dmCfg.scenes[+el.dataset.i].secs=Math.max(3,+el.value||0)||3; if(el.dataset.k==='act'||el.dataset.k==='mstory'){ const sc2=dmCfg.scenes[+el.dataset.i], want=sc2.act==='thanks'?(sc2.mstory==='tour'?80:sc2.mstory==='bowl'?60:sc2.mstory==='hunt'?82:sc2.mstory==='mow'?46:95):sc2.act==='shortmow'?60:sc2.act==='drag'?75:isFilm(sc2)?OD_CH[sc2.act].secs:sc2.act==='petshop'?25:sc2.act==='petranch'?32:0; if(want&&sc2.secs<want)sc2.secs=want; } // long enough for the whole story
@@ -4660,7 +4664,7 @@ function chairMesh(){ const g=new THREE.Group(), w=lm(0x8a5a2e), dk=lm(0x6b4220)
   g.rotation.order='YXZ'; return g; }
 function onRanch(){ return curPlace()==='ranch'&&!!ranchK; }
 function riding(){ return !!(ranchK&&ranchK.ride); }
-function heroLook(){ if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
+function heroLook(){ if(shortK&&shortK.look)return shortK.look; if(demo&&demo.sc&&demo.sc.act==='ride')return Object.assign({},look,COWBOY); // the demo always rides as a cowboy
   if(demo&&demo.sc&&typeof isElf==='function'&&isElf(demo.sc))return Object.assign({},look,{skin:'#f6dcc8',hair:'curly',hairC:'#f0d070',eyes:'#3a7ad8',beard:'none',glasses:'none'}); // Buddy: the same fair skin, blond curls and blue eyes from baby to grown-up
   if(curPlace()==='ranch'&&ranchK){ const L=Object.assign({},look); for(const [k] of GEAR)if(ranchK.gear[k])L[k]=COWBOY[k]; if(ranchK.gear.neck)L.neckC=COWBOY.neckC;
     if(ranchK.gear.hat)L.hatC=COWBOY.hatC; if(ranchK.gear.top)L.topC=COWBOY.topC; if(ranchK.gear.bottom)L.bottomC=COWBOY.bottomC; if(ranchK.gear.shoes)L.shoeC=COWBOY.shoeC; if(ranchK.gear.beard)L.beard=ranchK.gear.beard; return L; }
@@ -6914,7 +6918,13 @@ function coralAction(){ if(!coralHeld||demo||!target||riding())return null; cons
 // ================= THE SHORTS RECORDER =================
 // Records the game as a tall 1080×1920 video with its sound, for YouTube Shorts. The 3D view is drawn into a video canvas every
 // frame, with the captions, fades and flashes (which are page elements, not part of the 3D view) painted on top of it.
-let shortLen=60, shortSaved=null, shortK=null;
+let shortLen=60, shortSaved=null, shortK=null, shortOutfit='current';
+try{ const o=localStorage.getItem('blockstar_short_outfit'); if(['current','random','standard'].includes(o))shortOutfit=o; }catch(e){}
+const SHORT_OUTFITS={current:'🎽 What I\'m wearing',random:'🎲 A random outfit',standard:'👕 White tee, jeans & sneakers'};
+function shortLook(){ const keep={skin:look.skin,eyes:look.eyes,hair:look.hair,hairC:look.hairC,beard:look.beard}; // always the same face and hair
+  if(shortOutfit==='random')return Object.assign(randomLook(),keep,{back:'none',cape:'none'});
+  if(shortOutfit==='standard')return Object.assign({},LOOK0,keep,{top:'tee',topC:'#f4f4f2',bottom:'jeans',bottomC:'#3a5a8a',shoes:'sneakers',shoeC:'#f2f2f2',helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',hat:'none',glasses:'none',back:'none',belt:'none',neck:'none'});
+  return Object.assign({},look); }
 try{ const n=+localStorage.getItem('blockstar_short_len'); if([30,45,60].includes(n))shortLen=n; }catch(e){}
 function shortRun(record){ audioInit(); if(record&&!(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream)){ toast('🎬 This browser can\'t record video. Try Chrome, Edge or Safari on a computer.'); return; }
   shortSaved={scenes:dmCfg.scenes,loop:dmCfg.loop,fades:dmCfg.fades}; dmCfg.scenes=[Object.assign({},DM_SCENE0,{act:'shortmow',secs:shortLen,time:'day',cam:'cine'})]; dmCfg.loop=false; dmCfg.fades=false;
@@ -6962,8 +6972,8 @@ function shortAlong(pts,f){ let L=0; const seg=[]; for(let i=1;i<pts.length;i++)
 function shortDrive(v,x,y,z,h,dt){ const moved=Math.hypot(x-v.p[0],z-v.p[2]); v.spd=dt>0?moved/dt:0; let dh=h-v.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; if(moved>0.001)v.h+=dh*Math.min(1,dt*10);
   v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); pl.p=v.p.slice(); }
 function shortSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
-  const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:''}; Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
-function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
+  const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:'',look:shortLook()}; dressHero(); Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
+function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; dressHero(); if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
   if(shortSaved){ dmCfg.scenes=shortSaved.scenes; dmCfg.loop=shortSaved.loop; dmCfg.fades=shortSaved.fades; shortSaved=null; } }
 function shortPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=demo.st, sg=K.seg; let i=0; while(i<3&&t>=sg[i+1])i++;
   if(K.capT>0){ K.capT-=dt; K.capAge=(K.capAge||0)+dt; if(K.capT<=0)shortCap(''); }
@@ -10629,6 +10639,9 @@ function petTex(p){ const c=document.createElement('canvas'); c.width=c.height=1
   if(p.pat==='freckles'){ x.fillStyle=p.col[1]; x.globalAlpha=0.55; for(let i=0;i<4;i++)x.fillRect(Math.floor(r()*16),Math.floor(r()*16),1,1); x.globalAlpha=1; } // a few faint grey freckles
   if(p.pat==='spots2'||p.pat==='spots3'){ for(let i=0;i<(p.pat==='spots3'?7:5);i++){ x.fillStyle=p.col[p.pat==='spots3'?1+(i%2):1]; const w=2+Math.floor(r()*5), h=2+Math.floor(r()*4); x.fillRect(Math.floor(r()*16)-1,Math.floor(r()*16)-1,w,h); } }
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
+function petSitPose(M){ const bgp=M.body.children[0].geometry.parameters, lift=Math.sin(0.55)*bgp.depth*0.5; M.body.rotation.x=0.55; M.body.position.y=M.legH*0.55+bgp.height/2;
+  M.legs[2].rotation.x=M.legs[3].rotation.x=1.45; M.legs.forEach((L,i)=>L.position.y=i>1?0.07*M.s:M.legH); M.head.position.y=M.body.position.y+bgp.height*0.45+lift; M.head.position.z=-bgp.depth/2*Math.cos(0.55)-0.02*M.s;
+  M.tail.position.y=M.body.position.y-lift+0.02; M.tail.position.z=bgp.depth/2*Math.cos(0.55); if(M.tail.userData.plume){ M.tail.rotation.x=0.08; M.tail.position.y=Math.max(0.12*M.s,M.tail.position.y); } }
 function petMesh(p){ const g=new THREE.Group(), cat=p.kind==='cat', s=(cat?0.72:1)*p.size, tex=petTex(p), M=new THREE.MeshLambertMaterial({map:tex}), C2=new THREE.MeshLambertMaterial({color:p.col[1]}), dk=new THREE.MeshLambertMaterial({color:0x1a1210}),
     fluffy=p.coat==='long'||p.coat==='shaggy', curly=p.coat==='curly', add=(par,w,h,d,m,x,y,z)=>{ const b=box(w,h,d,m); b.position.set(x,y,z); par.add(b); return b; };
   const legH=(cat?0.24:0.34)*s, bw=(cat?0.3:0.42)*s, bh=(cat?0.28:0.38)*s, bl=(cat?0.62:0.88)*s, by=legH+bh/2;
