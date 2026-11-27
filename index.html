@@ -553,6 +553,25 @@ function tileTex(name){ const c=document.createElement('canvas'); c.width=c.heig
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
 
 let rec=null; // the Shorts recorder, while it's recording
+// The director's toolkit (for scripted Shorts): after a Short places the camera each frame, dirCam adds the moves:
+// dirShake(strength,seconds), dirKick(degrees) for a quick zoom punch, DIR.dolly for a dolly zoom ("vertigo"), DIR.dutch for a
+// tilted angle, DIR.whip for whip pans between shots (with a motion blur that also goes into the recording), and DIR.ts, the speed
+// the world runs at (slow motion), which the Short sets from its speed ramps (shortRamp) so the video always keeps its length.
+const DIR={ts:1,fovT:75,kick:0,shk:0,shk0:1,shkA:0,dutch:0,whip:0,blur:0,dolly:null}; let dirRealDt=0;
+function dirReset(){ Object.assign(DIR,{ts:1,fovT:75,kick:0,shk:0,shkA:0,dutch:0,whip:0,blur:0,dolly:null}); canvas.style.filter=''; if(camera.fov!==75&&!ccOn){ camera.fov=75; camera.updateProjectionMatrix(); } }
+function dirShake(a,d){ DIR.shkA=Math.max(a,DIR.shk>0?DIR.shkA:0); DIR.shk=DIR.shk0=Math.max(d,DIR.shk); }
+function dirKick(f){ DIR.kick=f; }
+function dirCam(dt,look){ let fov=DIR.fovT+DIR.kick; DIR.kick*=Math.max(0,1-dt*4);
+  if(DIR.dolly){ const D=DIR.dolly; fov=D.fov; const k=Math.tan(D.f0*Math.PI/360)/Math.tan(fov*Math.PI/360); camera.position.sub(D.tgt).multiplyScalar(k).add(D.tgt); camera.lookAt(D.tgt); }
+  else if(look)camera.lookAt(look);
+  if(DIR.whip)camera.rotateY(DIR.whip); if(DIR.dutch)camera.rotateZ(DIR.dutch);
+  if(DIR.shk>0){ DIR.shk-=dt; const a=DIR.shkA*Math.max(0,DIR.shk/DIR.shk0); camera.position.x+=(Math.random()-0.5)*a; camera.position.y+=(Math.random()-0.5)*a; camera.position.z+=(Math.random()-0.5)*a; }
+  if(Math.abs(camera.fov-fov)>0.01){ camera.fov=fov; camera.updateProjectionMatrix(); }
+  const b=DIR.blur>0.4?'blur('+DIR.blur.toFixed(1)+'px)':''; if(canvas.style.filter!==b)canvas.style.filter=b; }
+// a speed ramp: the story slows to speed k between story points A and B (0..1 of a part), and runs a little faster the rest of
+// the part so it still ends on time. Turns real time (u) into story time and the world's speed
+function shortRamp(u,R){ if(!R)return {s:u,k:1}; const [A,B,k]=R, len=B-A, realW=len/k, c=(1-len)/(1-realW), ra=A/c, rb=ra+realW;
+  if(u<ra)return {s:u*c,k:c}; if(u<rb)return {s:A+(u-ra)*k,k}; return {s:Math.min(1,B+(u-rb)*c),k:c}; }
 function resize(){ if(rec&&!rec.done){ renderer.setSize(1080,1920,false); camera.aspect=9/16; camera.updateProjectionMatrix(); return; } const w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize',resize); resize();
 
@@ -943,6 +962,7 @@ function dressRig(R,L){
   // head and hair
   const hm=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.46,0.46),headMats(L)); hm.position.y=0.23; Hd.userData.d.add(hm);
   const mo=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.11,0.012),cm('#3a0d10')); mo.position.set(0,0.12,-0.234); mo.visible=false; Hd.userData.d.add(mo); R.mouth=mo; // opens when singing
+  { const fp=new THREE.Mesh(new THREE.PlaneGeometry(0.462,0.462),new THREE.MeshLambertMaterial({transparent:true,alphaTest:0.5})); fp.position.set(0,0.23,-0.2312); fp.rotation.y=Math.PI; fp.visible=false; Hd.userData.d.add(fp); R.faceP=fp; R.faceL=L; R.faceK=''; } // an expression, when there is one (setFace)
   const hc=cm(L.hairC), hs=st=>L.hair===st;
   if(hs('long'))put(Hd,0.48,0.62,0.08,hc,0,0.12,0.25);
   if(hs('ponytail')){ put(Hd,0.16,0.14,0.1,cm(shadeHex(L.hairC,0.7)),0,0.33,0.27); const p=put(Hd,0.13,0.44,0.11,hc,0,0.1,0.32); p.rotation.x=0.22; }
@@ -2660,7 +2680,7 @@ function demoCamera(dt){ if(isFilm(demo.sc)){ odyCam(dt); return; } if(demo.sc.a
   want.lerpVectors(tgt,want,tt);
   if(!C.p)C.p=want.clone(); else C.p.lerp(want,Math.min(1,dt*(k==='follow'?4:2.2))); C.l.lerp(tgt,Math.min(1,dt*5));
   camera.position.copy(C.p); camera.lookAt(C.l); }
-function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!demo.user)demo.st+=dt; if(rec&&!rec.done&&shortK)demo.st=(performance.now()-rec.t0)/1000; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock (a Short being recorded follows the real clock, so the video is exactly its length): it waits while you're driving
+function demoTick(dt){ if(!demo||!demo.sc)return; fxTick(dt); demo.t+=dt; if(!demo.user)demo.st+=shortK?dirRealDt:dt; if(rec&&!rec.done&&shortK)demo.st=(performance.now()-rec.t0)/1000; const sc=demo.sc, P=demo.pil; // demo.st is the scene clock (a Short being recorded follows the real clock, so the video is exactly its length): it waits while you're driving
   invuln=Math.max(invuln,1); hp=MAXHP; burning=0; if(webbed)clearWeb(false); if(dead){ dead=false; paused=false; $('modal').style.display='none'; }
   if((P.wave||sc.act==='showcase')&&!demo.user){ const w=Math.sin(demo.t*7); if(sc.act!=='showcase'||(demo.t%5)<2.2){ armR.rotation.z=2.6+w*0.35; armR.rotation.x=0; } }
   if(sc.act==='city')demoCityDance();
@@ -2732,6 +2752,19 @@ function glitchTick(dt,beat){ const now=performance.now()/1000, hb=Math.floor(be
 // game controller or keyboard (so nobody has to touch the screen while recording). The stage is at the -z end, facing +z.
 const CLUB=new THREE.Vector3(48,180,48), club=new THREE.Group(); club.position.copy(CLUB); club.visible=false; scene.add(club);
 let clubK=null, padPyroWas=false; const singKeys=new Set();
+// --- expressions: 'shock', 'grin', 'angry', 'scared', 'happy' (eyes shut, smiling) and 'determined'; '' is the normal face
+const FACE_C=new Map(); // expressions: 'shock','grin','angry','scared','happy','determined'
+function faceExpr(k,L){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'), S=L.skin, dk='#2a1210', px=(a,b,w,h,col)=>{ x.fillStyle=col; x.fillRect(a,b,w||1,h||1); };
+  px(1,3,6,5,S); const eye=(a,b,wide)=>{ if(wide){ px(a,b,2,2,'#fff'); px(a===1?2:5,b+1,1,1,L.eyes); } else { px(a,b,2,1,'#fff'); px(a===1?2:5,b,1,1,L.eyes); } };
+  if(k==='shock'){ eye(1,3,1); eye(5,3,1); px(3,5,2,2,dk); }
+  else if(k==='grin'){ eye(1,4); eye(5,4); px(2,6,4,1,dk); px(1,5,1,1,dk); px(6,5,1,1,dk); px(3,6,2,1,'#fff'); }
+  else if(k==='angry'){ eye(1,4); eye(5,4); px(1,3,1,1,dk); px(2,3,1,1,shadeHex(L.hairC||'#3b2a1a',0.7)); px(6,3,1,1,dk); px(5,3,1,1,shadeHex(L.hairC||'#3b2a1a',0.7)); px(2,6,4,1,dk); px(1,7,1,1,dk); px(6,7,1,1,dk); }
+  else if(k==='scared'){ eye(1,3,1); eye(5,3,1); px(2,6,1,1,dk); px(3,7,1,1,dk); px(4,6,1,1,dk); px(5,7,1,1,dk); }
+  else if(k==='happy'){ px(1,4,2,1,dk); px(5,4,2,1,dk); px(2,6,4,1,dk); px(1,5,1,1,dk); px(6,5,1,1,dk); }
+  else if(k==='determined'){ px(1,3,2,1,dk); px(5,3,2,1,dk); eye(1,4); eye(5,4); px(3,6,2,1,shadeHex(S,0.55)); }
+  const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
+function setFace(R,k){ if(!R||!R.faceP||R.faceK===(k||''))return; R.faceK=k||''; if(!k){ R.faceP.visible=false; return; }
+  const L=R.faceL, key=k+L.skin+L.eyes+L.hairC; let t=FACE_C.get(key); if(!t){ t=faceExpr(k,L); FACE_C.set(key,t); } R.faceP.material.map=t; R.faceP.material.needsUpdate=true; R.faceP.visible=true; }
 function setMouth(R,o){ if(!R||!R.mouth)return; R.mouth.visible=o>0.06; R.mouth.scale.y=Math.max(0.05,o); R.mouth.position.y=0.125-0.055*o; }
 function padRead(){ const o={sing:0,pyro:false,lx:0,ly:0,rx:0,ry:0,a:false,b:false,hit:false,swap:false,any:false,y:false,rt:0,lt:0}, dz=v=>Math.abs(v)>0.22?v:0; let ps=[];
   try{ ps=navigator.getGamepads?navigator.getGamepads():[]; }catch(e){}
@@ -5420,9 +5453,9 @@ function animate(dt){
 }
 let last=performance.now();
 function frame(now){
-  const dt=Math.min(rec&&!rec.done?0.25:0.05,Math.max(0,(now-last)/1000)); last=now; // the game slows down on a slow computer
+  let dt=Math.min(rec&&!rec.done?0.25:0.05,Math.max(0,(now-last)/1000)); last=now; dirRealDt=dt; if(shortK&&DIR.ts!==1)dt*=DIR.ts; // slow motion in a Short // the game slows down on a slow computer
   requestAnimationFrame(frame); // asked for first, so an error below can't stop the game from drawing
-  try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dt);
+  try{ update(dt); if(ccOn)updateCC(dt); else if(titleOn)updateTitle(dt); animate(dt); musicTick(dirRealDt);
     let n=0; for(const k of dirty){ buildChunk(k%NCX,Math.floor(k/NCX)); dirty.delete(k); if(++n>=4)break; }
     bubbleLayout(); renderer.render(scene,camera); if(fxK.cur==='glitch')fxCapture(); if(rec&&!rec.done)recDraw(); frameErrs=0; }
   catch(e){ console.error(e); $('dmFade').style.opacity=0; if(demo&&++frameErrs<4){ try{ demoNext(); }catch(e2){ console.error(e2); } } else if(demo){ frameErrs=0; try{ demoStop(); }catch(e3){ console.error(e3); } } }
@@ -6935,7 +6968,7 @@ function recStart(len){ const cv=document.createElement('canvas'); cv.width=1080
   const types=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']; rec.type=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
   try{ rec.mr=new MediaRecorder(new MediaStream(tracks),rec.type?{mimeType:rec.type,videoBitsPerSecond:12e6,audioBitsPerSecond:192000}:undefined); }catch(e){ rec.mr=new MediaRecorder(new MediaStream(tracks)); rec.type=rec.mr.mimeType||'video/webm'; }
   rec.mr.ondataavailable=e=>{ if(e.data&&e.data.size)rec.chunks.push(e.data); }; rec.mr.onstop=recDone; rec.mr.start(500); $('recBadge').style.display='block'; }
-function recDraw(){ const R=rec, x=R.x; x.drawImage(canvas,0,0,1080,1920);
+function recDraw(){ const R=rec, x=R.x; if(DIR.blur>0.4)x.filter='blur('+(DIR.blur*2.2).toFixed(1)+'px)'; x.drawImage(canvas,0,0,1080,1920); x.filter='none';
   const f=$('dmFade'); if(f){ const cs=getComputedStyle(f), op=+cs.opacity; if(op>0.01){ x.globalAlpha=Math.min(1,op); x.fillStyle=cs.backgroundColor&&cs.backgroundColor!=='rgba(0, 0, 0, 0)'?cs.backgroundColor:'#000'; x.fillRect(0,0,1080,1920); x.globalAlpha=1; } }
   if(shortK&&shortK.cap&&shortK.capT>0){ x.save(); x.textAlign='center'; x.textBaseline='middle'; x.font='900 96px Impact, "Arial Black", sans-serif'; x.lineJoin='round'; const lines=shortK.cap.split('\n'), pop=Math.min(1,(shortK.capAge||0)*6); x.translate(540,340); x.scale(0.7+0.3*pop,0.7+0.3*pop);
     lines.forEach((l,i)=>{ const y=(i-(lines.length-1)/2)*108; x.lineWidth=18; x.strokeStyle='#000'; x.strokeText(l,0,y); x.fillStyle='#fff'; x.fillText(l,0,y); }); x.restore(); }
@@ -6973,12 +7006,20 @@ function shortDrive(v,x,y,z,h,dt){ const moved=Math.hypot(x-v.p[0],z-v.p[2]); v.
   v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); pl.p=v.p.slice(); }
 function shortSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
   const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:'',look:shortLook()}; dressHero(); Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
-function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; dressHero(); if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
+function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; dressHero(); dirReset(); setFace(rig,''); if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
   if(shortSaved){ dmCfg.scenes=shortSaved.scenes; dmCfg.loop=shortSaved.loop; dmCfg.fades=shortSaved.fades; shortSaved=null; } }
 function shortPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=demo.st, sg=K.seg; let i=0; while(i<3&&t>=sg[i+1])i++;
   if(K.capT>0){ K.capT-=dt; K.capAge=(K.capAge||0)+dt; if(K.capT<=0)shortCap(''); }
-  if(i!==K.i){ K.i=i; K.done={}; ['shortA','shortB','shortC','shortD'][i]&&SHORT_INIT[i](K); }
-  const u=(t-sg[i])/(sg[i+1]-sg[i]), sl=sg[i+1]-sg[i]; SHORT_TICK[i](K,u,dt,sl); return {ix:0,iz:0}; }
+  if(i!==K.i){ K.i=i; K.done={}; dirReset(); SHORT_INIT[i](K); }
+  const u=(t-sg[i])/(sg[i+1]-sg[i]), sl=sg[i+1]-sg[i], r=shortRamp(u,SHORT_RAMP[i]&&SHORT_RAMP[i](sl)); K.s=r.s; K.sl=sl;
+  if(r.k<0.9&&!K.slow){ K.slow=1; snd(()=>{ tone('sine',320,70,0.7,0.16); noise(500,0.6,0.08,'lowpass'); }); } else if(r.k>=0.9&&K.slow){ K.slow=0; snd(()=>tone('sine',70,300,0.35,0.1)); } // the "whoomp" into and out of slow motion
+  DIR.ts=r.k; SHORT_TICK[i](K,r.s,dt,sl); return {ix:0,iz:0}; }
+// on the beat: fires at the first beat of the music after story point u (the built-in tune is 116 beats a minute)
+function onBeat(K,key,cond,fn,every){ if(!cond||K.done[key])return; const b=60/116*(every||1), tgt=K.done[key+'@']||(K.done[key+'@']=Math.ceil((demo.st+0.001)/b)*b); if(demo.st>=tgt-0.02){ K.done[key]=1; fn(); } }
+// where each part slows down (story points A to B at speed k): the mower's jump out of the garage, and the wave runner's big jump
+const SHORT_RAMP=[sl=>{ const s0=0.07*12/sl; return [s0+0.125*(0.97-s0),s0+0.235*(0.97-s0),0.4]; },null,()=>[0.84,0.95,0.45],null];
+// the cuts in each part (story points): the camera whips across between shots
+const SHORT_CUTS=[[0.2,0.25,0.62,0.8],[0.25,0.42,0.5],[0.12,0.6],[0.6]];
 const at=(K,key,cond,fn)=>{ if(cond&&!K.done[key]){ K.done[key]=1; fn(); } };
 const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]];
 const SHORT_INIT=[
@@ -6987,7 +7028,7 @@ const SHORT_INIT=[
     K.bro=seatPerson(K.root,87.4,F1+0.47-0.72,73.2,Math.PI/2+0.35,''); { const ch=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b); }
     K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother';
     makeGateway(38,F1,78,false,'drag'); refreshPortals(); K.lucy=shortLucy(66.5,F1,82.6);
-    K.v=shortMower(MW_GAR.x,F1,MW_GAR.z0,Math.PI,'mower'); shortCap('SATURDAY\nCHORES...'); },
+    K.v=shortMower(MW_GAR.x,F1,MW_GAR.z0,Math.PI,'mower'); shortCap('SATURDAY\nCHORES...'); setFace(rig,''); },
   K=>{ shortWorld('drag'); const D=dragK, Z=DR.Z0; K.v=shortMower(45,DR.GY,Z+14,0,'mower'); K.rv=D.cars.find(c=>c.type==='dragster')||D.cars[0]; const a=K.rv; a.p=[52.5,DR.GY,Z+13]; a.h=0; a.spd=0; vehPlace(a); a.npc={script:1};
     if(!a.drv){ a.drv=driverMesh(randomLook()); const st=a.vm.seat; a.drv.position.set(st[0],st[1]-0.7,st[2]); a.m.add(a.drv); } if(a.owner)a.owner.g.visible=false;
     makeGateway(44,DR.GY,Z-150,true,'odyssey'); refreshPortals(); K.lucy=shortLucy(42.2,DR.GY,Z-70); K.rz=a.p[2]; },
@@ -7009,8 +7050,10 @@ const SHORT_TICK=[
     if(u<s0){ d=0; K.sip=u<s0*0.6?1:0; } else { const k=(u-s0)/(0.97-s0); d=k<0.12?6.1*(k/0.12)**2:6.1+(k-0.12)/0.88*(K.total||64-6.1); }
     if(!K.total){ K.total=shortAlong(MW_PATH,1).L; } const f=Math.min(1,d/K.total), q=shortAlong(MW_PATH,f); let y=F1, pitch=0;
     if(d>6.1&&d<13.7){ const a=(d-6.1)/7.6; y=F1+Math.sin(a*Math.PI)*2.4; pitch=-0.35*Math.cos(a*Math.PI); }
-    at(K,'burst',d>6.0,()=>{ K.dv=[0,5,10,3]; sfx('boom'); sfx('break'); burst(94.5,F1+2,70,new THREE.Color(0.9,0.9,0.85),20); shortCap('WAIT...\nWHAT?!'); npcSay(K.bro,'Hey!! My mower!'); });
-    at(K,'land',d>13.7,()=>{ burst(q.x-0.5,F1+0.2,q.z-0.5,new THREE.Color(0.45,0.75,0.3),14); sfx('thunk'); });
+    at(K,'burst',d>6.0,()=>{ K.dv=[0,5,10,3]; sfx('boom'); sfx('break'); burst(94.5,F1+2,70,new THREE.Color(0.9,0.9,0.85),20); shortCap('WAIT...\nWHAT?!'); npcSay(K.bro,'Hey!! My mower!'); dirShake(0.35,0.6); dirKick(10); setFace(rig,'shock'); setFace(K.bro.R,'shock'); });
+    at(K,'yell',d>9,()=>setFace(K.bro.R,'angry')); at(K,'grin',d>14.5,()=>setFace(rig,'grin'));
+    DIR.dutch=d>6.1&&d<13.7?-0.18*Math.sin((d-6.1)/7.6*Math.PI):0;
+    at(K,'land',d>13.7,()=>{ burst(q.x-0.5,F1+0.2,q.z-0.5,new THREE.Color(0.45,0.75,0.3),14); sfx('thunk'); dirShake(0.18,0.35); });
     if(K.dv){ const D2=K.door; K.dv[1]-=14*dt; D2.position.x+=K.dv[0]*dt; D2.position.y=Math.max(F1-1.9,D2.position.y+K.dv[1]*dt); D2.position.z+=K.dv[2]*dt; if(D2.position.y>F1-1.9)D2.rotation.x+=K.dv[3]*dt; else { K.dv[2]*=0.9; } }
     shortDrive(v,q.x,y,q.z,q.h,dt); v.pitch=pitch; vehPlace(v);
     at(K,'portal',u>0.9,()=>{ shortCap(''); }); at(K,'flash',u>0.955,()=>shortFlash());
@@ -7018,43 +7061,51 @@ const SHORT_TICK=[
   // the drag strip: the flame makeover, the countdown, the race and the portal
   (K,u,dt,sl)=>{ const v=K.v, a=K.rv, Z=DR.Z0;
     at(K,'flame',u>0.1,()=>{ v.lockLook=0; mowerLook(v,'flame'); v.lockLook=1; shortCap('UPGRADE!'); });
-    at(K,'c3',u>0.27,()=>{ shortCap('3'); sfx('click'); }); at(K,'c2',u>0.32,()=>{ shortCap('2'); sfx('click'); }); at(K,'c1',u>0.37,()=>{ shortCap('1'); sfx('click'); });
-    at(K,'go',u>0.42,()=>{ shortCap('GO!'); sfx('buy'); }); at(K,'chute',u>0.47,()=>{ a.chute=true; chuteShow(a,true); snd(()=>noise(900,0.5,0.25,'lowpass')); shortCap('OOPS'); });
-    at(K,'win',u>0.74,()=>shortCap('MOWER\nWINS?!')); at(K,'flash',u>0.955,()=>shortFlash());
+    at(K,'det',u>0.25,()=>setFace(rig,'determined'));
+    onBeat(K,'c3',u>0.27,()=>{ shortCap('3'); sfx('click'); },2); onBeat(K,'c2',K.done.c3&&u>0.31,()=>{ shortCap('2'); sfx('click'); },2); onBeat(K,'c1',K.done.c2&&u>0.35,()=>{ shortCap('1'); sfx('click'); },2);
+    at(K,'go',u>0.42,()=>{ shortCap('GO!'); sfx('buy'); dirShake(0.3,0.7); dirKick(14); setFace(rig,'grin'); });
+    DIR.dolly=u>0.25&&u<0.42?{tgt:new THREE.Vector3(v.p[0],DR.GY+1.75,v.p[2]),f0:70,fov:70-38*Math.min(1,(u-0.25)/0.17)}:null; at(K,'chute',u>0.47,()=>{ a.chute=true; chuteShow(a,true); snd(()=>noise(900,0.5,0.25,'lowpass')); shortCap('OOPS'); });
+    at(K,'win',u>0.74,()=>{ shortCap('MOWER\nWINS?!'); setFace(rig,'happy'); }); at(K,'flash',u>0.955,()=>shortFlash());
     let d=0; if(u>0.42){ const k=Math.min(1,(u-0.42)/0.55); d=(14+150+4)*Math.pow(k,1.5); } shortDrive(v,45,DR.GY,Z+14-d,0,dt); v.pitch=u>0.42&&u<0.6?-0.18:0; vehPlace(v);
     let rz=Z+13; if(u>0.42){ const k=u-0.42; rz=Z+13-Math.min(26,k*sl*40)+(k>0.05?0:0); } const old=a.p[2]; a.p=[52.5,DR.GY,Math.min(old,rz)]; a.spd=dt?(old-a.p[2])/dt:0; vehPlace(a); a.wheel+=a.spd*dt/(a.vm.wr||0.4); for(const w of a.vm.wheels)w.rotation.x=-a.wheel;
     if(K.lucy)K.lucy.hd=Math.atan2(-(v.p[0]-K.lucy.p[0]),-(v.p[2]-K.lucy.p[2])); },
   // the Odyssey Sea: a splash, wave runner mode, racing the whale (Lucy on its back), a big jump
   (K,u,dt,sl)=>{ const v=K.v, B2=K.sea, S=odyK.sea, wh=S.whale; const sp=0.1; let y, d;
     if(u<sp){ const k=u/sp; y=OD.SEA+7-6.1*k*k; d=k*6; } else { d=6+(u-sp)/0.85*84; y=OD.SEA+0.9+Math.sin(demo.st*5)*0.06; }
-    at(K,'splash',u>=sp,()=>{ v.lockLook=0; mowerLook(v,'jet'); v.lockLook=1; odSfx('splash'); for(let k=0;k<4;k++)burst(v.p[0]-0.5+(Math.random()-0.5)*2,OD.SEA+0.5,v.p[2]-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd8f0ff),14); shortCap('WAVE RUNNER\nMODE'); });
-    at(K,'race',u>0.42,()=>{ shortCap('RACE YOU!'); wh.spout=2; seaSfx('spout',wh.p); });
+    at(K,'splash',u>=sp,()=>{ v.lockLook=0; mowerLook(v,'jet'); v.lockLook=1; odSfx('splash'); setFace(rig,'shock'); dirShake(0.25,0.5); for(let k=0;k<4;k++)burst(v.p[0]-0.5+(Math.random()-0.5)*2,OD.SEA+0.5,v.p[2]-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd8f0ff),14); shortCap('WAVE RUNNER\nMODE'); });
+    at(K,'race',u>0.42,()=>{ shortCap('RACE YOU!'); wh.spout=2; seaSfx('spout',wh.p); setFace(rig,'grin'); }); at(K,'jump',u>0.82,()=>setFace(rig,'shock')); at(K,'yay',u>0.92,()=>setFace(rig,'happy'));
     if(u>0.8&&u<0.98){ const k=(u-0.8)/0.18; y+=Math.sin(Math.min(1,k)*Math.PI)*3.2; } at(K,'flash',u>0.955,()=>shortFlash());
     const x=B2.x+B2.f[0]*d, z=B2.z+B2.f[1]*d; shortDrive(v,x,y,z,B2.h,dt); v.pitch=u>0.8&&u<0.9?-0.3:0; vehPlace(v);
     const wd=Math.max(0,d-2.5+Math.sin(demo.st*0.8)*1.5); wh.p=[B2.x+B2.f[0]*wd+B2.r[0]*6,OD.SEA+0.1,B2.z+B2.f[1]*wd+B2.r[1]*6]; wh.h=B2.h; wh.tgt=null; wh.chase=false;
     const pc=S.pod.c; pc[0]=x+B2.f[0]*10-B2.r[0]*5; pc[2]=z+B2.f[1]*10-B2.r[1]*5; },
   // home: into the garage, the door comes down, and your brother wonders what he missed
   (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1; const k=Math.min(1,u/0.55), e=1-(1-k)*(1-k), z=96-(96-63.5)*e; shortDrive(v,90.8,F1,z,0,dt);
-    at(K,'what',u>0.18,()=>{ npcSay(K.bro,'...what did I miss?'); shortCap(''); }); at(K,'hush',u>0.8,()=>{ const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; }); at(K,'door',u>0.55,()=>sfx('click'));
+    at(K,'what',u>0.18,()=>{ npcSay(K.bro,'...what did I miss?'); shortCap(''); setFace(K.bro.R,'scared'); setFace(rig,'happy'); }); at(K,'calm',u>0.8,()=>{ setFace(K.bro.R,''); setFace(rig,''); }); at(K,'hush',u>0.8,()=>{ const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; }); at(K,'door',u>0.55,()=>sfx('click'));
     if(u>0.55){ K.door.position.y=Math.max(F1,F1+3.6-(u-0.55)/0.2*3.6); } if(u>0.75)K.door.position.y=F1;
     K.sip=u>0.86?1:0; broTick(K,dt,u<0.8?v.p:null); } ];
 // the camera for each part (tall 9:16 framing)
-function shortCam(dt){ const K=shortK; if(!K||K.i<0)return; const v=K.v, t=demo.st, sg=K.seg, i=K.i, u=(t-sg[i])/(sg[i+1]-sg[i]); let want, look, snap=false;
+function shortCam(dt){ const K=shortK; if(!K||K.i<0)return; const v=K.v, sg=K.seg, i=K.i, u=K.s||0; let want, look, snap=false; dt=dirRealDt;
   const f=vFwd(v.h), r=vRight(v.h), p=v.p;
   if(i===0){ if(u<0.2){ want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } // the opening shot (the last shot matches it)
+    else if(u<0.25){ const hp=new THREE.Vector3(); rig.head.getWorldPosition(hp); hp.y+=0.25; want=new THREE.Vector3(hp.x+f[0]*1.5+r[0]*0.45,hp.y+0.1,hp.z+f[1]*1.5+r[1]*0.45); look=hp; snap=true; } // slow motion: his face as he flies out
     else if(u<0.62){ want=new THREE.Vector3(p[0]+r[0]*3.2-f[0]*4.2,p[1]+2.0,p[2]+r[1]*3.2-f[1]*4.2); look=new THREE.Vector3(p[0]+f[0]*3,p[1]+0.8,p[2]+f[1]*3); snap=true; }
     else if(u<0.8){ want=new THREE.Vector3(p[0]-f[0]*5.5-r[0]*1.5,MN.F1+2.6,p[2]-f[1]*5.5-r[1]*1.5); look=new THREE.Vector3(p[0]+f[0]*6,MN.F1+1.2,p[2]+f[1]*6); snap=true; }
     else { want=new THREE.Vector3(33.0,MN.F1+1.5,76.6); look=new THREE.Vector3(39,MN.F1+1.4,79.4); } } // through the portal, toward the camera
   else if(i===1){ const Z=DR.Z0; if(u<0.25){ want=new THREE.Vector3(46.8,DR.GY+1.3,p[2]-3.2); look=new THREE.Vector3(p[0],DR.GY+0.7,p[2]); }
+    else if(u<0.42){ want=new THREE.Vector3(p[0]+0.3,DR.GY+1.9,p[2]-2.6); look=new THREE.Vector3(p[0],DR.GY+1.75,p[2]); } // the dolly zoom on his face, through the countdown
     else if(u<0.5){ want=new THREE.Vector3(48.7,DR.GY+4.2,Z+23); look=new THREE.Vector3(48.7,DR.GY+0.6,Z+7); }
     else { want=new THREE.Vector3(p[0]+3.4,DR.GY+1.3,p[2]+2.2); look=new THREE.Vector3(p[0]-0.5,DR.GY+0.8,p[2]-5); snap=true; } }
   else if(i===2){ if(u<0.12){ want=new THREE.Vector3(p[0]+r[0]*5-f[0]*4,OD.SEA+4.5,p[2]+r[1]*5-f[1]*4); look=new THREE.Vector3(p[0],p[1],p[2]); }
     else if(u<0.6){ want=new THREE.Vector3(p[0]-r[0]*3.5-f[0]*3.5,OD.SEA+2.6,p[2]-r[1]*3.5-f[1]*3.5); look=new THREE.Vector3(p[0]+r[0]*3+f[0]*5,OD.SEA+1,p[2]+r[1]*3+f[1]*5); snap=true; }
-    else { want=new THREE.Vector3(p[0]+f[0]*7+r[0]*2.5,OD.SEA+1.8,p[2]+f[1]*7+r[1]*2.5); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; }
+    else if(u<0.84||u>0.95){ want=new THREE.Vector3(p[0]+f[0]*7+r[0]*2.5,OD.SEA+1.8,p[2]+f[1]*7+r[1]*2.5); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; }
+    else { const a=(u-0.84)/0.11*2.4+0.3, cs=Math.cos(a), sn=Math.sin(a); want=new THREE.Vector3(p[0]+(f[0]*cs+r[0]*sn)*6,p[1]+1.2,p[2]+(f[1]*cs+r[1]*sn)*6); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; } // slow motion: the camera circles the jump
     const wh=odyK.sea.whale; seaPlace(wh,wh.g); wh.g.visible=true; }
   else { if(u<0.6){ want=new THREE.Vector3(96.2,MN.F1+2.3,p[2]+6.5); look=new THREE.Vector3(91.2,MN.F1+1.3,p[2]-3); } else { want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } }
   if(!demo.cam||demo.cam.k!=='short'||demo.cam.i!==i){ demo.cam={k:'short',i,p:want.clone(),l:look.clone()}; } const c=demo.cam; const kk=snap?7:3; c.p.lerp(want,Math.min(1,dt*kk)); c.l.lerp(look,Math.min(1,dt*(kk+1)));
-  if(i===3&&u>0.6||i===0&&(u<0.2||u>=0.8)){ c.p.copy(want); c.l.copy(look); } camera.position.copy(c.p); camera.lookAt(c.l); model.visible=true; }
+  // whip pans: the camera swings away just before a cut and swings in just after it, with a blur
+  const w=0.3/Math.max(4,K.sl||10); let wp=0, hard=false; (SHORT_CUTS[i]||[]).forEach((cu,n)=>{ const sgn=n%2?1:-1; if(u>=cu-w&&u<cu)wp=sgn*Math.pow((u-(cu-w))/w,2)*0.9; else if(u>=cu&&u<cu+w){ wp=-sgn*Math.pow(1-(u-cu)/w,2)*0.9; hard=true; } });
+  DIR.whip=wp; DIR.blur=Math.abs(wp)*9;
+  if(hard||i===0&&u>=0.2&&u<0.25||i===3&&u>0.6||i===0&&(u<0.2||u>=0.8)||i===1&&u>=0.25&&u<0.42){ c.p.copy(want); c.l.copy(look); } camera.position.copy(c.p); camera.lookAt(c.l); dirCam(dt,c.l); model.visible=true; }
 
 // --- the world's life: what you see when you visit (and what the story uses)
 let odyK=null;
