@@ -2597,7 +2597,7 @@ function demoSetup(sc){ if(isFilm(sc)){ if(musOnNow==='tune'){ tuneStop(); musOn
   if(drive)exitVehicle(true,true); petsClear(); storyReset(); if(riding())dismount(true); if((demo.cityWorld&&sc.act!=='city')||(demo.ranchWorld&&sc.act!=='ride')||(demo.dragWorld&&sc.act!=='drag')||(demo.mansionWorld&&sc.act!=='thanks')||(demo.odyWorld&&!isOdy(sc))||(demo.mxWorld&&!isMx(sc))||(demo.rkWorld&&!isRk(sc))||(demo.brWorld&&!isBr(sc))||(demo.elWorld&&!isElf(sc))||(demo.petWorld&&sc.act!=='petshop'))demoBaseWorld(); dressHero(); setTime(sc.time); setLand(sc.land); setWeather(sc.wx);
   for(const m of mobs.slice())removeMob(m); for(const c of drops)scene.remove(c.m); drops.length=0; if(boom){ scene.remove(boom.mesh); boom=null; }
   hp=MAXHP; dead=false; burning=0; clearWeb(false); setFly(false,false); pl.v=[0,0,0]; pl.kb=[0,0,0]; pitch=-0.1;
-  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'||sc.act==='thanks'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
+  weapon=sc.act==='fight'?'diamond':isConc(sc)||sc.act==='chop'||sc.act==='thanks'||sc.act==='shortmow'?'fists':demo.was.weapon; refreshWeapon(); camMode=sc.cam==='first'&&sc.act!=='stadium'&&sc.act!=='fire'?1:3;
   const P=demo.pil={t:0,d:1e9,up:0,side:0,n:0,wp:null,wpT:0,jT:2+Math.random()*2};
   demo.puppet=false; club.visible=false; merchant.g.visible=true; model.rotation.z=0; setMouth(rig,0); viewF=-1; for(const b of brickPool){ b.on=false; b.m.visible=false; }
   if(sc.act==='fight'||sc.act==='wonder')arrows.explode=999; // bomb arrows for the show (nothing the demo does is saved)
