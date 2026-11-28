@@ -7251,7 +7251,7 @@ function cbDebris(K,x,y,z,n,col){ for(let i=0;i<n;i++){ const b=mb(K.root,0.5,0.
 function cbBoom(K,x,y,z){ for(let k=0;k<5;k++)burst(x-0.5+(Math.random()-0.5)*2,y+(Math.random()-0.5),z-0.5+(Math.random()-0.5)*2,new THREE.Color(1,0.45+Math.random()*0.3,0.1),14); sfx('boom'); dirShake(0.3,0.5); }
 // the movies, in order, with their length in the 60-second cut; 'in' says which cuts they're in
 const CB_SEGS=[{k:'hook',d:3,in:[30,45,60]},{k:'scifi',d:6,in:[30,45,60]},{k:'fantasy',d:6,in:[30,45,60]},{k:'western',d:6,in:[30,45,60]},{k:'horror',d:6,in:[30,45,60]},
-  {k:'pirates',d:6,in:[45,60]},{k:'under',d:2.5,in:[60]},{k:'space',d:3.5,in:[45,60]},{k:'action',d:6,in:[60]},{k:'monster',d:6,in:[45,60]},{k:'xmas',d:5.5,in:[30,45,60]},{k:'loop',d:3.5,in:[30,45,60]}];
+  {k:'pirates',d:6,in:[45,60]},{k:'under',d:2.5,in:[45,60]},{k:'space',d:3.5,in:[45,60]},{k:'action',d:6,in:[60]},{k:'monster',d:6,in:[45,60]},{k:'xmas',d:5.5,in:[30,45,60]},{k:'loop',d:3.5,in:[30,45,60]}];
 const CB_RAMP={hook:[0.55,0.75,0.5],action:[0.3,0.62,0.3],pirates:[0.74,0.88,0.4]};
 function cbSetup(sc,P){ musicStop();
   if(drive)exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); petsClear();
