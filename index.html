@@ -7227,11 +7227,11 @@ function cbBoom(K,x,y,z){ for(let k=0;k<5;k++)burst(x-0.5+(Math.random()-0.5)*2,
 const CB_SEGS=[{k:'hook',d:3,in:[30,45,60]},{k:'scifi',d:6,in:[30,45,60]},{k:'fantasy',d:6,in:[30,45,60]},{k:'western',d:6,in:[30,45,60]},{k:'horror',d:6,in:[30,45,60]},
   {k:'pirates',d:6,in:[45,60]},{k:'under',d:2.5,in:[60]},{k:'space',d:3.5,in:[45,60]},{k:'action',d:6,in:[60]},{k:'monster',d:6,in:[45,60]},{k:'xmas',d:5.5,in:[30,45,60]},{k:'loop',d:3.5,in:[30,45,60]}];
 const CB_RAMP={hook:[0.55,0.75,0.5],action:[0.3,0.62,0.3],pirates:[0.74,0.88,0.4]};
-function cbSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
+function cbSetup(sc,P){ musicStop();
   if(drive)exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); petsClear();
   if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.odyWorld){ odStageClear(); clearOdyLife(); demo.odyWorld=false; }
   clearCityLife(); clearInteriorLife(); clearApples(); demo.cityKey=null; demo.vplace='stage'; setWorldSize(320,48,64); generateStage(dmCfg.seed+57); rebuildAll(); refreshPortals();
-  const len=sc.secs, tpl=len<38?30:len<53?45:60, list=CB_SEGS.filter(s=>s.in.includes(tpl)), tot=list.reduce((a,s)=>a+s.d,0); let t=0; const segs=list.map(s=>{ const o={k:s.k,t0:t,t1:t+s.d*len/tot}; t=o.t1; return o; });
+  const len=sc.secs, tpl=len<38?30:len<53?45:60, list=CB_SEGS.filter(s=>s.in.includes(tpl)), tot=list.reduce((a,s)=>a+s.d,0); let t=0, raw=0; const segs=list.map((s,i)=>{ raw+=s.d*len/tot; const o={k:s.k,t0:t,t1:i===list.length-1?len:Math.round(raw/0.5)*0.5}; t=o.t1; return o; }); // each movie starts on a beat
   const base=shortLook(); shortK={cube:1,segs,i:-1,cap:'',capT:0,root:new THREE.Group(),look:base,base,bits:[],tpl,has:k=>segs.some(s=>s.k===k)}; const K=shortK; scene.add(K.root);
   K.big=cbCube(); K.big.scale.setScalar(1.4); K.root.add(K.big); K.hand=cbCube(); K.hand.scale.setScalar(0.28); K.hand.position.set(0,-0.78,-0.12); armR.add(K.hand); K.hand.visible=false;
   K.dome=new THREE.Mesh(new THREE.SphereGeometry(0.42,16,12),new THREE.MeshBasicMaterial({color:0xcfefff,transparent:true,opacity:0.3})); K.dome.position.set(0,0.25,0); rig.head.add(K.dome); K.dome.visible=false;
@@ -7339,10 +7339,30 @@ const CB_SCN={
       if(K.deer)K.deer.g.visible=false; cbLucyAt(K,x-3.4,G,35.4,Math.PI*0.8,''); K.lucy.g.scale.setScalar(1); setFace(rig,''); },
     tick(K,u,dt){ const G=CB.G, x=CB.street; K.big.rotation.y+=dt*0.8; K.big.rotation.x+=dt*0.5; cbHero(x,G,u<0.5?36.6+0.9*(u/0.5):37.5,0,0); at(K,'cap',u>0.8,()=>shortCap('DON\'T\nTOUCH IT')); },
     cam(K,u){ const G=CB.G, x=CB.street; const k=Math.max(0,1-u/0.95); return {p:[x+0.9,G+0.55,41.5+k*0.6],l:[x,G+3.0,31.5],hard:u<0.03}; } } };
+// --- the score: one beat (120 a minute), one chord progression (A minor, F, C, G) and one tune for the whole Short, played by each
+// movie's own instruments, so the music jumps genres with the picture. It follows the real clock, so slow motion doesn't slow it
+const CB_ROOT=[45,41,48,43], CB_CH=[[57,60,64],[53,57,60],[55,60,64],[55,59,62]], CB_MOT=[0,1,2,1,2,1,0,1];
+function cbM(type,m,dur,vol,slide){ const f=midiF(m); tone(type,f,f*(slide||1),dur,vol); }
+const cbKick=v=>tone('sine',150,42,0.18,0.42*v), cbSnare=v=>noise(1800,0.12,0.2*v,'bandpass'), cbHat=v=>noise(8000,0.03,0.05*v,'highpass');
+const CB_MUS={
+  hook:(b,bar,ch,r,v)=>{ if(b===0)cbKick(v*0.9); if(b===1)cbKick(v*0.5); if(b===0){ cbM('sine',r,1.9,0.05*v); cbM('sine',r+12,1.9,0.03*v); } },
+  scifi:(b,bar,ch,r,v,st)=>{ if(b%2===0)cbKick(v); if(b===2||b===6)cbSnare(v); cbHat(v); cbM('sawtooth',r-12,0.2,0.07*v); cbM('square',ch[st%3]+12,0.12,0.03*v); },
+  fantasy:(b,bar,ch,r,v)=>{ if(b===0||b===4)tone('sine',midiF(r-12)*1.5,midiF(r-12),0.5,0.3*v); if(b%2===0)cbM('triangle',ch[CB_MOT[b]]+12,0.45,0.09*v); if(b===0)for(const n of ch)cbM('sawtooth',n,1.8,0.015*v); },
+  western:(b,bar,ch,r,v)=>{ if(b===0||b===4)cbM('triangle',r,0.3,0.2*v,0.98); if(b===2||b===6)for(const n of ch)cbM('square',n,0.06,0.025*v,0.97); if(b%2===0)cbM('sine',ch[CB_MOT[b]]+24,0.4,0.08*v); if(b===2||b===6)cbSnare(v*0.4); },
+  horror:(b,bar,ch,r,v,st)=>{ if(b===0){ cbM('sine',r,2,0.09*v); cbM('sine',r+6,2,0.05*v); } if(b===3||b===7)cbM('triangle',ch[(st*5)%3]+25,0.6,0.04*v); if(b===0)cbKick(v*0.6); if(b===1)cbKick(v*0.35); },
+  pirates:(b,bar,ch,r,v)=>{ cbM('sawtooth',ch[CB_MOT[b]]+12,0.2,0.05*v); if(b===0||b===4){ for(const n of ch)cbM('square',n,0.8,0.02*v); cbKick(v*0.8); } if(b===2||b===6)noise(6000,0.08,0.08*v,'highpass'); },
+  under:(b,bar,ch,r,v)=>{ if(b%2===0)cbM('sine',ch[(b/2)%3]+12,0.6,0.05*v); if(b===0)cbM('sine',r,1.9,0.05*v); },
+  space:(b,bar,ch,r,v,st)=>{ if(b===0)for(const n of ch)cbM('sine',n+12,2,0.03*v); if(b%2===1)cbM('triangle',ch[st%3]+24,0.3,0.03*v); },
+  action:(b,bar,ch,r,v)=>{ if(b%2===0||b===3)cbKick(v*1.1); if(b===2||b===6)cbSnare(v*1.2); cbHat(v); cbM('sawtooth',r-12,0.18,0.1*v); if(b===0||b===3||b===6){ cbM('square',r,0.2,0.04*v); cbM('square',r+7,0.2,0.04*v); } },
+  monster:(b,bar,ch,r,v)=>{ if(b===0){ cbM('sawtooth',r-12,1.6,0.09*v); cbM('sawtooth',r-5,1.6,0.05*v); } if(b===0||b===3||b===4)tone('sine',90,40,0.45,0.45*v); },
+  xmas:(b,bar,ch,r,v)=>{ noise(7000,0.05,0.06*v,'highpass'); if(b%2===0)cbM('triangle',ch[CB_MOT[b]]+24,0.35,0.11*v); if(b===0||b===4){ cbM('sine',r,0.4,0.16*v); cbKick(v*0.5); } }};
+CB_MUS.loop=CB_MUS.hook;
+function cbMusic(K){ if(!AC||!sfxOn||!K.segs[K.i])return; const st=Math.floor(demo.st/0.25); if(st===K.mStep)return; K.mStep=st; // every eighth note
+  const b=st%8, bar=Math.floor(st/8)%4, v=Math.max(0.2,(mus.vol||60)/100)*1.1, g=CB_MUS[K.segs[K.i].k]; try{ g&&g(b,bar,CB_CH[bar],CB_ROOT[bar],v,st); }catch(e){} }
 function cbPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=demo.st; let i=0; while(i<K.segs.length-1&&t>=K.segs[i+1].t0)i++;
   if(K.capT>0){ K.capT-=dt; K.capAge=(K.capAge||0)+dt; if(K.capT<=0)shortCap(''); }
   const S=K.segs[i]; if(i!==K.i){ K.i=i; K.done={}; dirReset(); CB_SCN[S.k].init(K); demo.cam=null; }
-  const u=Math.min(1,(t-S.t0)/(S.t1-S.t0)), r=shortRamp(u,CB_RAMP[S.k]); K.s=r.s; DIR.ts=r.k; CB_SCN[S.k].tick(K,r.s,dt);
+  const u=Math.min(1,(t-S.t0)/(S.t1-S.t0)), r=shortRamp(u,CB_RAMP[S.k]); K.s=r.s; DIR.ts=r.k; CB_SCN[S.k].tick(K,r.s,dt); cbMusic(K);
   for(const b of K.bits.slice()){ b.v[1]-=14*dt; b.m.position.x+=b.v[0]*dt; b.m.position.y+=b.v[1]*dt; b.m.position.z+=b.v[2]*dt; b.m.rotation.x+=dt*4; if(b.m.position.y<CB.G-1){ K.root.remove(b.m); K.bits.splice(K.bits.indexOf(b),1); } }
   return {ix:0,iz:0}; }
 function cbCam(dt){ const K=shortK; if(!K||K.i<0)return; dt=dirRealDt; const S=K.segs[K.i], c0=CB_SCN[S.k].cam(K,K.s||0), want=new THREE.Vector3(...c0.p), look=new THREE.Vector3(...c0.l);
