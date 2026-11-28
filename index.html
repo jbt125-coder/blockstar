@@ -7036,16 +7036,30 @@ function shortAlong(pts,f){ let L=0; const seg=[]; for(let i=1;i<pts.length;i++)
   let d=Math.max(0,Math.min(1,f))*L; for(let i=0;i<seg.length;i++){ if(d<=seg[i]||i===seg.length-1){ const k=seg[i]?Math.min(1,d/seg[i]):0, a=pts[i], b=pts[i+1]; return {x:a[0]+(b[0]-a[0])*k,z:a[1]+(b[1]-a[1])*k,h:Math.atan2(-(b[0]-a[0]),-(b[1]-a[1])),L}; } d-=seg[i]; } }
 function shortDrive(v,x,y,z,h,dt){ const moved=Math.hypot(x-v.p[0],z-v.p[2]); v.spd=dt>0?moved/dt:0; let dh=h-v.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; if(moved>0.001)v.h+=dh*Math.min(1,dt*10);
   v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); if(drive===v)pl.p=v.p.slice(); }
-function shortSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
-  const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:'',look:shortLook()}; dressHero(); Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
+function shortSetup(sc,P){ musicStop();
+  const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:'',look:shortLook(),broLook:cleanLook(Object.assign({},LOOK0,{skin:look.skin,eyes:look.eyes,hair:look.hair,hairC:look.hairC,beard:'none',top:'stripes',topC:'#d8502a',bottom:'shorts',bottomC:'#3a5a8a',shoes:'sneakers',shoeC:'#f2f2f2'}))}; dressHero(); Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
 function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); cbTag(''); if(K.cleanup)K.cleanup(); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; dressHero(); dirReset(); setFace(rig,''); if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
   if(shortSaved){ dmCfg.scenes=shortSaved.scenes; dmCfg.loop=shortSaved.loop; dmCfg.fades=shortSaved.fades; shortSaved=null; } }
+// --- the Mower Short's theme: an original chiptune at 128 beats a minute (a bar is 1.875 s, so the 30, 45 and 60 second cuts all
+// end on a bar line and the song loops with the video). A square-wave lead, a bouncing triangle bass and noise drums, over
+// C, G, A minor, F; the tune alternates a flowing verse and a punchy hook. Quick arpeggios join at the drag strip, an echo at sea,
+// and it calms down at home
+const MW_ROOT=[48,43,45,41], MW_CH=[[60,64,67],[55,59,62],[57,60,64],[53,57,60]],
+  MW_A=[[76,79,84,79,81,79,76,74],[74,79,83,79,86,83,79,74],[72,76,81,76,83,81,76,72],[81,84,77,81,79,77,76,74]],
+  MW_B=[[84,0,84,83,84,0,79,0],[83,0,83,81,83,0,79,0],[81,0,81,79,81,0,76,79],[77,79,81,0,79,0,0,0]];
+function mwMusic(K){ if(!AC||!sfxOn)return; const e=60/128/2, st=Math.floor(demo.st/e); if(st===K.mStep)return; K.mStep=st;
+  const b=st%8, bar=Math.floor(st/8), c=bar%4, ab=Math.floor(bar/4)%2, part=K.i, v=Math.max(0.2,(mus.vol||60)/100)*1.1, f=m=>midiF(m);
+  try{ const note=(ab?MW_B:MW_A)[c][b]; if(note){ tone('square',f(note),f(note),0.17,0.045*v); if(part===2)tone('triangle',f(note+12),f(note+12),0.15,0.02*v,0.117); } // the lead (with an echo at sea)
+    const r=MW_ROOT[c]+(b%2?12:0); tone('triangle',f(r),f(r),0.2,0.16*v); // the bass, bouncing octaves
+    if(part===1)tone('square',f(MW_CH[c][st%3]+12),f(MW_CH[c][st%3]+12),0.1,0.018*v); // drag strip: fast arpeggios
+    const calm=part===3&&K.s>0.6; if(b===0||b===4)tone('sine',160,42,0.14,(calm?0.2:0.36)*v); if(!calm&&(b===2||b===6))noise(2400,0.1,0.14*v,'bandpass'); if(!calm||b%2===0)noise(9000,0.03,0.04*v,'highpass');
+    if(part===1&&bar%4===3&&b>=6)noise(1400,0.08,0.14*v,'bandpass'); }catch(e2){} } // a little fill at the end of each phrase on the strip
 function shortPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=demo.st, sg=K.seg; let i=0; while(i<3&&t>=sg[i+1])i++;
   if(K.capT>0){ K.capT-=dt; K.capAge=(K.capAge||0)+dt; if(K.capT<=0)shortCap(''); }
   if(i!==K.i){ K.i=i; K.done={}; dirReset(); SHORT_INIT[i](K); }
   const u=(t-sg[i])/(sg[i+1]-sg[i]), sl=sg[i+1]-sg[i], r=shortRamp(u,SHORT_RAMP[i]&&SHORT_RAMP[i](sl)); K.s=r.s; K.sl=sl;
   if(r.k<0.9&&!K.slow){ K.slow=1; snd(()=>{ tone('sine',320,70,0.7,0.16); noise(500,0.6,0.08,'lowpass'); }); } else if(r.k>=0.9&&K.slow){ K.slow=0; snd(()=>tone('sine',70,300,0.35,0.1)); } // the "whoomp" into and out of slow motion
-  DIR.ts=r.k; SHORT_TICK[i](K,r.s,dt,sl); return {ix:0,iz:0}; }
+  DIR.ts=r.k; SHORT_TICK[i](K,r.s,dt,sl); mwMusic(K); return {ix:0,iz:0}; }
 // on the beat: fires at the first beat of the music after story point u (the built-in tune is 116 beats a minute)
 function onBeat(K,key,cond,fn,every){ if(!cond||K.done[key])return; const b=60/116*(every||1), tgt=K.done[key+'@']||(K.done[key+'@']=Math.ceil((demo.st+0.001)/b)*b); if(demo.st>=tgt-0.02){ K.done[key]=1; fn(); } }
 // where each part slows down (story points A to B at speed k): the mower's jump out of the garage, and the wave runner's big jump
@@ -7057,7 +7071,7 @@ const at=(K,key,cond,fn)=>{ if(cond&&!K.done[key]){ K.done[key]=1; fn(); } };
 function shortWalk(pts,f,F1){ const q=shortAlong(pts,f); pl.p=[q.x,F1,q.z]; pl.v=[0,0,0]; let d=q.h-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=d*Math.min(1,dirRealDt*10); demo.pil.hs=f>0&&f<1?3.2:0; }
 // your brother in his lawn chair, beside the garage (the chair can tip over backward, with him in it)
 function shortBro(K,F1){ const seat=grp(K.root,87.4,F1,73.2,-Math.PI/2-0.25), tilt=grp(seat,0,0,0.38), ch=grp(tilt,0,0,-0.38); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b);
-  K.bro=seatPerson(tilt,0,0.47-0.72,-0.38,0,''); K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.seat=seat; K.tilt=tilt; K.tip=0; }
+  K.bro=seatPerson(tilt,0,0.47-0.72,-0.38,0,''); dressRig(K.bro.R,K.broLook); K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.seat=seat; K.tilt=tilt; K.tip=0; }
 const SH_HERO=[92.6,74.6], SH_LUCY=[88.7,74.4]; // where the hero stands, and Lucy sits, at the start and the end (so it loops)
 const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]], MW_IN=[SH_HERO,[91.4,72.4],[91.4,66.8],[90.8,64.9]], MW_OUT=[[91.6,65.4],[91.6,71.6],SH_HERO], SH_S0=0.3;
 const SHORT_INIT=[
