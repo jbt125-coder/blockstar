@@ -5543,7 +5543,8 @@ function mowerMesh(look){ const g=new THREE.Group(), M=c=>lm(c), wheels=[], add=
   const sw=new THREE.Mesh(new THREE.TorusGeometry(0.17,0.03,6,16),dk); sw.position.set(0,1.27+up,-0.3); sw.rotation.x=-1.0; g.add(sw);
   const pipes=[]; if(flame){ const ft=flameTex(), fm=new THREE.MeshBasicMaterial({map:ft,transparent:true}); for(const sx of [-1,1]){ const pl2=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.36),fm); pl2.position.set(sx*0.456,0.8+up,-0.62); pl2.rotation.y=sx*Math.PI/2+(sx<0?Math.PI:0); g.add(pl2); }
       const top=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.8),fm); top.rotation.set(-Math.PI/2,0,Math.PI/2); top.position.set(0,1.0+up,-0.62); g.add(top);
-      const chrome=lm(0xd8dde4,{emissive:0x30343a}); for(const sx of [-1,1]){ cyl(0.08,0.08,1.3,chrome,sx*0.56,0.62+up,-0.25,Math.PI/2); const st=cyl(0.1,0.13,1.0,chrome,sx*0.6,1.15+up,0.45,-0.35); pipes.push([sx*0.6,1.65+up,0.62]); } } // big chrome pipes
+      const chrome=lm(0xd8dde4,{emissive:0x30343a}); for(const sx of [-1,1]){ for(let k=0;k<4;k++){ const sp2=cyl(0.06,0.07,0.42,chrome,sx*0.6,0.5+up,-0.62+k*0.22,0.75,-sx*0.95); } // side pipes, like a hot rod's headers: out and back
+        cyl(0.1,0.13,1.0,chrome,sx*0.42,1.08+up,0.78,0.65); pipes.push([sx*0.42,1.08+up+0.4,0.78+0.3]); } } // two tall stacks at the back, raked backward, away from the driver
   else add(0.16,0.44,0.87,trim,0,0.79,-0.62); // a yellow stripe on the hood
   return {g,wheels,lights:[],seat:[0,0.4+up,0.32],wr:rb,bodyMat:body,chute:[1.0,0.28,-0.05],pipes}; }
 function mowerLook(v,look){ const was=v.look; if(was===look)return; scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); v.vm=mowerMesh(look); v.m=v.vm.g; scene.add(v.m); v.look=look; v.V=MOWER_V[look]; vehPlace(v);
@@ -5561,7 +5562,7 @@ function mowerTick(dt){ mowSprayTick(dt); if(traveling)return;
     if(sp>1.2){ v.sprT=(v.sprT||0)-dt; if(v.sprT<=0){ v.sprT=0.03;
       if(v.look==='jet'){ const q=at(v.vm.spray); for(let k=0;k<3;k++)mowSpray(q[0],q[1],q[2],-f[0]*sp*0.4+(Math.random()-0.5)*2,2+Math.random()*2.5,-f[1]*sp*0.4+(Math.random()-0.5)*2,Math.random()<0.5?0xffffff:0x9ad8ff); }
       else { const gid=get(Math.floor(v.p[0]),Math.floor(v.p[1])-1,Math.floor(v.p[2])); if(gid===ID.grass||gid===ID.dirt){ const q=at(v.vm.chute); for(let k=0;k<3;k++)mowSpray(q[0],q[1],q[2],r[0]*(4+Math.random()*3)+f[0]*sp*0.5,1.5+Math.random()*2,r[1]*(4+Math.random()*3)+f[1]*sp*0.5,[0x3aa030,0x5ac83a,0x2a8a2a,0x7ad84a][k%4]); } } // grass out of the chute
-      if(v.look==='flame'&&v.driver&&sp>4)for(const pp of v.vm.pipes){ const q=at(pp); mowSpray(q[0],q[1],q[2],(Math.random()-0.5)*0.6,2.5+Math.random(),(Math.random()-0.5)*0.6,Math.random()<0.5?0xff8a1a:0xffd23a); } } }
+      if(v.look==='flame'&&v.driver&&sp>4)for(const pp of v.vm.pipes){ const q=at(pp); mowSpray(q[0],q[1],q[2],-f[0]*2.2+(Math.random()-0.5)*0.5,1.8+Math.random(),-f[1]*2.2+(Math.random()-0.5)*0.5,Math.random()<0.5?0xff8a1a:0xffd23a); } } }
     // left parked for 10 minutes: it drives itself off the edge of the world and goes home to the mansion
     const home=mansionK&&onMansion()&&Math.hypot(v.p[0]-MOW_HOME[0],v.p[2]-MOW_HOME[1])<2.5;
     if(v.driver||v.npc||demo||home){ v.idle=0; v.going=null; continue; } v.idle=(v.idle||0)+dt; if(v.idle<MOW_WAIT)continue;
@@ -6632,7 +6633,7 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
     K.mvT=(K.mvT||0)-dt; if(K.mvT<=0){ K.mvT=0.08; movieDraw(K); } }
   if(G.out.visible){ resortTick(K,dt); yardTurkeyTick(K,dt); for(const p of K.fireFam){ p.R.head.rotation.y=Math.sin(K.t*0.5+p.ph)*0.3; p.R.armR.rotation.x=1.3+Math.sin(K.t*0.8+p.ph)*0.08; animRig(p.R,dt,0); if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } } }
     K.fcT=(K.fcT||3)-dt; if(K.fcT<=0){ K.fcT=4+Math.random()*4; if(Math.hypot(pl.p[0]-87,pl.p[2]-9)<9&&K.fireFam.length)npcSay(K.fireFam[Math.floor(Math.random()*K.fireFam.length)],FIRE_CHAT[Math.floor(Math.random()*FIRE_CHAT.length)]); } }
-  { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
+  { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(shortK&&shortK.bounce!==undefined)K.gB=shortK.bounce; else if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
     let any=false; (K.gcars||[]).forEach((v,i)=>{ if(v.driver||v.jet){ return; } v.gb=(v.gb||0)+((K.gB?1:0)-(v.gb||0))*Math.min(1,dt*3); if(v.gb<0.01){ if(v.gbOn){ v.gbOn=false; vehPlace(v); } return; } any=true; v.gbOn=true;
       const ph=K.t*6.5+i*1.3, y=v.gb*0.35*Math.abs(Math.sin(ph)); v.m.position.y=v.p[1]+y; v.m.rotation.set(v.gb*0.08*Math.sin(ph*0.5),v.h,v.gb*0.06*Math.sin(ph*0.25+i),'YXZ'); });
     if(any&&inG)discoBeat(dt,0.6); }
@@ -7024,7 +7025,7 @@ const at=(K,key,cond,fn)=>{ if(cond&&!K.done[key]){ K.done[key]=1; fn(); } };
 // the hero on foot (a scripted walk): along a path of points, f is 0..1; he faces the way he walks and his legs swing
 function shortWalk(pts,f,F1){ const q=shortAlong(pts,f); pl.p=[q.x,F1,q.z]; pl.v=[0,0,0]; let d=q.h-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=d*Math.min(1,dirRealDt*10); demo.pil.hs=f>0&&f<1?3.2:0; }
 // your brother in his lawn chair, beside the garage (the chair can tip over backward, with him in it)
-function shortBro(K,F1){ const seat=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35), tilt=grp(seat,0,0,0.38), ch=grp(tilt,0,0,-0.38); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b);
+function shortBro(K,F1){ const seat=grp(K.root,87.4,F1,73.2,-Math.PI/2-0.25), tilt=grp(seat,0,0,0.38), ch=grp(tilt,0,0,-0.38); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b);
   K.bro=seatPerson(tilt,0,0.47-0.72,-0.38,0,''); K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.seat=seat; K.tilt=tilt; K.tip=0; }
 const SH_HERO=[92.6,74.6], SH_LUCY=[88.7,74.4]; // where the hero stands, and Lucy sits, at the start and the end (so it loops)
 const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]], MW_IN=[SH_HERO,[91.4,72.4],[91.4,66.8],[90.8,64.9]], MW_OUT=[[91.6,65.4],[91.6,71.6],SH_HERO], SH_S0=0.3;
@@ -7110,6 +7111,7 @@ const SHORT_TICK=[
     if(K.lucy){ if(K.lucy.mode==='porch'||K.lucy.mode==='sit'){ K.lucy.mode='sit'; K.lucy.p[0]=SH_LUCY[0]; K.lucy.p[2]=SH_LUCY[1]; } K.lucy.demoHero=pl.p.slice(); }
     at(K,'what',u>0.6,()=>{ npcSay(K.bro,'...what did I miss?'); setFace(K.bro.R,'scared'); }); at(K,'done',u>0.72,()=>{ heroSay('Chores are done. 😎'); setFace(rig,'happy'); shortCap('CHORES:\nDONE ✅'); });
     at(K,'calm',u>0.9,()=>{ setFace(K.bro.R,''); setFace(rig,''); shortCap(''); const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; if(heroBub&&heroBub.bub){ model.remove(heroBub.bub); heroBub.bub=null; heroBub.bubT=0; } }); // (back to how it began, for the loop)
+    K.bounce=u>0.28&&u<0.74; // the cars in the garage bounce to celebrate the mower coming home
     K.sip=u>0.92?1:0; broTick(K,dt,u<0.44?v.p:pl.p); } ];
 // the camera for each part (tall 9:16 framing)
 function shortCam(dt){ const K=shortK; if(!K||K.i<0)return; const v=K.v, sg=K.seg, i=K.i, u=K.s||0; let want, look, snap=false; dt=dirRealDt;
