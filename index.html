@@ -5543,7 +5543,8 @@ function mowerMesh(look){ const g=new THREE.Group(), M=c=>lm(c), wheels=[], add=
   const sw=new THREE.Mesh(new THREE.TorusGeometry(0.17,0.03,6,16),dk); sw.position.set(0,1.27+up,-0.3); sw.rotation.x=-1.0; g.add(sw);
   const pipes=[]; if(flame){ const ft=flameTex(), fm=new THREE.MeshBasicMaterial({map:ft,transparent:true}); for(const sx of [-1,1]){ const pl2=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.36),fm); pl2.position.set(sx*0.456,0.8+up,-0.62); pl2.rotation.y=sx*Math.PI/2+(sx<0?Math.PI:0); g.add(pl2); }
       const top=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.8),fm); top.rotation.set(-Math.PI/2,0,Math.PI/2); top.position.set(0,1.0+up,-0.62); g.add(top);
-      const chrome=lm(0xd8dde4,{emissive:0x30343a}); for(const sx of [-1,1]){ cyl(0.08,0.08,1.3,chrome,sx*0.56,0.62+up,-0.25,Math.PI/2); const st=cyl(0.1,0.13,1.0,chrome,sx*0.6,1.15+up,0.45,-0.35); pipes.push([sx*0.6,1.65+up,0.62]); } } // big chrome pipes
+      const chrome=lm(0xd8dde4,{emissive:0x30343a}); for(const sx of [-1,1]){ for(let k=0;k<4;k++){ const sp2=cyl(0.06,0.07,0.42,chrome,sx*0.6,0.5+up,-0.62+k*0.22,0.75,-sx*0.95); } // side pipes, like a hot rod's headers: out and back
+        cyl(0.1,0.13,1.0,chrome,sx*0.42,1.08+up,0.78,0.65); pipes.push([sx*0.42,1.08+up+0.4,0.78+0.3]); } } // two tall stacks at the back, raked backward, away from the driver
   else add(0.16,0.44,0.87,trim,0,0.79,-0.62); // a yellow stripe on the hood
   return {g,wheels,lights:[],seat:[0,0.4+up,0.32],wr:rb,bodyMat:body,chute:[1.0,0.28,-0.05],pipes}; }
 function mowerLook(v,look){ const was=v.look; if(was===look)return; scene.remove(v.m); v.m.traverse(o=>{ if(o.geometry)o.geometry.dispose(); }); v.vm=mowerMesh(look); v.m=v.vm.g; scene.add(v.m); v.look=look; v.V=MOWER_V[look]; vehPlace(v);
@@ -5561,7 +5562,7 @@ function mowerTick(dt){ mowSprayTick(dt); if(traveling)return;
     if(sp>1.2){ v.sprT=(v.sprT||0)-dt; if(v.sprT<=0){ v.sprT=0.03;
       if(v.look==='jet'){ const q=at(v.vm.spray); for(let k=0;k<3;k++)mowSpray(q[0],q[1],q[2],-f[0]*sp*0.4+(Math.random()-0.5)*2,2+Math.random()*2.5,-f[1]*sp*0.4+(Math.random()-0.5)*2,Math.random()<0.5?0xffffff:0x9ad8ff); }
       else { const gid=get(Math.floor(v.p[0]),Math.floor(v.p[1])-1,Math.floor(v.p[2])); if(gid===ID.grass||gid===ID.dirt){ const q=at(v.vm.chute); for(let k=0;k<3;k++)mowSpray(q[0],q[1],q[2],r[0]*(4+Math.random()*3)+f[0]*sp*0.5,1.5+Math.random()*2,r[1]*(4+Math.random()*3)+f[1]*sp*0.5,[0x3aa030,0x5ac83a,0x2a8a2a,0x7ad84a][k%4]); } } // grass out of the chute
-      if(v.look==='flame'&&v.driver&&sp>4)for(const pp of v.vm.pipes){ const q=at(pp); mowSpray(q[0],q[1],q[2],(Math.random()-0.5)*0.6,2.5+Math.random(),(Math.random()-0.5)*0.6,Math.random()<0.5?0xff8a1a:0xffd23a); } } }
+      if(v.look==='flame'&&v.driver&&sp>4)for(const pp of v.vm.pipes){ const q=at(pp); mowSpray(q[0],q[1],q[2],-f[0]*2.2+(Math.random()-0.5)*0.5,1.8+Math.random(),-f[1]*2.2+(Math.random()-0.5)*0.5,Math.random()<0.5?0xff8a1a:0xffd23a); } } }
     // left parked for 10 minutes: it drives itself off the edge of the world and goes home to the mansion
     const home=mansionK&&onMansion()&&Math.hypot(v.p[0]-MOW_HOME[0],v.p[2]-MOW_HOME[1])<2.5;
     if(v.driver||v.npc||demo||home){ v.idle=0; v.going=null; continue; } v.idle=(v.idle||0)+dt; if(v.idle<MOW_WAIT)continue;
@@ -6632,7 +6633,7 @@ function mansionTick(dt){ const K=mansionK; K.t+=dt; const G=K.G, eye=demo&&!dem
     K.mvT=(K.mvT||0)-dt; if(K.mvT<=0){ K.mvT=0.08; movieDraw(K); } }
   if(G.out.visible){ resortTick(K,dt); yardTurkeyTick(K,dt); for(const p of K.fireFam){ p.R.head.rotation.y=Math.sin(K.t*0.5+p.ph)*0.3; p.R.armR.rotation.x=1.3+Math.sin(K.t*0.8+p.ph)*0.08; animRig(p.R,dt,0); if(p.bubT>0){ p.bubT-=dt; if(p.bubT<=0&&p.bub){ p.g.remove(p.bub); p.bub=null; } } }
     K.fcT=(K.fcT||3)-dt; if(K.fcT<=0){ K.fcT=4+Math.random()*4; if(Math.hypot(pl.p[0]-87,pl.p[2]-9)<9&&K.fireFam.length)npcSay(K.fireFam[Math.floor(Math.random()*K.fireFam.length)],FIRE_CHAT[Math.floor(Math.random()*FIRE_CHAT.length)]); } }
-  { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
+  { const Gr=MN.garage, inG=eye[0]>Gr.x0&&eye[0]<Gr.x1&&eye[2]>Gr.z0&&eye[2]<Gr.z1, hero=pl.p, half=hero[0]>(Gr.x0+Gr.x1)/2-1&&hero[2]>Gr.z0&&hero[2]<Gr.z1&&hero[0]<Gr.x1; if(half&&!K.gB){ K.gB=true; rtoast('🚗 The cars start bouncing!'); } if(shortK&&shortK.bounce!==undefined)K.gB=shortK.bounce; else if(!(hero[0]>Gr.x0-1&&hero[0]<Gr.x1&&hero[2]>Gr.z0&&hero[2]<Gr.z1))K.gB=false; // walk halfway into the garage...
     let any=false; (K.gcars||[]).forEach((v,i)=>{ if(v.driver||v.jet){ return; } v.gb=(v.gb||0)+((K.gB?1:0)-(v.gb||0))*Math.min(1,dt*3); if(v.gb<0.01){ if(v.gbOn){ v.gbOn=false; vehPlace(v); } return; } any=true; v.gbOn=true;
       const ph=K.t*6.5+i*1.3, y=v.gb*0.35*Math.abs(Math.sin(ph)); v.m.position.y=v.p[1]+y; v.m.rotation.set(v.gb*0.08*Math.sin(ph*0.5),v.h,v.gb*0.06*Math.sin(ph*0.25+i),'YXZ'); });
     if(any&&inG)discoBeat(dt,0.6); }
@@ -6987,10 +6988,10 @@ function recDone(){ const R=rec; if(!R)return; R.done=true; renderer.setPixelRat
 // Odyssey Sea as a wave runner and races a whale. Then it's back home, rolling into the garage as the door comes down, and your
 // brother looks up from his lemonade. The last shot matches the first, so it loops. Lucy hides in every world.
 // Each world is a segment of the Short; the segments shrink for the 45- and 30-second versions.
-const SHORT_SEGS={60:[0,12,31,50,60],45:[0,9,23,37,45],30:[0,7,16,24,30]};
+const SHORT_SEGS={60:[0,14,31,49,60],45:[0,11,23,35,45],30:[0,9,16,23,30]};
 function shortCap(t){ const K=shortK; if(!K)return; K.cap=t||''; K.capT=t?2.4:0; K.capAge=0; const el=$('shortCap'); el.textContent=t||''; el.style.display=t?'block':'none'; }
 function shortFlash(){ odFlash(450); sfx('zap'); }
-function shortLucy(x,y,z){ const e=petSpawn(petClean(Object.assign({id:9001},LUCY)),x,y,z,'sit'); e.demoHero=1; e.demo=1; return e; }
+function shortLucy(x,y,z){ const e=petSpawn(petClean(Object.assign({id:9001},LUCY)),x,y,z,'sit'); e.demoHero=pl.p.slice(); e.demo=1; e.g=e.M.g; return e; } // (demoHero: who she watches or chases; g so she can bark in a speech bubble)
 function shortWorld(k){ const K=shortK; if(drive)exitVehicle(true,true); for(const v of freeVehicles.slice())removeVehicle(v); petsClear(); if(K.root){ scene.remove(K.root); disposeG(K.root); } K.root=new THREE.Group(); scene.add(K.root);
   if(demo.mansionWorld){ clearMansionLife(); demo.mansionWorld=false; } if(demo.dragWorld){ clearDragLife(); demo.dragWorld=false; } if(demo.odyWorld&&k!=='odyssey'){ odStageClear(); clearOdyLife(); demo.odyWorld=false; }
   clearCityLife(); clearInteriorLife(); clearApples(); demo.cityKey=null; demo.vplace=k;
@@ -6998,12 +6999,12 @@ function shortWorld(k){ const K=shortK; if(drive)exitVehicle(true,true); for(con
   else if(k==='drag'){ demo.dragWorld=true; setWorldSize(...PLACES.drag.dims); generateDrag(dmCfg.seed+23); rebuildAll(); refreshPortals(); buildDragLife(null); }
   else { if(!demo.odyWorld||!odyK){ demo.odyWorld=true; setWorldSize(...PLACES.odyssey.dims); generateOdyssey(dmCfg.seed+41); rebuildAll(); refreshPortals(); buildOdyLife(); } odStageClear(); }
   applyPlaceSky(); if(k==='odyssey'){ odSky('day'); odHeroGear(false); } K.world=k; demo.cam=null; }
-function shortMower(x,y,z,h,look){ const v=makeVehicle('mower',x,y,z,h); freeVehicles.push(v); if(look&&look!==v.look)mowerLook(v,look); v.lockLook=1; v.npc={script:1}; enterVehicle(v,true); camMode=3; chase.p=null; return v; }
+function shortMower(x,y,z,h,look,walk){ const v=makeVehicle('mower',x,y,z,h); freeVehicles.push(v); if(look&&look!==v.look)mowerLook(v,look); v.lockLook=1; v.npc={script:1}; if(!walk){ enterVehicle(v,true); camMode=3; chase.p=null; } return v; }
 // move the mower along a path of points: f is how far along (0..1); it faces the way it's going and its wheels turn
 function shortAlong(pts,f){ let L=0; const seg=[]; for(let i=1;i<pts.length;i++){ const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(d); L+=d; }
   let d=Math.max(0,Math.min(1,f))*L; for(let i=0;i<seg.length;i++){ if(d<=seg[i]||i===seg.length-1){ const k=seg[i]?Math.min(1,d/seg[i]):0, a=pts[i], b=pts[i+1]; return {x:a[0]+(b[0]-a[0])*k,z:a[1]+(b[1]-a[1])*k,h:Math.atan2(-(b[0]-a[0]),-(b[1]-a[1])),L}; } d-=seg[i]; } }
 function shortDrive(v,x,y,z,h,dt){ const moved=Math.hypot(x-v.p[0],z-v.p[2]); v.spd=dt>0?moved/dt:0; let dh=h-v.h; while(dh>Math.PI)dh-=2*Math.PI; while(dh<-Math.PI)dh+=2*Math.PI; if(moved>0.001)v.h+=dh*Math.min(1,dt*10);
-  v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); pl.p=v.p.slice(); }
+  v.p=[x,y,z]; v.wheel+=moved/(v.vm.wr||0.4); for(const w of v.vm.wheels)w.rotation.x=-v.wheel; vehPlace(v); if(drive===v)pl.p=v.p.slice(); }
 function shortSetup(sc,P){ musicStop(); if(tunePlay('adventure')){ musOnNow='tune'; musGain.gain.value=mus.vol/100*0.5; }
   const len=sc.secs, tpl=len<38?30:len<53?45:60, sg=SHORT_SEGS[tpl].map(t=>t*len/tpl); shortK={seg:sg,i:-1,cap:'',capT:0,root:null,world:'',look:shortLook()}; dressHero(); Object.assign(P,{hs:0}); demo.puppet=true; setFly(false,false); shortCap(''); }
 function shortEnd(){ const K=shortK; if(!K)return; shortCap(''); if(K.root){ scene.remove(K.root); disposeG(K.root); } shortK=null; dressHero(); dirReset(); setFace(rig,''); if(rec&&!rec.done&&rec.mr&&rec.mr.state==='recording')rec.mr.stop();
@@ -7017,47 +7018,64 @@ function shortPilot(dt,P){ const K=shortK; if(!K)return {ix:0,iz:0}; const t=dem
 // on the beat: fires at the first beat of the music after story point u (the built-in tune is 116 beats a minute)
 function onBeat(K,key,cond,fn,every){ if(!cond||K.done[key])return; const b=60/116*(every||1), tgt=K.done[key+'@']||(K.done[key+'@']=Math.ceil((demo.st+0.001)/b)*b); if(demo.st>=tgt-0.02){ K.done[key]=1; fn(); } }
 // where each part slows down (story points A to B at speed k): the mower's jump out of the garage, and the wave runner's big jump
-const SHORT_RAMP=[sl=>{ const s0=0.07*12/sl; return [s0+0.125*(0.97-s0),s0+0.235*(0.97-s0),0.4]; },null,()=>[0.84,0.95,0.45],null];
+const SHORT_RAMP=[()=>{ const s0=SH_S0; return [s0+0.125*(0.97-s0),s0+0.235*(0.97-s0),0.4]; },null,()=>shortK&&shortK.sea&&shortK.sea.R?[0.72,0.84,0.5]:[0.84,0.95,0.45],null];
 // the cuts in each part (story points): the camera whips across between shots
-const SHORT_CUTS=[[0.2,0.25,0.62,0.8],[0.25,0.42,0.5],[0.12,0.6],[0.6]];
+const SHORT_CUTS=[[0.397,0.434,0.71,0.84],[0.25,0.42,0.5],[0.12,0.55],[0.44]];
 const at=(K,key,cond,fn)=>{ if(cond&&!K.done[key]){ K.done[key]=1; fn(); } };
-const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]];
+// the hero on foot (a scripted walk): along a path of points, f is 0..1; he faces the way he walks and his legs swing
+function shortWalk(pts,f,F1){ const q=shortAlong(pts,f); pl.p=[q.x,F1,q.z]; pl.v=[0,0,0]; let d=q.h-yaw; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; yaw+=d*Math.min(1,dirRealDt*10); demo.pil.hs=f>0&&f<1?3.2:0; }
+// your brother in his lawn chair, beside the garage (the chair can tip over backward, with him in it)
+function shortBro(K,F1){ const seat=grp(K.root,87.4,F1,73.2,-Math.PI/2-0.25), tilt=grp(seat,0,0,0.38), ch=grp(tilt,0,0,-0.38); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b);
+  K.bro=seatPerson(tilt,0,0.47-0.72,-0.38,0,''); K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.seat=seat; K.tilt=tilt; K.tip=0; }
+const SH_HERO=[92.6,74.6], SH_LUCY=[88.7,74.4]; // where the hero stands, and Lucy sits, at the start and the end (so it loops)
+const MW_GAR={x:90.8,z0:63.5,door:69.6}, MW_PATH=[[90.8,63.5],[90.8,69.6],[90.8,77.2],[88.6,79.4],[39.4,79.1],[34,79.1]], MW_IN=[SH_HERO,[91.4,72.4],[91.4,66.8],[90.8,64.9]], MW_OUT=[[91.6,65.4],[91.6,71.6],SH_HERO], SH_S0=0.3;
 const SHORT_INIT=[
   K=>{ shortWorld('mansion'); const F1=MN.F1, m=mansionK; m.mower&&removeVehicle(m.mower); m.mower=null;
     const door=grp(K.root,94.5,F1,70.05); const dm=mm(0xe8e4dc); mb(door,15.8,4,0.22,dm,0,2,0); for(let k=0;k<4;k++)mb(door,15.6,0.06,0.25,mm(0xb8b4ac),0,0.6+k*0.9,0); mb(door,1.2,0.12,0.28,mm(0x6a6a70),0,0.5,0.05); K.door=door; K.dv=null;
-    K.bro=seatPerson(K.root,87.4,F1+0.47-0.72,73.2,Math.PI/2+0.35,''); { const ch=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b); }
-    K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother';
-    makeGateway(38,F1,78,false,'drag'); refreshPortals(); K.lucy=shortLucy(66.5,F1,82.6);
-    K.v=shortMower(MW_GAR.x,F1,MW_GAR.z0,Math.PI,'mower'); shortCap('SATURDAY\nCHORES...'); setFace(rig,''); },
+    shortBro(K,F1); makeGateway(38,F1,78,false,'drag'); refreshPortals(); K.lucy=shortLucy(SH_LUCY[0],F1,SH_LUCY[1]);
+    K.v=shortMower(MW_GAR.x,F1,MW_GAR.z0,Math.PI,'mower',true); pl.p=[SH_HERO[0],F1,SH_HERO[1]]; yaw=Math.PI; setFace(rig,''); shortCap('SATURDAY\nCHORES...'); },
   K=>{ shortWorld('drag'); const D=dragK, Z=DR.Z0; K.v=shortMower(45,DR.GY,Z+14,0,'mower'); K.rv=D.cars.find(c=>c.type==='dragster')||D.cars[0]; const a=K.rv; a.p=[52.5,DR.GY,Z+13]; a.h=0; a.spd=0; vehPlace(a); a.npc={script:1};
     if(!a.drv){ a.drv=driverMesh(randomLook()); const st=a.vm.seat; a.drv.position.set(st[0],st[1]-0.7,st[2]); a.m.add(a.drv); } if(a.owner)a.owner.g.visible=false;
-    makeGateway(44,DR.GY,Z-150,true,'odyssey'); refreshPortals(); K.lucy=shortLucy(42.2,DR.GY,Z-70); K.rz=a.p[2]; },
-  K=>{ shortWorld('odyssey'); const S=odyK.sea; let best=null; for(let k=0;k<400&&!best;k++){ const x=40+Math.random()*176, z=40+Math.random()*176, h=Math.random()*6.28, f=[-Math.sin(h),-Math.cos(h)], r=[Math.cos(h),-Math.sin(h)]; let ok=true;
-      for(let d=-4;d<=95&&ok;d+=3)for(const o of [0,6])if(!seaOpen(x+f[0]*d+r[0]*o,z+f[1]*d+r[1]*o,3))ok=false; if(ok)best={x,z,h,f,r}; }
-    K.sea=best||{x:128,z:180,h:0,f:[0,-1],r:[1,0]}; const B2=K.sea; K.v=shortMower(B2.x,OD.SEA+7,B2.z,B2.h,'mower');
+    makeGateway(44,DR.GY,Z-150,true,'odyssey'); refreshPortals(); K.lucy=shortLucy(40.5,DR.GY+2,Z-52); K.lucy.hd=-Math.PI/2; K.rz=a.p[2]; }, // Lucy watches from the top of the wall, safe off the track
+  K=>{ shortWorld('odyssey'); const S=odyK.sea; K.sea=null; if(!odyK.ramps)odBuildRamps(odyK);
+    // a run-up to one of the jump ramps behind the Cyclops's mountain: open water before it (with room for the whale beside) and after it
+    for(const R of (odyK.ramps||[])){ const f=vFwd(R.h), r=vRight(R.h); for(const app of [40,30,22])for(const side of [1,-1]){ let ok=true; const pt=(a,o)=>seaOpen(R.x+f[0]*a+r[0]*o,R.z+f[1]*a+r[1]*o,2);
+        for(let a=-RAMP.L/2-app;a<=-RAMP.L/2-1&&ok;a+=2)ok=pt(a,0)&&(a>-RAMP.L/2-10||pt(a,6*side)); for(let a=RAMP.L/2+1;a<=RAMP.L/2+22&&ok;a+=2)ok=pt(a,0);
+        if(ok&&!K.sea){ K.sea={x:R.x+f[0]*(-RAMP.L/2-app),z:R.z+f[1]*(-RAMP.L/2-app),h:R.h,f,r:[r[0]*side,r[1]*side],R,app}; } } if(K.sea)break; }
+    if(!K.sea){ let best=null; for(let k=0;k<400&&!best;k++){ const x=40+Math.random()*176, z=40+Math.random()*176, h=Math.random()*6.28, f=[-Math.sin(h),-Math.cos(h)], r=[Math.cos(h),-Math.sin(h)]; let ok=true;
+        for(let d=-4;d<=95&&ok;d+=3)for(const o of [0,6])if(!seaOpen(x+f[0]*d+r[0]*o,z+f[1]*d+r[1]*o,3))ok=false; if(ok)best={x,z,h,f,r}; } K.sea=best||{x:128,z:180,h:0,f:[0,-1],r:[1,0]}; } // (no ramp to be found: a straight race)
+    const B2=K.sea; K.v=shortMower(B2.x,OD.SEA+7,B2.z,B2.h,'mower');
     const wh=S.whale; K.lucyM=petMesh(petClean(Object.assign({id:9002},LUCY))); K.lucyM.g.position.set(0,1.05,0.6); K.lucyM.g.rotation.y=Math.PI/2; wh.g.add(K.lucyM.g); }, // Lucy surfs on the whale's back
   K=>{ shortWorld('mansion'); const F1=MN.F1, m=mansionK; m.mower&&removeVehicle(m.mower); m.mower=null;
     const door=grp(K.root,94.5,F1+3.6,70.05); mb(door,15.8,4,0.22,mm(0xe8e4dc),0,2,0); for(let k=0;k<4;k++)mb(door,15.6,0.06,0.25,mm(0xb8b4ac),0,0.6+k*0.9,0); mb(door,1.2,0.12,0.28,mm(0x6a6a70),0,0.5,0.05); K.door=door;
-    K.bro=seatPerson(K.root,87.4,F1+0.47-0.72,73.2,Math.PI/2+0.35,''); { const ch=grp(K.root,87.4,F1,73.2,Math.PI/2+0.35); mb(ch,0.7,0.1,0.7,mm(0x2a8ad8),0,0.45,0); mb(ch,0.7,0.8,0.08,mm(0x2a8ad8),0,0.85,0.33); for(const [a,b] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])mb(ch,0.05,0.45,0.05,mm(0xd8d8d8),a,0.22,b); }
-    K.cup=mcyl(K.bro.R.armR,0.08,0.07,0.22,mm(0xffe86a,{transparent:true,opacity:0.85}),0,-0.8,-0.08,10); K.bro.name='Brother'; K.lucy=shortLucy(84.2,F1,75.6);
+    shortBro(K,F1); K.lucy=shortLucy(80.5,F1,90.5); K.lucy.mode='home'; K.lucy.home=SH_LUCY.slice();
     K.v=shortMower(90.8,F1,96,0,'mower'); shortFlash(); } ];
-function broTick(K,dt,lookAt){ const B2=K.bro, R=B2.R; if(!B2)return; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=0.9; const sip=K.sip>0; R.armR.rotation.x=sip?2.2:1.0; if(K.sip>0)K.sip-=dt;
-  if(lookAt){ const w=Math.atan2(-(lookAt[0]-B2.g.position.x),-(lookAt[2]-B2.g.position.z))-B2.g.rotation.y; let d=w; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; R.head.rotation.y+=(Math.max(-1.2,Math.min(1.2,d))-R.head.rotation.y)*Math.min(1,dt*5); } else R.head.rotation.y*=Math.max(0,1-dt*4);
+function broTick(K,dt,lookAt){ const B2=K.bro, R=B2&&B2.R; if(!B2)return; R.legL.rotation.x=R.legR.rotation.x=1.45; R.armL.rotation.x=0.9; const sip=K.sip>0; R.armR.rotation.x=sip?2.2:1.0; if(K.sip>0)K.sip-=dt;
+  if(lookAt){ const S2=K.seat, w=Math.atan2(-(lookAt[0]-S2.position.x),-(lookAt[2]-S2.position.z))-S2.rotation.y; let d=w; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; R.head.rotation.y+=(Math.max(-1.2,Math.min(1.2,d))-R.head.rotation.y)*Math.min(1,dt*5); } else R.head.rotation.y*=Math.max(0,1-dt*4);
+  K.tilt.rotation.x+=((K.tip||0)*1.25-K.tilt.rotation.x)*Math.min(1,dt*(K.tip?9:4)); if(K.tip)R.legL.rotation.x=R.legR.rotation.x=1.45+Math.sin(demo.st*14)*0.35; // over backward, legs kicking
   animRig(R,dt,0); if(B2.bubT>0){ B2.bubT-=dt; if(B2.bubT<=0&&B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } } }
 const SHORT_TICK=[
   // the garage, the lawn and the portal
-  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1, s0=0.07*12/sl, sDoor=0.16, sLand=0.3; let d;
-    if(u<s0){ d=0; K.sip=u<s0*0.6?1:0; } else { const k=(u-s0)/(0.97-s0); d=k<0.12?6.1*(k/0.12)**2:6.1+(k-0.12)/0.88*(K.total||64-6.1); }
+  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1, s0=SH_S0; let d, P=demo.pil;
+    // on foot: "Time for chores!", the door rolls up, he walks in and climbs on, the door comes down, the garage rumbles
+    if(u<s0){ d=0; K.sip=u<0.05?1:0; const D2=K.door;
+      at(K,'say',u>0.01,()=>heroSay('Time for chores! 🚜'));
+      if(u<0.065){ pl.p=[SH_HERO[0],F1,SH_HERO[1]]; yaw=Math.PI; P.hs=0; } else if(u<0.21)shortWalk(MW_IN,(u-0.065)/0.145,F1);
+      D2.position.y=F1+3.6*Math.max(0,Math.min(1,(u-0.06)/0.05))*(u<0.22?1:Math.max(0,1-(u-0.22)/0.035)); at(K,'up',u>0.06,()=>snd(()=>noise(300,0.8,0.12,'lowpass')));
+      at(K,'on',u>=0.215,()=>{ P.hs=0; enterVehicle(v,true); camMode=3; chase.p=null; }); at(K,'shut',u>0.25,()=>sfx('thunk'));
+      if(u>0.255){ D2.position.x=94.5+Math.sin(demo.st*40)*0.03; at(K,'vroom',true,()=>snd(()=>{ tone('sawtooth',55,120,0.9,0.12); tone('square',80,160,0.9,0.05); })); setFace(K.bro.R,'scared'); } }
+    else { const k=(u-s0)/(0.97-s0); d=k<0.12?6.1*(k/0.12)**2:6.1+(k-0.12)/0.88*(K.total||64-6.1); }
+    if(K.lucy){ if(u<0.38||!K.done.burst)K.lucy.demoHero=pl.p.slice(); else { K.lucy.mode='follow'; K.lucy.demoHero=v.p.slice(); } }
     if(!K.total){ K.total=shortAlong(MW_PATH,1).L; } const f=Math.min(1,d/K.total), q=shortAlong(MW_PATH,f); let y=F1, pitch=0;
     if(d>6.1&&d<13.7){ const a=(d-6.1)/7.6; y=F1+Math.sin(a*Math.PI)*2.4; pitch=-0.35*Math.cos(a*Math.PI); }
-    at(K,'burst',d>6.0,()=>{ K.dv=[0,5,10,3]; sfx('boom'); sfx('break'); burst(94.5,F1+2,70,new THREE.Color(0.9,0.9,0.85),20); shortCap('WAIT...\nWHAT?!'); npcSay(K.bro,'Hey!! My mower!'); dirShake(0.35,0.6); dirKick(10); setFace(rig,'shock'); setFace(K.bro.R,'shock'); });
+    at(K,'burst',d>6.0,()=>{ K.dv=[0,5,10,3]; sfx('boom'); sfx('break'); burst(94.5,F1+2,70,new THREE.Color(0.9,0.9,0.85),20); shortCap('WAIT...\nWHAT?!'); npcSay(K.bro,'Hey!! My mower!'); dirShake(0.35,0.6); dirKick(10); setFace(rig,'shock'); setFace(K.bro.R,'shock'); K.tip=1; K.lucy&&npcSay(K.lucy,'WOOF! WOOF!'); });
     at(K,'yell',d>9,()=>setFace(K.bro.R,'angry')); at(K,'grin',d>14.5,()=>setFace(rig,'grin'));
     DIR.dutch=d>6.1&&d<13.7?-0.18*Math.sin((d-6.1)/7.6*Math.PI):0;
     at(K,'land',d>13.7,()=>{ burst(q.x-0.5,F1+0.2,q.z-0.5,new THREE.Color(0.45,0.75,0.3),14); sfx('thunk'); dirShake(0.18,0.35); });
     if(K.dv){ const D2=K.door; K.dv[1]-=14*dt; D2.position.x+=K.dv[0]*dt; D2.position.y=Math.max(F1-1.9,D2.position.y+K.dv[1]*dt); D2.position.z+=K.dv[2]*dt; if(D2.position.y>F1-1.9)D2.rotation.x+=K.dv[3]*dt; else { K.dv[2]*=0.9; } }
     shortDrive(v,q.x,y,q.z,q.h,dt); v.pitch=pitch; vehPlace(v);
     at(K,'portal',u>0.9,()=>{ shortCap(''); }); at(K,'flash',u>0.955,()=>shortFlash());
-    broTick(K,dt,u>s0?v.p:null); },
+    broTick(K,dt,u>0.37?v.p:pl.p); },
   // the drag strip: the flame makeover, the countdown, the race and the portal
   (K,u,dt,sl)=>{ const v=K.v, a=K.rv, Z=DR.Z0;
     at(K,'flame',u>0.1,()=>{ v.lockLook=0; mowerLook(v,'flame'); v.lockLook=1; shortCap('UPGRADE!'); });
@@ -7068,44 +7086,57 @@ const SHORT_TICK=[
     at(K,'win',u>0.74,()=>{ shortCap('MOWER\nWINS?!'); setFace(rig,'happy'); }); at(K,'flash',u>0.955,()=>shortFlash());
     let d=0; if(u>0.42){ const k=Math.min(1,(u-0.42)/0.55); d=(14+150+4)*Math.pow(k,1.5); } shortDrive(v,45,DR.GY,Z+14-d,0,dt); v.pitch=u>0.42&&u<0.6?-0.18:0; vehPlace(v);
     let rz=Z+13; if(u>0.42){ const k=u-0.42; rz=Z+13-Math.min(26,k*sl*40)+(k>0.05?0:0); } const old=a.p[2]; a.p=[52.5,DR.GY,Math.min(old,rz)]; a.spd=dt?(old-a.p[2])/dt:0; vehPlace(a); a.wheel+=a.spd*dt/(a.vm.wr||0.4); for(const w of a.vm.wheels)w.rotation.x=-a.wheel;
-    if(K.lucy)K.lucy.hd=Math.atan2(-(v.p[0]-K.lucy.p[0]),-(v.p[2]-K.lucy.p[2])); },
+    if(K.lucy){ K.lucy.demoHero=v.p.slice(); K.lucy.p[1]=DR.GY+2; K.lucy.v=[0,0,0]; } },
   // the Odyssey Sea: a splash, wave runner mode, racing the whale (Lucy on its back), a big jump
-  (K,u,dt,sl)=>{ const v=K.v, B2=K.sea, S=odyK.sea, wh=S.whale; const sp=0.1; let y, d;
-    if(u<sp){ const k=u/sp; y=OD.SEA+7-6.1*k*k; d=k*6; } else { d=6+(u-sp)/0.85*84; y=OD.SEA+0.9+Math.sin(demo.st*5)*0.06; }
-    at(K,'splash',u>=sp,()=>{ v.lockLook=0; mowerLook(v,'jet'); v.lockLook=1; odSfx('splash'); setFace(rig,'shock'); dirShake(0.25,0.5); for(let k=0;k<4;k++)burst(v.p[0]-0.5+(Math.random()-0.5)*2,OD.SEA+0.5,v.p[2]-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd8f0ff),14); shortCap('WAVE RUNNER\nMODE'); });
-    at(K,'race',u>0.42,()=>{ shortCap('RACE YOU!'); wh.spout=2; seaSfx('spout',wh.p); setFace(rig,'grin'); }); at(K,'jump',u>0.82,()=>setFace(rig,'shock')); at(K,'yay',u>0.92,()=>setFace(rig,'happy'));
-    if(u>0.8&&u<0.98){ const k=(u-0.8)/0.18; y+=Math.sin(Math.min(1,k)*Math.PI)*3.2; } at(K,'flash',u>0.955,()=>shortFlash());
-    const x=B2.x+B2.f[0]*d, z=B2.z+B2.f[1]*d; shortDrive(v,x,y,z,B2.h,dt); v.pitch=u>0.8&&u<0.9?-0.3:0; vehPlace(v);
-    const wd=Math.max(0,d-2.5+Math.sin(demo.st*0.8)*1.5); wh.p=[B2.x+B2.f[0]*wd+B2.r[0]*6,OD.SEA+0.1,B2.z+B2.f[1]*wd+B2.r[1]*6]; wh.h=B2.h; wh.tgt=null; wh.chase=false;
+  (K,u,dt,sl)=>{ const v=K.v, B2=K.sea, S=odyK.sea, wh=S.whale, R=B2.R, H2=R?RAMP.H:0, LL=R?RAMP.L:0, app=B2.app||84; let y, d, h=B2.h, pitch=0;
+    // the run-up (racing the whale), up the ramp, a backflip with a full spin in slow motion, and the landing
+    if(u<0.1){ const k=u/0.1; y=OD.SEA+7-6.1*k*k; d=k*6; }
+    else if(u<0.6||!R){ d=6+(u-0.1)/0.5*(app-6); if(!R)d=6+(u-0.1)/0.85*84; y=OD.SEA+0.9+Math.sin(demo.st*5)*0.06; if(!R&&u>0.8&&u<0.98)y+=Math.sin(Math.min(1,(u-0.8)/0.18)*Math.PI)*3.2; }
+    else if(u<0.66){ const k=(u-0.6)/0.06; d=app+LL*k; y=OD.SEA+0.9+H2*k; pitch=-Math.atan2(H2,LL); }
+    else if(u<0.9){ const k=(u-0.66)/0.24; d=app+LL+16*k; y=OD.SEA+0.9+H2*(1-k)+6*Math.sin(k*Math.PI); pitch=-Math.atan2(H2,LL)*(1-k)-k*Math.PI*2; h=B2.h+k*Math.PI*2; }
+    else { d=app+LL+16+(u-0.9)/0.1*8; y=OD.SEA+0.9; }
+    at(K,'splash',u>=0.1,()=>{ v.lockLook=0; mowerLook(v,'jet'); v.lockLook=1; odSfx('splash'); setFace(rig,'shock'); dirShake(0.25,0.5); for(let k=0;k<4;k++)burst(v.p[0]-0.5+(Math.random()-0.5)*2,OD.SEA+0.5,v.p[2]-0.5+(Math.random()-0.5)*2,new THREE.Color(0xd8f0ff),14); shortCap('WAVE RUNNER\nMODE'); });
+    at(K,'race',u>0.3,()=>{ shortCap('RACE YOU!'); wh.spout=2; seaSfx('spout',wh.p); setFace(rig,'grin'); });
+    if(R){ at(K,'ramp',u>0.58,()=>{ shortCap('SEND IT!'); setFace(rig,'determined'); }); at(K,'air',u>0.66,()=>{ setFace(rig,'shock'); snd(()=>{ noise(1200,0.4,0.15,'bandpass'); tone('sine',300,700,0.4,0.07); }); shortCap(''); });
+      at(K,'land',u>0.9,()=>{ setFace(rig,'happy'); shortCap('NAILED IT!'); dirShake(0.3,0.5); odSfx('splash'); for(let k=0;k<16;k++)mowSpray(v.p[0],OD.SEA+1,v.p[2],(Math.random()-0.5)*7,3+Math.random()*4,(Math.random()-0.5)*7,Math.random()<0.5?0xffffff:0x9ad8ff); wh.spout=2; }); }
+    else { at(K,'jump',u>0.82,()=>setFace(rig,'shock')); at(K,'yay',u>0.92,()=>setFace(rig,'happy')); }
+    at(K,'flash',u>0.955,()=>shortFlash());
+    const x=B2.x+B2.f[0]*d, z=B2.z+B2.f[1]*d; shortDrive(v,x,y,z,h,dt); if(R&&u>0.66&&u<0.9)v.h=h; v.pitch=R?pitch:(u>0.8&&u<0.9?-0.3:0); vehPlace(v);
+    const wd=Math.min(R?app-12:1e9,Math.max(0,d-2.5+Math.sin(demo.st*0.8)*1.5)); wh.p=[B2.x+B2.f[0]*wd+B2.r[0]*6,OD.SEA+0.1,B2.z+B2.f[1]*wd+B2.r[1]*6]; wh.h=B2.h; wh.tgt=null; wh.chase=false;
     const pc=S.pod.c; pc[0]=x+B2.f[0]*10-B2.r[0]*5; pc[2]=z+B2.f[1]*10-B2.r[1]*5; },
-  // home: into the garage, the door comes down, and your brother wonders what he missed
-  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1; const k=Math.min(1,u/0.55), e=1-(1-k)*(1-k), z=96-(96-63.5)*e; shortDrive(v,90.8,F1,z,0,dt);
-    at(K,'what',u>0.18,()=>{ npcSay(K.bro,'...what did I miss?'); shortCap(''); setFace(K.bro.R,'scared'); setFace(rig,'happy'); }); at(K,'calm',u>0.8,()=>{ setFace(K.bro.R,''); setFace(rig,''); }); at(K,'hush',u>0.8,()=>{ const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; }); at(K,'door',u>0.55,()=>sfx('click'));
-    if(u>0.55){ K.door.position.y=Math.max(F1,F1+3.6-(u-0.55)/0.2*3.6); } if(u>0.75)K.door.position.y=F1;
-    K.sip=u>0.86?1:0; broTick(K,dt,u<0.8?v.p:null); } ];
+  // home: into the garage; he walks out as the door comes down, Lucy runs up and sits by your brother, "What did I miss?" "Chores are done."
+  (K,u,dt,sl)=>{ const v=K.v, F1=MN.F1, P=demo.pil; const k=Math.min(1,u/0.42), e=1-(1-k)*(1-k), z=96-(96-63.5)*e; if(u<0.44)shortDrive(v,90.8,F1,z,0,dt);
+    at(K,'off',u>=0.44,()=>{ exitVehicle(true,true); v.spd=0; }); if(u>=0.44&&u<0.6)shortWalk(MW_OUT,(u-0.44)/0.16,F1); else if(u>=0.6){ pl.p=[SH_HERO[0],F1,SH_HERO[1]]; pl.v=[0,0,0]; let dd=Math.PI-yaw; while(dd>Math.PI)dd-=2*Math.PI; while(dd<-Math.PI)dd+=2*Math.PI; yaw+=dd*Math.min(1,dirRealDt*8); P.hs=0; }
+    if(u>0.5){ K.door.position.y=Math.max(F1,F1+3.6-(u-0.5)/0.18*3.6); } at(K,'door',u>0.5,()=>snd(()=>noise(300,0.8,0.12,'lowpass')));
+    if(K.lucy){ if(K.lucy.mode==='porch'||K.lucy.mode==='sit'){ K.lucy.mode='sit'; K.lucy.p[0]=SH_LUCY[0]; K.lucy.p[2]=SH_LUCY[1]; } K.lucy.demoHero=pl.p.slice(); }
+    at(K,'what',u>0.6,()=>{ npcSay(K.bro,'...what did I miss?'); setFace(K.bro.R,'scared'); }); at(K,'done',u>0.72,()=>{ heroSay('Chores are done. 😎'); setFace(rig,'happy'); shortCap('CHORES:\nDONE ✅'); });
+    at(K,'calm',u>0.9,()=>{ setFace(K.bro.R,''); setFace(rig,''); shortCap(''); const B2=K.bro; if(B2.bub){ B2.g.remove(B2.bub); B2.bub=null; } B2.bubT=0; if(heroBub&&heroBub.bub){ model.remove(heroBub.bub); heroBub.bub=null; heroBub.bubT=0; } }); // (back to how it began, for the loop)
+    K.bounce=u>0.28&&u<0.74; // the cars in the garage bounce to celebrate the mower coming home
+    K.sip=u>0.92?1:0; broTick(K,dt,u<0.44?v.p:pl.p); } ];
 // the camera for each part (tall 9:16 framing)
 function shortCam(dt){ const K=shortK; if(!K||K.i<0)return; const v=K.v, sg=K.seg, i=K.i, u=K.s||0; let want, look, snap=false; dt=dirRealDt;
   const f=vFwd(v.h), r=vRight(v.h), p=v.p;
-  if(i===0){ if(u<0.2){ want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } // the opening shot (the last shot matches it)
-    else if(u<0.25){ const hp=new THREE.Vector3(); rig.head.getWorldPosition(hp); hp.y+=0.25; want=new THREE.Vector3(hp.x+f[0]*1.5+r[0]*0.45,hp.y+0.1,hp.z+f[1]*1.5+r[1]*0.45); look=hp; snap=true; } // slow motion: his face as he flies out
-    else if(u<0.62){ want=new THREE.Vector3(p[0]+r[0]*3.2-f[0]*4.2,p[1]+2.0,p[2]+r[1]*3.2-f[1]*4.2); look=new THREE.Vector3(p[0]+f[0]*3,p[1]+0.8,p[2]+f[1]*3); snap=true; }
-    else if(u<0.8){ want=new THREE.Vector3(p[0]-f[0]*5.5-r[0]*1.5,MN.F1+2.6,p[2]-f[1]*5.5-r[1]*1.5); look=new THREE.Vector3(p[0]+f[0]*6,MN.F1+1.2,p[2]+f[1]*6); snap=true; }
+  if(i===0){ if(u<0.397){ want=new THREE.Vector3(92.6,MN.F1+2.3,81.4); look=new THREE.Vector3(90.2,MN.F1+1.35,73.2); } // the opening shot (the last shot matches it)
+    else if(u<0.434){ const hp=new THREE.Vector3(); rig.head.getWorldPosition(hp); hp.y+=0.25; want=new THREE.Vector3(hp.x+f[0]*1.5+r[0]*0.45,hp.y+0.1,hp.z+f[1]*1.5+r[1]*0.45); look=hp; snap=true; } // slow motion: his face as he flies out
+    else if(u<0.71){ want=new THREE.Vector3(p[0]+r[0]*3.2-f[0]*4.2,p[1]+2.0,p[2]+r[1]*3.2-f[1]*4.2); look=new THREE.Vector3(p[0]+f[0]*3,p[1]+0.8,p[2]+f[1]*3); snap=true; }
+    else if(u<0.84){ want=new THREE.Vector3(p[0]-f[0]*5.5-r[0]*1.5,MN.F1+2.6,p[2]-f[1]*5.5-r[1]*1.5); look=new THREE.Vector3(p[0]+f[0]*6,MN.F1+1.2,p[2]+f[1]*6); snap=true; }
     else { want=new THREE.Vector3(33.0,MN.F1+1.5,76.6); look=new THREE.Vector3(39,MN.F1+1.4,79.4); } } // through the portal, toward the camera
   else if(i===1){ const Z=DR.Z0; if(u<0.25){ want=new THREE.Vector3(46.8,DR.GY+1.3,p[2]-3.2); look=new THREE.Vector3(p[0],DR.GY+0.7,p[2]); }
     else if(u<0.42){ want=new THREE.Vector3(p[0]+0.3,DR.GY+1.9,p[2]-2.6); look=new THREE.Vector3(p[0],DR.GY+1.75,p[2]); } // the dolly zoom on his face, through the countdown
     else if(u<0.5){ want=new THREE.Vector3(48.7,DR.GY+4.2,Z+23); look=new THREE.Vector3(48.7,DR.GY+0.6,Z+7); }
     else { want=new THREE.Vector3(p[0]+3.4,DR.GY+1.3,p[2]+2.2); look=new THREE.Vector3(p[0]-0.5,DR.GY+0.8,p[2]-5); snap=true; } }
   else if(i===2){ if(u<0.12){ want=new THREE.Vector3(p[0]+r[0]*5-f[0]*4,OD.SEA+4.5,p[2]+r[1]*5-f[1]*4); look=new THREE.Vector3(p[0],p[1],p[2]); }
-    else if(u<0.6){ want=new THREE.Vector3(p[0]-r[0]*3.5-f[0]*3.5,OD.SEA+2.6,p[2]-r[1]*3.5-f[1]*3.5); look=new THREE.Vector3(p[0]+r[0]*3+f[0]*5,OD.SEA+1,p[2]+r[1]*3+f[1]*5); snap=true; }
-    else if(u<0.84||u>0.95){ want=new THREE.Vector3(p[0]+f[0]*7+r[0]*2.5,OD.SEA+1.8,p[2]+f[1]*7+r[1]*2.5); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; }
-    else { const a=(u-0.84)/0.11*2.4+0.3, cs=Math.cos(a), sn=Math.sin(a); want=new THREE.Vector3(p[0]+(f[0]*cs+r[0]*sn)*6,p[1]+1.2,p[2]+(f[1]*cs+r[1]*sn)*6); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; } // slow motion: the camera circles the jump
+    else if(u<0.55||!K.sea.R&&u<0.6){ want=new THREE.Vector3(p[0]-r[0]*3.5-f[0]*3.5,OD.SEA+2.6,p[2]-r[1]*3.5-f[1]*3.5); look=new THREE.Vector3(p[0]+r[0]*3+f[0]*5,OD.SEA+1,p[2]+r[1]*3+f[1]*5); snap=true; }
+    else if(K.sea.R&&u<0.68){ const R=K.sea.R, rf=vFwd(R.h), rr=vRight(R.h); want=new THREE.Vector3(R.x+rf[0]*6+rr[0]*7,OD.SEA+1.4,R.z+rf[1]*6+rr[1]*7); look=new THREE.Vector3(p[0],p[1]+0.6,p[2]); snap=true; } // low, beside the ramp, following him up it
+    else if(K.sea.R?(u>=0.68&&u<0.88):(u>=0.84&&u<=0.95)){ const w0=K.sea.R?0.68:0.84, w1=K.sea.R?0.88:0.95, a=(u-w0)/(w1-w0)*2.4+0.3, cs=Math.cos(a), sn=Math.sin(a), ff=vFwd(K.sea.h), rr2=vRight(K.sea.h); want=new THREE.Vector3(p[0]+(ff[0]*cs+rr2[0]*sn)*6.5,p[1]+1.2,p[2]+(ff[1]*cs+rr2[1]*sn)*6.5); look=new THREE.Vector3(p[0],p[1]+0.6,p[2]); snap=true; } // slow motion: the camera circles the trick
+    else if(true){ const ff=vFwd(K.sea.h), rr2=vRight(K.sea.h); want=new THREE.Vector3(p[0]+ff[0]*7+rr2[0]*2.5,OD.SEA+1.8,p[2]+ff[1]*7+rr2[1]*2.5); look=new THREE.Vector3(p[0],p[1]+0.8,p[2]); snap=true; }
     const wh=odyK.sea.whale; seaPlace(wh,wh.g); wh.g.visible=true; }
-  else { if(u<0.6){ want=new THREE.Vector3(96.2,MN.F1+2.3,p[2]+6.5); look=new THREE.Vector3(91.2,MN.F1+1.3,p[2]-3); } else { want=new THREE.Vector3(94.2,MN.F1+2.8,83.5); look=new THREE.Vector3(89.4,MN.F1+1.6,71.0); } }
+  else { if(u<0.44){ want=new THREE.Vector3(96.2,MN.F1+2.3,p[2]+6.5); look=new THREE.Vector3(91.2,MN.F1+1.3,p[2]-3); } else { want=new THREE.Vector3(92.6,MN.F1+2.3,81.4); look=new THREE.Vector3(90.2,MN.F1+1.35,73.2); } }
   if(!demo.cam||demo.cam.k!=='short'||demo.cam.i!==i){ demo.cam={k:'short',i,p:want.clone(),l:look.clone()}; } const c=demo.cam; const kk=snap?7:3; c.p.lerp(want,Math.min(1,dt*kk)); c.l.lerp(look,Math.min(1,dt*(kk+1)));
   // whip pans: the camera swings away just before a cut and swings in just after it, with a blur
   const w=0.3/Math.max(4,K.sl||10); let wp=0, hard=false; (SHORT_CUTS[i]||[]).forEach((cu,n)=>{ const sgn=n%2?1:-1; if(u>=cu-w&&u<cu)wp=sgn*Math.pow((u-(cu-w))/w,2)*0.9; else if(u>=cu&&u<cu+w){ wp=-sgn*Math.pow(1-(u-cu)/w,2)*0.9; hard=true; } });
   DIR.whip=wp; DIR.blur=Math.abs(wp)*9;
-  if(hard||i===0&&u>=0.2&&u<0.25||i===3&&u>0.6||i===0&&(u<0.2||u>=0.8)||i===1&&u>=0.25&&u<0.42){ c.p.copy(want); c.l.copy(look); } camera.position.copy(c.p); camera.lookAt(c.l); dirCam(dt,c.l); model.visible=true; }
+  if(hard||i===0&&u>=0.397&&u<0.434||i===3&&u>=0.44||i===0&&(u<0.397||u>=0.84)||i===1&&u>=0.25&&u<0.42){ c.p.copy(want); c.l.copy(look); } camera.position.copy(c.p); camera.lookAt(c.l); dirCam(dt,c.l); model.visible=true; }
 
 // --- the world's life: what you see when you visit (and what the story uses)
 let odyK=null;
