@@ -887,7 +887,7 @@ function faceTex(draw){ const c=document.createElement('canvas'); c.width=c.heig
   const t=new THREE.CanvasTexture(c); t.magFilter=t.minFilter=THREE.NearestFilter; t.generateMipmaps=false; return t; }
 const LOOK_KEY='blockstar_look', OUTFIT_KEY='blockstar_outfits';
 const LOOK0={skin:'#e0b08a',eyes:'#2a4a8a',hair:'short',hairC:'#3b2a1a',top:'tee',topC:'#1f8a8a',bottom:'pants',bottomC:'#2f3e7a',shoes:'shoes',shoeC:'#3a2a20',
-  helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',capeC:'#c0282e',sym:'star',symC:'#ffd84a',hat:'none',hatC:'#d8202a',glasses:'none',back:'none',backC:'#6b4a2a',beard:'none',belt:'none',neck:'none',neckC:'#c8202a'};
+  helm:'none',chest:'none',legs:'none',boots:'none',cape:'none',capeC:'#c0282e',sym:'star',symC:'#ffd84a',hat:'none',hatC:'#d8202a',hatSym:'skull',hatSymC:'#f4f2ee',hatBand:'#c8202a',glasses:'none',back:'none',backC:'#6b4a2a',beard:'none',belt:'none',neck:'none',neckC:'#c8202a'};
 const ARMOR_OPTS=[['none','None'],['leather','Leather'],['iron','Iron'],['gold','Gold'],['diamond','Diamond']];
 const LOOK_OPTS={
   hair:[['short','Short'],['long','Long'],['ponytail','Ponytail'],['bun','Bun'],['braids','Braids'],['spiky','Spiky'],['curly','Big curly'],['mohawk','Mohawk'],['buzz','Buzz cut'],['bald','Bald']],
@@ -897,6 +897,7 @@ const LOOK_OPTS={
   helm:ARMOR_OPTS, chest:ARMOR_OPTS, legs:ARMOR_OPTS, boots:ARMOR_OPTS,
   cape:[['none','No cape'],['plain','Plain cape'],['symbol','Cape with a symbol']],
   sym:[['star','⭐ Star'],['heart','❤️ Heart'],['bolt','⚡ Lightning'],['diamond','💎 Diamond'],['moon','🌙 Moon'],['skull','💀 Skull'],['crown','👑 Crown'],['b','🅱️ Letter B']],
+  hatSym:[['skull','☠️ Skull & crossbones'],['anchor','⚓ Anchor'],['star','⭐ Star'],['heart','❤️ Heart'],['crown','👑 Crown'],['bolt','⚡ Lightning'],['none','No symbol']],
   hat:[['none','None'],['cap','Cap'],['pirate','Pirate hat'],['beanie','Beanie'],['tophat','Top hat'],['crown','Crown'],['wizard','Wizard hat'],['cowboy','Cowboy hat'],['headband','Headband']],
   glasses:[['none','None'],['round','Round'],['shades','Sunglasses'],['goggles','Goggles'],['party','Party glasses']],
   back:[['none','None'],['backpack','Backpack'],['wings','Angel wings'],['dragon','Dragon wings'],['jetpack','Jetpack'],['quiver','Arrow quiver']],
@@ -954,6 +955,25 @@ function denimTex(hex){ const c=document.createElement('canvas'); c.width=c.heig
   for(let i=0;i<8;i++)for(let j=0;j<8;j++){ x.fillStyle=shadeHex(hex,0.88+r()*0.22); x.fillRect(i,j,1,1); } x.fillStyle=shadeHex(hex,1.45); x.fillRect(6,0,1,8); return ownMat(new THREE.CanvasTexture(c)); }
 function stripeTex(hex){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d'); for(let y=0;y<8;y++){ x.fillStyle=(y>>1)%2?shadeHex(hex,1.75):hex; x.fillRect(0,y,8,1); } return ownMat(new THREE.CanvasTexture(c)); }
 function undress(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material){ for(const m of [].concat(o.material)) if(m.userData.own){ if(m.map)m.map.dispose(); m.dispose(); } } }); g.clear(); }
+// the pirate hat (a tricorn): the front is a picture (its curved outline and the symbol), the rest is blocks
+function pirateFront(L){ const c=document.createElement('canvas'); c.width=192; c.height=96; const x=c.getContext('2d');
+  x.beginPath(); x.moveTo(4,62); x.quadraticCurveTo(40,30,78,14); x.quadraticCurveTo(96,4,114,14); x.quadraticCurveTo(152,30,188,62); x.lineTo(176,94); x.quadraticCurveTo(96,80,16,94); x.closePath();
+  x.fillStyle=L.hatC; x.fill(); x.lineWidth=5; x.strokeStyle=shadeHex(L.hatC,0.65); x.stroke(); x.save(); x.clip(); x.fillStyle=shadeHex(L.hatC,1.25); x.globalAlpha=0.35; x.fillRect(0,14,192,6); x.restore();
+  const s=L.hatSym, C=L.hatSymC; x.save(); x.translate(96,44); x.fillStyle=C; x.strokeStyle=C; x.lineCap='round';
+  if(s==='skull'){ x.lineWidth=7; for(const a of [-1,1]){ x.beginPath(); x.moveTo(-30*a,-20); x.lineTo(30*a,20); x.stroke(); for(const e of [-1,1]){ x.beginPath(); x.arc(-30*a*e,-20*e,5,0,7); x.fill(); } }
+    x.beginPath(); x.arc(0,-6,17,0,7); x.fill(); x.fillRect(-10,4,20,12); x.fillStyle=L.hatC; x.beginPath(); x.arc(-7,-7,5,0,7); x.arc(7,-7,5,0,7); x.fill(); x.fillRect(-1.5,0,3,5); for(const k of [-6,0,6])x.fillRect(k-1,10,2,6); }
+  else if(s==='anchor'){ x.lineWidth=6; x.beginPath(); x.moveTo(0,-20); x.lineTo(0,22); x.moveTo(-12,-10); x.lineTo(12,-10); x.stroke(); x.beginPath(); x.arc(0,8,16,0.15,Math.PI-0.15); x.stroke(); x.beginPath(); x.arc(0,-24,5,0,7); x.stroke(); }
+  else if(s==='star'){ x.beginPath(); for(let k=0;k<10;k++){ const r=k%2?10:24, a=k*Math.PI/5-Math.PI/2; x.lineTo(Math.cos(a)*r,Math.sin(a)*r); } x.fill(); }
+  else if(s==='heart'){ x.beginPath(); x.moveTo(0,20); x.bezierCurveTo(-30,0,-14,-26,0,-10); x.bezierCurveTo(14,-26,30,0,0,20); x.fill(); }
+  else if(s==='crown'){ x.beginPath(); for(const [a,b] of [[-22,16],[-22,-10],[-11,4],[0,-18],[11,4],[22,-10],[22,16]])x.lineTo(a,b); x.fill(); }
+  else if(s==='bolt'){ x.beginPath(); for(const [a,b] of [[4,-24],[-14,4],[-2,4],[-6,24],[14,-6],[2,-6]])x.lineTo(a,b); x.fill(); }
+  x.restore(); const t=new THREE.CanvasTexture(c); const m=new THREE.MeshLambertMaterial({map:t,transparent:true,alphaTest:0.4,side:THREE.DoubleSide}); m.userData.own=true; return m; }
+function pirateHat(Hd,L,y){ const d=Hd.userData.d, hk=cm(L.hatC), hkD=cm(shadeHex(L.hatC,0.75)), band=cm(L.hatBand||'#c8202a'), add=(w,h,dd,m,x,yy,z,rx,ry,rz)=>{ const b=box(w,h,dd,m); b.position.set(x,yy,z); b.rotation.set(rx||0,ry||0,rz||0); d.add(b); return b; };
+  add(0.46,0.2,0.46,hk,0,y+0.1,0.02); add(0.8,0.03,0.62,hkD,0,y+0.005,0.03); // the crown and the brim under it
+  const fr=new THREE.Mesh(new THREE.PlaneGeometry(0.98,0.49),pirateFront(L)); fr.position.set(0,y+0.2,-0.3); fr.rotation.x=0.12; d.add(fr); // the front, with its symbol
+  for(const sx of [-1,1]){ add(0.04,0.2,0.42,hk,sx*0.36,y+0.13,0.06,0,-sx*0.38,sx*0.1); } add(0.5,0.18,0.05,hk,0,y+0.11,0.3,-0.12); // the sides sweep back and in, to a lower back
+  add(0.62,0.08,0.03,band,0,y+0.05,-0.325,0.12); add(0.5,0.07,0.04,band,0,y+0.03,0.25); for(const sx of [-1,1])add(0.04,0.07,0.5,band,sx*0.245,y+0.03,0); // the band, round the front...
+  add(0.1,0.1,0.1,band,0.3,y+0.04,-0.31); add(0.06,0.26,0.05,band,0.3,y-0.1,-0.33,0.1,0,0.1); add(0.06,0.21,0.05,band,0.36,y-0.08,-0.31,-0.08,0,0.32); } // ...knotted at the side, with two tails
 function dressRig(R,L){
   for(const k of ['legL','legR','armL','armR','torso','head'])undress(R[k].userData.d);
   R.cape=null; R.wings=[]; R.jet=null;
@@ -1019,8 +1039,7 @@ function dressRig(R,L){
   // hats
   const hk=cm(L.hatC), hkD=cm(shadeHex(L.hatC,0.7)), hkL=cm(shadeHex(L.hatC,1.6)), gold=cm('#f2c230','#3a2800');
   if(L.hat==='cap'){ put(Hd,0.5,0.14,0.5,hk,0,hatY+0.06,0); put(Hd,0.46,0.03,0.22,hkD,0,hatY,-0.34); }
-  else if(L.hat==='pirate'){ put(Hd,0.46,0.18,0.46,hk,0,hatY+0.1,0); put(Hd,0.78,0.04,0.62,hk,0,hatY+0.02,0); const fr=put(Hd,0.74,0.22,0.05,hk,0,hatY+0.14,-0.31); fr.rotation.x=0.25; for(const sx of [-1,1]){ const bk=put(Hd,0.05,0.22,0.5,hk,sx*0.33,hatY+0.14,0.08); bk.rotation.z=-sx*0.25; }
-    put(Hd,0.12,0.11,0.02,cm('#f4f2ee'),0,hatY+0.16,-0.345); put(Hd,0.74,0.03,0.055,gold,0,hatY+0.25,-0.33); } // a tricorn with a skull
+  else if(L.hat==='pirate')pirateHat(Hd,L,hatY); // a tricorn: a tall front with a symbol, sides sweeping back, and a band knotted at the side
   else if(L.hat==='beanie'){ put(Hd,0.5,0.2,0.5,hk,0,hatY+0.07,0); put(Hd,0.52,0.06,0.52,hkD,0,hatY-0.02,0); put(Hd,0.12,0.12,0.12,hkL,0,hatY+0.23,0); }
   else if(L.hat==='tophat'){ put(Hd,0.64,0.03,0.64,hk,0,hatY+0.01,0); put(Hd,0.4,0.42,0.4,hk,0,hatY+0.23,0); put(Hd,0.41,0.06,0.41,hkL,0,hatY+0.06,0); }
   else if(L.hat==='crown'){ const y=hatY+0.06; put(Hd,0.5,0.12,0.04,gold,0,y,-0.23); put(Hd,0.5,0.12,0.04,gold,0,y,0.23); for(const sx of [-1,1])put(Hd,0.04,0.12,0.5,gold,sx*0.23,y,0);
@@ -2102,7 +2121,7 @@ const CC_ROWS=[
   {tab:'armor',k:'helm',l:'⛑️ Helmet'},{tab:'armor',k:'chest',l:'🛡️ Chestplate'},{tab:'armor',k:'legs',l:'🦵 Leg armor'},{tab:'armor',k:'boots',l:'🥾 Armor boots'},
   {tab:'cape',k:'cape',l:'Cape'},{tab:'cape',k:'capeC',l:'Cape color',sw:SW.cloth,show:L=>L.cape!=='none'},
   {tab:'cape',k:'sym',l:'Symbol',show:L=>L.cape==='symbol'},{tab:'cape',k:'symC',l:'Symbol color',sw:SW.cloth,show:L=>L.cape==='symbol'},
-  {tab:'extras',k:'hat',l:'🎩 Hat'},{tab:'extras',k:'hatC',l:'Hat color',sw:SW.cloth,show:L=>L.hat!=='none'},
+  {tab:'extras',k:'hat',l:'🎩 Hat'},{tab:'extras',k:'hatC',l:'Hat color',sw:SW.cloth,show:L=>L.hat!=='none'},{tab:'extras',k:'hatSym',l:'Hat symbol',show:L=>L.hat==='pirate'},{tab:'extras',k:'hatSymC',l:'Symbol color',sw:SW.cloth,show:L=>L.hat==='pirate'&&L.hatSym!=='none'},{tab:'extras',k:'hatBand',l:'Band color',sw:SW.cloth,show:L=>L.hat==='pirate'},
   {tab:'extras',k:'glasses',l:'👓 Glasses'},{tab:'extras',k:'neck',l:'🧣 Around your neck'},{tab:'extras',k:'neckC',l:'Bandana color',sw:SW.cloth,show:L=>L.neck!=='none'},{tab:'extras',k:'back',l:'🎒 On your back'},{tab:'extras',k:'backC',l:'Color',sw:SW.cloth,show:L=>!['none','wings'].includes(L.back)}];
 const CC_TABS=[['body','🙂 Body'],['clothes','👕 Clothes'],['armor','🛡️ Armor'],['cape','🦸 Cape'],['extras','🎩 Extras'],['outfits','💾 Outfits']];
 let ccOn=false, ccTab='body', ccFrom='', ccSpin=0, ccIdle=0;
@@ -7214,7 +7233,7 @@ function cbLucyAt(K,x,y,z,h,hat,par){ const M=K.lucy; (par||K.root).add(M.g); M.
 const CB_COST={normal:{},scifi:{top:'jacket',topC:'#1a1c2a',bottom:'pants',bottomC:'#2a2a3a',shoes:'boots',shoeC:'#111114',glasses:'goggles'},
   fantasy:{helm:'iron',chest:'iron',legs:'iron',boots:'iron',cape:'plain',capeC:'#c0282e'},western:COWBOY,
   horror:{top:'long',topC:'#5a5040',bottom:'pants',bottomC:'#3a3428',shoes:'boots',shoeC:'#2a2018',hat:'none'},
-  pirate:{top:'stripes',topC:'#e8e4dc',bottom:'pants',bottomC:'#2a2a3a',shoes:'boots',shoeC:'#2a1a10',hat:'pirate',hatC:'#1a1a1e',belt:'buckle',neck:'bandana',neckC:'#c8202a'},
+  pirate:{top:'stripes',topC:'#e8e4dc',bottom:'pants',bottomC:'#2a2a3a',shoes:'boots',shoeC:'#2a1a10',hat:'pirate',hatC:'#2e2e32',hatSym:'skull',hatSymC:'#f4f2ee',hatBand:'#c8202a',belt:'buckle',neck:'none'},
   space:{top:'long',topC:'#f2f2f2',bottom:'pants',bottomC:'#f2f2f2',shoes:'boots',shoeC:'#d8d8d8',back:'jetpack',backC:'#9aa0a8',sym:'star',symC:'#2a6ad8'},
   action:{top:'tank',topC:'#3a4a2a',bottom:'pants',bottomC:'#4a5a3a',shoes:'boots',shoeC:'#1a1a1a',glasses:'shades',belt:'belt'},
   xmas:{top:'hoodie',topC:'#c8202a',bottom:'jeans',bottomC:'#3a5a8a',hat:'beanie',hatC:'#2a8a3a',shoes:'boots',shoeC:'#5a3a1a'}};
