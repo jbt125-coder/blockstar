@@ -574,7 +574,7 @@ function dirCam(dt,look){ let fov=DIR.fovT+DIR.kick; DIR.kick*=Math.max(0,1-dt*4
 // the part so it still ends on time. Turns real time (u) into story time and the world's speed
 function shortRamp(u,R){ if(!R)return {s:u,k:1}; const [A,B,k]=R, len=B-A, realW=len/k, c=(1-len)/(1-realW), ra=A/c, rb=ra+realW;
   if(u<ra)return {s:u*c,k:c}; if(u<rb)return {s:A+(u-ra)*k,k}; return {s:Math.min(1,B+(u-rb)*c),k:c}; }
-function resize(){ if(rec&&!rec.done){ renderer.setSize(1080,1920,false); camera.aspect=9/16; camera.updateProjectionMatrix(); return; } const w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+function resize(){ if(rec&&!rec.done){ renderer.setSize(rec.w||1080,rec.h||1920,false); camera.aspect=9/16; camera.updateProjectionMatrix(); return; } const w=window.innerWidth,h=window.innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize',resize); resize();
 
 // ================= MESHING =================
@@ -2497,8 +2497,9 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   const sel=(T,k,i,v)=>'<select data-i="'+i+'" data-k="'+k+'">'+Object.entries(T).map(([a,b])=>'<option value="'+a+'"'+(a===v?' selected':'')+'>'+b+'</option>').join('')+'</select>';
   const tot=dmCfg.scenes.reduce((a,s)=>a+s.secs,0);
   let h='<h2>🎬 Demo Mode</h2><div class="say">Line up your scenes, pick a song, then press <b>▶ Play demo</b>. The game plays by itself so you can record it. To stop, tap the screen and press ■ Stop, or press Esc.</div>'+
-    '<h3>🎬 YouTube Shorts</h3><div class="item"><div class="ic">🎬</div><div class="tx"><div class="chips">'+Object.entries(SHORTS).map(([k,o])=>'<div class="chip'+(shortPick===k?' on':'')+'" data-spick="'+k+'">'+o.n+'</div>').join('')+'</div><div class="fx" style="margin-top:6px">'+SHORTS[shortPick].d+' Lucy is hiding in every world. Records a tall 1080×1920 video with the game\'s sound, ready for YouTube Shorts.</div>'+
+    '<h3>🎬 YouTube Shorts</h3><div class="item"><div class="ic">🎬</div><div class="tx"><div class="chips">'+Object.entries(SHORTS).map(([k,o])=>'<div class="chip'+(shortPick===k?' on':'')+'" data-spick="'+k+'">'+o.n+'</div>').join('')+'</div><div class="fx" style="margin-top:6px">'+SHORTS[shortPick].d+' Lucy is hiding in every world. Records a tall video with the game\'s sound, ready for YouTube Shorts.</div>'+
     '<div class="chips" style="margin-top:6px">'+[30,45,60].map(n=>'<div class="chip'+(shortLen===n?' on':'')+'" data-slen="'+n+'">'+n+' s</div>').join('')+'</div>'+
+    '<div class="fx" style="margin-top:8px">Video quality (Smooth records more evenly on phones)</div><div class="chips" style="margin-top:4px">'+Object.entries(SHORT_Q).map(([k,o])=>'<div class="chip'+(shortQ===k?' on':'')+'" data-squal="'+k+'">'+o.n+'</div>').join('')+'</div>'+
     '<div class="fx" style="margin-top:8px">Hero\'s outfit</div><div class="chips" style="margin-top:4px">'+Object.entries(SHORT_OUTFITS).map(([k,l])=>'<div class="chip'+(shortOutfit===k?' on':'')+'" data-sout="'+k+'">'+l+'</div>').join('')+'</div></div></div>'+
     '<div class="row"><button class="mbtn" id="shWatch">▶ Watch it</button><button class="mbtn gold" id="shRec">⏺ Record video</button></div>'+
     '<div class="row"><button class="mbtn gold" id="dmPlayTop">▶ Quick start: play the demo</button></div><h3>🎞️ Scenes <span class="dmTot">total '+dmTime(tot)+'</span></h3>';
@@ -2534,6 +2535,7 @@ function openDemo(){ if(document.pointerLockElement)document.exitPointerLock(); 
   $('mbox').innerHTML=h; $('mbox').classList.add('wide'); $('modal').style.display='flex';
   const box2=$('mbox'), redraw=()=>{ const y=box2.scrollTop; openDemo(); box2.scrollTop=y; };
   box2.querySelectorAll('[data-slen]').forEach(el=>onClick(el,()=>{ shortLen=+el.dataset.slen; try{ localStorage.setItem('blockstar_short_len',String(shortLen)); }catch(e){} redraw(); }));
+  box2.querySelectorAll('[data-squal]').forEach(el=>onClick(el,()=>{ shortQ=el.dataset.squal; try{ localStorage.setItem('blockstar_short_q',shortQ); }catch(e){} redraw(); }));
   box2.querySelectorAll('[data-spick]').forEach(el=>onClick(el,()=>{ shortPick=el.dataset.spick; try{ localStorage.setItem('blockstar_short_pick',shortPick); }catch(e){} redraw(); }));
   box2.querySelectorAll('[data-sout]').forEach(el=>onClick(el,()=>{ shortOutfit=el.dataset.sout; try{ localStorage.setItem('blockstar_short_outfit',shortOutfit); }catch(e){} redraw(); }));
   onClick($('shWatch'),()=>shortRun(false)); onClick($('shRec'),()=>shortRun(true));
@@ -6978,6 +6980,8 @@ function coralAction(){ if(!coralHeld||demo||!target||riding())return null; cons
 // ================= THE SHORTS RECORDER =================
 // Records the game as a tall 1080×1920 video with its sound, for YouTube Shorts. The 3D view is drawn into a video canvas every
 // frame, with the captions, fades and flashes (which are page elements, not part of the 3D view) painted on top of it.
+let shortQ='smooth'; try{ if(localStorage.getItem('blockstar_short_q')==='sharp')shortQ='sharp'; }catch(e){}
+const SHORT_Q={smooth:{n:'🏃 Smooth (720p)',w:720,h:1280,bits:6e6},sharp:{n:'✨ Sharp (1080p)',w:1080,h:1920,bits:12e6}};
 let shortLen=60, shortSaved=null, shortK=null, shortOutfit='current', shortPick='mower';
 try{ const k=localStorage.getItem('blockstar_short_pick'); if(k==='mower'||k==='cube')shortPick=k; }catch(e){}
 const SHORTS={mower:{n:'🚜 Mower vs. Everything',file:'mower-vs-everything',act:'shortmow',d:'The riding mower breaks out of the garage, races a dragster and a whale, and comes home.'},cube:{n:'🧊 One Cube. Nine Movies.',file:'one-cube-nine-movies',act:'cubemovies',d:'A glowing cube throws the hero through sci-fi, fantasy, western, horror, pirates, space, action, a monster movie and Christmas, and back again.'}};
@@ -6991,22 +6995,23 @@ try{ const n=+localStorage.getItem('blockstar_short_len'); if([30,45,60].include
 function shortRun(record){ audioInit(); if(record&&!(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream)){ toast('🎬 This browser can\'t record video. Try Chrome, Edge or Safari on a computer.'); return; }
   shortSaved={scenes:dmCfg.scenes,loop:dmCfg.loop,fades:dmCfg.fades}; dmCfg.scenes=[Object.assign({},DM_SCENE0,{act:SHORTS[shortPick].act,secs:shortLen,time:'day',cam:'cine'})]; dmCfg.loop=false; dmCfg.fades=false;
   demoStart(); if(record)recStart(shortLen); }
-function recStart(len){ const cv=document.createElement('canvas'); cv.width=1080; cv.height=1920; rec={len,file:SHORTS[shortPick].file,cv,x:cv.getContext('2d'),chunks:[],t0:performance.now(),done:false,pr:renderer.getPixelRatio()};
-  renderer.setPixelRatio(1); document.body.classList.add('rec'); resize(); const tracks=[...cv.captureStream(30).getVideoTracks()];
+function recStart(len){ const Q=SHORT_Q[shortQ]||SHORT_Q.smooth, cv=document.createElement('canvas'); cv.width=Q.w; cv.height=Q.h; rec={len,w:Q.w,h:Q.h,file:SHORTS[shortPick].file,cv,x:cv.getContext('2d'),chunks:[],t0:performance.now(),done:false,pr:renderer.getPixelRatio()};
+  renderer.setPixelRatio(1); document.body.classList.add('rec'); resize(); let st=cv.captureStream(0), vt=st.getVideoTracks()[0]; if(!vt||typeof vt.requestFrame!=='function'){ st=cv.captureStream(30); vt=st.getVideoTracks()[0]; } else rec.vt=vt; const tracks=[vt]; // a frame each time the game draws one (so the video keeps the game's rhythm)
   if(AC&&recBus){ try{ rec.dest=AC.createMediaStreamDestination(); recBus.connect(rec.dest); tracks.push(...rec.dest.stream.getAudioTracks()); }catch(e){} }
   const types=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']; rec.type=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
-  try{ rec.mr=new MediaRecorder(new MediaStream(tracks),rec.type?{mimeType:rec.type,videoBitsPerSecond:12e6,audioBitsPerSecond:192000}:undefined); }catch(e){ rec.mr=new MediaRecorder(new MediaStream(tracks)); rec.type=rec.mr.mimeType||'video/webm'; }
+  try{ rec.mr=new MediaRecorder(new MediaStream(tracks),rec.type?{mimeType:rec.type,videoBitsPerSecond:Q.bits,audioBitsPerSecond:192000}:undefined); }catch(e){ rec.mr=new MediaRecorder(new MediaStream(tracks)); rec.type=rec.mr.mimeType||'video/webm'; }
   rec.mr.ondataavailable=e=>{ if(e.data&&e.data.size)rec.chunks.push(e.data); }; rec.mr.onstop=recDone; rec.mr.start(500); $('recBadge').style.display='block'; }
-function recDraw(){ const R=rec, x=R.x; if(DIR.blur>0.4)x.filter='blur('+(DIR.blur*2.2).toFixed(1)+'px)'; x.drawImage(canvas,0,0,1080,1920); x.filter='none';
+function recDraw(){ const R=rec, x=R.x, k=R.w/1080; x.setTransform(1,0,0,1,0,0); if(DIR.blur>0.4)x.filter='blur('+(DIR.blur*2.2*k).toFixed(1)+'px)'; x.drawImage(canvas,0,0,R.w,R.h); x.filter='none'; x.setTransform(k,0,0,k,0,0); // (the captions are laid out for 1080 wide, and scaled to fit)
   const f=$('dmFade'); if(f){ const cs=getComputedStyle(f), op=+cs.opacity; if(op>0.01){ x.globalAlpha=Math.min(1,op); x.fillStyle=cs.backgroundColor&&cs.backgroundColor!=='rgba(0, 0, 0, 0)'?cs.backgroundColor:'#000'; x.fillRect(0,0,1080,1920); x.globalAlpha=1; } }
   if(shortK&&shortK.cap&&shortK.capT>0){ x.save(); x.textAlign='center'; x.textBaseline='middle'; x.font='900 96px Impact, "Arial Black", sans-serif'; x.lineJoin='round'; const lines=shortK.cap.split('\n'), pop=Math.min(1,(shortK.capAge||0)*6); x.translate(540,340); x.scale(0.7+0.3*pop,0.7+0.3*pop);
     lines.forEach((l,i)=>{ const y=(i-(lines.length-1)/2)*108; x.lineWidth=18; x.strokeStyle='#000'; x.strokeText(l,0,y); x.fillStyle='#fff'; x.fillText(l,0,y); }); x.restore(); }
   if(shortK&&shortK.tag){ x.save(); x.font='900 54px Impact, "Arial Black", sans-serif'; x.lineWidth=10; x.strokeStyle='#000'; x.lineJoin='round'; x.strokeText(shortK.tag,64,130); x.fillStyle='#ffe02a'; x.fillText(shortK.tag,64,130); x.restore(); }
+  x.setTransform(1,0,0,1,0,0); if(R.vt)R.vt.requestFrame();
   const s=Math.max(0,(performance.now()-R.t0)/1000); $('recBadge').textContent='⏺ REC '+Math.floor(s)+' s / '+R.len+' s'; }
 function recDone(){ const R=rec; if(!R)return; R.done=true; renderer.setPixelRatio(R.pr); document.body.classList.remove('rec'); $('recBadge').style.display='none'; resize(); try{ if(R.dest)recBus.disconnect(R.dest); }catch(e){}
   const type=(R.type||'video/webm').split(';')[0], ext=type.includes('mp4')?'mp4':'webm', blob=new Blob(R.chunks,{type}), url=URL.createObjectURL(blob), name='blockstar-'+(R.file||'short')+'-'+R.len+'s.'+ext; rec=null;
   if(document.pointerLockElement)document.exitPointerLock(); paused=true;
-  $('mbox').innerHTML='<h2>🎬 Your Short is ready!</h2><div class="say">'+R.len+' seconds, 1080×1920, '+ext.toUpperCase()+' ('+(blob.size/1048576).toFixed(1)+' MB). Save it, then upload it to YouTube as a Short. Pin a comment: “Did you spot Lucy?” 🐶</div>'+
+  $('mbox').innerHTML='<h2>🎬 Your Short is ready!</h2><div class="say">'+R.len+' seconds, '+R.w+'×'+R.h+', '+ext.toUpperCase()+' ('+(blob.size/1048576).toFixed(1)+' MB). Save it, then upload it to YouTube as a Short. Pin a comment: “Did you spot Lucy?” 🐶</div>'+
     (IOS&&navigator.canShare?'<div class="say">📲 To put it with your other videos: tap <b>Save to Photos</b>, then <b>Save Video</b>.</div>':'')+
     '<video src="'+url+'" controls playsinline style="display:block;margin:10px auto;max-height:52vh;max-width:100%;border-radius:10px;background:#000"></video><div class="row">'+
     (IOS&&navigator.canShare?'<button class="mbtn gold" id="recShare">📲 Save to Photos</button><button class="mbtn" id="recSave">💾 Save to Files</button>':'<button class="mbtn gold" id="recSave">💾 Save video</button>'+(navigator.canShare?'<button class="mbtn" id="recShare">📤 Share</button>':''))+'<button class="mbtn gray" id="recClose">Done</button></div>';
